@@ -1,0 +1,543 @@
+<apex:page standardcontroller="Payment__c" extensions="PaymentLinesManageExt" docType="html-5.0" id="page">
+	
+    <apex:sectionHeader title="{!$ObjectType.Payment__c.Label} {!Payment__c.Name}" />
+    
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+	<apex:form id="theForm">
+        
+        <div class="page-container">
+            <div class="page-message"></div>
+            <apex:pageMessages id="msgs"/>
+            <c:busyWait includeScripts="false" />
+                
+                <div class="grid-container">
+                	<div class="grid-message"></div>
+                	<apex:pageBlock id="pb" >
+		                <apex:pageBlockButtons location="top">
+		                	<apex:outputPanel >
+		                    	<!--<apex:commandButton value="{!$Label.Go_Back}" action="{!cancel}" status="actionStatus" rerender="theForm" />-->
+			                    <a href="{!ReturnUrl}" style="text-decoration: none;"><input type="button" value="{!$Label.Go_Back}" class="k-button kndy-btn cancel-command" /></a>
+			                    <!-- <apex:commandButton value="{!$Label.Save}" id="savePayment" status="actionStatus" rerender="nothing" styleClass="btn grid-save-command"/>-->
+			                    <apex:outputPanel rendered="{!!Payment__c.Finalized__c}">
+			                    	<input name="savePayment" id="savePayment" type="button" value="{!$Label.Save}" class ="k-button kndy-btn save-command" accesskey="s" />
+		                    	</apex:outputPanel>
+		                    </apex:outputPanel>
+		                </apex:pageBlockButtons>
+	                     
+	                    <apex:pageBlockSection columns="1">
+	                    	<div id="PaymentHeaderDetailList">
+		                    </div>
+		                </apex:pageBlockSection>
+	                    <div id="GridAddManagePaymentLines"></div>
+	            	 </apex:pageBlock>        
+                </div>
+                
+                <div class="grid-container">
+                	<apex:pageBlock id="pbopts" >
+	                    <div id="GridInvoiceOptions"></div>
+	            	 </apex:pageBlock>        
+                </div>       
+           
+        </div>
+	</apex:form>
+	<c:busyWait includeScripts="false" />
+	<script type="text/javascript">
+	
+		var paymentLinesGridConfig = JSONUtils.Parse('{!JSENCODE(paymentLinesConfigJson)}');
+		var invoiceOptionsGridConfig = JSONUtils.Parse('{!JSENCODE(invoiceOptionsConfigJson)}');
+		var paymentLineFieldList = '{!paymentLineFieldList}';
+        var invoiceFieldList = '{!invoiceFieldList}';
+        var paymentManageFields = JSONUtils.Parse('{!PaymentHeaderManageFieldList}');
+        var paymentAdditionalFields = JSONUtils.Parse('{!PaymentHeaderAdditionalFieldList}');
+    	var expandedRows = [];
+    	var paymentId;
+    	
+        var paymentLinesData = function() {
+            var deferred = $.Deferred();
+          	var remoteArgs = paymentLinesGridConfig;
+            
+            if (paymentId) {
+                // The stuff returned from Salesforce has extra properties like "attributes"
+                // which couldn't be deserialised back
+                remoteArgs.parentRecord = { Id: paymentId };
+            }else{
+            	remoteArgs.parentRecord = null;
+            }
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.PaymentLinesManageExt.getPaymentLines}',
+                remoteArgs, 
+                function (result, event) {
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+            );
+
+            return deferred.promise();
+        }
+        
+        var invoiceOptionsData = function() {
+            var deferred = $.Deferred();
+          	var remoteArgs = invoiceOptionsGridConfig;
+            if (paymentId) {
+                // The stuff returned from Salesforce has extra properties like "attributes"
+                // which couldn't be deserialised back
+                remoteArgs.parentRecord = { Id: paymentId };
+            }
+            
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.PaymentLinesManageExt.getInvoiceOptions}',
+                remoteArgs, 
+                function (result, event) {
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+            );
+
+            return deferred.promise();
+        }
+        
+        $(document).on('KenandyErpReady', function(e) {
+        	
+        	init();
+        });
+        
+        function init(){
+        
+        	paymentId = '{!Payment__c.Id}' == '' ? null : '{!Payment__c.Id}';
+        	PaymentLinesManageUtils.InitializeHeaderDetailList();
+        	
+        	var lookupSearchFilters = [];
+        	var exceptionFieldList = JSONUtils.Parse('{!exceptionFieldList}');
+        	var paymentMatchFieldList = JSONUtils.Parse('{!paymentMatchFieldList}');
+        	var lookupSearchAction = '{!$RemoteAction.PaymentLinesManageExt.lookupSearchFilter}';
+        	var savePaymentLinesAction = '{!$RemoteAction.PaymentLinesManageExt.savePaymentLines}'; //'{!$RemoteAction.PaymentLinesManageExt.saveList}'
+            var paymentLineDateFields = KenandyErp.KendoGridOptions.GetDateFields(JSONUtils.Parse(paymentLineFieldList)); // get the list of date fields for the master grid
+            var paymentLinesGrid = $('#GridAddManagePaymentLines').kendoGridActionList({
+                    	namespace: '{!NamespaceUU}', 
+                        config: paymentLinesGridConfig, 
+                        fieldList: paymentLineFieldList,
+                        lookupSearchAction: lookupSearchAction, 
+                        getActionListFunction: paymentLinesData,
+                        saveAction: savePaymentLinesAction,
+                        lookupSearchFilters: lookupSearchFilters,
+                        toolbarButtons: [  ],
+                        validateLookupOnBlur: true,
+                        detailTemplate: kendo.template($("#detailTemplate").html()),
+                        modelIdField: 'pmtLine.Id'
+                    }).data('kendoGridActionList');
+                                        
+            // unbind grid save command 
+            paymentLinesGrid.wrapper.off("click", ".grid-save-command");
+                
+            // bind grid save command
+            paymentLinesGrid.wrapper.on("click", ".grid-save-command", $.proxy(PaymentLinesManageUtils.Save, { grid: paymentLinesGrid, options: { saveAction: savePaymentLinesAction, config: paymentLinesGridConfig, dateFields: paymentLineDateFields } }));
+            //$('#savePayment').on("click", $.proxy(PaymentLinesManageUtils.Save));
+           	$('#savePayment').on("click", $.proxy(PaymentLinesManageUtils.Save, { grid: paymentLinesGrid, options: { saveAction: savePaymentLinesAction, config: paymentLinesGridConfig, dateFields: paymentLineDateFields } }));
+            // bind grid detailInit event
+            paymentLinesGrid.bind("detailInit", $.proxy(PaymentLinesManageUtils.DetailInit, { fieldList: paymentMatchFieldList }));
+			
+			if({!Payment__c.Finalized__c} == false){			
+	            // bind grid detailExpand/detailCollapse events
+	            //paymentLinesGrid.bind("detailExpand", $.proxy(PaymentLinesManageUtils.DetailExpand, { grid: paymentLinesGrid }));
+	            //paymentLinesGrid.bind("detailCollapse", $.proxy(PaymentLinesManageUtils.DetailCollapse, { grid: paymentLinesGrid }));
+	            var invoiceOptionsGrid = $('#GridInvoiceOptions').kendoGridActionList({
+	                    	namespace: '{!NamespaceUU}', 
+	                        config: invoiceOptionsGridConfig, 
+	                        fieldList: invoiceFieldList,
+	                        lookupSearchAction: lookupSearchAction, 
+	                        getActionListFunction: invoiceOptionsData,
+	                        saveAction: savePaymentLinesAction,
+	                        lookupSearchFilters: lookupSearchFilters,
+	                        toolbarButtons: [  ],
+	                        validateLookupOnBlur: true,
+	                        modelIdField: 'Id'
+	                    }).data('kendoGridActionList');
+	            invoiceOptionsGrid.wrapper.on("click", ".grid-add-to-payment-custom-command", $.proxy(PaymentLinesManageUtils.AddToPayments, { grid: invoiceOptionsGrid, options: { config: invoiceOptionsGridConfig, dateFields: paymentLineDateFields } }));
+            }else{
+            	document.getElementById('{!$Component.page.theForm.pbopts}').style.display = 'none';
+            }
+        }
+        
+        var PaymentLinesManageUtils = function() {
+        	return {
+        		DetailInit: function(e) {
+                    var self = this;
+                    var detailRow = e.detailRow;
+                    var detailGridContainer = detailRow.find("div.grid-container");
+                    var detailFieldList = self.fieldList;
+                    var uid = e.data.uid;
+                    
+                    var getDetailModel = function() {
+                        var fields = KenandyErp.KendoGridOptions.GetFields(detailFieldList); 
+                        var model = kendo.data.Model.define({ id: "Id", fields: fields });
+                                
+                        return model;
+                    };
+                            
+                    var getDetailColumns = function() {
+                        return KenandyErp.KendoGridOptions.GetColumns(detailFieldList);;
+                    };
+                    
+                    var getDetailDataSource = function() {
+                        var dataSource = new kendo.data.DataSource({
+                            //data: e.data.get('exceptions'),
+                            data: e.data.get('paymentMatches'),
+                            batch: true,
+                            schema: {
+                                model: getDetailModel()
+                            }        
+                        });
+            
+                        return dataSource;
+                    };
+                    
+                    var grid = detailRow.find(".grid-exceptions").kendoGrid({
+                        dataSource: getDetailDataSource(), 
+                        navigatable: true,
+                        columns: getDetailColumns(),
+                        sortable: true,
+                        filterable: true,
+                        resizable: true
+                    }).data('kendoGrid');
+                },
+                
+                DetailExpand: function(e) {
+                	var self = this;
+                	var grid = self.grid;
+                	var masterDataItem = grid.dataItem(e.masterRow);
+                	
+                	// Hide the detail grid if the Type is fixed/none
+					if (masterDataItem.get('Type__c') != 'Tiered') {
+						e.detailRow.find(".grid-tier-pricing").hide();
+						e.detailRow.find(".grid-tier-pricing-message").show();
+					}
+					else {
+						e.detailRow.find(".grid-tier-pricing").show();
+						e.detailRow.find(".grid-tier-pricing-message").hide();
+					}
+					
+					// add row uid to the expandedRows list
+					expandedRows.push(masterDataItem.uid);
+                },
+                
+                DetailCollapse: function(e) {
+                	var self = this;
+                	var grid = self.grid;
+                	var masterDataItem = grid.dataItem(e.masterRow);
+                	
+                	// remove row uid to the expandedRows list
+					expandedRows.pop(masterDataItem.uid);
+                },
+                //FIN-627 Prevent Error when Users Tab fast.Validation done On save ,Not on Tab out
+                IsValidLookups: function(grid) {
+                    var fieldList = JSONUtils.Parse(paymentLineFieldList);
+                    var referenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(fieldList); // get the list of reference fields
+                    var currentData = grid.dataSource.data();
+                    var messages = [];
+
+                	grid.tbody.find("tr").removeClass("kndy-error");
+                	
+                    $.each(currentData, function(index, item) {
+                        var invalidFields = [];
+                        
+                        for (var i = 0; i < referenceFields.length; i++) {
+                            if (!item.get(referenceFields[i]) && item.get(referenceFields[i].replace(/__c/, '__r.Name'))) {
+                                var fieldInfo = _.where(fieldList, { field: referenceFields[i] });
+                                var fieldTitle = (fieldInfo.length > 0) ? fieldInfo[0].title : '';
+                                
+                                invalidFields.push(fieldTitle);
+                            }
+                        }
+                        
+                        if (invalidFields.length > 0) {
+                            grid.tbody.find("tr[data-uid='" + item.uid + "']").addClass("kndy-error");
+                            messages.push({ message: 'Invalid ' + invalidFields.join(', ') + '. Please correct the highlighted line(s).', severity: KenandyErp.MessageType.Error });
+                        }
+                    });
+                    
+                    if (messages.length > 0) {
+                        KenandyErp.Messages(messages);
+                        return false;
+                    }
+                    
+                    return true;
+                },
+                
+                InitializeHeaderDetailList: function(options) {
+                	
+                 	var pmtHeaderView = $('#PaymentHeaderDetailList').data('kendoDetailList');
+               		if (pmtHeaderView) { //if it was rendered before destroy and recreate it. 
+                    	pmtHeaderView.destroy();
+        	            $('#PaymentHeaderDetailList').off();
+    	                $('#PaymentHeaderDetailList').empty();
+                	}
+	                var lookupSearchFilters = [];
+	                //lookupSearchFilters.push({ field: "Customer__c", filter: "RecordType.DeveloperName in (\'Bill_To\', \'Corporate_Parent\')" });
+	                pmtHeaderView = $('#PaymentHeaderDetailList').kendoDetailList({
+                        //namespace: '{!NamespaceUU}',  
+	                    autoExpandSections: true,  //this will by default expand all the sections. TODO on widget: push this option to each section giving users more control. 
+	                    sections: [
+	                        {
+	                        	name: 'payment-manage',  
+	                        	fields: paymentManageFields
+	                        },
+	                        {
+	                        	name: 'payment-detail',  
+	                            title: 'Payment Detail',
+	                        	fields: paymentAdditionalFields
+	                        }
+	                    ],
+	                    lookupSearchAction: '{!$RemoteAction.PaymentLinesManageExt.lookupSearchFilter}',
+	                    lookupSearchFilters: lookupSearchFilters,
+	                    getDetailListFunction: function() {
+	                    
+	                        var deferred = $.Deferred();
+	                        
+	                        Visualforce.remoting.Manager.invokeAction(
+	                                '{!$RemoteAction.PaymentLinesManageExt.getPaymentDetails}',
+	                                paymentId,
+	                                function (result, event) {
+	                                    if(result.success)
+	                                    	KenandyErp.Messages(result.messages);
+	                                    deferred.resolve(result, event);
+	                                    
+	                                },
+	                                {escape: false}
+	                            );
+	                        
+	                        return deferred.promise();
+	                    } 
+	                }).data('kendoDetailList');
+	                //pmtHeaderView.element.bind('OnReadSuccess', this.CRHeaderReadSuccess);
+	                
+                },
+                
+                AddToPayments: function(e){
+                
+					 var self = this;
+					 var grid = self.grid;
+					 KenandyErp.BlockUI(grid.element);
+					 
+					 var currentData = grid.dataSource.data();
+					 var selectedInvoiceIds = [];
+					 $.each(currentData, function(index, item) {
+                    	if(item.IsSelected__custom){
+                    		selectedInvoiceIds.push(item.Id);
+                    	}
+                    });
+                    //console.log(selectedInvoiceIds);
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.PaymentLinesManageExt.addInvoicesToPayment}',
+                        paymentId,
+                        selectedInvoiceIds,
+                        function (result, event) {
+                        	if(event.status){
+                        		PaymentLinesManageUtils.InitializeHeaderDetailList();
+                        		//$("#PaymentHeaderDetailList").data("kendoDetailList").dataSource.read();
+                        		//$("#PaymentHeaderDetailList").data("kendoDetailList").refresh();
+                        		$("#GridAddManagePaymentLines").data("kendoGridActionList").dataSource.read();
+                        		$("#GridAddManagePaymentLines").data("kendoGridActionList").refresh();
+                        		$("#GridInvoiceOptions").data("kendoGridActionList").dataSource.read();
+                        		$("#GridInvoiceOptions").data("kendoGridActionList").refresh();
+                            }else if(event.type == 'exception'){
+                    			return;							
+							}    
+							KenandyErp.UnBlockUI(grid.element);                      
+                        },
+                        {escape: false}
+                    );
+                    
+					                
+                },
+                
+                Save: function(e) {
+                
+                	var self = this;
+                	var grid = self.grid;
+                	var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                	var detailList = $('#PaymentHeaderDetailList').data('kendoDetailList');
+                	
+                	if(!detailList.validate()){
+	                	//has errors
+	                	KenandyErp.Message("Please fix the following errors.");
+	                    e.preventDefault();
+						return false;
+	                }
+                	
+                	KenandyErp.BlockUI(grid.element);
+                	
+                	var pmtData = $('#PaymentHeaderDetailList').getKendoDetailList().data;
+                    //pmtData = pmtData.toJSON();
+                    delete pmtData.From_Company__r;
+                    delete pmtData.To_Company__r;
+                    pmtData = pmtData.toJSON();
+                    pmtData = Serializer.ConvertToSFDCDate(pmtData, { dateFields: $('#PaymentHeaderDetailList').data('kendoDetailList')._dateFields });
+                	Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.PaymentLinesManageExt.savePaymentDetails}',
+                        JSON.stringify(pmtData),
+                        function (result, event) {
+                        	if(event.status){
+                        		if(result.messages.length > 0){
+                        			KenandyErp.Message('Unable to save: ' + result.messages[0].message, KenandyErp.MessageType.Error, messageElement);
+									KenandyErp.UnBlockUI(grid.element);
+                        			return;
+                        		}else{
+                        		
+	                        		paymentId = result.records[0].Id;
+	                        		
+	                        		if(result.records[0]['{!NamespaceUU}Finalized__c']){
+	                        			for(i=0; i<paymentManageFields.length; i++){
+	                        				paymentManageFields[i].editable = false;
+	                        			}
+	                        			for(i=0; i<paymentAdditionalFields.length; i++){
+	                        				paymentAdditionalFields[i].editable = false;
+	                        			}
+	                        			$('#savePayment').hide();
+	                        			$('.grid-cancel-command').hide();
+	                        			$('.grid-mass-delete-command').hide();
+	                        			
+	                        			document.getElementById('{!$Component.page.theForm.pbopts}').style.display = 'none';
+	                        		}
+	                            	PaymentLinesManageUtils.SaveLines(e, self);
+	                            	KenandyErp.UnBlockUI(grid.element);
+                            	}
+                            }else if(event.type == 'exception'){
+								KenandyErp.Message('Unable to save: ' + event.message, KenandyErp.MessageType.Error, messageElement);
+								KenandyErp.UnBlockUI(grid.element);
+                    			return;							
+							}else{
+								KenandyErp.UnBlockUI(grid.element);
+							}                            
+                        },
+                        {escape: false}
+                    );
+                	
+                	return;
+                	
+                    
+                },
+                
+                SaveLines: function(e, self){
+                
+                    var grid = self.grid;
+                    var options = self.options;
+                    var modelIdField = grid.dataSource.options.schema.model.idField;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                    
+                    if (grid.editable && !grid.editable.validatable.validate()) {
+                        e.preventDefault();
+                        return false;
+                    }
+                   //FIN-627 Prevent Error when Users Tab fast.Validation done On save ,Not on Tab out                    
+                    if (!PaymentLinesManageUtils.IsValidLookups(grid)) {
+                        return false;
+                    }
+                    var currentData = grid.dataSource.data();
+					var updatedRows = [];
+					var newRows = [];
+                                    
+                    $.each(currentData, function(index, item) {
+                    	if (!item.get(modelIdField) || item.dirty) {
+                            var isNewRow = (!item.get(modelIdField));
+
+                            item = item.get('pmtLine').toJSON();
+                            item = Serializer.ConvertToSFDCDate(item, { dateFields: options.dateFields });
+                            
+                            if (isNewRow) {
+                            	delete item.Id;
+								item.sObjectType = options.config.objectName;
+																
+								if (options.config.parentField) {
+									item[options.config.parentField] = options.config.parentRecord.Id;
+								}
+								
+								newRows.push(item);
+                            }
+                            else {
+                            	updatedRows.push(item);
+                            }
+                        }
+                    });
+                    
+                    var deletedRows = $.map(grid.dataSource._destroyed, function(item, index) {
+                    	if (item.get(modelIdField)) {
+							item = item.get('pmtLine').toJSON();
+					        item = Serializer.ConvertToSFDCDate(item, { dateFields: options.dateFields });
+					        
+							return item;
+						}
+					});
+                      
+                    if (newRows.length == 0 && updatedRows.length == 0 && deletedRows.length == 0) {
+                        //KenandyErp.Message("{!$Label.No_records_changed}", KenandyErp.MessageType.Info, messageElement);
+                        PaymentLinesManageUtils.InitializeHeaderDetailList();
+                        $("#GridAddManagePaymentLines").data("kendoGridActionList").dataSource.read();
+                      	$("#GridAddManagePaymentLines").data("kendoGridActionList").refresh();
+                      	$("#GridInvoiceOptions").data("kendoGridActionList").dataSource.read();
+                      	$("#GridInvoiceOptions").data("kendoGridActionList").refresh();
+                        KenandyErp.Message("{!$Label.Changes_saved}", KenandyErp.MessageType.Success, messageElement);
+                        return;
+                    }
+                    
+                    if (updatedRows.length > 0) {
+                        updatedRows = Serializer.ParameterMap(updatedRows);
+                    }
+                    
+                    if (newRows.length > 0) {
+		                newRows = Serializer.ParameterMap(newRows);
+					}
+					
+                    if (deletedRows.length > 0) {
+		            	deletedRows = Serializer.ParameterMap(deletedRows);
+					}
+					
+                    KenandyErp.BlockUI(grid.element);
+
+                    var dateFields = self.options.dateFields ? _.pluck(self.options.dateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;          
+                    Visualforce.remoting.Manager.invokeAction(
+                        options.saveAction,              
+                        updatedRows,
+                        newRows,
+                        deletedRows,
+                        dateFields,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI(grid.element);
+                            PaymentLinesManageUtils.InitializeHeaderDetailList();
+                            //$("#PaymentHeaderDetailList").data("kendoDetailList").dataSource.read();
+                       		//$("#PaymentHeaderDetailList").data("kendoDetailList").refresh();
+                            $("#GridAddManagePaymentLines").data("kendoGridActionList").dataSource.read();
+                       		$("#GridAddManagePaymentLines").data("kendoGridActionList").refresh();
+                       		$("#GridInvoiceOptions").data("kendoGridActionList").dataSource.read();
+                       		$("#GridInvoiceOptions").data("kendoGridActionList").refresh();
+                            if (event.type == 'exception') {
+								KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+							} else {
+								if (result.success) {
+									// refresh the grid
+	                				grid.dataSource._destroyed = [];
+	                				grid.dataSource.read();
+	                				KenandyErp.Messages(result.messages, messageElement);
+								}
+								else {
+									KenandyErp.Messages(result.messages, messageElement);
+								}
+							}
+                        },
+                        {escape: false}
+                    );
+                }
+        	};
+		}();
+     </script>   
+	<script type="text/x-kendo-template" id="detailTemplate">
+        <div class="grid-container grid-detail-container k-block k-info-colored">
+			<div class="grid-exceptions-message k-hidden"></div>
+            <div class="grid-exceptions"></div>
+        </div>
+    </script>
+
+</apex:page>

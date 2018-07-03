@@ -1,0 +1,29 @@
+<apex:page standardController="Facility__c" extensions="GenerateMRPbyFacilityExtV2" >
+    <apex:form id="theForm" >
+	    <c:busyWait />
+        <apex:sectionHeader subtitle="{!$Label.MRP_for}: {!Facility__c.Name}" title="{!$Label.Planning_Functions}"/>
+        <apex:pagemessages ></apex:pagemessages>
+       
+        <p>
+            {!$Label.Running_your_MRP_converts_demand_into_planned_orders}
+        </p>
+        
+        <apex:pageBlock rendered="{!NOT(runPlanning)}" >
+            <apex:pageBlockButtons >
+            <apex:commandButton value="{!$Label.MRP_Generate_Plan}" 
+                action="{!generatePlan}"  reRender="theForm"   status="actionStatus"  disabled="{!isButtonDisabled}"  />
+            <apex:commandButton value="{!$Label.Cancel} " action="{!cancel}" reRender="theForm"   status="actionStatus"  />
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockSection columns="2" collapsible="false">
+                <apex:repeat value="{!$ObjectType.Facility__c.FieldSets.MRPRun_RO}" var="f" > 
+                <apex:outputField value="{!fRec[f]}" />
+                </apex:repeat>
+                <apex:repeat value="{!$ObjectType.Facility__c.FieldSets.MRPRun_WR}" var="f" > 
+                <apex:inputField value="{!fRec[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+                </apex:repeat>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>  
+    <c:JobMonitor height="200"> </c:JobMonitor>
+</apex:page>

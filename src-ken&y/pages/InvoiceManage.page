@@ -1,0 +1,669 @@
+<apex:page showHeader="true" sidebar="true" docType="html-5.0" standardController="Invoice__c" extensions="InvoiceManageExt" tabStyle="Invoice__c">
+
+	<style type="text/css">
+        .line-errors {
+            cursor: pointer;
+         }
+         
+        .line-total {
+            border: 2px dashed !important;
+            font-weight: bold;
+            width: 100px;
+            text-align: right;
+        }
+        
+        .text-red { border-color: red !important; }
+        .text-green { border-color: green !important; }
+        
+        .invoiced-amount {
+            padding: .3em .4em !important;
+        }
+
+        .column-label {
+            vertical-align: middle !important;
+            width: 15%;
+        }
+        
+        .column-field {
+            vertical-align: middle !important;
+            width: 85%;
+        }
+        
+        div.individualPalette.lookupHoverDetail[id^='lookup'] .pbButton input.btn:nth-child(2) {
+            display: none;
+        }
+        
+        body .bPageBlock .pbBody .kndy-pbHeader .pbSubheader{
+            background-color:#428bca;
+        }
+        
+    </style>
+    
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+
+    <apex:form id="InvoiceManageForm">
+        <div class="page-container">
+            <apex:sectionHeader title="{!pageTitle}" />
+            <apex:outputPanel id="sourceContainer">
+	            <div class="page-message"></div>
+	            <apex:pageMessages id="msgs"/>
+	            
+	            <apex:pageBlock id="InvoiceHeaderDetailBlock">  
+	                <apex:pageBlockSection columns="1">
+	                    <div id="InvoiceHeaderDetailList"></div>
+	                </apex:pageBlockSection>
+	    
+	                <apex:pageBlockButtons location="top">
+	                    <apex:outputPanel layout="none" rendered="{!invoice.Finalized__c == false}">
+	                        <button id="saveButton" class ="k-button kndy-btn save-command" type="button" accesskey="s">Save</button>
+	                        <a href="{!ReturnUrl}" style="text-decoration: none;"><input type="button" value="{!$Label.Go_Back}" class="k-button kndy-btn cancel-command" /></a>
+	                    </apex:outputPanel>
+                        <apex:outputPanel layout="none" rendered="{!invoice.Finalized__c == true}">
+                            <a href="{!ReturnUrl}" style="text-decoration: none;"><input type="button" value="{!$Label.Go_Back}" class="k-button kndy-btn cancel-command" /></a>
+                        </apex:outputPanel>
+	                </apex:pageBlockButtons>
+	            </apex:pageBlock>
+	            <apex:pageBlock title="" rendered="{!invoice.Type__c != ''}" >  
+	                <apex:outputPanel styleClass="kndy-pbHeader" layout="block">          
+	                    <apex:pageBlockSection columns="1" collapsible="true" title="Exceptions" id="pbsExceptions"  rendered="{!displayExceptions}">                   
+	                        <div class="grid-container">
+	                              <div class="grid-message"></div>
+	                              <div id="ExceptionsGrid"></div>                    
+	                        </div>
+	                    </apex:pageBlockSection> 
+	                    <apex:pageBlockSection columns="1" collapsible="true" title="Invoice Lines" id="pbsInvoiceLInes">                   
+	                        <div class="grid-container">
+			                    <div class="grid-message"></div>
+			                    <div id="InvoiceLinesGrid"></div>
+			                </div>
+			             </apex:pageBlockSection>                                
+	                </apex:outputPanel>   
+	            </apex:pageBlock>
+
+	            <apex:inputHidden value="{!invoice.Type__c}" id="invoiceType" />
+		        <apex:inputHidden value="{!invoice.Id}" id="invoiceId" />
+		        <apex:inputHidden value="{!InvoiceHeaderFieldList}" id="headerFieldLst" />
+		        <apex:inputHidden value="{!InvoiceJson}" id="headerDetailLst" />
+                <apex:inputHidden value="{!InvoiceHeaderAddlFieldList}" id="headeraddlFieldLst"/>
+
+		        <apex:inputHidden value="{!InvoiceLineFieldList}" id="lineFieldLst" />
+		        <apex:inputHidden value="{!InvoiceLinesConfigJson}" id="lineConfig"/>
+
+                <apex:inputHidden value="{!exceptionsConfigJson}" id="exceptConfig"/>
+
+            </apex:outputPanel>
+        </div>
+        <apex:actionFunction action="{!onInvoiceTypeChange}" name="OnInvoiceTypeChange" reRender="sourceContainer" oncomplete="InvoiceTypeChangeComplete();"/>
+    </apex:form>
+
+    <script type="text/javascript">
+    var invoiceHeaderData = function(readOptions) {
+		var deferred = $.Deferred();
+        var invoiceId = InvoiceManageUtil.InvoiceId;
+        var invoiceType = InvoiceManageUtil.InvoiceType;
+        
+        if (!invoiceId) {
+        	var headerData = InvoiceManageUtil.InvoiceHeaderData;
+        	var records = [];
+
+			delete headerData['attributes'];
+			records.push(headerData);
+			            
+            setTimeout(function() {
+				deferred.resolve({ records: records, success: true, total: 1 }, { statusCode: 200 });
+            }, 100);
+        }
+        else {
+            Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.InvoiceManageExt.getInvoiceDetails}',
+                    invoiceId,invoiceType,
+                    function (result, event) {
+                        deferred.resolve(result, event);
+                    },
+                    {escape: false}
+                );
+		}
+		
+		return deferred.promise();
+	};
+
+	var invoiceLinesData = function(readOptions) {
+        var deferred = $.Deferred();
+        var config = InvoiceManageUtil.GetInvoiceLinesConfigJson();
+
+        if (config == null || !config.parentRecord.Id) {
+            setTimeout(function() {
+                deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+            }, 100);
+        }else {
+            var remoteArgs = config;
+            // The stuff returned from Salesforce has extra properties like "attributes"
+            // which couldn't be deserialised back
+            remoteArgs.parentRecord = { Id: remoteArgs.parentRecord.Id };
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.InvoiceManageExt.getInvoiceLines}',
+                remoteArgs,
+                function (result, event) {
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+            );
+        }
+        
+        return deferred.promise();
+    };
+
+    var ExceptionTasksUtils = function() {
+        return {
+        
+            MassOverride: function(e) {
+                debugger;
+                var self = this;
+                var grid = self.grid;
+                var columns = grid.columns;
+                var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");                 
+                var gridUtils = new KendoGridUtils(grid);
+                var selectedRows = gridUtils.SelectedRows();                
+                if (selectedRows.length == 0) {
+                    KenandyErp.Message("No Rows Selected", KenandyErp.MessageType.Error, messageElement);
+                    return;
+                }                    
+                
+                // KNDY-7636 Remove the String name column
+                if (selectedRows.length > 0) {
+                    $.each( selectedRows, function( idx, elem) {
+                        delete elem.name;
+                    });
+                }
+                                 
+                KenandyErp.BlockUI(grid.element);                    
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.InvoiceManageExt.massOverrideTasks}',
+                     selectedRows,
+                     function (result, event) {                                       
+                        if (event.type == 'exception') {
+                            KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                        } else {
+                            if (result.success) {
+                                KenandyErp.Messages(result.messages, messageElement);
+                            }
+                            else {
+                                KenandyErp.Messages(result.messages, messageElement);
+                            }                                                                    
+                            grid.dataSource.read();
+                        }
+                        KenandyErp.UnBlockUI(grid.element);
+                    },
+                    {escape: false}
+                );
+            },
+                      
+            GetFieldList: function(fieldList) {
+                fieldList = JSON.parse(fieldList);
+                
+                $.each(fieldList, function() { 
+                    if (this.field == 'subjectLink') {
+                        this.template = '<a target="_top" href="/#=Id#">#=Subject#</a>';
+                    }
+                    if (this.field == 'relatedToLink') {
+                        this.template = '<a target="_top" href="/#=WhatId#">#=getRelatedToName(WhatId)#</a>';
+                    }
+                    if (this.field == 'name'){ //KNDY-7636
+                       this.template =  '#=  ExceptionTasksUtils.RenderNameColumn(data)# ';
+                    }
+                });
+
+                return JSON.stringify(fieldList);
+            },
+            
+            // KNDY-7636: Displays sortable String WhatId
+            RenderNameColumn: function(data){
+               var whatId = data.get('WhatId');
+               var whatIdName = getRelatedToName(whatId);
+               data.name = whatIdName;
+               return data.name;
+            }
+        };
+    }();   
+
+    var loadExceptionData = function() {
+            var deferred = $.Deferred();
+            var configJson = InvoiceManageUtil.GetExceptionsConfigJson();
+            var remoteArgs = configJson;
+            remoteArgs.parentRecord = { Id: '{!invoice}' };
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.InvoiceManageExt.getTaskRelatedList}',
+                configJson, 
+                function (result, event) {
+                    deferred.resolve(result, event);
+                    if (result.total > 0){
+                        exceptionsRecords = result.records; 
+                        loadExceptionsPerInvoiceLine();
+                    }
+                },
+                {escape: false}
+            );                   
+            return deferred.promise();
+    }; 
+
+    var loadExceptionsPerInvoiceLine = function () {
+        if (typeof exceptionsRecords == 'undefined'){
+            return;
+        }
+        var grid = $("#InvoiceLinesGrid").data("kendoGridActionList");
+        var currentData = grid.dataSource.view();
+        $.each(currentData, function(index, item) { 
+            template = '';
+            
+            // for each invoice line row in UI, construct a list
+            // of exception subjects corresponding to that invoice line
+            if (item.get('invoiceLine.Has_Exceptions__c')){
+                var invLineId = item.get('invoiceLine.Id');
+                var invLineExceptions = []; // Array of Exception Tasks
+                $.each(exceptionsRecords, function(ix, itemException) {
+                    if (itemException['WhatId'] == invLineId){ 
+                       invLineExceptions.push(itemException);
+                    }
+                });
+                if (invLineExceptions.length > 0) {
+                    template = template + '<table cellspacing="3"><tr><td class="kndy-white kndy-text-left"><h3>Exceptions</h3></td></tr><tr><td>';
+                    
+                    template = template + '<ul class="error-messages">';
+                    for (var i = 0; i < invLineExceptions.length; i++) {
+                        template = template + '<li><a href="/' + invLineExceptions[i].Id + '" target="_blank"><nobr>' + invLineExceptions[i].Subject + '</nobr></a></li>';
+                    }
+                    template =  template + '</ul>';
+                    template = template + '</td></tr></table>'
+                }
+            }
+             
+            // populate errros column for each invoice line row in UI
+            var rowGUID = item['uid']
+            var row = grid.tbody.find("tr[data-uid='" + rowGUID + "']");
+            var dataItem = grid.dataItem(row);
+            dataItem.errors = template;
+        });
+    };
+
+    $(document).on('KenandyErpReady', function(e) {
+    	KenandyErp.KendoGridOptions.DefaultPageSize = KenandyErp.KendoGridOptions.PageSizes[0];
+
+    	initInvoiceManageUtil();
+    });
+
+    function InvoiceTypeChangeComplete(){
+    	initInvoiceManageUtil();
+    	KenandyErp.UnBlockUI();
+    }
+
+    function initInvoiceManageUtil(){
+    	InvoiceManageUtil.Init({
+			InvoiceId: $('input[id$="invoiceId"]').val(),
+			InvoiceType: $('input[id$="invoiceType"]').val(),
+			InvoiceHeaderFieldList: $('input[id$="headerFieldLst"]').val(),
+            InvoiceHeaderAddtional : $('input[id$="headeraddlFieldLst"]').val(),
+			invoiceHeaderDetailList: $('input[id$="headerDetailLst"]').val(),
+			InvoiceLinesFieldList: $('input[id$="lineFieldLst"]').val(),
+			InvoiceLinesConfigJson: $('input[id$="lineConfig"]').val(),
+            ExceptionsConfigJson: $('input[id$="exceptConfig"]').val()
+
+    	});
+    }
+
+    var InvoiceManageUtil = function(){
+
+    	return {
+    		InvoiceId : null,
+    		InvoiceType: null,
+    		InvoiceHeaderFieldList : null,
+    		InvoiceLiensFieldList : null,
+    		InvoiceHeaderDetailList: null,
+    		InvoiceAddlHeaderFieldList: null,
+    		InvoiceHeaderData: null,
+    		InvoiceLinesConfigJson: null,
+            InvoiceLinesFieldList: null,
+            ExceptionsConfigJson: null,
+
+    		Init : function(arg){
+    			this.InvoiceId = arg.InvoiceId;
+    			this.InvoiceType = arg.InvoiceType;
+    			this.InvoiceHeaderFieldList = JSON.parse(arg.InvoiceHeaderFieldList);
+                this.InvoiceAddlHeaderFieldList = JSON.parse(arg.InvoiceHeaderAddtional);
+    			this.InvoiceHeaderData = JSON.parse(arg.invoiceHeaderDetailList);
+    			this.InvoiceLinesFieldList = JSON.parse(arg.InvoiceLinesFieldList);
+    			this.InvoiceLinesConfigJson = JSON.parse(arg.InvoiceLinesConfigJson);
+
+                this.ExceptionsConfigJson = JSON.parse(arg.ExceptionsConfigJson);
+
+
+    			this.RenderSaveListDropdown();
+    			this.RenderWidgets();
+    		},
+    		RenderWidgets : function(){
+    			this.RenderInvoiceHeaderDetailList();
+    		},
+
+    		RenderInvoiceHeaderDetailList : function(){
+
+    			var lookupSearchFilters = [];
+                //lookupSearchFilters.push({ field: "Supplier__c", filter: "Type__c = \'Remit-To\' and Status__c = \'Active\'" });
+
+    			// Destroy InvoiceHeaderDetailList
+                if (this.InvoiceHeaderDetailList) {
+                    this.InvoiceHeaderDetailList.destroy();
+                    $('#InvoiceHeaderDetailList').empty();
+                }
+
+                this.InvoiceHeaderDetailList = $('#InvoiceHeaderDetailList').kendoDetailList({
+                    namespace: '{!NamespaceUU}',  
+                    autoExpandSections: true,
+                    sections: [
+                        {
+                            fields: InvoiceManageUtil.GetInvoiceHeaderFieldList(InvoiceManageUtil.InvoiceHeaderFieldList)
+                        },
+                        {
+                            name: 'invoice-header-addl-info',
+                            title: 'Invoice Detail',
+                            fields: InvoiceManageUtil.InvoiceAddlHeaderFieldList
+                		}
+                    ],
+                    lookupSearchAction: '{!$RemoteAction.InvoiceManageExt.lookupSearchFilter}',
+                    lookupSearchFilters: lookupSearchFilters,
+                    getDetailListFunction: invoiceHeaderData 
+                }).data('kendoDetailList');
+
+                this.InvoiceHeaderDetailList.element.bind('OnReadSuccess', this.OnInvoiceHeaderDetailListReadSuccess);
+
+    		},
+
+            GetExceptionsConfigJson: function() {
+                var configJson = InvoiceManageUtil.ExceptionsConfigJson;
+                return configJson;
+            },
+
+    		GetInvoiceHeaderFieldList : function(){
+				var fieldList = InvoiceManageUtil.InvoiceHeaderFieldList;
+				return fieldList;
+    		},
+
+    		OnInvoiceHeaderDetailListReadSuccess : function(){
+    			//Bind Type change event
+                $('select[name="Type__c"]').bind('change',function(arg){
+                	console.log('test');
+                	$('input[id$="invoiceType"]').val($(this).val());
+                	KenandyErp.BlockUI();
+    				OnInvoiceTypeChange();
+                });
+
+                $.each($(".k-autocomplete input"), function(){
+                    $(this).data("kendoLookup").options.minLength = 1;
+                });
+
+                InvoiceManageUtil.RenderInvoiceLinesGrid();
+    		},
+
+    		RenderSaveListDropdown: function() {
+	            $('#saveButton').kendoDropDownButton({
+	                type: 'splitButton',
+	                items: [
+	                    {
+	                        text: "Save and Return",
+	                        cssClass: "save-return-command"
+	                    },
+	                    {
+	                        text: "Save and New",
+	                        cssClass: "save-new-command"
+	                    }
+	                ]
+	            });
+	        },
+
+	        GetInvoiceLinesFieldList: function() {
+                var fieldList = InvoiceManageUtil.InvoiceLinesFieldList;
+                
+                $.each(fieldList, function() { 
+
+                });
+
+                return fieldList;
+            },
+
+            RenderExceptionsGrid: function(options) {
+                var configOptions = InvoiceManageUtil.GetExceptionsConfigJson();
+                // Destroy ExceptionsGrid
+                if (this.ExceptionsGrid) {
+                    this.ExceptionsGrid.destroy();
+                    $('#ExceptionsGrid').empty();
+                }
+                
+                this.ExceptionsGrid = $('#ExceptionsGrid').kendoGridActionList({
+                    namespace: '{!NamespaceUU}', 
+                    config: configOptions,
+                    fieldList: ExceptionTasksUtils.GetFieldList('{!JSENCODE(exceptionsFieldList)}'),
+                    lookupSearchAction: '{!$RemoteAction.InvoiceManageExt.lookupSearchFilter}', 
+                    getActionListFunction: loadExceptionData,
+                    toolbarButtons: [ 
+                            { name: "grid-mass-override-custom-command", text:"", template: "<input type='button' value='Mass Override' class='btn grid-mass-override-custom-command' />" }
+                    ]
+                }).data('kendoGridActionList'); 
+                
+                // Delete any existing messages in exceptions grid
+                var grid = this.ExceptionsGrid;
+                var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");                 
+                messageElement.empty();
+                
+                grid.hideColumn(2);
+                
+                //BINDING EVENTS
+                this.ExceptionsGrid.wrapper.on("click", ".grid-mass-override-custom-command", $.proxy(ExceptionTasksUtils.MassOverride, { grid: this.ExceptionsGrid})); 
+           },
+
+            RenderErrors: function(data) { 
+              return (data.get('invoiceLine.Id') && data.get('invoiceLine.Has_Exceptions__c')) ? '<i class="fa fa-exclamation-triangle fa-lg line-errors kndy-orange"></i>' : '';         
+           },  
+
+            GetInvoiceLinesConfigJson: function() {
+                var configJson = InvoiceManageUtil.InvoiceLinesConfigJson;
+
+                return configJson;
+            },
+
+	        RenderInvoiceLinesGrid: function(options) {
+	        	var configOptions = InvoiceManageUtil.GetInvoiceLinesConfigJson();
+                var lookupSearchFilters = [];
+                lookupSearchFilters.push({ field: "glaccount", filter: "Active__c = true and GL_Type__r.Accounting_Type__c = \'Expense\'" });
+
+                // Destroy InvoiceLinesGrid
+                if (this.InvoiceLinesGrid) {
+                    this.InvoiceLinesGrid.destroy();
+                    $('#InvoiceLinesGrid').empty();
+                }
+
+                this.InvoiceLinesGrid = $('#InvoiceLinesGrid').kendoGridActionList({
+                	namespace: '{!NamespaceUU}', 
+                    config: configOptions, 
+                    fieldList: InvoiceManageUtil.GetInvoiceLinesFieldList(),
+                    lookupSearchAction: '{!$RemoteAction.InvoiceManageExt.lookupSearchFilter}', 
+                    getActionListFunction: invoiceLinesData,
+                    aggregates: [{ field: "invoicedAmount", aggregate: "sum" }],
+                    showIconButtons: true,
+                    modelIdField: 'invoiceLine.Id',
+                    beforeEdit: function(e) {
+                   		InvoiceManageUtil.InvoiceLinesGridBeforeEdit.call(this, e);
+                    },
+                    validateLookupOnBlur: true,
+                    lookupSearchFilters: lookupSearchFilters
+
+                }).data('kendoGridActionList');
+
+                if(this.InvoiceLinesGrid != null){
+
+                    this.InvoiceLinesGrid.bind('edit', $.proxy(InvoiceManageUtil.InvoiceLinesGridEdit, { grid: this.InvoiceLinesGrid }));
+
+                    this.InvoiceLinesGrid.bind('save', function(data) {
+
+                    });
+
+                    this.InvoiceLinesGrid.dataSource.bind('change', function() {
+                        loadExceptionsPerInvoiceLine();
+                    });
+
+                    this.InvoiceLinesGrid.element.bind('OnReadSuccess', this.OnInvoiceLinesGridReadSuccess);
+
+                }
+                    
+                // unbind and bind the save, save & return button click events
+                $('.save-command, .save-new-command, .save-return-command').off("click",
+                    $.proxy(InvoiceManageUtil.Save, { grid: this.InvoiceLinesGrid, options: { config: configOptions } })
+                );
+                
+                $('.save-command, .save-new-command, .save-return-command').on("click",
+                    $.proxy(InvoiceManageUtil.Save, { grid: this.InvoiceLinesGrid, options: { config: configOptions } })
+                );
+
+                // Show Exceptions grid
+                if ({!displayExceptions}){
+                    InvoiceManageUtil.RenderExceptionsGrid();
+                }
+	        },
+
+	        InvoiceLinesGridBeforeEdit: function(e){
+	        	var grid = this;
+				var columnIndex = grid.cellIndex(e.container);
+    			var fieldName = grid.thead.find("th").eq(columnIndex).data("field");
+    			var isDefaultPrevented = false;
+
+    			if (isDefaultPrevented) {
+            		e.preventDefault();
+            	}
+	        },
+
+	        InvoiceLinesGridEdit: function(e) {
+	        	
+	        },
+
+	        OnInvoiceLinesGridReadSuccess: function(e) {
+	        	
+	        },
+
+	        Save: function(e) {
+	        	var self = this;
+                var grid = self.grid;
+                var detailList = InvoiceManageUtil.InvoiceHeaderDetailList;
+                var options = self.options;
+                var modelIdField = grid.dataSource.options.schema.model.idField;
+                
+                var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                var isNewInvoice = (!detailList.data.get('Id')) ? true : false;
+                var returnUrl = '{!ReturnUrl}';
+			        	
+                KenandyErp.ClearMessage();
+
+                if(!detailList.validate()){
+                	//has errors
+                	KenandyErp.Message("Please fix the following errors.");
+                    e.preventDefault();
+					return false;
+                }
+
+
+
+                var headerDateFields = detailList.getDateFields();
+                var headerRowsList = [];
+                var headerRows = [];
+                
+                headerRowsList.push(detailList.data);
+                
+                headerRows = $.map(headerRowsList, function(item, index) {
+                    item = item.toJSON();
+                    item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+                    
+                    return item;
+                });
+                
+                if (headerRows.length > 0) {
+                    headerRows = Serializer.ParameterMap(headerRows);
+                }
+                
+                var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields, isDml: false });
+                var updatedRows = [];
+                var newRows = [];
+                var deletedRows = [];
+                
+                newRows = gridUtils.NewRows();
+				updatedRows = gridUtils.UpdatedRows();
+				deletedRows = gridUtils.DeletedRows(); 
+                
+                KenandyErp.BlockUI();
+
+                headerDateFields = headerDateFields ? _.pluck(headerDateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+                var dateFields = self.options.dateFields ? _.pluck(self.options.dateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null; 
+
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.InvoiceManageExt.saveAction}', 
+                    headerRows[0], 
+                    headerDateFields,           
+                    updatedRows,
+                    newRows,
+                    deletedRows,
+                    dateFields,
+                    function (result, event) {
+                        KenandyErp.UnBlockUI();
+
+                        if (event.type == 'exception') {
+                                KenandyErp.Message(event.message);
+                    	}else{
+                    		KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+
+                    		if(result.success){
+                    			if ($(e.target.parentElement).hasClass('save-return-command')) {
+                                    KenandyErp.back(true, returnUrl);
+                                }else if ($(e.target.parentElement).hasClass('save-new-command')) {
+                                    KenandyErp.NavigateToURL('/apex/InvoiceManage', true);//KNDY-14218
+                                }else if ($(e.target).hasClass('save-command') && (isNewInvoice ||  result.records[0].Finalized__c == true ) ) {
+                                    KenandyErp.NavigateToURL('/apex/InvoiceManage' + '?id=' + result.records[0].Id ,true);
+                                }else{
+                                	// refresh widgets
+                                    var id = (result.records && result.records[0].Id) ? result.records[0].Id : null;
+                                    var invoiceType = (result.records && result.records[0].Type__c) ? result.records[0].Type__c : null;
+
+                                    InvoiceManageUtil.InvoiceId = id;
+                                    InvoiceManageUtil.InvoiceType = invoiceType;
+                                    InvoiceManageUtil.RenderWidgets();
+                                    
+                                    KenandyErp.Messages(result.messages);
+                                }
+                    		}else{
+                    			// hilite rows with invalid segment validations
+                            	var invalidRowGuids = result.records;
+                            	
+                            	if (invalidRowGuids) {
+                            		grid.tbody.find("tr").removeClass("kndy-error");
+                            		
+                            		for (var guid in invalidRowGuids) {
+                            			grid.tbody.find("tr[data-uid='" + invalidRowGuids[guid] + "']").addClass("kndy-error");
+                            		}
+                            	}
+                            	
+                                KenandyErp.Messages(result.messages);
+                    		}
+                    	}
+                    },
+                    {escape: false}
+				);
+
+
+	        },
+    	}//End Return
+
+    }();
+
+    function getRelatedToName(Id) { // KNDY-7636
+        var whatIdNameMap = {!whatIdNameMapJson};
+        return ( whatIdNameMap[Id]) ? whatIdNameMap[Id] : '';
+    }
+    </script>
+	
+</apex:page>

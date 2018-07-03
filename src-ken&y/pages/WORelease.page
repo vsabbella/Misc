@@ -1,0 +1,129 @@
+<apex:page title="Work Order Release" sidebar="false" standardController="Work_Order__c" extensions="WOReleaseExtension" recordSetVar="wo" docType="html-5.0">
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+    <c:busyWait includeScripts="false" />
+
+    <apex:form >
+        <div id="page-container">
+            <apex:sectionHeader title="Work Order Release" />
+
+            <apex:pageMessages />
+            <div id="page-message" />
+
+            <apex:pageBlock title="{!$Label.Release_Selected_Work_Orders}">
+                <apex:pageBlockButtons location="top">
+                    <apex:outputPanel layout="none">
+                        <input type="button" id="release-button" value="Release" class="btn" onClick="release()" />
+                        <apex:commandButton value="{!$Label.Go_Back}" action="{!cancel}" />
+                    </apex:outputPanel>               
+                </apex:pageBlockButtons>
+
+                <div class="grid-container">
+                    <div class="grid-message" />
+                    <div id="woGrid" />
+                </div>
+            </apex:pageBlock>
+        </div>
+    </apex:form>
+
+    <script>
+        Visualforce.remoting.timeout = 120000;
+
+        var namespace  = "{!namespace}",
+            disable    = {!disable},
+            woFields   = JSON.parse("{!JSENCODE(woFieldsJson)}"),
+            workOrders = JSON.parse("{!JSENCODE(workOrdersJson)}"),
+            retUrl     = "{!retUrl}",
+            woGrid;
+
+        $(document).on("KenandyErpReady", function() {
+            KenandyErp.KendoGridOptions.DefaultPageSize = KenandyErp.KendoGridOptions.PageSizes[0];
+            if (disable === true) $("#release-button").hide();
+            KenandyErp.CleanNamespace(workOrders, namespace);
+
+            var woMap = {};
+            for (var i = 0; i < workOrders.length; i++) {
+                var wo = workOrders[i];
+                woMap[wo.Id] = wo;
+            }
+            workOrders = woMap;
+
+            renderWoGrid();
+        });
+
+        function renderWoGrid() {
+            if (woGrid) {
+                $('#woGrid').off();
+                woGrid.destroy();
+                $('#woGrid').empty();
+                woGrid = undefined;
+            }
+
+            woGrid = $("#woGrid").kendoGridActionList({
+                namespace: namespace,
+                editable: false,
+                fieldList: woFields,
+                filterable: false,
+                getActionListFunction: function() {
+                    var deferred = $.Deferred();
+                    
+                    var woIds = Object.keys(workOrders);
+                    var woList = [];
+                    for (var i = 0; i < woIds.length; i++) woList.push(workOrders[woIds[i]]);
+
+                    deferred.resolve({ records: woList, success: true }, { statusCode: 200 });
+                    return deferred.promise();
+                }
+            }).data("kendoGridActionList");
+
+            woGrid.hideColumn("IsSelected__custom");
+        }
+
+        function release() {
+            var messageElement = $('#woGrid').closest('div.grid-container').find('div.grid-message');
+            KenandyErp.ClearMessage(messageElement);
+            KenandyErp.BlockUI($('#page-container'));
+
+            var groupedWoIds = [];
+            var allWoIds = Object.keys(workOrders);
+            for (var i = 0; i < allWoIds.length; i++) {
+                var woId = allWoIds[i];
+                if (i % 10 === 0) groupedWoIds.push([woId]);
+                else groupedWoIds[groupedWoIds.length - 1].push(woId);
+            }
+
+            var errors = [];
+            for (var i = 0; i < groupedWoIds.length; i++) {
+                (function(woIds) {
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.WOReleaseExtension.release}',
+                        woIds,
+                        function(result, event) {
+                            if (event.type === 'exception' || result.success !== true) {
+                                errors = errors.concat(event.type === 'exception' ? [{ message: event.message, severity: 'ERROR' }] : result.messages);
+                            } else {
+                                for (var i = 0; i < woIds.length; i++) delete workOrders[woIds[i]];
+                            }
+                            return finished();
+                        },
+                        { escape: false, buffer: false }
+                    );
+                })(groupedWoIds[i]);
+            }
+
+            var processed = 0;
+            function finished() {
+                processed++;
+                if (processed === groupedWoIds.length) {
+                    if (errors.length > 0) {
+                        KenandyErp.Messages(errors, messageElement);
+                        renderWoGrid();
+                        KenandyErp.UnBlockUI($("#page-container"));
+                    } else {
+                        window.location.href = retUrl;
+                    }
+                }
+            }
+        }
+    </script>
+</apex:page>

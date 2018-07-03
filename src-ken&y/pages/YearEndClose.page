@@ -1,0 +1,925 @@
+<apex:page standardController="Fiscal_Year__c" extensions="YearEndCloseExt">
+
+    <apex:stylesheet value="{!URLFOR($Resource.FontAwesome, '/css/font-awesome.min.css')}" />
+    <apex:stylesheet value="{!$Resource.KenandyCommonStyles}" />
+	<c:KendoResources /> 
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" /> 
+    
+    <!------- CHUNKING REWORK SIMI----->
+    <script src="../../soap/ajax/38.0/connection.js" type="text/javascript"> </script>
+    <!--------USe custom settings for chunksize if needed----->
+    <c:QLPKChunk completeCallback="OnCompleteQLPK"  chunkSize="1000"  /> 
+    <c:QueryChunk uniqueId="AEL"/>
+    
+    <apex:outputPanel id="jsPanel">
+	    <script>
+	        jeID = "{!journalEntryID}";
+	        glID = "{!retainedEarningsGLID}";
+	        pID =  "{!zeroPeriodID}";
+	    </script>
+    </apex:outputPanel>
+    <script>
+        Visualforce.remoting.timeout = 120000; // Set timeout at page level   
+        var jeID = '';
+        var glID = "{!retainedEarningsGLID}";
+        var pID =  "{!zeroPeriodID}";
+        var yecID = "{!Fiscal_Year__c.Id}"; 
+        
+        var pb;
+        var noOfChunkBatches = 0;
+        //var chunkIndex = 0;
+        var chunkAssembledData = [];
+
+        var jelIDList;
+        var numberOfSCOAs;
+        var SCOAsRemaining = 0;
+        var retainedEarningFlag = true;
+       
+ 		var realtimeRetriesRT = new Object();
+ 		var realtimeStartTimestampRT = new Object();
+ 		var realtimeRetriesJEL = new Object();
+ 		var realtimeStartTimestampJEL = new Object(); 		
+		var numberOfRetries = 6;
+		var min;
+        var max; 
+        var numTotalRT = 0;
+        var numRemainingTotalRT = 0;
+        var numRemainingBatchRT = 0;
+        var realTimeList = [];
+        var numSimultaneous = 100; 
+        var recentData = new Object();
+        var assembledData = new Object();
+        var totalRevenue = 0;
+        var totalExpense = 0;
+        var netIncome = 0;
+	
+		
+		//------- CHUNKING REWORK SIMI-----
+		var realtimeRetriesJEL2 = {};
+		var noOfChunkBatches2 = 0;
+		//Use custom settings for retries if needed---
+		var numberOfRetries2 = 20
+		var realtimeStartTimestampJEL2 = {}; 
+		var chunkRetries = {};
+		var totalChunks = 0;
+		// --- again custom settings if needed---//
+		var chunkSizeForRA = 400;
+		var scoaQuery = '{!scoaQuery}';
+		var scoaWhereClause = "{!NamespaceUU}Accounting_Entry__r.{!NamespaceUU}Status__c = 'Active' " +
+                            "AND {!NamespaceUU}Accounting_Entry__r.{!NamespaceUU}Has_Exceptions__c = false " + 
+                            " AND ({!NamespaceUU}GL_Account__r.{!NamespaceUU}Statement_Type__c = 'Income Statement' OR {!NamespaceUU}GL_Account__r.{!NamespaceUU}GL_Type__r.{!NamespaceUU}Statement_Type__c  = 'Income Statement')" + 
+                            " AND {!NamespaceUU}accounting_entry__r.{!NamespaceUU}period__r.{!NamespaceUU}fiscalyear__c ="+"'"+yecID+"'" + 
+                            " AND {!NamespaceUU}COMP_Functional_Currency_Amount_DR__c != null"+
+                            " AND {!NamespaceUU}COMP_Functional_Currency_Amount_CR__c != null"; 
+                            
+        console.log('####### scoaWhereClause ####### ',scoaWhereClause);
+        
+         
+        $(document).ready(function() {
+            //init();
+        }); 
+        
+    //   function init(){
+    //     	KenandyErp.BlockUI();
+    //     	findMin();
+    //     	findMax();
+    //     }
+ 
+        // function findMin(){
+        // 	if(!min){
+	       // 	Visualforce.remoting.Manager.invokeAction(
+	       //         '{!$RemoteAction.YearEndCloseExt.createJournalEntryData2}'//REWORK 'RemoteAction.YearEndCloseExt.findMin
+	       //         '{!Fiscal_Year__c.Id}',
+	       //         function (result, event) {
+	       //             checkErrors(event);
+	       //             if (event.status) {
+	       //                 console.log(result);
+	       //                 min = result;
+        //                     if(!min){
+        //                       KenandyErp.Message('Unable to find Active Accounting Entries for this Fiscal Year', KenandyErp.MessageType.Info);
+        //                       KenandyErp.UnBlockUI(); 
+        //                     }
+	       //                 if(min && max){
+	       //                 	KenandyErp.UnBlockUI();
+	       //                 }
+	       //             }
+	       //         },
+	       //         {escape: false, buffer: false}
+	       //     );
+        //     }
+        // }
+        
+        // function findMax(){
+        // 	if(!max){
+	       // 	Visualforce.remoting.Manager.invokeAction(
+	       //         '{!$RemoteAction.YearEndCloseExt.createJournalEntryData2}',//REWORK 'RemoteAction.YearEndCloseExt.findMax
+	       //         '{!Fiscal_Year__c.Id}',
+	       //         function (result, event) {
+	       //             checkErrors(event);
+	       //             if (event.status) {
+	       //                 console.log(result);
+	       //                 max = result;
+        //                     if(!max){
+        //                       KenandyErp.Message('Unable to find Active Accounting Entries for this Fiscal Year', KenandyErp.MessageType.Info);
+        //                       KenandyErp.UnBlockUI(); 
+        //                     }
+	       //                 if(min && max){
+	       //                 	KenandyErp.UnBlockUI();
+	       //                 }
+	       //             }
+	       //         },
+	       //         {escape: false, buffer: false}
+	       //     );
+        //     }
+        // }  
+        
+        // Turns a list into a list of lists of specified lengths.
+        _.chunk = function(array,chunkSize) {
+            return _.reduce(array,function(reducer,item,index) {
+                reducer.current.push(item);
+                if(reducer.current.length === chunkSize || index + 1 === array.length) {
+                    reducer.chunks.push(reducer.current);
+                    reducer.current = [];
+                }
+                return reducer;
+            },{current:[],chunks: []}).chunks
+        };
+ 
+        function progressbar(status, progressCount, totalCount)
+        {
+            var exp=totalCount;
+            var curr=progressCount;
+            var currVal = (curr/exp)*100;			
+            if (pb) {
+                pb.value(currVal);
+                $("#ProgressStatus").html(status);
+            }
+            else {
+                pb = $("#ProgressBar").kendoProgressBar({
+                    type: "percent",
+                    min: 0,
+                    max: 100,
+                    value: currVal,
+                    animation: {
+                        duration: 50
+                    }
+                }).data("kendoProgressBar");
+                $("#ProgressStatus").html(status);
+                
+            }
+        }
+        
+         
+        //------- CHUNKING REWORK SIMI-----
+        
+          var processFiscalYear = function(){
+          
+            KenandyErp.BlockUI();
+           //------ Chunk entire AELs in DB, Calls OnCompleteQLPK after that-----------//
+            chunkEntireDB('{!NamespaceUU}Accounting_Entry_Line__c');
+             
+            
+            // Visualforce.remoting.Manager.invokeAction(
+            //     '{!$RemoteAction.YearEndCloseExt.createJournalEntryData2}', //REWORK 'RemoteAction.YearEndCloseExt.chunkPeriodRange
+            //     min, max,
+            //     function (result, event) {
+	           //     checkErrors(event);
+            //         if (event.status) {
+            //             console.log(result);
+            //             realTimeList = result;
+            //             parallelStartRT();
+            //         }
+            //     },
+            //     {escape: false, buffer: false}
+            // );
+        }
+         
+        
+        //QL chunks are complete, call the chunk queries
+        var OnCompleteQLPK = function(type){
+             
+            parallelStart_AEL(scoaQuery, chunkList[type], chunkCallback_AEL, completeCallback_AEL, 
+                              checkErrors_AEL, updateStatus_AEL,scoaWhereClause);
+            totalChunks = numTotal_AEL;
+            console.log('totalChunks after QPLK chunking and starting QueryCHUNK',numTotal_AEL);
+            
+        }
+        
+        //====== BEGIN QueryChunk.component methods
+        //this is the function that each chunk query from the QueryChunk.component will call back to.
+        //we are defining it here and passing it into the component
+        var scoaAssembledData = {};
+        var count =0;
+        
+        var chunkCallback_AEL = function(result, event) {
+            
+             numberOfSCOAs = 0;
+             count++;
+             console.log(' ############ EACH chunk Callback_AEL ####### ',result);
+             
+             if (event.status) {
+               
+                for(i = 0; i<result.length; i++){
+                    var iAccountingCodeId="Invalid";
+                    if("{!NamespaceUU}Accounting_Code__c" in result[i]){
+                        iAccountingCodeId = result[i]["{!NamespaceUU}Accounting_Code__c"];                             
+                    }
+                    if (iAccountingCodeId in scoaAssembledData) {
+                        var tempArray = scoaAssembledData[iAccountingCodeId];
+                        tempArray.push(result[i]);
+                        scoaAssembledData[iAccountingCodeId] = tempArray;  
+                    } else {
+                        scoaAssembledData[iAccountingCodeId] = new Array(result[i]);
+                        numberOfSCOAs++;
+                    }
+                     
+                   
+                }   
+                console.log('########### SCOA Assembled Data #########',scoaAssembledData); 
+                
+             }
+        };
+        
+        //this is the function that QueryChunk.component will call back to when all chunks are complete.
+        //we are defining it here and passing it into the component
+        var completeCallback_AEL= function(uniqueId) {
+            var iAssembledData   ={};
+            var    assembledData ={};
+            var invalidAccountingCode =false ;
+            console.log('############ All chunks complete ########## ' + uniqueId);
+            
+            for(var accountingCodeId in scoaAssembledData){
+                if (scoaAssembledData.hasOwnProperty(accountingCodeId)) {
+				     progressbar("Assembling Data...", 0 , numberOfSCOAs);
+				    
+	                 var iAssembledData = {};
+	                 iAssembledData["balance"] = 0;
+	                 if(accountingCodeId == "Invalid"){
+	                  invalidAccountingCode = true;
+	                  break;
+	                 }
+	                 for(i=0; i<scoaAssembledData[accountingCodeId].length; i++){
+	                    if (scoaAssembledData[accountingCodeId][i]["{!NamespaceUU}COMP_Functional_Currency_Amount_CR__c"] != null
+	                            && scoaAssembledData[accountingCodeId][i]["{!NamespaceUU}COMP_Functional_Currency_Amount_DR__c"] != null){
+	                    	iAssembledData["balance"] += 
+	                    	    scoaAssembledData[accountingCodeId][i]["{!NamespaceUU}COMP_Functional_Currency_Amount_DR__c"]-
+	                    	    scoaAssembledData[accountingCodeId][i]["{!NamespaceUU}COMP_Functional_Currency_Amount_CR__c"];
+	                    }
+	                     
+	                    iAssembledData["accountingCodeId"] = accountingCodeId; 
+	                 }
+	                 assembledData[accountingCodeId] = iAssembledData; 
+                }
+            }
+            console.log(' ############# ALL SCOAS (assembledData) in completeCallback_AEL ######### ',assembledData);
+            
+            if(invalidAccountingCode == false){
+               createJournalEntry2(assembledData);
+            }
+            else{
+               KenandyErp.Message('Unable to close Fiscal year as accounting entry lines exist with no accounting code.',
+                                        KenandyErp.MessageType.Fatal);
+               $('#ProgressBar').hide();
+               $('#ProgressStatus').hide();
+               KenandyErp.UnBlockUI();
+               return;             
+            }
+            
+           // KenandyErp.UnBlockUI();
+            
+    	}; 
+    	
+    	var errors = [];
+    	var checkErrors_AEL = function (event) { 
+            if (event.status) {            
+            } else if (event.type === 'exception') {
+                errors.push(event.message + ' : ' + event.type);
+            } else {
+                errors.push(event.message);
+            }
+            if (errors.length == 0) {
+                 console.log('*** checkErrors_AEL ----- NO errors in chunking AEL ***');
+            } else {
+                console.log('*** checkErrors_AEL ----- There are some errors in chunking AEL ***',errors); 
+            }
+        };  
+    	
+    	var updateStatus_AEL = function (msgLocation, statusMsg) { 
+            // if (msgLocation == 2) {
+            //     window.setTimeout(function(){
+            //         $("#status-message2").text(statusMsg);
+            //     }); 
+            // } else {
+            //     window.setTimeout(function(){
+            //         $("#status-message1").text(statusMsg);
+            //     });     
+            // } 
+        }; 
+    	  
+        
+        function checkErrors ( event ) { 
+            if (event.status) {            
+                // status ok so there was no error
+            } else if (event.type === 'exception') {
+                $("#responseErrors").append( '<div>'+event.message + ' : ' + event.type+'</div>');
+                $(".message").show();
+               	KenandyErp.UnBlockUI();       
+            } else {
+                $("#responseErrors").text( event.message );
+                KenandyErp.UnBlockUI();
+            }
+        }   
+			        
+// 		function checkRetry(event) {
+// 	        var doRetry = false;
+// 	        if (event.type === 'exception') {
+// 	        	if ((event.message.indexOf("timeout") > -1) ||
+// 	        		(event.message.indexOf("Remoting request invalid for your session") > -1) || 
+// 	        		(event.message.indexOf("Logged in") > -1)) {
+// 	        		doRetry = true;	
+// 	        	}	
+// 	        }  
+// 	        return doRetry;  	
+// 		}	
+		
+		 function checkRetry2(event) {
+            var doRetry = false;
+            if (event.type === 'exception') {
+                if ((event.message.indexOf("timeout") > -1) ||
+                    (event.message.indexOf("UNABLE_TO_LOCK_ROW") > -1) || 
+                    (event.message.indexOf("ConcurrentPerOrgApex") > -1) || 
+                    (event.message.indexOf("Remoting request invalid for your session") > -1) || 
+                    (event.message.indexOf("Logged in") > -1)) {
+                    doRetry = true; 
+                }   
+            }  
+            return doRetry;     
+        }       
+     
+    
+    
+        // //================================================================
+        // // Begin realtime parallel
+        // //================================================================
+        // function parallelStartRT() {
+        //     numTotalRT = realTimeList.length;
+        //     numRemainingTotalRT = numTotalRT;
+        //     getNextBatchRT();
+        // }       
+        // function getNextBatchRT() {
+        //     if (numRemainingTotalRT == 0) {
+        //         parallelEndRT();
+        //     } else {
+        //         var nextBatchStartIndexRT = numTotalRT - numRemainingTotalRT;
+        //         //get the number of simultaneous chunks, or whatever is left if it's less
+        //         numRemainingBatchRT = numSimultaneous;
+        //         if (numRemainingTotalRT < numRemainingBatchRT) {
+        //             numRemainingBatchRT = numRemainingTotalRT;
+        //         }                       
+        //         chunkWorkerRT(nextBatchStartIndexRT, numRemainingBatchRT);
+        //     }
+        // }       
+        // function chunkWorkerRT(nextBatchStartIndexRT, numRemainingBatchRT) {
+        //     for (i=0; i<numRemainingBatchRT; i++) {
+        //         getRealtimeChunk(nextBatchStartIndexRT+i);
+        //     }       
+        // }    
+        // function chunkCompleteRT() {
+        //     numRemainingBatchRT--;
+        //     numRemainingTotalRT--;
+        //     progressbar("Querying Data...", (numTotalRT - numRemainingTotalRT), numTotalRT);
+        //     if (numRemainingBatchRT == 0) {
+        //         getNextBatchRT();
+        //     }
+        // }       
+        // function parallelEndRT() {
+        //   // console.log('parallel finish',recentData);
+            
+        //     calcData();
+        // }                 
+    //     function getRealtimeChunk(startAt) {
+    //         var itemRange = new Object();
+    //         itemRange["first"] = realTimeList[startAt]["first"];
+    //         itemRange["last"] = realTimeList[startAt]["last"];
+    //         Visualforce.remoting.Manager.invokeAction(
+    //             '{!$RemoteAction.YearEndCloseExt.createJournalEntryData2}',// REWORK  getRecentDataSOQL
+    //             itemRange, '{!Fiscal_Year__c.Id}',
+    //             function (result, event) {
+
+				// 	var doRetry = checkRetry(event);			        
+    //                 if (doRetry == false) {
+    //                 	checkErrors(event);
+    //                 }
+                    
+    //                 if (event.status) {
+				// 		console.log(result);
+    //                     for(i = 0; i<result.length; i++){
+    //                         //Explicitly setting accountingcodeid to some value as opposed to 'undefined' to mimic apex behaviour.
+    //                         //Also setting it to word Invalid as opposed to null and will respectively check for the same in downstream. 
+    //                         //Reason being JS properties are autotypecasted to string even if we set null.
+    //                         var iAccountingCodeId="Invalid";
+    //                         if("{!NamespaceUU}Accounting_Code__c" in result[i]){//Apex will have suppressed fields with null values so only records with non-null values will go through this flow.
+    //                             iAccountingCodeId = result[i]["{!NamespaceUU}Accounting_Code__c"];                             
+    //                         }
+                     
+    //                         if (iAccountingCodeId in recentData) {
+    //                             var tempArray = recentData[iAccountingCodeId];
+    //                             tempArray.push(result[i]);
+    //                             recentData[iAccountingCodeId] = tempArray;  
+    //                         } else {
+    //                             recentData[iAccountingCodeId] = new Array(result[i]);
+    //                             numberOfSCOAs++;
+    //                         }
+                            
+    //                     }console.log('parallel finish',recentData);
+    //                     chunkCompleteRT();	               
+    //                 }
+
+				// 	if (doRetry) {
+				// 		if (startAt in realtimeRetriesRT) {
+				// 			realtimeRetriesRT[startAt]++;
+				// 		} else {
+				// 			realtimeRetriesRT[startAt] = 1;
+				// 		}
+						
+				// 		if (realtimeRetriesRT[startAt] <= numberOfRetries) {
+				// 			var msExec = (new Date().getTime()) - realtimeStartTimestampRT[startAt];
+							
+				// 			var retryMsg =
+				// 			'retry: ' 		+ realtimeRetriesRT[startAt] + ', ' +
+				// 			'ms: ' 			+ msExec + ', ' +
+				// 			'curr time: ' 	+ new Date();
+							
+				// 			console.log(retryMsg);
+							
+				// 			getRealtimeChunk(startAt);
+				// 		} else {
+				// 			//we hit our number of retries, time to fail
+				// 			checkErrors(event);
+				// 			chunkCompleteRT();						
+				// 		}
+						
+				// 	}
+    //             },
+    //             {escape: false, buffer: false}
+    //         );     
+    //     }
+        
+    //     //================================================================
+    //     // End realtime parallel
+    //     //================================================================
+    //     function calcData(){
+    //         //console.log('recentdata in calc data');
+    //         //console.log(recentData);
+    //         //numberOfSCOAs = recentData.length;
+    //         var counter = 0;
+    //         var invalidAccountingCode = false;
+    //         progressbar("Assembling Data...", counter, numberOfSCOAs);
+            
+    //         for(var accountingCodeId in recentData){
+    //              //Using hasOwnProperty to avoid unnecessary iteration over object prototypes.
+			 //    if (recentData.hasOwnProperty(accountingCodeId)) {
+				//      progressbar("Assembling Data...", counter, numberOfSCOAs);
+	   //              var iAssembledData = new Object();
+	   //              iAssembledData["fcDR"] = 0;
+	   //              iAssembledData["fcCR"] = 0;
+	   //              if(accountingCodeId == "Invalid"){
+	   //               invalidAccountingCode = true;
+	   //               break;
+	   //              }
+	   //              for(i=0; i<recentData[accountingCodeId].length; i++){
+	   //                 if (recentData[accountingCodeId][i]["debitsfc"] != null)
+	   //                 	iAssembledData["fcDR"] += recentData[accountingCodeId][i]["debitsfc"];
+	   //                 if (recentData[accountingCodeId][i]["creditsfc"] != null)
+	   //                 	iAssembledData["fcCR"] += recentData[accountingCodeId][i]["creditsfc"];
+	   //                 iAssembledData["accountingCodeId"] = accountingCodeId;
+	                    
+	   //              }
+	   //              assembledData[accountingCodeId] = iAssembledData;
+	   //              counter++;
+				//  }   
+				//  console.log('assembledData',assembledData);
+
+    //         }
+    //         if(invalidAccountingCode == false){
+    //           createJournalEntry();
+    //         }
+    //         else{
+    //           KenandyErp.Message('Unable to close Fiscal year as accounting entry lines exist with no accounting code.', KenandyErp.MessageType.Fatal);
+    //           $('#ProgressBar').hide();
+    //           $('#ProgressStatus').hide();
+    //           KenandyErp.UnBlockUI();
+    //           return;             
+    //         }
+    //     }
+        
+        function createJournalEntry2(assembledData){
+        	Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.YearEndCloseExt.createYearEndJournalEntry}',
+                '{!Fiscal_Year__c.Id}',
+                function (result, event) {
+	                checkErrors(event);
+                    if (event.status) {
+                        prepareJournalEntryData2(result,assembledData);
+                    }
+                },
+                {escape: false, buffer: false}
+            );
+        }
+        
+            //================================================================
+        // Creating the Journal Entry Lines
+        //================================================================
+        function prepareJournalEntryData2(journalEntryId,assembledData){
+            
+        	console.log('ID of YEAR END JE created' + journalEntryId);
+         
+            var SCOAsRemaining = _.values(assembledData).length;
+          
+           
+            if (SCOAsRemaining == 0) {
+                KenandyErp.Message('There are no Income Statement SCOAs for this fiscal year', KenandyErp.MessageType.Info);
+                console.log('There are no Income Statement SCOAs for this fiscal year, assembledData ',assembledData);
+                $('#ProgressBar').hide();
+                $('#ProgressStatus').hide();
+                KenandyErp.UnBlockUI();
+                return;
+            }
+
+            if (SCOAsRemaining > 0) {
+                KenandyErp.BlockUI();
+            }
+            //-----Chunking for remote action-------//
+            var chunks            = _.chunk(_.values(assembledData),chunkSizeForRA);
+            console.log('########## Chunks for create JEL2 remote action ###########',chunks);
+            var allAssembledVals  = chunks;
+            noOfChunkBatches2     = chunks.length;
+            for(i = 0; i<chunks.length; i++){
+                var indChunk = chunks[i];
+                var chunkAssembledDataIndList = [];
+                
+                for(j = 0; j<indChunk.length; j++){
+                    var indObj = indChunk[j];
+                    var indAssembledData = {};
+                    if(!indAssembledData["accountingCodeId"]){
+	                    indAssembledData["accountingCodeId"] = indObj["accountingCodeId"];
+	                    indAssembledData["balance"] = indObj["balance"];
+	                    chunkAssembledDataIndList.push(indAssembledData);
+                    }
+                } 
+                chunkAssembledData.push(chunkAssembledDataIndList); 
+            }
+            console.log('########### chunkAssembledData for remoting #######',chunkAssembledData);
+            
+            progressbar("Transferring Balances...", 0, chunkAssembledData.length);
+             
+            createJEL2(journalEntryId, 0);
+             
+        }
+        
+        
+        // function createJournalEntry(){
+        // 	Visualforce.remoting.Manager.invokeAction(
+        //         '{!$RemoteAction.YearEndCloseExt.createYearEndJournalEntry}',
+        //         '{!Fiscal_Year__c.Id}',
+        //         function (result, event) {
+	       //         checkErrors(event);
+        //             if (event.status) {
+        //                 prepareJournalEntryData(result);
+        //             }
+        //         },
+        //         {escape: false, buffer: false}
+        //     );
+        // }
+        		
+        
+        // //================================================================
+        // // Creating the Journal Entry Lines
+        // //================================================================
+        // function prepareJournalEntryData(journalEntryId){
+        
+        // 	console.log(journalEntryId);
+        //     SCOAsRemaining = _.values(assembledData).length;
+        //     var totalSCOAs = _.values(assembledData).length;
+            
+        //     var numberOfBatches = Math.ceil(totalSCOAs/chunkSize);
+        //     var remainingSCOAs = totalSCOAs;
+            
+        //     //var chunkAssembledData = new Object();
+        //     if (SCOAsRemaining == 0) {
+        //         KenandyErp.Message('There are no Income Statement SCOAs for this fiscal year', KenandyErp.MessageType.Info);
+        //         $('#ProgressBar').hide();
+        //         $('#ProgressStatus').hide();
+        //         KenandyErp.UnBlockUI();
+        //         return;
+        //     }
+
+        //     if (SCOAsRemaining > 0) {
+        //         KenandyErp.BlockUI();
+        //     }
+
+        //     //var chunks = _.partition(assembledData, numberOfBatches);
+        //     var chunks = _.chunk(_.values(assembledData),chunkSize);
+        //     var total = chunks;
+        //     noOfChunkBatches = chunks.length;
+        //     //var chunkAssembledData = [];
+        //     for(i = 0; i<chunks.length; i++){
+        //         var indChunk = chunks[i];
+        //         var chunkAssembledDataIndList = [];
+
+        //         for(j = 0; j<indChunk.length; j++){
+        //             var indObj = indChunk[j];
+        //             var indAssembledData = new Object();
+        //             if(!indAssembledData["accountingCodeId"]){
+	       //             indAssembledData["accountingCodeId"] = indObj["accountingCodeId"];
+	       //             indAssembledData["fcDR"] = indObj["fcDR"];
+	       //             indAssembledData["fcCR"] = indObj["fcCR"];
+	       //             indAssembledData["jeID"] = journalEntryId;
+	       //             chunkAssembledDataIndList.push(indAssembledData);
+        //             }
+        //         }
+        //         chunkAssembledData.push(chunkAssembledDataIndList);
+        //         SCOAsRemaining = SCOAsRemaining-chunkSize;
+        //     }
+            
+        //     progressbar("Transferring Balances...", 0, chunkAssembledData.length);
+        //     createJEL(journalEntryId, 0);
+            
+        // }
+        
+         //================================================================
+        // Create Journal Entry Lines
+        //================================================================
+        function createJEL2(journalEntryId,remoteChunkIndex) { 
+                $("#responseErrors").text('');
+                
+               	var JEindexKey = journalEntryId + '-' + remoteChunkIndex; 
+               	
+                Visualforce.remoting.Manager.invokeAction(
+                     '{!$RemoteAction.YearEndCloseExt.createJournalEntryData2}',
+                       chunkAssembledData[remoteChunkIndex], 
+                       journalEntryId,
+                        function (result, event) {
+                             
+                            console.log(' ############## CREATING JE LINES ########### '+'result ',result);
+                            console.log('event ',event); 
+                            
+                            progressbar("Transferring Balances...", remoteChunkIndex, chunkAssembledData.length);
+                            
+                            //------Retry Logic in case of exceptions trap any timeouts, etc.  see if we need to retry.-----------//
+                            var doRetry = checkRetry2(event);                    
+                            if (doRetry == false) {
+                                checkErrors(event);
+                            }  
+                            
+                            if (doRetry) {
+    							if (JEindexKey in realtimeRetriesJEL2) {
+    								realtimeRetriesJEL2[JEindexKey]++;
+    							}
+    							else {
+    								realtimeRetriesJEL2[JEindexKey] = 1;
+    							}
+    							
+    							if (realtimeRetriesJEL2[JEindexKey] < numberOfRetries2) {
+    								
+    								KenandyErp.Message('Retrying to create JE data '+ realtimeRetriesJEL2[JEindexKey]
+    								                    ,KenandyErp.MessageType.Info);
+    								                    
+    								console.log('Retrying to create JEL data '+ realtimeRetriesJEL2[JEindexKey]);
+    								
+    								createJEL2(journalEntryId, remoteChunkIndex);
+    							} else {
+    								//we hit our number of retries, time to fail
+    								KenandyErp.Message('There is  error while creating the Year End Journal Entry: No of retries '
+    								                    + realtimeRetriesJEL2[JEindexKey] +'\n Reason shown below : '
+    								                    ,KenandyErp.MessageType.Info);
+    								console.log('There is  error while creating the Year End Journal Entry: No of retries '
+    								                    + realtimeRetriesJEL2[JEindexKey]);
+    								checkErrors(event); 
+                                    $('#ProgressBar').hide();
+                                    $('#ProgressStatus').hide();
+                                    KenandyErp.UnBlockUI();
+                                    return;			
+    							} 
+    							
+						   } 
+                            
+                           if ( result!=null && result.success == false) {
+                            	checkErrors(event);
+                                KenandyErp.Message('There was an error while creating the Year End Journal Entry:'+
+                                                        result.messages[0].message, KenandyErp.MessageType.Info);
+                                $('#ProgressBar').hide();
+                                $('#ProgressStatus').hide();
+                                KenandyErp.UnBlockUI();
+                                return;
+                        }  
+                        if (result!=null && event.status && result.success == true) {
+                            noOfChunkBatches2--;
+                            console.log('noOfChunkBatches2',noOfChunkBatches2,'remoteChunkIndex',remoteChunkIndex);
+	                        if(noOfChunkBatches2 <= 0){  
+	                            createRetainedEarnings(journalEntryId);
+	                            KenandyErp.UnBlockUI();
+	                        }else {
+	                            remoteChunkIndex++;
+	                            createJEL2(journalEntryId, remoteChunkIndex);
+	                        }
+                       } 
+                              
+    	               },
+                    
+                    {escape: false, buffer: false}
+                );   
+        }
+
+        
+    //     //================================================================
+    //     // Create Journal Entry Lines
+    //     //================================================================
+    //     function createJEL(journalEntryId, chunkIndex) {
+            	
+    //         	var JEindexKey = journalEntryId + '-' + chunkIndex;
+            
+    //             Visualforce.remoting.Manager.invokeAction(
+    //                 '{!$RemoteAction.YearEndCloseExt.createJournalEntryData2}', //changed to createJournalEntryData2 REWORK
+    //                 chunkAssembledData[chunkIndex],
+    //                 function (result, event) {
+     	                
+    //                 	progressbar("Transferring Balances...", chunkIndex, chunkAssembledData.length);     	                
+     	                
+				// 		var doRetry = checkRetry(event);			        
+	   //                 if (doRetry == false) {
+	   //                 	checkErrors(event);
+	   //                 }
+                    	
+                    	
+				// 		if (doRetry) {
+				// 			if (JEindexKey in realtimeRetriesJEL) {
+				// 				realtimeRetriesJE[JEindexKey]++;
+				// 			} else {
+				// 				realtimeRetriesJE[JEindexKey] = 1;
+				// 			}
+							
+				// 			if (realtimeRetriesJE[JEindexKey] <= numberOfRetries) {
+				// 				var msExec = (new Date().getTime()) - realtimeStartTimestampJE[JEindexKey];
+								
+				// 				var retryMsg =
+				// 				'retry: ' 		+ realtimeRetriesJE[JEindexKey] + ', ' +
+				// 				'ms: ' 			+ msExec + ', ' +
+				// 				'curr time: ' 	+ new Date();
+								
+				// 				console.log(retryMsg);
+								
+				// 				createJEL(journalEntryId, chunkIndex);
+				// 			} else {
+				// 				//we hit our number of retries, time to fail
+				// 				checkErrors(event);
+	   //                         KenandyErp.UnBlockUI();
+	   //                         return;				
+				// 			}
+							
+				// 		}
+
+    //                     //SCOAsRemaining = SCOAsRemaining-chunkSize;
+    //                     if (result == null) {
+    //                     	checkErrors(event);
+    //                         KenandyErp.Message('There was an error while creating the Year End Journal Entry', KenandyErp.MessageType.Info);
+    //                         KenandyErp.UnBlockUI();
+    //                         return;
+    //                     }
+
+    //                     if (event.status) {
+    //                         noOfChunkBatches--;
+	   //                     if(noOfChunkBatches <= 0){ //SCOAsRemaining<=0 &&
+	   //                         createRetainedEarnings(journalEntryId);
+	   //                         KenandyErp.UnBlockUI();
+	   //                     }else {
+	   //                         chunkIndex++;
+	   //                         createJEL(journalEntryId, chunkIndex);
+	   //                     }
+	   //                 }
+    //                 }, 
+                    
+    //                 {escape: false, buffer: false}
+    //             );   
+    //     }
+        
+		//================================================================
+        // Create RetainedEarnings
+		//================================================================
+        function createRetainedEarnings(journalEntryId) {
+            
+            console.log('######### BEFORE REMOTE ACTION: Creating Retained Earnings on JE with ID : -------------'+journalEntryId);
+            
+	        retainedEarningFlag = false;
+	        Visualforce.remoting.Manager.invokeAction(
+	            '{!$RemoteAction.YearEndCloseExt.createRetainedEarnings}',
+	            journalEntryId, 
+	            '{!Fiscal_Year__c.GL_Account__c}', 
+	            '{!Fiscal_Year__c.Id}',
+	            function (result, event) {                      
+	                checkErrors(event);
+	                $("#ProgressBar").hide();
+	                $("#ProgressStatus").hide();
+	                KenandyErp.UnBlockUI();
+	                
+	                console.log('######### Creating Retained Earnings REMOTE ACTION RESULT ##############');
+	                console.log('######### Event ############------------- ', event);
+	                console.log('######### Result ###########------------- ' , result);
+	                 
+	                if (result == "Success") {
+	
+	                    var jeUrl = '/' + journalEntryId;
+	
+	                    KenandyErp.Message('Balances have been succesfully transferred to Retained Earnings. Please click on the link to go to the details page. <a href="' + 
+	                                                        jeUrl + '">View Journal Entry</a>', KenandyErp.MessageType.Info);
+	
+	                    window.open(jeUrl, '_blank');
+ 	                    btnComplete();
+	                    
+	               }else{
+	                    KenandyErp.Message('Not able to create Retained Earnings, REASON :'+result +   KenandyErp.MessageType.Info);
+	               }
+ 	            }, 	            {escape: false, buffer: false}
+	        );   
+        }
+        
+    </script>
+    
+    <style type="text/css">
+        .col1 {
+            width: 50%;
+            text-align: center;
+        }
+       
+        .col2 {
+            width: 50%;
+            text-align: center;
+        }
+        .col3 {
+            width: 50%;
+        } 
+        .col4 {
+            width: 50%;
+        } 
+        .alignCenter {
+            text-align: center;
+        }
+        #responseErrors{
+            background-color: #100;
+            color:#fff;
+        }
+    </style>
+    <apex:form id="form">
+        <div class="page-container">
+        
+	        <apex:sectionHeader subtitle="{!Fiscal_Year__c.name} Fiscal Year Close"/>
+	        <apex:pageBlock >
+		        <div id="MessagesBlock">  
+		            <apex:pagemessages id="Messages" />
+		            <div class="page-message"></div>
+                    <div id="responseErrors"></div>
+		        </div>
+	            <apex:panelGrid width="20%" border="0" cellspacing="5" cellpadding="5" columns="1">
+	                <apex:outputText styleClass="fa-lg" value="Fiscal Periods"></apex:outputText>
+	                <apex:pageBlockTable value="{!Periods}" var="p" title="Test Table" styleClass="alignCenter">
+	                        <apex:column styleClass="col1" headerValue="Period" headerClass="alignCenter">
+	                            <apex:outputLink value="/{!p.id}" target="_blank">{!p.name}</apex:outputLink>   
+	                        </apex:column>
+	                        <apex:column styleClass="col2" headerValue="Period Closed" headerClass="alignCenter">
+	                            <apex:outputPanel rendered="{!IF(OR(p.Closed__c == true,p.Permanently_Closed__c == true), TRUE, FALSE)}"  styleClass="alignCenter">
+	                                <b><div class="kndy-green"><i class="fa fa-check"></i></div></b>
+	                            </apex:outputPanel>
+	                            <apex:outputPanel rendered="{!IF(OR(NOT(p.Closed__c == false),NOT(p.Permanently_Closed__c == false)), FALSE,TRUE)}">
+	                                <div class="kndy-red"><i class="fa fa-times"></i></div>
+	                            </apex:outputPanel>
+	                        </apex:column>
+	                    </apex:pageBlockTable> 
+	                    
+	                    <table width="100%">
+	                    		<tr>
+                                    <td align="center"><div id="ProgressStatus" ></div></td>
+                                </tr> 
+                                <tr>
+                                    <td align="center"><div id="ProgressBar" ></div></td>
+                                </tr>                    
+                            </table>    
+	                </apex:panelGrid>
+	                <apex:pageBlockButtons location="bottom" id="Buttons">
+				        <apex:commandButton value="{!$Label.Go_Back}" action="{!cancel}" status="actionStatus" /> 
+				        <apex:commandButton value="Transfer Balances to Retained Earnings" rerender="jsPanel" disabled="{!!YECFlag}" onclick="processFiscalYear();" id="TransferButton" />
+	        			<apex:commandButton value="Cancel Existing Balance Transfer" rendered="{!existingYEJournal}" rerender="form" action="{!cancelExistingYearEndJournal}" id="CancelButton"/>
+	        		</apex:pageBlockButtons>
+	        		<apex:actionFunction name="btnComplete" rerender="TransferButton"/> 
+	        </apex:pageBlock>
+
+        </div>
+    </apex:form>
+    <div id="force" style="display: none; ">
+	    <apex:outputField value="{!Fiscal_Year__c.Id}" />
+		<apex:outputField value="{!Fiscal_Year__c.Name}" />
+		<apex:outputField value="{!Fiscal_Year__c.GL_Account__c}" />
+    </div>
+    
+    
+
+</apex:page>

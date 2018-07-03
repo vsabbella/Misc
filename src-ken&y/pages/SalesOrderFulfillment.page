@@ -1,0 +1,889 @@
+<apex:page standardController="Sales_Order__c"
+            tabStyle="Sales_Order__c"
+            extensions="SalesOrderFulfillmentExt,KSE"
+            docType="html-5.0"
+            sidebar="false">
+
+
+    <c:KendoResources />
+    <c:busyWait includeScripts="false" />
+
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+
+    <apex:form id="SOFulfillmentForm">
+        <div class="page-container">
+        
+            <apex:sectionHeader title="Sales Order Fulfillment" subtitle="{!so.Name}" />
+        
+            <div class="page-message"></div>
+            <apex:pageMessages id="msgs"/>
+                      
+            <apex:pageBlock title="Sales Order Lines">
+                <apex:pageBlockButtons location="top">
+                    <apex:outputPanel layout="none">
+                        <a href="/{!soId}" style="text-decoration: none;"><input type="button" class="btn go-back" value="Return To Sales Order" /></a>
+                    </apex:outputPanel>
+                </apex:pageBlockButtons>
+                
+                <div class="grid-container">
+                    <div class="grid-message" />
+                    <div id="SOLGrid" />
+                </div>
+
+                <div id="gridWindow" class="grid-window">
+                    <div class="grid-container k-block k-info-colored">
+                        <div id = "gridSerial" class="grid-serial-lines" style="width:{!gridSize}px"></div>
+                        <div id="okayDiv" class="okDiv" style="float: right; margin: 10px"></div>
+                    </div>    
+                </div>
+                <div id="gridWindowFulfill" class="grid-window-Fulfill">
+                  <div class="grid-container">
+                        <div class="grid-message" />
+                        <div id="fulGrid" />
+                	</div>
+                </div>
+            </apex:pageBlock>
+        </div>
+    </apex:form>
+
+    <script type="text/javascript">  
+        "use strict";
+
+        var serialFieldList = JSONUtils.Parse('{!serialFieldList}');
+    	var sOrderLineId;
+        var serialDetailData = [];
+        var serialData = [];
+        var serialControl = false;
+        var serialLinesWindow;
+        var fulfillWindow;
+        var serialTracked = false;
+        var record = 0;
+        var fulGrid;
+        var expandedRows = [];
+        var showSerialTopBar = {!serialShowTopBar};
+        var renderRecordNumber = function() {
+            return ++record;
+        }
+
+        var generalDetailDateFields = KenandyErp.KendoGridOptions.GetDateFields(JSONUtils.Parse('{!solFieldList}'));
+        
+        var lookupSearchAction =  '{!$RemoteAction.SalesOrderFulfillmentExt.lookupSearchFilter}';
+        var saveListAction = '{!$RemoteAction.SalesOrderFulfillmentExt.saveList}';
+        var lookupSearchFilters = [];
+
+        $(document).on('KenandyErpReady', function(e) {
+
+            var masterFieldList = JSONUtils.Parse(SalesOrderFulfillmentUtils.GetFieldList('{!solFieldList}'));
+            var gridConfig = JSONUtils.Parse('{!JSENCODE(SolGridConfigJSON)}');
+            gridConfig.actionColumnButtons = "Serials,Undo Fulfill"; 
+
+            var masterDateFields = KenandyErp.KendoGridOptions.GetDateFields((masterFieldList)); // get the list of date fields for the master grid
+
+            var soLinesGrid = $('#SOLGrid').kendoGridActionList({
+                        namespace: '{!NamespaceUU}', 
+                        config: gridConfig, 
+                        fieldList: masterFieldList,
+                        lookupSearchAction: lookupSearchAction, 
+                        getActionListFunction: salesOrderLinesData,
+                        saveAction: saveListAction,
+                        modelIdField: 'soLine.Id',
+                        showIconButtons: true
+            }).data('kendoGridActionList');
+            
+            soLinesGrid.hideColumn("IsSelected__custom");
+            soLinesGrid.bind("dataBound", $.proxy(SalesOrderFulfillmentActions.DisableSerials, {grid: soLinesGrid }));
+
+            $('.grid-fulfill-custom-command').on("click", $.proxy(SOLActions.CreateFulfill, { 
+                grid: soLinesGrid, 
+                options: { 
+                    config: gridConfig, 
+                    masterDateFields: masterDateFields
+                } 
+            }));
+
+            $('.grid-populate-quantities-custom-command').on("click", $.proxy(SOLActions.Populate, { 
+                grid: soLinesGrid
+            }));
+
+            soLinesGrid.wrapper.on("click", ".grid-serials-custom-command", $.proxy(SalesOrderFulfillmentActions.ManageSerials, { 
+                grid: soLinesGrid, 
+                dateFields: masterDateFields, 
+                serialFieldList: serialFieldList
+            }));
+            soLinesGrid.wrapper.on("click", ".grid-undo-fulfill-custom-command", $.proxy(FulfillUtil.fulGridInit, { 
+                grid: soLinesGrid, 
+                dateFields: masterDateFields, 
+                serialFieldList: serialFieldList
+            }));
+            var actionColumnIndex = soLinesGrid.columns.length - 1;
+
+            if(!serialTracked){
+                $('#SOLGrid').data('kendoGridActionList').hideColumn(actionColumnIndex);
+                $(".grid-serials-custom-command").hide();
+            }
+        });
+
+		var SOLActions = function(){
+            return {
+                Populate: function(e) {
+                    var messageElement = $(".page-message");
+                    KenandyErp.ClearMessage(messageElement);
+                    var self = this;
+                    var grid = self.grid;
+                    
+                    var currentData = grid.dataSource.data();
+                    $.each(currentData, function(i,item) {
+                        console.log(item);
+                        item.qtyToFulfill = Math.abs(item.soLine.Quantity_Ordered__c) - Math.abs(item.soLine.Quantity_Fulfilled__c);
+                    });
+                   
+                   grid.refresh();
+                    
+                },
+              
+                
+                CreateFulfill: function(){
+
+                    var self = this;
+                    var grid = self.grid;
+
+                    KenandyErp.BlockUI(grid.element);
+
+                    var options = self.options;
+
+                    var currentData = grid.dataSource.data();
+                    
+                    var columns = grid.columns;
+
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message");
+                    KenandyErp.ClearMessage( messageElement);
+
+                    var rows = [];
+                    var qtyerr = false;
+                    
+                    $.map(currentData, function(item, index) {
+				
+						if ( item.qtyToFulfill <= 0 && item.soLine.Status__c != 'Closed' ) {
+						   
+						    KenandyErp.Message('You can’t fulfill an order with zero or negative Quantity in the Fulfill column.', KenandyErp.MessageType.Error, messageElement);
+                            qtyerr= true;
+                            
+							    
+						}
+							
+						if ( item.qtyToFulfill > 0 ) {
+                        var serialWrapperUid = item.soLine.Id;
+
+                        var serials = SalesOrderFulfillmentUtils.GetSerialListById(serialWrapperUid);
+
+                        var serialList = $.map(serials, function(serialItem, index) {
+                            if(serialItem['Name']){
+
+                                delete serialItem[""];
+
+                                serialItem = serialItem.toJSON();
+                                return serialItem;
+                            }
+                        });
+                        
+                        
+                        item.serialWrapperList[0].serialList = serialList;
+                            
+                        // set this on the controller.
+                        delete item['IsSelected__custom'];
+
+                        item = item.toJSON();
+		            	item = Serializer.ConvertToSFDCDate(item, { dateFields: options.masterDateFields });
+			            
+			            // Remove the extra attributes Kendo Grid creates for supporting wrapper classes
+			            for (var i = 0; i < columns.length; i++) {
+			                
+                            var name = columns[i].field;
+							
+                            if (name && name.indexOf('.') != -1) {
+							    delete item[name];
+							}
+					    }
+                            rows.push(item);
+                        return item;
+                            
+                        }
+                    });
+
+                   if(qtyerr == true) {
+                        KenandyErp.UnBlockUI(grid.element);
+                        return;
+                   }
+
+                   
+
+
+
+                    if (rows.length > 0) {
+                        rows = Serializer.ParameterMap(rows, { isDml: false });
+                    }
+
+                    var dateFields = self.options.masterDateFields ? _.pluck(self.options.masterDateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;  
+                    
+                    // Remove the prefix for the date fields
+                    dateFields = $.map(dateFields, function(item, index) {
+                        if (item.indexOf('.') != -1) {
+                            item = item.split('.')[1];
+                        }
+                        
+                        return item;
+                    });
+
+                    console.log(rows);
+                    console.log(dateFields);
+                    var redirectAction = '/{!soId}';
+
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.SalesOrderFulfillmentExt.createFulfillments}',
+                        rows,
+                        dateFields,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI(grid.element);
+
+                            if (event.type == 'exception'){
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            }
+                            else{
+                                KenandyErp.CleanNamespace(result.records, KenandyErp.NamespacePrefix);
+
+                                if (result.success) {
+                                    KenandyErp.back(true, redirectAction);
+                                    // refresh the grid
+                                    // grid.dataSource._destroyed = [];
+                                    // grid.dataSource.read();
+                                                
+                                    // trigger onsavesuccess
+                                    // grid.element.trigger("OnSaveSuccess");
+                                                
+                                    // KenandyErp.Messages(result.messages, messageElement);
+                                }
+                                else if (result.success == false){
+                                    var messages = [];
+                                    $.each(result.messages, function(a,b){
+                                        messages.push(b);
+                                    });
+
+                                    KenandyErp.Messages(messages, messageElement);
+                                    KenandyErp.UnBlockUI($("#SOLGrid")); // else buttosn wont load
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );   
+                }
+            };
+        }();
+
+		var salesOrderLinesData = function() {
+            var deferred = $.Deferred();
+            var gridElement = $("#SOLGrid");
+            var messageElement = gridElement.closest("div.grid-container").find("div.grid-message");
+
+            KenandyErp.BlockUI($("#SOLGrid"));
+
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.SalesOrderFulfillmentExt.getSOLines}',
+                '{!so.Id}',
+                function (result, event) {
+                    
+                    if (event.type == 'exception') {
+                        KenandyErp.Message(event.message, KenandyErp.MessageType.Error);
+                    } 
+
+                    else {
+
+                        KenandyErp.CleanNamespace(result.records, KenandyErp.NamespacePrefix);
+
+                        if (result.success && result.records != null && result.records.length > 0){
+                            
+                            var errorMessage = [];
+                            var recordslen = result.records.length;
+                            
+                            // Collect Error Messages for all the lines
+                            for (var i = 0; i < recordslen; i++){
+                                if (result.records[i].errMsgs != null && result.records[i].errMsgs.length > 0){
+                                    var msg = {message: result.records[i].errMsgs, severity: KenandyErp.MessageType.Warning};
+                                    errorMessage.push(msg);
+                                }
+                            }
+
+                            serialTracked = Boolean(result.additionalInfo);
+
+                            // print all error messages
+                            if (errorMessage.length > 0){
+                                KenandyErp.Messages(errorMessage, messageElement);
+                            }
+
+                        } else if (result.success == false){
+                            var messages = [];
+                            $.each(result.messages, function(a,b){
+                                messages.push(b);
+                            });
+
+                            KenandyErp.Messages(messages, messageElement);
+                            KenandyErp.UnBlockUI($("#SOLGrid")); // else buttosn wont load
+                        
+                        } else if (result.records == null) {
+                            result.records = [];
+                        }
+                        console.log(result);
+                        deferred.resolve(result, event);
+                    }
+                },
+                {escape: false}
+            );
+            
+            return deferred.promise();
+        };
+
+        var SalesOrderFulfillmentActions = function() {
+            return {
+
+                DisableSerials: function(e){
+
+                    if(serialTracked){
+                        var grid = this.grid;
+                        var data = grid.dataSource.view();
+
+                        var actionColumnIndex = grid.columns.length - 1;
+
+                        grid.showColumn(actionColumnIndex);
+                        $(".grid-serials-custom-command").show();
+
+                        $.each( this.grid.dataSource.data(), function (a,dataItem){
+                            var enableSerialButton = (dataItem.soLine.Product__r.Item__r && dataItem.soLine.Product__r.Item__r.Item_Attribute__r && dataItem.soLine.Product__r.Item__r.Item_Attribute__r.Serial_Number__c) ? true : false;
+
+                            if (!enableSerialButton) {
+                                var rowUid = dataItem.uid;
+                                var currenRow = grid.table.find("tr[data-uid='" + rowUid + "']");
+                                var serialButton = $(currenRow).find(".grid-serials-custom-command");
+                                serialButton.toggleClass('btnDisabled', true).prop('disabled', true);
+                            }
+                        });
+                    }
+                },
+
+                ManageSerials: function(e) {
+                    
+                    var self = this;
+                    var grid = self.grid;
+                    var buttons = [KenandyErp.KendoGridOptions.CommandType.Search];
+                    
+                    var row = $(e.target).closest("tr"); //get the row
+                    var dataItem = grid.dataItem(row); // get the row data
+
+                    if (dataItem == null){
+                        var rowUid = row.attr('data-uid');
+                        $.each(grid.dataSource.data(), function(index,item){
+                            if (item.uid == rowUid){
+                                dataItem = item;
+                                return;
+                            }
+                        });
+                    }
+                    var soLine = dataItem.soLine;
+                    var uid = dataItem.uid;
+                    
+                    var Quantity = dataItem.qtyToFulfill;
+                    if(dataItem.soLine.Quantity_Ordered__c <0){
+                    	var maxQty = (dataItem.soLine.Quantity_Ordered__c)*-1 - dataItem.soLine.Quantity_Fulfilled__c;
+                    }
+                    else
+                    	var maxQty = dataItem.soLine.Quantity_Ordered__c - dataItem.soLine.Quantity_Fulfilled__c;
+                    
+                    if (Quantity > maxQty){
+                        KenandyErp.Alert( 'Quantity to fulfill is greater than available quantity to fulfill! Available quantity to fulfill is ' + maxQty + '.');
+                        return;
+                    }
+
+                    var serialFieldList = self.serialFieldList;
+                    
+                    var serialReferenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(JSON.parse(JSON.stringify(serialFieldList)));
+                    if(!(Quantity > 0)){
+                        KenandyErp.Alert( 'Please Enter a positive quantity to receive to enter serial numbers!');
+                        return;
+                    }
+                    
+                    if ($(".grid-serial-lines").data('kendoGrid')) {
+                        $(".grid-serial-lines").data('kendoGrid').destroy();
+                        $(".grid-serial-lines").empty();
+                    }
+                    
+                    var serialWrapperUid = soLine.Id;
+                    console.log(serialWrapperUid);
+                    
+                    var serialList = SalesOrderFulfillmentUtils.GetSerialListById(serialWrapperUid, uid);
+
+                    if (serialList.length == 0) {
+                        serialList = dataItem.serialWrapperList[0].serialList;
+                    }
+                    
+                    var convertFactor = dataItem.serialWrapperList[0].conversionFactor;
+                    if(convertFactor==null){
+                    	convertFactor =1;
+                    }
+                    
+                    Quantity = Quantity * convertFactor;
+                    var serialLength = serialList.length;
+                    if( serialLength <  Quantity ){
+                        
+                        for(var i = serialLength; i< Quantity ; i++ ){
+                            var serial = {};
+                            if (serialList.length > 0){
+                                serial = JSON.parse(JSON.stringify(serialList[0]));
+                            }
+                            serial.Name = undefined;
+                            serialList.push(serial);
+                        }
+                    }
+                    else if( serialLength > Quantity ){
+                        
+                        for(var i = serialLength; i>Quantity; i--){
+                            if(!serialList[i-1].Name){
+                                serialList.pop(serialList[i-1]);
+                            }
+                        }
+                    }
+                    
+                    var determineTotal = function(){
+                        return serialList.length;
+                    };
+                    
+                    var dataBoundSerial = function(){
+                        try {
+                            record = 0;
+                        }
+                        catch (e) {
+                        }
+                        
+                    };
+                    
+                    var getSerialModel = function() {
+                        var modelFields = KenandyErp.KendoGridOptions.GetFields(serialFieldList); 
+                        var model = kendo.data.Model.define({ id: "Id", fields: modelFields });
+                                
+                        return model;
+                    };
+                            
+                    var getSerialColumns = function() {
+                        var lookupSearchFilters = [];
+                        var columns = KenandyErp.KendoGridOptions.GetColumns(serialFieldList, {});
+                        columns[0].template= "#= renderRecordNumber() #";
+                        return columns;
+                    };
+                    
+                    var getSerialToolbarButtons = function() {
+                        return KenandyErp.KendoGridOptions.GetToolbarButtons(buttons);
+                    };
+                    
+                    var getSerialDataSource = function() {
+                        var dataSource = new kendo.data.DataSource({
+                            data: serialList,
+                            batch: true,
+                            pageSize: 10,
+                            serverPaging: false,
+                            schema: {
+                                model: getSerialModel(),
+                                total: determineTotal,
+                                parse: function(response) {
+                                    $.each(response,function(i, item) {
+                                        item = Serializer.ConvertFromSFDCDate(item, { dateFields: KenandyErp.KendoGridOptions.GetDateFields(serialFieldList) });
+                                    });
+                                    return response;
+                                }
+                            },
+                            change: function() {
+                                console.log(serialWrapperUid);
+                                SalesOrderFulfillmentUtils.UpdateSerialList(serialWrapperUid,this.data());
+                            }           
+                        });
+            
+                        return dataSource;
+                    };
+                    
+                    // Window initialization
+                    if (!serialLinesWindow) {
+                        serialLinesWindow = $(".grid-window").kendoWindow({
+                            title    : "Serial",
+                            resizable: false,
+                            modal    : true,
+                            visible  : false,
+                            content  : {
+                                
+                            }
+                        }).data("kendoWindow");
+                    }
+                    
+                    var serialGrid = $(".grid-serial-lines").kendoGrid({
+                        dataSource: getSerialDataSource(), 
+                        navigatable: true,
+                        pageable: { 
+                            input: true,
+                            numeric: false, 
+                            pageSizes: KenandyErp.KendoGridOptions.PageSizes ,
+                        },
+                        toolbar: getSerialToolbarButtons(),
+                        columns: getSerialColumns(),
+                        sortable: true,
+                        filterable: true,
+                        resizable: true,
+                        editable: true,
+                        dataBinding: function() {
+                            record = (this.dataSource.page() -1) * this.dataSource.pageSize();
+                        },
+                        dataBound: function(e) {
+                            record = 0;
+                        }
+                    }).data('kendoGrid');
+                    
+                    if ( showSerialTopBar ) {
+                        $(".grid-serial-lines").prepend('<div class="grid-serial-lines-pager"/>');
+                        $('.grid-serial-lines-pager').kendoPager({
+                            dataSource: serialGrid.dataSource,
+                            pageSizes: [10, 25, 50, 100, 200],
+                            input: true,
+                            numeric: false
+                        });
+                    }
+                    
+					// bind click events to the custom buttons
+                    KenandyErp.KendoGridOptions.BindEvents(serialGrid, buttons, 
+                        { 
+                            referenceFields: serialReferenceFields
+                        }
+                    );
+                    serialLinesWindow.open().center();
+                }
+            };
+        }();
+
+        var SalesOrderFulfillmentUtils = function() {
+            return {
+                
+                GetFieldList: function(fieldList) {
+                    fieldList = JSON.parse(fieldList);
+                    
+                    return JSON.stringify(fieldList);
+                }, 
+                GetSerialListById: function(id) {
+                    var data = _.where(serialDetailData, {Id: id});
+                    var serialList = [];
+                    
+                    if (data.length > 0) {
+                        serialList = data[0].serialList;
+                    }
+                    
+                    return serialList;
+                },
+                
+                UpdateSerialList: function(id,serialList) {
+                    var found = false;
+                    
+                    $.each(serialDetailData, function() {
+                        if (this.Id == id) {
+                            this.serialList = serialList;
+                            found = true;
+                            return false;
+                        }
+                    });
+                    
+                    if (!found) {
+                        serialDetailData.push({ Id: id, serialList: serialList });
+                    }
+                }
+            };
+        }();
+
+         //----Undo fulfillment
+        var fulData = function() {
+            var deferred = $.Deferred();
+            var messageElement = $("#fulGrid").closest("div.grid-container").find("div.grid-message");
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.SalesOrderFulfillmentExt.getFulfillments}',
+                sOrderLineId, 
+                function(result,event) {
+                    console.log(result);
+                    if (event.type == 'exception') {
+                        KenandyErp.Message(event.message,KenandyErp.MessageType.Error,messageElement);
+                    } else if (result.success && result.records.length > 0){
+                        KenandyErp.Messages(result.messages,messageElement);
+                        deferred.resolve(result,event);
+                    } else {
+                        KenandyErp.Messages(result.messages,messageElement);
+                        KenandyErp.UnBlockUI($("#fulGrid"));
+                    }
+                },
+                { escape: false }
+            );
+            return deferred.promise();
+        };
+        
+        var FulfillUtil = function() {
+            return {
+        		
+                fulFieldList: JSONUtils.Parse('{!fulFieldList}'),
+                serialFieldList: JSONUtils.Parse('{!serialFieldList}'),
+               
+                cancelFulfillment: function(e) {
+                    var deferred = $.Deferred();
+                    var messageElement = $("#fulGrid").closest("div.grid-container").find("div.grid-message");
+                    var self = this;
+                    var grid = self.grid;
+                    var gridUtils = new KendoGridUtils(grid);
+                    var selectedRows = gridUtils.SelectedRows();
+                    var redirectAction = '/{!soId}';
+                    
+                    if (selectedRows.length == 0) {
+                        KenandyErp.Message("No records selected.", KenandyErp.MessageType.Info, messageElement);
+                        return;
+                    }
+                    var fmtIds = [] ;
+                    $.each(selectedRows, function(index,item) {
+                       fmtIds.push(item.fulfillment.Id);
+                    });
+                    KenandyErp.BlockUI(grid.element);
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.SalesOrderFulfillmentExt.cancelFulfillments}',
+                        fmtIds,
+                        function(result,event) {
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message,KenandyErp.MessageType.Error,messageElement);
+                            } else if (result.success){
+                                KenandyErp.back(true, redirectAction);
+                                KenandyErp.Messages(result.messages,messageElement);
+                                 KenandyErp.UnBlockUI(grid.element);
+                                deferred.resolve(result,event);
+                                
+                            } else {
+                                KenandyErp.Messages(result.messages,messageElement);
+                                KenandyErp.UnBlockUI(grid.element);
+                            }
+                        },
+                        { escape: false }
+                    );
+                    return deferred.promise();
+                },  
+                
+                fulGridInit: function(e) {
+                    var grid = this.grid;
+                    var fulFieldList = FulfillUtil.fulFieldList;
+                    var fulDateFields = KenandyErp.KendoGridOptions.GetDateFields(fulFieldList);
+                    var serialList = FulfillUtil.serialList;
+                    var serialDateFields = KenandyErp.KendoGridOptions.GetDateFields(serialFieldList); 
+                    var gridConfig = '{!fulConfigJson}';
+                    var row = $(e.target).closest("tr"); //get the row
+                    var dataItem = grid.dataItem(row); // get the row data
+                    sOrderLineId = dataItem.soLine.Id;
+                 
+                // Window initialization
+                if (!fulfillWindow) {
+                        fulfillWindow = $(".grid-window-Fulfill").kendoWindow({
+                            title    : "Undo Fulfillments",
+                            resizable: false,
+                            modal    : true,
+                            visible  : false,
+                            content  : {
+                                
+                            }
+                        }).data("kendoWindow");
+                    }
+  
+                var fulGrid = $('#fulGrid').kendoGridActionList({
+                        namespace: '{!NamespaceUU}', 
+                        config: gridConfig,
+                        fieldList: fulFieldList,
+                        getActionListFunction: fulData,
+                        modelIdField: 'fulfillment.Id',
+                        showIconButtons: false,
+                        detailTemplate: kendo.template($("#detailTemplate").html())
+                    }).data('kendoGridActionList');
+                    
+                   
+                    fulGrid.wrapper.on("click",".grid-expand-all-custom-command",$.proxy(FulfillUtil.ExpandRows,{ grid: fulGrid }));
+                    fulGrid.wrapper.on("click",".grid-collapse-all-custom-command",$.proxy(FulfillUtil.CollapseRows,{ grid: fulGrid }));
+                    fulGrid.wrapper.on("click",".grid-undo-fulfillment-custom-command",$.proxy(FulfillUtil.cancelFulfillment,{ grid: fulGrid }));
+                    fulGrid.bind("detailExpand",$.proxy(FulfillUtil.DetailExpand,{ grid: fulGrid }));
+                    fulGrid.bind("detailCollapse",$.proxy(FulfillUtil.DetailCollapse,{ grid: fulGrid }));
+                    
+                    fulGrid.bind("detailInit",$.proxy(FulfillUtil.SerialGridInit,{ 
+                        grid: fulGrid 
+                    }));
+                    
+                    fulGrid.refresh();
+                    fulfillWindow.open().center();
+                    
+                    KenandyErp.ClearMessage($("#fulGrid").closest("div.grid-container").find("div.grid-message"));
+                    $('#fulGrid .grid-populate-component-quantities-custom-command').on("click",$.proxy(FulfillUtil.Populate,{ grid: fulGrid,fulDateFields: fulDateFields,serialDateFields: serialDateFields }));
+                },
+               
+                
+                UpdateDetailList: function(id,serialList) {
+                    var found = false;
+                    
+                    $.each(serialData,function() {
+                        if (this.Id == id) {
+                            this.serialList = serialList;
+                            found = true;
+                            return false;
+                        }
+                    });
+                    
+                    if (!found) {
+                        serialData.push({ Id: id,serialList: serialList });
+                    }
+                },
+                GetDetailListById: function(id) {
+                    var data = _.where(serialData,{ Id: id });
+                    var serialList = [];
+                    
+                    if (data.length > 0) {
+                        serialList = data[0].serialWrapperList[0].serialList;
+                    }
+                    
+                    return serialList;
+                },
+                SerialGridInit: function(e) {
+                  
+                    var grid = this.grid;
+                    var serialGrid = e.detailRow.find('div.grid-Serials').data('kendoGrid');
+                    var type = this.type;
+                    
+                    var uid = e.data.uid;
+                    
+                    var serialList = FulfillUtil.GetDetailListById(uid);
+                    
+                    if(serialList.length === 0){
+                        serialList = e.data.serialWrapperList[0].serialList;
+                    }
+                        
+                    
+                    var serialDateFields = KenandyErp.KendoGridOptions.GetDateFields(JSONUtils.Parse(serialList));
+                    
+
+                    
+                    var getSerialModel = function() {
+                        var fields = KenandyErp.KendoGridOptions.GetFields(serialFieldList);
+                        fields.IsSelected__custom = { type: "boolean" };
+
+                        var model = kendo.data.Model.define({ id: "Id",fields: fields });
+                        return model;
+                    };
+                            
+                    var getSerialColumns = function() {
+                        var columns = [];
+
+                        $.each(KenandyErp.KendoGridOptions.GetColumns(serialFieldList),function(a,b) {
+                            columns.push(b);
+                        });
+                        
+                        
+                        return columns;
+                    };
+                    
+                    var getSerialDataSource = function() {
+                        var dataSource = new kendo.data.DataSource({
+                            data: serialList,
+                            batch: true,
+                            schema: {
+                                model: getSerialModel(),
+                                parse: function(response) {
+                                    $.each(response,function(idx, item) {
+                                        item = Serializer.ConvertFromSFDCDate(item,{ dateFields: serialDateFields });
+                                    });
+                                    return response;
+                                }
+                            },
+                            change: function() {
+                                FulfillUtil.UpdateDetailList(uid,this.data());
+                            }
+                        });
+                        return dataSource;
+                    };
+
+                    
+
+                    var onDataBound = function(e) {
+                        if (e.sender.dataSource.total() == 0) {
+                            var colCount = e.sender.columns.length;
+                            
+                            $(e.sender.wrapper)
+                                .find('.k-grid-content tbody')
+                                .append('<tr class="kndy-grid-empty"><td colspan="' + colCount + '" class="kndy-grid-empty-message">No records to display</td></tr>');
+                        }
+                        
+                        
+                    };
+
+                    serialGrid = e.detailRow.find(".grid-Serials").kendoGrid({
+                        dataSource: getSerialDataSource(), 
+                        navigatable: true,
+                        columns: getSerialColumns(),
+                        sortable: false,
+                        filterable: true,
+                        resizable: true,
+                        editable: true,
+                        dataBound: onDataBound,
+                        edit: function(e){
+                            var input = e.container.find(".k-input");
+                            
+                            if (e.container.find('.k-numerictextbox').length > 0) {
+                                input.addClass("kndy-text-right");
+                                input.on('focus',function() {
+                                    var that = $(this);
+                                    setTimeout(function() {
+                                        if (!kendo.support.browser.safari) {
+                                            that.select();
+                                        }
+                                    });
+                                });
+                                input.focus();
+                            }
+                            
+                        }
+                    }).data('kendoGrid');
+                
+                  
+                
+                },
+                DetailExpand: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    var masterDataItem = grid.dataItem(e.masterRow);
+                    expandedRows.push(masterDataItem.uid);
+                },
+                
+                DetailCollapse: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    var masterDataItem = grid.dataItem(e.masterRow);
+                    expandedRows.pop(masterDataItem.uid);
+                },
+                ExpandRows: function(e) {
+                    expandedRows = [];
+                    var grid = this.grid;
+                    grid.expandRow(grid.tbody.find("tr.k-master-row"));
+                },
+                
+                CollapseRows: function(e) {
+                    expandedRows = [];
+                    var grid = this.grid;
+                    grid.collapseRow(grid.tbody.find("tr.k-master-row"));
+                },
+                };
+            
+                 }();   
+    </script>
+    
+    <script type="text/x-kendo-template" id="detailTemplate">
+        <div class="grid-container grid-detail-container k-block k-info-colored">
+            <div class="grid-Serial-message" />
+            <div class="grid-Serials" />
+        </div>
+    </script>
+</apex:page>

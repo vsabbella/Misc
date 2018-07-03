@@ -1,0 +1,592 @@
+<apex:page standardController="MRP__c" id="mrpreleasewithagreementpgid" 
+     recordSetVar="POss" sidebar="false" extensions="MRPPlannedPurchaseAgainstAgreementExt">
+<style type="text/css">
+		.column-width {
+        	width: 25%;
+        }
+	</style>
+	
+    <c:KendoResources />
+
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+
+	<apex:form id="form">
+        <div class="page-container">
+    		<apex:sectionHeader subtitle="{!$Label.MRP_Planned_Purchase}" />
+    
+    		<div class="page-message"></div>
+    	<apex:pagemessages ></apex:pagemessages>  
+		<!-- <apex:pageBlock title="Filters">	
+				<apex:panelGrid columns="4" width="100%" styleClass="search-filters" columnClasses="column-width">
+			        <apex:outputPanel >
+				        <label class="company-label" for="companyFilter">Company:</label>
+				        <input id="companyFilter" class="kendoWidgetSelector" />
+			        </apex:outputPanel>
+		
+			        <apex:outputPanel >
+						<label class="facility-label" for="facilityFilter">Facility:</label>
+						<input id="facilityFilter" class="kendoWidgetSelector" />
+			        </apex:outputPanel>
+		
+					<apex:outputPanel >
+						<input name="searchFilter" id="searchFilter" type="button" value="Search" onclick="ContractReleaseActions.Search();" class="btn" />
+			        </apex:outputPanel>	
+		
+					<apex:outputPanel >
+						&nbsp;
+					</apex:outputPanel>
+			    </apex:panelGrid>
+			    
+			    <apex:panelGrid columns="4" width="100%" styleClass="display-filters k-hidden" columnClasses="column-width">
+			        <apex:outputPanel >
+				        <label class="company-label">Company: <span id="companyName"></span></label>
+			      		<input id="companyId" type="hidden" />
+			        </apex:outputPanel>
+		
+			        <apex:outputPanel >
+						<label class="facility-label">Facility: <span id="facilityName"></span></label>
+						<input id="facilityId" type="hidden" />
+			        </apex:outputPanel>
+		
+					<apex:outputPanel >
+						<input name="changeFilters" id="changeFilters" type="button" value="Change Filters" onclick="ContractReleaseActions.ChangeFilters();" class="btn" />
+			        </apex:outputPanel>	
+		
+					<apex:outputPanel >
+						&nbsp;
+					</apex:outputPanel>
+			    </apex:panelGrid>
+			</apex:pageBlock> --> 
+			<apex:pageBlock title="{!$Label.Search_All}">    
+				<apex:panelGrid columns="1" width="100%" styleClass="search-all-filter" columnClasses="column-width">
+			        <apex:outputPanel >
+				        <label class="search-all-label" for="searchAllFilter">{!$Label.Search}:</label>
+				        <input id="searchAll" class="k-textbox kendoWidgetSelector" onkeyup="ContractReleaseActions.SearchAll();" />
+			        </apex:outputPanel>
+			    </apex:panelGrid>
+			    
+		    </apex:pageBlock>
+			<apex:pageBlock title="{!$Label.MRP_Planned_Purchases}">    
+				<div class="grid-container">
+		    		<div class="grid-message"></div>
+		        	<div id="{!mrpPlannedPurchaseConfig.uniqueId}" ></div>
+		        </div>
+		         <apex:pageBlockButtons >
+		            
+		        	<apex:outputPanel layout="none">
+		            	<a href="{!previousPage}" style="text-decoration: none;"><input type="button" value="{!$Label.Go_Back}" class="btn" /></a>
+		           	</apex:outputPanel>
+		       
+		       	</apex:pageBlockButtons>
+		    </apex:pageBlock>
+			<apex:pageBlock title="{!$Label.Sourcing_Policy}" rendered="{!showSourcingGrid}">
+				<div class="grid-container">
+		    		<div class="grid-message"></div>
+		        	<div id="{!sourcingPolicyConfig.uniqueId}" ></div>
+		        </div>
+		    </apex:pageBlock>
+			<apex:pageBlock title="{!$ObjectType.Contract_Line__c.LabelPlural}">    
+				<div class="grid-container">
+		    		<div class="grid-message"></div>
+		        	<div id="{!contractLinesConfig.uniqueId}" ></div>
+		        </div>
+		        
+		        <apex:pageBlockButtons >
+		            
+		        	<apex:outputPanel layout="none">
+		            	<input name="addLines" id="addLines" type="button" value="{!$Label.Add}" class="btn add-command" />
+		           	</apex:outputPanel>
+		           	
+		       	</apex:pageBlockButtons>
+		    </apex:pageBlock>
+		    
+		    <apex:pageBlock title="{!$Label.Release_Lines}">    
+				<div class="grid-container">
+		    		<div class="grid-message"></div>
+		        	<div id="{!releaseLinesConfig.uniqueId}" ></div>
+		        </div>
+		        <apex:pageBlockButtons >
+		            
+		        	<apex:outputPanel layout="none">
+		            	<input name="createRelease" id="createRelease" type="button" value="{!$Label.Create_Release}" class="btn release-command" />
+		           	</apex:outputPanel>
+		       
+		       	</apex:pageBlockButtons>
+		    </apex:pageBlock>
+		</div> 
+    </apex:form>
+
+    <script type="text/javascript">  
+    	var mrpPlannedGrid;
+    	var contractLinesGrid;
+    	var sourcingPolicyGrid;
+    	var releaseLinesGrid;
+    	var enableSourcingPolicy = false;
+		var companyId = '{!defaultCompany}';
+		var facilityId = '{!defaultFacility}';
+		var isOnPageLoad = true;
+		var defaultNeedDate;
+		var contractLinesFieldList = '{!contractLinesFieldList}';
+		
+		var getMRPPlannedPurchaseData = function() {
+            var deferred = $.Deferred();
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.MRPPlannedPurchaseAgainstAgreementExt.getMRPPlannedPurchaseRecords}',
+                JSON.parse('{!SelectedMRPIDAsString}'),
+                function (result, event) {
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+            );
+
+            return deferred.promise();
+            
+        }
+        
+        var getSourcingPolicyData = function() {
+            var deferred = $.Deferred();
+            
+            if (isOnPageLoad) {
+            	setTimeout(function() {
+	  				deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+	 			}, 100);
+            }
+            else {
+	            Visualforce.remoting.Manager.invokeAction(
+	                '{!$RemoteAction.MRPPlannedPurchaseAgainstAgreementExt.getItemCrossReferenceRecords}',
+	                companyId,
+	                facilityId,
+	                JSON.parse('{!SelectedMRPItemIDsAsString}'),
+	                function (result, event) {
+	                    deferred.resolve(result, event);
+	                },
+	                {escape: false}
+	            );
+			}
+            return deferred.promise();
+        }
+       
+       var getContractLinesData = function() {
+            var deferred = $.Deferred();
+            
+            if (isOnPageLoad) {
+            	setTimeout(function() {
+	  				deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+	 			}, 100);
+            }
+            else {
+	            Visualforce.remoting.Manager.invokeAction(
+	                '{!$RemoteAction.MRPPlannedPurchaseAgainstAgreementExt.getContractLines}',
+	                companyId,
+	                facilityId,
+	                JSON.parse('{!SelectedItemUOMKeysAsString}'),
+	                function (result, event) {
+	                    deferred.resolve(result, event);
+	                },
+	                {escape: false}
+	            );
+			}
+			
+            return deferred.promise();
+        }
+        
+        var getReleaseLinesData = function() {
+        	var deferred = $.Deferred();
+
+ 			setTimeout(function() {
+  				deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+ 			}, 100);
+        	
+            return deferred.promise();
+        }
+
+		 
+        
+        $(document).ready(function() {
+        	ContractReleaseUtils.Init({
+        		mrpPlannedGridFieldList: '{!mrpPlannedPurchaseFieldList}'
+        	});
+        	
+        	// Initialize Company Lookup
+        	//var companyDropdown = $.fn.KendoComboBox($('#companyFilter'), { lookupSearchAction: '{!$RemoteAction.MRPPlannedPurchaseAgainstAgreementExt.lookupSearchFilter}', referenceTo: 'Company__c', title: '{!$ObjectType.Company__c.Label}', value: '{!defaultCompany}' });
+        	
+        	// Initialize Facility Lookup
+        	//$.fn.KendoComboBox($('#facilityFilter'), { lookupSearchAction: '{!$RemoteAction.MRPPlannedPurchaseAgainstAgreementExt.lookupSearchFilter}', referenceTo: 'Facility__c', title: '{!$ObjectType.Facility__c.Label}', value: '{!defaultFacility}', filterCriteria: "Company__c = \'#=Id#\'", cascadeFrom: 'companyFilter' });
+        	
+        	// Initialize Contract Lines Grid
+            contractLinesGrid = $.fn.GridRelatedList($('#{!contractLinesConfig.uniqueId}'), { namespace: '{!NamespaceUU}', config: '{!contractLinesConfigJson}', fieldList: ContractReleaseUtils.GetFieldList('{!contractLinesFieldList}'), lookupSearchAction: '{!$RemoteAction.MRPPlannedPurchaseAgainstAgreementExt.lookupSearch}', getRelatedListFunction: getContractLinesData });
+            
+            // Initialize Release Lines Grid
+            releaseLinesGrid = $.fn.GridRelatedList($('#{!releaseLinesConfig.uniqueId}'), { namespace: '{!NamespaceUU}', config: '{!releaseLinesConfigJson}', fieldList: ContractReleaseUtils.GetFieldList('{!releaseLinesFieldList}'), lookupSearchAction: '{!$RemoteAction.MRPPlannedPurchaseAgainstAgreementExt.lookupSearch}', getRelatedListFunction: getReleaseLinesData });
+            
+            // Initialize Sourcing Policy Grid
+            if ({!showSourcingGrid}){
+            	sourcingPolicyGrid = $.fn.GridRelatedList($('#{!sourcingPolicyConfig.uniqueId}'), { namespace: '{!NamespaceUU}', config: '{!sourcingPolicyConfigJson}', fieldList: ContractReleaseUtils.GetFieldList('{!sourcingPolicyFieldList}'), lookupSearchAction: '{!$RemoteAction.MRPPlannedPurchaseAgainstAgreementExt.lookupSearch}', getRelatedListFunction: getSourcingPolicyData });
+            }
+            // Initialize MRP Planned Purchase Grid
+            mrpPlannedGrid = $.fn.GridRelatedList($('#{!mrpPlannedPurchaseConfig.uniqueId}'), { namespace: '{!NamespaceUU}', config: '{!mrpPlannedPurchaseConfigJson}', fieldList: ContractReleaseUtils.GetFieldList(ContractReleaseUtils.MrpPlannedGridFieldList), lookupSearchAction: '{!$RemoteAction.MRPPlannedPurchaseAgainstAgreementExt.lookupSearch}', getRelatedListFunction: getMRPPlannedPurchaseData });
+            
+            // Bind Grid Events
+			$('.add-command').on("click", $.proxy(ContractReleaseActions.Add, { grid: contractLinesGrid }));
+            $('.release-command').on("click", $.proxy(ContractReleaseActions.Release, { grid: releaseLinesGrid, contractLinesGrid: contractLinesGrid, dateFields: KenandyErp.KendoGridOptions.GetDateFields(JSON.parse(contractLinesFieldList)) }));
+            
+            // Bind grid edit event to attach needDate validation
+            contractLinesGrid.bind('edit', function(e){
+            	if (e.model.ctLine.Contract_Start__c && e.model.ctLine.Contract_End__c && $(e.container).find('input[name="needDate"]').data('kendoDatePicker')) {
+            		$(e.container).find('input[name="needDate"]').data('kendoDatePicker').min(new Date());
+            		$(e.container).find('input[name="needDate"]').data('kendoDatePicker').max(e.model.ctLine.Contract_End__c);
+            	}
+            	
+           		// Validate MOQ on quantity to release field
+            	$(e.container).find('input[name="quantityToRelease"]').bind('blur', 
+            		$.proxy(ContractReleaseActions.ValidateQtyToRelease, { grid: contractLinesGrid })
+            	);
+		    });
+		    
+            // Bind grid edit event to attach needDate validation
+            releaseLinesGrid.bind('edit', function(e){
+            	if (e.model.ctLine.Contract_Start__c && e.model.ctLine.Contract_End__c && $(e.container).find('input[name="needDate"]').data('kendoDatePicker')) {
+            		$(e.container).find('input[name="needDate"]').data('kendoDatePicker').min(new Date());
+            		$(e.container).find('input[name="needDate"]').data('kendoDatePicker').max(e.model.ctLine.Contract_End__c);
+            	}
+		    });
+		    
+		    mrpPlannedGrid.dataSource.bind('requestEnd', ContractReleaseActions.OnMRPPlannedGridRequestEnd);
+        });
+		
+        var ContractReleaseUtils = function() {
+        	
+        	return {
+        		MrpPlannedGridFieldList: null,
+        		
+        		Init: function(args) {
+        			this.MrpPlannedGridFieldList = args.mrpPlannedGridFieldList;
+        		},
+        		
+        		GetFieldList: function(fieldList) {
+        			fieldList = JSON.parse(fieldList);
+        			
+        			$.each(fieldList, function() { 
+        				if (this.field == 'quantityToRelease') {
+			            	this.min = 0;
+			            }
+        });
+		
+        			return JSON.stringify(fieldList);
+        		}
+        	};
+		}();
+		
+        var ContractReleaseActions = function() {
+			
+			return { 
+			
+        		Search: function() {
+        			var companyFilter = $('#companyFilter').data('kendoComboBox');
+        			var facilityFilter = $('#facilityFilter').data('kendoComboBox');
+        			
+        			var companyId = companyFilter.value();
+        			var companyName = companyFilter.text();
+        			var facilityId = facilityFilter.value();
+        			var facilityName = facilityFilter.text();
+        			
+        			KenandyErp.ClearMessage();
+        			
+        			if (!companyId) {
+        				KenandyErp.Message('{!$Label.Company_is_required}');
+        				return false;
+        			}
+        			else if (!facilityId) {
+                        KenandyErp.Message('{!$Label.Facility_is_required}');
+                        return false;
+                   }
+        			
+        			$('.search-filters').hide();
+        			$('.display-filters').show();
+        			
+        			$('#companyId').val(companyFilter.value());
+        			$('#companyName').html(KenandyErp.LookupHoverDetail(companyId, companyName));
+        			$('#facilityId').val(facilityFilter.value());
+        			$('#facilityName').html(KenandyErp.LookupHoverDetail(facilityId, facilityName));
+        			
+        			contractLinesGrid.dataSource.read();
+        			sourcingPolicyGrid.dataSource.read();
+        			
+        			return true;
+        		},
+        		
+        		SearchAll: function(){
+        			var searchFilter = $('#searchAll').val();
+        			
+        			mrpPlannedGrid.wrapper.find('.grid-search-command').val(searchFilter).trigger('keyup');
+        			contractLinesGrid.wrapper.find('.grid-search-command').val(searchFilter).trigger('keyup');
+        			sourcingPolicyGrid.wrapper.find('.grid-search-command').val(searchFilter).trigger('keyup');
+        		},
+        		
+        		ChangeFilters: function() {
+        			$('.search-filters').show();
+        			$('.display-filters').hide();
+        		},
+        		
+        		ValidateQtyToRelease: function(e) { // KNDY-10905
+        			var self = this;
+					var grid = this.grid;
+					var messageElement = grid.element.closest("div.grid-container").find("div.grid-message");
+					var cell = grid.editable.element;
+					var row = $(e.target).closest("tr"); //get the row
+           			var dataItem = grid.dataItem(row); // get the row data
+           			var quantity = dataItem.get('quantityToRelease') ? dataItem.get('quantityToRelease') : null;
+           			var ctLines = [];
+           			var dateFields = KenandyErp.KendoGridOptions.GetDateFields(JSON.parse(contractLinesFieldList));
+           			
+           			var ctLineItem = dataItem.get('ctLine');
+           			
+           			ctLineItem = ctLineItem.toJSON();
+                    ctLineItem = Serializer.ConvertToSFDCDate(ctLineItem, { dateFields: dateFields });
+                    ctLines.push(ctLineItem);
+                    
+                    if (ctLines.length > 0) {
+		                ctLines = Serializer.ParameterMap(ctLines);
+		                ctLineItem = ctLines[0];
+					}
+           			if (dataItem.get('quantityToRelease') <= 0) {
+           				$('.add-command').removeAttr('disabled');
+					    $('.add-command').removeClass('btnDisabled');			
+           				return;
+           			}
+           			
+           			KenandyErp.BlockUI();
+					       	
+				        Visualforce.remoting.Manager.invokeAction(
+			                '{!$RemoteAction.MRPPlannedPurchaseAgainstAgreementExt.isWithinMOQ}',
+			                ctLineItem,
+			                quantity,
+			                function (result, event) {
+			                	KenandyErp.UnBlockUI();
+			                	
+			                	if (event.type == 'exception') {
+									KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+								} else {
+									KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+									
+				                    if (!result.success) {
+					                    grid.closeCell();
+					                    
+					                    try {
+	        								grid.editCell(cell);
+	        							}
+	        							catch(e){
+	        							}
+	        							
+	        							$('.add-command').attr('disabled', 'disabled');
+	        							$('.add-command').addClass('btnDisabled');
+	        							KenandyErp.KendoGridOptions.ShowValidationError(cell, e.target.name, result.message);
+					                }
+					                else {
+					                	$('.add-command').removeAttr('disabled');
+					                	$('.add-command').removeClass('btnDisabled');
+					                }
+					        	}
+			                },
+			                {escape: false}
+			            );
+        		},
+		   		
+		   		Add: function(e) {
+		   			var self = this;
+		   			var grid = self.grid;
+		   			var releaseLinesGrid = $('#{!releaseLinesConfig.uniqueId}').data('kendoGrid');
+		   			
+		   			var messageElement = grid.element.closest("div.grid-container").find("div.grid-message").first();
+					var currentData = grid.dataSource.data();
+					var updatedRows = {};
+					var columns = grid.columns;
+					var invalidQtyToRelease = '';
+					updatedRows = $.map(currentData, function(item, index) {						
+						item = item.toJSON();
+						
+						// KNDY-10905
+						if(item.quantityToRelease && item.ctLine.Minimum_Order_Quantity__c  &&
+							item.quantityToRelease < item.ctLine.Minimum_Order_Quantity__c){
+							invalidQtyToRelease += item.ctLine.Name + ',';
+						}
+						if (item.quantityToRelease > 0) {
+							
+							for (var i = 0; i < columns.length; i++) {
+								var name = columns[i].field;
+								
+								if (name != 'needDate' && name != 'quantityToRelease')
+									delete item[name];
+							}
+							
+							return item;
+						}
+					});
+					
+					if (invalidQtyToRelease != '') {// KNDY-10905
+						var pos = invalidQtyToRelease.lastIndexOf(",");
+						var errLines = invalidQtyToRelease.slice(0,pos); // remove the last ,
+						KenandyErp.Message("{!$Label.Quantity_entered_to_release_is_less_than_minimum_order_quantity}" + ': ' + errLines, KenandyErp.MessageType.Error, messageElement);
+						return;
+					}
+				 		
+		        	if (updatedRows.length == 0) {
+		        		KenandyErp.Message("No records changed.", KenandyErp.MessageType.Info, messageElement);
+		        		return;
+		        	}
+		        	
+		        	releaseLinesGrid.dataSource.data(updatedRows);
+		   		},
+		   		
+				Release: function(e) {
+					var self = this;
+		   			var grid = self.grid;
+		   			var contractLinesGrid = self.contractLinesGrid;
+		   			var dateFields = self.dateFields;
+		   			//var mrpPlannedGrid = $('#{!mrpPlannedPurchaseConfig.uniqueId}').data('kendoGrid');
+		   			var mrpPlannedPurchaseGridData = mrpPlannedGrid.dataSource.data();
+		   			var messageElement = grid.element.closest("div.grid-container").find("div.grid-message").first();
+		   			
+		   			if (grid.editable && !grid.editable.validatable.validate()) {
+		                e.preventDefault();
+		                return false;
+		            }
+		        	//KNDY-2958
+		        	var mrpPlannedRows = {};
+		        	var mrpPlannedGridDateFields = KenandyErp.KendoGridOptions.GetDateFields(JSON.parse(ContractReleaseUtils.MrpPlannedGridFieldList));
+									
+					mrpPlannedRows = $.map(mrpPlannedPurchaseGridData, function(item, index) {
+						if (item) {
+							item = item.toJSON();
+                        	item = Serializer.ConvertToSFDCDate(item, { dateFields: mrpPlannedGridDateFields });
+							return item;
+						}
+					});
+					
+					if (mrpPlannedRows.length > 0) {
+		                mrpPlannedRows = Serializer.ParameterMap(mrpPlannedRows);
+					}
+					
+		   			var currentData = grid.dataSource.data();
+					var updatedRows = {};
+					var columns = grid.columns;
+									
+					updatedRows = $.map(currentData, function(item, index) {
+						if (item) {
+							item = item.toJSON();
+                        	item = Serializer.ConvertToSFDCDate(item, { dateFields: dateFields });
+							
+							for (var i = 0; i < columns.length; i++) {
+								var name = columns[i].field;
+								
+								if (name != 'needDate' && name != 'quantityToRelease')
+									delete item[name];
+							}
+							
+							return item;
+						}
+					});
+				 		
+		        	if (updatedRows.length == 0) {
+		        		KenandyErp.Message("No records changed.", KenandyErp.MessageType.Info, messageElement);
+		        		return;
+		        	}
+		        	
+					if (updatedRows.length > 0) {
+		                updatedRows = Serializer.ParameterMap(updatedRows, { isDml: false });
+					}
+		        	
+		        	dateFields = _.pluck(dateFields, KenandyErp.KendoGridOptions.FieldInfo.Field);
+		        	// Remove the prefix for the date fields
+		        	dateFields = $.map(dateFields, function(item, index) {
+						if (item.indexOf('.') != -1) {
+							item = item.split('.')[1];
+						}
+						
+						return item;
+					});
+					
+					dateFields.pop('needDate');
+					
+					KenandyErp.BlockUI(grid.element);
+									
+					Visualforce.remoting.Manager.invokeAction(
+				    	'{!$RemoteAction.MRPPlannedPurchaseAgainstAgreementExt.release}',
+				    	companyId,
+						facilityId,
+                		updatedRows,
+						dateFields,
+						mrpPlannedRows,
+						function (result, event) {
+							KenandyErp.UnBlockUI(grid.element);
+								    	
+							if (event.type == 'exception') {
+								KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+							} else {
+								if (result.success) {
+									//refresh the grid
+	                				grid.dataSource._destroyed = [];
+	                				grid.dataSource.read();
+	                				
+	                				//refresh MRP grid
+	                				mrpPlannedGrid.dataSource.read();
+	                				KenandyErp.Messages(result.messages, messageElement);
+								}
+								else {
+									KenandyErp.Messages(result.messages, messageElement);
+								}
+							}
+						},
+						{escape: false}
+					);
+		   		}, 
+		   		/* use case: upon save, reload mrp grid and then copy over the required date into the need date fields.
+		   		Capture the request end of MRP planned grid, issue a data bound to MRP grid & data bind to contract lines grid. 
+		   		In the contract lines grid data binding, prevent it from issuing a data binding request again. manipulate the data as needed (in this case, set the need date).
+		   		Issue a data unbind on contract lines grid itself and refresh it to load the new need dates. 
+		   		Now, the contract lines bind request is done. 
+		   		The data bound request executes on its own. This is coming off of a read which was part of the save. So it refreshes the grid. Capture the 
+		   		need date again and finally issue a read on the 2 grids on page and this will paint the grids in. 
+		   		
+		   		Reason for such sequence is that during debugging found that request end would occur first hence, to establish the sequence below.
+		   		Not issuing the contract lines read on save since we are doing it below here. If we issue a read inside the save method, it will execute first in which case
+		   		the data bound will not occur and the need date will be null when painted. 
+		   		*/
+		   		OnMRPPlannedGridDataBound: function(e) {
+		   			isOnPageLoad = false;
+		   			
+		   			if (mrpPlannedGrid.dataSource.total() > 0) {
+		   				var tDay = KenandyErp.Today();
+		   				defaultNeedDate = mrpPlannedGrid.dataSource.data()[0].get('Required_Date__c');
+		   				if (defaultNeedDate < tDay){
+		   					defaultNeedDate = tDay;
+		   				}
+		   				contractLinesGrid.dataSource.read();
+        				sourcingPolicyGrid.dataSource.read();
+        			}
+        			
+        			mrpPlannedGrid.unbind('dataBound', ContractReleaseActions.OnMRPPlannedGridDataBound);
+		   		},
+		   		
+		   		OnMRPPlannedGridRequestEnd: function(e) {
+		   		    if (e.type != "read") return;
+		   		    
+		   			mrpPlannedGrid.bind('dataBound', ContractReleaseActions.OnMRPPlannedGridDataBound);
+		   			contractLinesGrid.bind('dataBinding', ContractReleaseActions.OnContractLinesGridDataBinding);
+		   		},
+		   		
+		   		OnContractLinesGridDataBinding: function(e) {
+		   			e.preventDefault();
+		   			
+		   			$.each(e.sender.dataSource.data(), function() {
+			            this.needDate = defaultNeedDate; //Reason for not using a setter is it will issue a data bind again
+			        });
+			        
+			        contractLinesGrid.unbind('dataBinding', ContractReleaseActions.OnContractLinesGridDataBinding);
+		   			contractLinesGrid.refresh();
+		   		}
+			};
+		}();
+    </script>
+</apex:page>

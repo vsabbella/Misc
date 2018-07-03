@@ -1,0 +1,123 @@
+<apex:page standardController="Sales_Order__c"
+           extensions="SalesOrderAllowancesExt"
+           docType="html-5.0" sidebar="true" action="{!createAutomaticAllowance}">
+
+	<apex:sectionHeader title="{!Sales_Order__c.Name}" subtitle="{!$Label.Sales_Order_Allowances}"></apex:sectionHeader>
+
+	<apex:form id="form">
+		<c:busyWait />
+	    <apex:pageBlock mode="edit" >
+	    	<apex:pageMessages />
+
+	        <apex:pageBlockButtons >
+	            <apex:commandButton action="{!reset}"  value="Reapply Allowances" status="actionStatus" rerender="form" rendered="{!NOT(autoAllowancesEnabled)}"/>
+	            <apex:commandButton action="{!cancel}"  value="{!$Label.Go_Back}" status="actionStatus" rerender="form"/>
+	        </apex:pageBlockButtons>
+
+	        <apex:pageBlockSection columns="2" title="{!$Label.Order_Header}" >
+	            <apex:repeat value="{!$ObjectType.Sales_Order__c.FieldSets.Allowances}" var="f" >
+	                <apex:outputField value="{!Sales_Order__c[f]}"/>
+	            </apex:repeat>
+	            <!-- <span>&nbsp;</span>             -->
+
+	        </apex:pageBlockSection>
+
+            <!-- <apex:pageBlockSection> -->
+	            <apex:commandButton action="{!URLFOR($Action.Allowance_Applied__c.New, null,[rid=Sales_Order__c.id])}" value="{!$Label.Add_Allowance}" status="actionStatus" rerender="form"/>
+
+	        <!-- </apex:pageBlockSection> -->
+
+	        <apex:pageBlockTable value="{!Sales_Order__c.Allowances_Applied__r}" var="a">
+	            <apex:column >
+	            	<apex:outputLink value="/{!a.Id}/e?retURL={!retUrl}?id={!a.Sales_Order__c}" rendered="{!OR(a.Allowance_Type__r.Manual__c, a.Allowance_Type__r.Allow_Override__c)}">edit</apex:outputLink>
+                    &nbsp;&nbsp;&nbsp;
+                    <apex:commandLink value="{!$Label.del}" action="{!deleteRecord}" rerender="form" status="actionStatus" rendered="{!OR(a.Allowance_Type__r.Manual__c,!autoAllowancesEnabled)}">
+                    <!-- {OR(a.Allowance_Type__r.Manual__c,autoAllowancesEnabled) -->
+	                    	<apex:param name="did" value="{!a.Id}" />
+	                    </apex:commandLink>
+
+	                    </apex:column>
+	            <apex:column >
+	            	<apex:outputPanel >
+						<a href="/{!a.Id}">{!a.Name}</a>
+					</apex:outputPanel>
+				</apex:column>
+
+				<!-- <apex:column value="{!a.Allowance_Type__c}" /> -->
+				<apex:column value="{!a.Allowance_Rule2__c}" />
+				<apex:column value="{!a.Allowance_Code__c}" />
+	            <apex:column value="{!a.Allowance_Type__r.Manual__c}" />
+	            <!-- <apex:column value="{!a.Allowance_Type__r.Allow_Override__c}" /> -->
+	            <apex:column value="{!a.Allowance_Amount__c}" />
+	        </apex:pageBlockTable>
+
+	        <apex:repeat value="{!wSOLlist}" var="wSOL" >
+	            <apex:pageBlockSection columns="2" title="{!$ObjectType.Sales_Order_Line__c.Label} : {!wSOL.sol.name}" >
+	                <apex:repeat value="{!$ObjectType.Sales_Order_Line__c.FieldSets.Allowances}" var="f" >
+	                    <apex:outputField value="{!wSOL.sol[f]}"/>
+	                </apex:repeat>
+	            </apex:pageBlockSection>
+
+	            <!-- <apex:pageBlockSection> -->
+	                <apex:commandButton action="{!URLFOR($Action.Allowance_Applied__c.New, null,[rid=wSOL.sol.id])}" status="actionStatus" rerender="form"
+	            		value="{!$Label.Add_Allowance}"/>
+
+	            <!-- </apex:pageBlockSection> -->
+
+<!-- 	            <apex:pageBlockSection columns="1">
+ -->
+	                <apex:pageBlockTable value="{!wSOL.aaiList}" var="a" >
+	                   	<apex:column >
+							<apex:outputPanel rendered="{!a.isTrade == false}">
+								<!-- <a href="/{!a.aaId}/e?retURL={!retUrl}?id={!a.salesOrderId}">{!$Label.Edit}</a> -->
+								<apex:outputLink value="/{!a.aaId}/e?retURL={!retUrl}?id={!a.salesOrderId}" rendered="{!OR(a.aaType.Manual__c, a.aaType.Allow_Override__c)}">edit</apex:outputLink>
+								&nbsp;
+								<apex:commandLink value="{!$Label.del}" action="{!deleteRecord}" rerender="form" rendered="{!OR(a.aaType.Manual__c,!autoAllowancesEnabled)}" >
+									<apex:param name="did" value="{!a.aaId}" />
+								</apex:commandLink>
+							</apex:outputPanel>
+						</apex:column>
+	                    <apex:column >
+							<apex:outputPanel >
+								<a href="/{!a.aaId}">{!a.Name}</a>
+							</apex:outputPanel>
+						</apex:column>
+						
+	                    <!-- <apex:column headerValue="{!$ObjectType.Allowance_Applied__c.Fields.Allowance_Type__c.Label}">
+							<apex:outputPanel >
+								<a href="/{!a.typeId}">{!a.allowanceType}</a>
+							</apex:outputPanel>
+	                    </apex:column> -->
+	                    <apex:column headerValue="{!$ObjectType.Allowance_Applied__c.Fields.Allowance_Rule2__c.Label}">
+							<apex:outputPanel >
+								<a href="/{!a.ruleId}">{!a.allowanceRule}</a>
+							</apex:outputPanel>
+	                    </apex:column>
+	                    <apex:column headerValue="{!$ObjectType.Allowance_Applied__c.Fields.Allowance_Code__c.Label}" value="{!a.arCode}"/>
+	                    <apex:column headerValue="{!$ObjectType.Allowance_Type__c.Fields.Manual__c.Label}" value="{!a.aaType.Manual__c}"/>
+	                    <!-- <apex:column headerValue="{!$ObjectType.Allowance_Type__c.Fields.Allow_Override__c.Label}" value="{!a.aaType.Allow_Override__c}"/> -->
+	                    <apex:column headerValue="{!$ObjectType.Allowance_Type__c.Fields.One_Time__c.Label}" value="{!a.aaType.One_Time__c}"/>
+	                    <!-- </apex:column> -->
+	                    <apex:column headerValue="{!$ObjectType.Allowance_Applied__c.Fields.Override_Value__c.Label}" value="{!a.allowanceApplied.Override_Value__c}"/>
+	                    <apex:column headerValue="{!$ObjectType.Allowance_Applied__c.Fields.Allowance_Amount__c.Label}" value="{!a.allowanceAmount}" />
+	                    <!-- <apex:column headerValue="{!$ObjectType.Allowance_Applied__c.Fields.Off_Invoice_Rate__c.Label}" value="{!a.offInvoiceRate}" />
+	                    <apex:column headerValue="{!$ObjectType.Allowance_Applied__c.Fields.BillBack_Rate__c.Label}" value="{!a.billBackRate }" /> -->
+	                    <!-- <apex:column headerValue="{!$ObjectType.Allowance_Applied__c.Fields.Off_Invoice_Paid__c.Label}" value="{!a.offInvoiceAmount}" /> -->
+	                    <apex:column headerValue="{!$ObjectType.Allowance_Applied__c.Fields.Beneficiary__c.Label}">
+							<apex:outputPanel >
+								<a href="/{!a.beneficiaryId}">{!a.beneficiary}</a>
+							</apex:outputPanel>
+	                    </apex:column>
+<!-- 
+	                    <apex:column headerValue="{!$ObjectType.Allowance_Applied__c.Fields.Beneficiary__c.Label}" value="{!a.beneficiary}" />      -->
+	                    <apex:column headerValue="{!$ObjectType.Allowance_Applied__c.Fields.BillBack_Commitment__c.Label}" value="{!a.billBackAmount}" />       
+
+	                </apex:pageBlockTable>
+	            <!-- </apex:pageBlockSection> -->
+
+	        </apex:repeat>
+	    </apex:pageBlock>
+
+	</apex:form>
+
+</apex:page>

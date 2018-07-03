@@ -1,0 +1,169 @@
+<apex:page standardcontroller="Company__c" extensions="Supplier1099BatchExt" title="{!$Label.supplier_1099_batch}" docType="html-5.0">
+
+    <c:KendoResources />
+    <c:busyWait includeScripts="false" />
+    <script src="../../soap/ajax/38.0/connection.js" type="text/javascript"/>
+    <apex:sectionHeader title="{!$ObjectType.Company__c.Label}" subtitle="{!$Label.supplier_1099_batch}"/>
+	<style>
+        .disab {
+            opacity: 0.4;
+            cursor: default;
+            pointer-events: none;
+        }
+        .button-text-bold{
+           font-weight: bold;
+        }
+        .k-tooltip{
+           margin-left:25px;
+        }
+     </style>
+	<apex:form id="form">
+		<apex:pageMessages />
+		<div class="page-message" ></div>
+		<apex:pageBlock >
+			<apex:pageBlockButtons location="top">
+				<input id="goBackBtn" type="button" value="{!$Label.Go_Back}"  class="k-button kndy-btn button-text-bold" />
+				<input id="runBatchBtn" type="button" value="{!$Label.Run_Batch}"  class="k-button kndy-btn run-batch-cls button-text-bold" />
+			</apex:pageBlockButtons>
+
+			<div >
+				<apex:outputPanel >
+					<div  style="display: inline;">
+						<span class="">Year </span>
+						&nbsp;
+						<div style="display: inline;" class="kndy-required-input">
+							<div class="kndy-required-block"></div>
+							<input id="yearPicker" value='2011' required="true"/>
+							<span class="k-invalid-msg" data-for="yearPicker"></span>	
+						</div>
+					</div>
+					<div style="display: inline;margin-left: 240px;">
+						<span  class="">Amount Reporting Threshold </span>
+						&nbsp;
+						<div style="display: inline;" class="kndy-required-input">
+							<div class="kndy-required-block"></div>
+							<input type="number"  id="amountNumericTxtBox"/>
+						</div>
+						
+					</div>
+				</apex:outputPanel>
+			</div>
+		</apex:pageBlock>
+	</apex:form>
+	
+    <script>
+      var companyId = '{!companyId}';
+      $(document).on('KenandyErpReady', function(e) {
+         $('#yearPicker').kendoDatePicker({
+            start: "decade",
+            depth: "decade",
+            format: 'yyyy',
+            dateFormat : 'yyyy',
+            value: new Date()
+         }); 
+         
+         $("#amountNumericTxtBox").kendoNumericTextBox({
+            value: "{!amountReportingThreshold}",
+            min: .01,
+            decimals: 2
+         })
+         
+        // Year validation messages, disable/enable buttons whenever validator runs
+        var validator = $('#yearPicker').kendoValidator({
+            rules: {
+                correctYearFormat: function (e) {
+                   var validYear = Supplier1099BatchUtil.ValidateYear();
+                   Supplier1099BatchUtil.DisableButtons();
+                   return validYear;
+                }
+            },
+            messages: {
+                required: 'Year is required',
+                correctYearFormat: "Invalid year"
+            }
+         }).data("kendoValidator");
+         
+         var Supplier1099BatchUtil = function() {
+            return {
+                DisableButtons: function() {
+                   var isValidYear = Supplier1099BatchUtil.ValidateYear();
+                   var isValidAmount = Supplier1099BatchUtil.ValidateAmount();
+                   if (!isValidYear || !isValidAmount){
+                       $('.run-batch-cls').addClass("disab");
+                   }
+                   else{
+                       $('.run-batch-cls').removeClass("disab"); 
+                   }
+                },
+                
+                ValidateYear: function(){
+                   var dateVal = $('#yearPicker').data('kendoDatePicker').element[0].value;
+                   var validYear = true;
+                   if (!dateVal ){
+                       validYear = false;
+                   }
+                   else{
+                      var yearVal = parseInt(dateVal);
+                      if( isNaN(dateVal) || !yearVal || yearVal < 0){
+                          validYear =  false
+                      }
+                   }
+                   return validYear;
+                },
+                
+                ValidateAmount: function(){
+                   var amount = $("#amountNumericTxtBox").data("kendoNumericTextBox").value();
+                   if( amount && amount > 0){
+                       return true;
+                   }
+                   else{
+                      return false;
+                   }
+                },
+                
+                GoBack: function(e){
+                    e.stopPropagation();
+                    var retunUrl;
+                    if(companyId){
+                        retunUrl =  '/'+companyId;
+                    }  
+                    KenandyErp.BlockUI();
+                    window.location.href = retunUrl;
+                },
+                
+                RunBatch: function(e){
+                   var year = $('#yearPicker').data('kendoDatePicker').element[0].value;
+                   var amount = $("#amountNumericTxtBox").data("kendoNumericTextBox").value();
+                   KenandyErp.BlockUI();
+                   KenandyErp.ClearMessage();
+                   Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.Supplier1099BatchExt.startOffBatch}', 
+                        '{!companyId}',
+                        year,
+                        amount,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();
+                            if (event.type == 'exception' ) {
+                               KenandyErp.Message(event.message + ' : ' + event.type);
+                            }else{
+                               KenandyErp.Messages(result.messages);
+                            }
+                        },
+                        {escape: false}
+                    );
+                }
+            }
+        }();
+        
+        $("#amountNumericTxtBox").data("kendoNumericTextBox").bind("change", function() {
+            Supplier1099BatchUtil.DisableButtons();
+        });
+        
+        $('#goBackBtn').on("click", $.proxy(Supplier1099BatchUtil.GoBack));
+        $('#runBatchBtn').on("click", $.proxy(Supplier1099BatchUtil.RunBatch));
+        $('#yearPicker').on("change", $.proxy(Supplier1099BatchUtil.DisableButtons));
+
+        Supplier1099BatchUtil.DisableButtons();
+    });
+    </script>
+</apex:page>

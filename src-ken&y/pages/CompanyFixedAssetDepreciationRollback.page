@@ -1,0 +1,51 @@
+<apex:page standardController="Company__c" extensions="CompanyFixedAssetDepreciationRollbackExt">
+	<apex:form id="theForm">
+		<c:busyWait />
+		<apex:sectionHeader title="{!$ObjectType.Company__c.Label}" subtitle="{!$Label.Rollback_Depreciation}"/>
+		<apex:pageMessages />
+		<apex:pageBlock >
+		
+			<apex:pageBlockSection title="{!$Label.Select_Company_and_Book}" collapsible="false">
+			
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="{!$ObjectType.Company__c.Label}"/>
+					<apex:selectList value="{!selectedCompanyId}" size="1">
+						<apex:selectOptions value="{!companyOptions}"/>
+						<apex:actionSupport event="onchange" rerender="taxbooks"/>
+					</apex:selectList>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem id="pbsiBookOptions">
+					<apex:outputLabel value="{!$ObjectType.Tax_Book__c.Label}"/>
+					<apex:selectList value="{!selectedBookId}" size="1" id="taxbooks">
+						<apex:selectOptions value="{!taxBookOptions}"/>
+						<apex:actionSupport event="onchange" rerender="theForm" status="actionStatus" action="{!updateFixedAssetDepreciations}"/>
+					</apex:selectList>
+				</apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+			
+			<apex:outputPanel rendered="{!!disableRollback}">
+				<apex:panelGrid columns="5" cellpadding="10" width="100%">
+					<apex:commandButton value="|< {!$Label.First}" action="{!first}" disabled="{!!hasPrevious}" status="actionStatus" rerender="theForm"/>
+					<apex:commandButton value="< {!$Label.Previous}" action="{!previous}" disabled="{!!hasPrevious}" status="actionStatus" rerender="theForm"/>
+					<apex:outputText value="{!$Label.Page} {!pageNumber} {!$Label.of} {!numberOfPages}"/>
+					<apex:commandButton value="{!$Label.Next} >" action="{!next}" disabled="{!!hasNext}" status="actionStatus" rerender="theForm"/>
+					<apex:commandButton value="{!$Label.Last} >|" action="{!last}" disabled="{!!hasNext}" status="actionStatus" rerender="theForm"/>
+				</apex:panelGrid>
+			
+				<apex:pageBlockTable value="{!fixedAssetDepreciations}" var="fad">
+					<apex:column value="{!fad.Fixed_Asset__c}"/>
+					<apex:column value="{!fad.name}"/>
+					<apex:column value="{!fad.Depreciation_Date__c}"/>
+					<apex:column value="{!fad.GL_Date__c}"/>
+					<apex:column value="{!fad.Depreciation_Amount__c}"/>
+					<apex:column value="{!fad.Finalized__c}"/>
+					<apex:column value="{!fad.Depreciation_Type__c}"/> 
+				</apex:pageBlockTable>
+			</apex:outputPanel>
+			<apex:pageBlockButtons location="top">
+				<apex:commandButton value="{!$Label.Go_Back}" action="{!cancel}" status="actionStatus" rerender="theForm"/>
+				<apex:commandButton value="{!$Label.Rollback_All}" action="{!btn_Rollback}" disabled="{!disableRollback}" rerender="theForm" status="actionStatus"/>
+			</apex:pageBlockButtons>	
+		</apex:pageBlock>
+	</apex:form>
+</apex:page>

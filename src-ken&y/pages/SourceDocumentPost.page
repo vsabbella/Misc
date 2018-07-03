@@ -1,0 +1,73 @@
+<apex:page extensions="SourceDocumentPostCon" docType="html-5.0" id="page" standardController="Period__c">
+	
+	<script>
+		function checkAll(cb)
+		{
+			var inputElem = document.getElementsByTagName("input");
+			for(var i=0; i<inputElem.length; i++)
+			{
+				if(inputElem[i].id.indexOf("checkedone")!=-1)
+				inputElem[i].checked = cb.checked;
+			}
+		} 
+		
+		function clearSelection(){
+			var selectAll = document.getElementById("{!$Component.page.form.pb.pbst.pbt.selectAll}");
+			selectAll.checked = false;
+		}  
+	</script>
+	
+	<apex:sectionHeader title="{!Period__c.Name}" subtitle="Modify Posting Date"  help="{!HelpURL}"/> 
+	<apex:form id="form">
+	<c:busyWait />
+		<apex:pageMessages />
+		<apex:pageBlock id="pb">
+			<apex:pageBlockButtons location="top">
+				<apex:commandButton value="Go Back" action="{!cancel}"/>
+				<apex:commandButton value="Modify Posting Date" status="actionStatus" action="{!assign}"  disabled="{!blockPost}" onclick="return confirm('Period assignment may be affected. Are you sure you want to reassign these posting dates?')"/>
+			</apex:pageBlockButtons>
+			<apex:pageBlockSection id="pbs" >
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Select Source Document"/>
+					<apex:selectList size="1" value="{!selectedSourceDocument}">
+						<apex:selectOptions value="{!sourceDocumentOptions}"/>
+						<apex:actionSupport event="onchange" action="{!updateGrid}" rerender="form"/>
+					</apex:selectList>
+				</apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+			
+			<apex:pageBlockSection columns="1" id="pbst" rendered="{!!blockPost}" collapsible="false">
+				<apex:outputPanel >
+					<apex:outputPanel style="width:100%;">
+                     	<apex:commandButton value="|<" status="actionStatus" action="{!first}" rerender="form" />
+						<apex:commandButton value="<" status="actionStatus" action="{!previous}" disabled="{!!hasPrevious}" rerender="form" />
+						<apex:commandButton value=">" status="actionStatus" action="{!next}" disabled="{!!hasNext}" rerender="form" />
+                       	<apex:commandButton value=">|" status="actionStatus" action="{!last}" rerender="form" />
+                       	<apex:outputText value="Page"/>
+                       	<apex:selectList value="{!pageNo}" size="1">
+                       		<apex:selectOptions value="{!pageOptions}"/>
+                       		<apex:actionSupport event="onchange" action="{!jumpPage}" rerender="form"/>
+                       	</apex:selectList>
+                    </apex:outputPanel>
+				</apex:outputPanel>
+				<apex:pageBlockTable value="{!sourceDocs}" var="sd" id="pbt">
+					<apex:column >
+						<apex:facet name="header"> 
+							<apex:inputCheckbox id="selectAll">
+								<apex:actionSupport event="onclick" onsubmit="checkAll(this)" rerender="theForm" />
+							</apex:inputCheckbox>
+						</apex:facet>
+						<apex:inputCheckbox value="{!sd.selected}" id="checkedone"/>
+					</apex:column>
+					<apex:column value="{!sd.sObj['Name']}"/>
+					<apex:column value="{!sd.sObj['Currency__c']}"/>
+					<apex:column value="{!sd.sObj['Transaction_Date__c']}"/>
+					<apex:column value="{!sd.sObj['Finalized__c']}"/>
+					<apex:column value="{!sd.sObj['Finalized_Date__c']}"/>
+					<apex:column value="{!sd.sObj['Posting_Date__c']}"/>
+					
+				</apex:pageBlockTable>
+			</apex:pageBlockSection>
+		</apex:pageBlock>
+	</apex:form>
+</apex:page>

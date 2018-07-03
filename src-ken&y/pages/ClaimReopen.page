@@ -1,0 +1,27 @@
+<apex:page standardcontroller="Claim__c" extensions="ClaimReopenExt" action="{!reopen}">
+
+    <apex:includeScript value="{!URLFOR($Resource.JQuery182)}" />
+	<apex:sectionHeader title="{!$ObjectType.Claim__c.Label} {!Claim__c.Name}" subtitle="{!$Label.Reopen}"/>
+	<apex:form id="form">
+		<apex:pageMessages escape="false"/>
+		<apex:pageBlock >
+		<c:busyWait />
+			<apex:pageBlockButtons location="top">
+				<apex:commandButton value="{!$Label.Go_Back} " action="{!cancel}" status="actionStatus" reRender="form"/>
+			</apex:pageBlockButtons>
+		</apex:pageBlock>
+		<apex:inputHidden value="{!Claim__c.Settlement_Method__c}" />
+	</apex:form>
+
+    <script>
+        $(document).ready(function() {
+            if({!redirect}) {
+                if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+                    sforce.one.back(true);
+                } else {
+                    window.location.href = '/' + '{!JSENCODE(Claim__c.Id)}';
+                }
+            }
+        });
+    </script>
+</apex:page>

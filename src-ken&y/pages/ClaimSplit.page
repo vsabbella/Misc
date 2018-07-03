@@ -1,0 +1,126 @@
+<apex:page standardcontroller="Claim__c" extensions="ClaimSplitExt" id="page">
+	<!-- <apex:outputLink value="/{!Claim__c.Id}"> Return to {!Claim__c.Name}</apex:outputLink>-->
+	<style>
+		.tdVertAlign{
+			vertical-align:middle;
+		}
+		.pbsHeader{
+			text-align:left;
+			font-size: 12px;
+			color:black;
+			font-family: Arial, Helvetica, sans-serif;
+		}
+	</style>
+	<apex:outputPanel id="jsPanel">
+		<script>
+
+			var goBack = function() {
+				 if({!redirect}) {
+					if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+						sforce.one.back(true);
+					} else {
+						window.location.href = '/' + '{!JSENCODE(Claim__c.Id)}';
+					}
+				}
+        	}
+
+			function checkAll(cb)
+			{
+				var inputElem = document.getElementsByTagName("input");
+				for(var i=0; i<inputElem.length; i++)
+				{
+					if(inputElem[i].id.indexOf("checkedone")!=-1)
+					inputElem[i].checked = cb.checked;
+				}
+			}  
+			function unCheck()
+			{
+				var checkFacet = document.getElementById("{!$Component.page.form.detailBlock.pbsSplit.pbtSplit.checkAll}");
+				checkFacet.checked = false;
+			}
+	
+			function confirmGoBack() 
+			{
+				var isSplitComplete = '{!isSplitComplete}';
+				if(isSplitComplete == 'false'){
+					var answer = window.confirm("You have not completed the split. Releated claims will be deleted. Proceed anyway?");
+					if (answer == true){
+						deleteRelatedClaims();
+					}
+				}
+				else{
+				deleteRelatedClaims();
+				}
+				
+			}	 
+		</script>
+	</apex:outputPanel>
+	
+	<apex:form id="form">
+       
+		<apex:pageMessages id="msgs"/>
+		<c:busyWait />
+		<apex:pageBlock title="{!Claim__c.Name}" id="detailBlock" >
+		
+		<apex:actionFunction name="deleteRelatedClaims" action="{!goBack}" rerender="detailBlock,jsPanel"  oncomplete="goBack();"/>
+			<apex:pageBlockButtons location="top" id="btns">
+				<apex:commandButton value="{!$Label.Go_Back}" onclick="confirmGoBack();" rerender="detailBlock, jsPanel" status="actionStatus" />
+				<apex:commandButton value="{!$Label.Complete_Split}" action="{!finishSplit}" disabled="{!IF(disabled || isTrade, true,false)}" rerender="msgs,detailBlock,jsPanel" status="actionStatus"/>
+				<!-- <apex:commandButton value="Undo Split" action="{!undoSplit}" rendered="{!enableUndo}"/>-->
+			</apex:pageBlockButtons>
+			
+
+			
+			<apex:outputPanel >
+				<apex:pageBlockSection collapsible="false">
+					<apex:repeat value="{!$ObjectType.Claim__c.Fieldsets.Detail}" var="f">
+						<apex:outputField value="{!Claim__c[f]}"/>
+					</apex:repeat>
+				</apex:pageBlockSection>
+				
+				<apex:pageBlockSection columns="1" collapsible="false" id="pbsSplit" rendered="{!not(isTrade)}">
+				
+					<apex:facet name="header">
+						<apex:outputPanel style="width:100%;">
+                           <table style="width:100%;">
+                           		<tr>
+                           			<td style="vertical-align:middle;">
+                           				<apex:outputText value="{!$Label.Split_Balance}: {!IF(splitBalance >= 0, '', '(')} {!splitBalance} {!IF(splitBalance >= 0, '', ')')}" styleClass="pbsHeader"/>
+                          			</td>
+                          			<td>
+										<apex:outputPanel layout="block" style="text-align:right;">
+		                                	<apex:commandButton value="{!$Label.Add}" action="{!addClaim}" rerender="pbsSplit,msgs,jsPanel" disabled="{!disabled}" status="actionStatus"/>
+											<apex:commandButton value="{!$Label.Save}" action="{!saveClaims}" rerender="pbsSplit,msgs,jsPanel" oncomplete="unCheck();" disabled="{!disabled}" status="actionStatus" accessKey="s"/>
+			                                <apex:commandButton value="{!$Label.Delete}" action="{!deleteClaims}" rerender="pbsSplit,msgs,jsPanel" oncomplete="unCheck();" disabled="{!disabled}" status="actionStatus"/>
+			                                <apex:commandButton value="{!$Label.Resolve}" action="{!resolve}" rerender="pbsSplit,msgs,jsPanel" oncomplete="unCheck();" disabled="{!disabled}" status="actionStatus"/>
+			                            </apex:outputPanel>
+		                            </td>
+	                            </tr>
+                           	</table>
+                           	</apex:outputPanel>
+                       </apex:facet>
+                       
+					<apex:pageBlockTable value="{!splitClaims}" var="c" id="pbtSplit">
+						<apex:column >
+							<apex:facet name="header"> 
+								<apex:inputCheckbox id="checkAll" disabled="{!disabled}">
+									<apex:actionSupport event="onclick" onsubmit="checkAll(this)" rerender=""/>
+								</apex:inputCheckbox>
+							</apex:facet>
+							<apex:inputCheckbox id="checkedone" value="{!c.selected}" disabled="{!disabled}"/>
+						</apex:column>
+						<apex:repeat value="{!$Objecttype.Claim__c.Fieldsets.Split}" var="f">
+							<apex:column headervalue="{!f.label}">
+								<apex:inputField value="{!c.claim[f]}" rendered="{!!disabled && c.claim.Status__c != 'Closed'}"/>
+								<apex:outputField value="{!c.claim[f]}" rendered="{!disabled || c.claim.Status__c == 'Closed'}"/>
+							</apex:column>
+						</apex:repeat>
+					</apex:pageBlockTable>
+				</apex:pageBlockSection>
+			</apex:outputPanel>	
+			
+		</apex:pageBlock>
+		
+	</apex:form>
+	
+</apex:page>

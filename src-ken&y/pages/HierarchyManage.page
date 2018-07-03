@@ -1,0 +1,171 @@
+<apex:page standardController="Hierarchy__c"  sidebar="true" showheader="true" 
+ 		extensions="HierarchyManageExt,HierarchyController" docType="html-5.0" >
+ 		
+	<c:KendoResources />
+<!-- http://docs.telerik.com/kendo-ui/api/web/treeview -->
+
+<apex:outputPanel rendered="{!$CurrentPage.parameters.inline != '1'}" > 
+	<apex:sectionHeader subtitle="{!Hierarchy__c.Type__c}"  title="{!Hierarchy__c.Name}" />	
+	<p id="controls" >    
+	        {!$Label.Show} &nbsp;<a href="#" class="ExpandButton  btn niceButton"  data-level="none" >{!$Label.Collapse_All}</a>
+	        &nbsp;<a href="#" class="ExpandButton  btn niceButton"  data-level="all" >{!$Label.Expand_Levels}</a>	
+	        &nbsp; <apex:outputText value="{0, date, MMMM d','  yyyy}"><apex:param value="{!eff_date}" /></apex:outputText>	        
+	</p>
+</apex:outputPanel>
+
+<!--  template for the node     -->
+<script id="treeview-template" type="text/kendo-ui-template">
+	<span class='k-nam' id='#=item.id#' title='#=item.spriteCssClass#,  #=item.code#' > #= item.text # </span>  
+	<span class='k-icon k-i-restore'  data-id='/#= item.id #' />
+</script>
+    
+    <div id="treeview">{!$Label.Loading} </div> 
+    <div id="manage">
+        <apex:form id="form" ><apex:pageMessages />
+            <apex:actionFunction name="reload" action="{!LoadAllNodes}" reRender="form" immediate="true" >
+                <apex:param name="hid" value="" /> 
+            </apex:actionFunction>
+            
+            <!--<c:minidetail Subject="{!Hierarchy__c.id}" fieldSetName="MiniDetail" />-->
+            <apex:pageBlock id="viewblock" mode="maindetail">
+                <apex:pageBlockButtons location="top">
+                    <apex:CommandButton value="Move Hierarchy" rerender="form"
+                                        action="{!moveNode}" />		
+                    <apex:CommandButton value="Cancel" immediate="true"
+                                        action="{!cancel}" />		
+                </apex:pageBlockButtons>
+                
+                <!-- enhance , could use a field set in the future ? -->
+                <apex:pageBlockSection title="Original Record" collapsible="false" columns="1">
+                    <apex:outputField value="{!originalNode.Name}" />
+                    <apex:outputField value="{!originalNode.Code__c}" />                    
+					<apex:outputField value="{!originalNode.Type__c}" />
+                    <apex:outputField value="{!originalNode.Level__c}" />
+                    <apex:outputField value="{!originalNode.Parent_Code__c}" />
+                    <apex:inputField value="{!originalNode.End_Date__c}" required="true"  />                  	
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockSection title="New Record" collapsible="false" columns="1">
+                    <apex:outputField value="{!newNode.Name}" />
+                    <apex:outputField value="{!newNode.Code__c}" />
+					<apex:outputField value="{!newNode.Type__c}" />
+                    <apex:outputField value="{!newNode.Level__c}" />
+                    <apex:inputField value="{!newNode.Parent__c}"  required="true"  />
+                    <apex:inputField value="{!newNode.Start_Date__c}" required="true"   />                  	
+                </apex:pageBlockSection>
+                
+            </apex:pageBlock>
+        </apex:form>
+    </div>
+
+<script>
+    var treeview;
+
+    $(function(){  
+
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.HierarchyController.getHierarchyWithDate}', '{!Hierarchy__c.id}', '{!$CurrentPage.parameters.date}',
+            function (result, event) {
+                if (event.type == 'exception') {
+                    $('#treeview').html(event.message);
+                }	else { 
+                    buildTreeView( result ) ;				
+                }
+            }
+        );
+        
+        // add click handlers to operate on the tree 
+        $(document).on('click', "a.ExpandButton", function() {
+            var button_data = $(this).attr('data-level')
+            if ( button_data == 'all' ) treeview.expand(".k-item");
+            else treeview.collapse(".k-item");
+        });
+        
+        $(document).on('dblclick', "span.k-icon.k-i-restore", function() {
+            var button_data = $(this).attr('data-id');
+            window.open( location.origin+button_data );
+            return false;         
+        });
+        
+    });
+    
+    function walk( nodes ) { 
+        // visit each node and set some info?
+        for (var i = 0; i < nodes.length; i++) {
+            nodes[i].expanded = true;
+            walk( nodes[i].items );
+        }
+    } 
+    
+    function buildTreeView( results ) { 
+        treeview = $("#treeview").kendoTreeView({  
+            /* this works, but moves the screen around each time 
+             * a user clicks on the tree, what i want is an event that fires once
+             * when the data is loaded, then not again            
+            dataBound: //_.debounce( 
+                function(e) { 
+                // locate the selected node
+                var ele = this.select(); 
+                console.log(ele);
+                var eleTop = $(ele).offset().top;
+                var treeScrollTop = $("#treeview").scrollTop();
+                var treeTop = $("#treeview").offset().top;
+                $("#treeview").animate({
+                    scrollTop: (treeScrollTop + eleTop) - treeTop
+                });
+                    //treeview.unbind("dataBound");	 
+    
+                },//600),
+            */
+            select: function(e) { 
+            	console.log(                treeview.dataItem(e.node).id);
+                reload(  treeview.dataItem(e.node).id);
+            },
+            dataSource: results, 
+            template: kendo.template($("#treeview-template").html()),
+            loadOnDemand: true 	  
+            
+        }).data("kendoTreeView");
+        
+    } 
+
+</script>
+<style>
+    a.niceButton , a:hover.niceButton { text-decoration: none;	padding: 4px 3px;}
+    
+    #treeview { min-height:500px; height:500px;}
+    #treeview { width: 50%; display: inline-block; float: left; } 
+    #manage { width: 45%; float: left; padding-left: 2%; }
+    
+    .k-nam { display: inline-block; padding: 4px 10px 0 0 ; }
+    .k-treeview .k-checkbox { vertical-align: middle;}
+    
+    .k-in { font-size: 10pt; }
+    .k-sprite { background-position: 0 0; width: 24px;height: 24px;	background-size: 24px 24px;}
+    .k-sprite.Company , .k-sprite.L8 , .k-sprite.Sales.Zone 	{ background-image: url(/img/icon/building32.png); }
+    
+    .k-sprite.Area 	, .k-sprite.L7 ,
+    .k-sprite.National.Planning.Group { background-image: url(/img/icon/bigtop24.png);}
+    
+    .k-sprite.Division.Summary, .k-sprite.L6, 
+    .k-sprite.National.Planning.Subgroup,
+    .k-sprite.National.Planning.Subroup { background-image: url(/img/icon/factory24.png); }
+    
+    .k-sprite.Division , .k-sprite.L5 , .k-sprite.Zone,
+    .k-sprite.National.Planning.Company { background-image: url(/img/icon/factory24.png); }
+    .k-sprite.National.Parent.Company,
+    .k-sprite.Region ,  .k-sprite.L4 {  background-image: url(/img/icon/custom51_100/truck24.png);}
+    .k-sprite.L3 { background-image: url(/img/icon/sack24.png);}
+    
+    .k-sprite.Territory , .k-sprite.L2, .k-sprite.Market  {background-image: url(/img/icon/leaf24.png);}
+    .k-sprite.PromoGroup { background-image: url(/img/icon/box32.png); }
+    .k-sprite.Product.Group { background-image: url(/img/icon/chest32.png); }
+    .k-sprite.Reporting.Customer { background-image: url(/img/icon/campaignmember32.png); }
+    .k-sprite.Planning.Customer { background-image: url(/img/icon/telescope24.png); }
+    .k-sprite.Case.UPC { background-image: url(/img/icon/custom51_100/gears24.png); }
+    .k-sprite.Sold.To.Customer,
+    .k-sprite.Case.UPC-TPM { background-image: url(/img/icon/cash24.png); }
+    .k-sprite.Item {     background-image: url(/img/icon/ticket24.png); }
+    
+</style>
+</apex:page>

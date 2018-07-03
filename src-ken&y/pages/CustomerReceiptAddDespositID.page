@@ -1,0 +1,140 @@
+<!--
+ - Created by zainab_shikari on 10/13/17.
+ -->
+
+<apex:page id="CustomerReceiptAddDespositID" standardController="Customer_Receipt__c" recordsetvar="customerReceipts" extensions="CustomerReceiptAddDepositIDExt" title="{!$Label.Add_Deposit_Identifier}">
+
+    <c:KendoResources />
+    <c:busyWait includeScripts="false" />
+    <style>
+       .button-text-bold{
+           font-weight: bold;
+        }
+        .disab {
+            opacity: 0.4;
+            cursor: default;
+            pointer-events: none;
+        }
+     </style>
+
+    <apex:form id="form">
+
+        <div class="page-message" ></div>
+        <apex:pageBlock >
+            <apex:pageBlockButtons location="top">
+                <input id="goBackBtn" type="button" value="{!$Label.Go_Back}"  class="k-button kndy-btn button-text-bold" />
+                <input id="saveAndReturn" type="button" value="{!$Label.Save_and_Return}"  class="k-button kndy-btn button-text-bold" accesskey="s" />
+            </apex:pageBlockButtons>
+            <div id="mainPage" style="display: inline;">
+                <apex:outputPanel >
+                    <div  style="display: inline;">
+                        <span class="">{!$ObjectType.Customer_Receipt__c.fields.Deposit_Identifier__c.Label} </span>
+                        &nbsp;
+                        <div style="display: inline;" class="kndy-required-input">
+                            <div class="kndy-required-block"></div>
+                            <input id="depositId" class="k-textbox"/>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+            </div>
+
+        </apex:pageBlock>
+
+
+    </apex:form>
+
+    <script>
+        var CRIds = [];
+        $(document).on('KenandyErpReady', function(e) {
+
+            CRIds = JSON.parse('{!lCRIdsJSON}');
+            $('#saveAndReturn').addClass('disab');
+            $('#depositId').prop("disabled", true).addClass("k-state-disabled");
+
+            $('#depositId').keyup(Utils.EnableSave);
+            $('#saveAndReturn').click(Utils.SaveAndReturn);
+            $('#goBackBtn').click(Utils.GoBack);
+            Utils.ValidateCustomerReceipts();
+
+
+
+
+        });
+
+        var messageElement = document.getElementById("page-message");
+        var Utils = function() {
+            return {
+                GoBack: function() {
+                   KenandyErp.BlockUI();
+                   var url = new URL(window.location.href);
+                   var c = url.searchParams.get("retURL");
+                   window.location.href = c;
+
+                },
+                ValidateCustomerReceipts : function() {
+                    if(typeof CRIds == 'undefined' ||  CRIds.length == 0) {
+                        KenandyErp.Message('{!$Label.Deposit_ID_Must_select_CR}', KenandyErp.MessageType.Error, messageElement);
+                    }else {
+
+                        KenandyErp.BlockUI();
+                        KenandyErp.ClearMessage();
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.CustomerReceiptAddDepositIDExt.validateCustomerReceipts}',
+                            CRIds,
+                            function (result, event) {
+                                KenandyErp.UnBlockUI();
+                                if (event.type == 'exception' ) {
+                                   KenandyErp.Message(event.message + ' : ' + event.type);
+                                }else{
+                                   if(result.success) {
+                                       $('#depositId').prop("disabled", false).removeClass("k-state-disabled");
+                                   } else {
+                                       KenandyErp.Messages(result.messages);
+                                   }
+
+                                }
+                            },
+                            {escape: false}
+                        );
+                    }
+                },
+                EnableSave: function() {
+                    if(document.getElementById('depositId').value == "") {
+                        $('#saveAndReturn').addClass('disab');
+                    }else {
+                        $('#saveAndReturn').removeClass('disab');
+                    }
+                },
+                SaveAndReturn: function() {
+
+                    var depositID = document.getElementById('depositId').value;
+                    KenandyErp.BlockUI();
+                    KenandyErp.ClearMessage();
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.CustomerReceiptAddDepositIDExt.saveDepositIDs}',
+                        CRIds,
+                        depositID,
+                        function (result, event) {
+                            if (event.type == 'exception' ) {
+                                KenandyErp.UnBlockUI();
+                               KenandyErp.Message(event.message + ' : ' + event.type);
+                            }else{
+                               if(result.success) {
+                                   var url = new URL(window.location.href);
+                                   var c = url.searchParams.get("retURL");
+                                   window.location.href = c;
+                               } else {
+                                   KenandyErp.UnBlockUI();
+                                   KenandyErp.Messages(result.messages);
+                               }
+
+                            }
+                        },
+                        {escape: false}
+                    );
+                }
+            }
+        }();
+    </script>
+
+</apex:page>

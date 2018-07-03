@@ -1,0 +1,13 @@
+<apex:page standardController="Work_Order__c" extensions="WorkOrderReopenExt">
+	<apex:sectionHeader title="{!$Label.Reopen_Work_Order}" />
+	<apex:form id="mainFormID">  
+		<c:busyWait />  
+    	<apex:pageMessages />
+ 		<apex:pageBlock >                
+	     	<apex:pageBlockButtons location="top">	     		
+	     		<apex:commandButton value="{!$Label.Reopen}" action="{!reopen}" disabled="{!disable}" status="actionStatus" rerender="mainFormID" />
+	     		<apex:commandButton value="{!$Label.Go_Back}" action="{!cancel}" status="actionStatus" />	     	
+	     	</apex:pageBlockButtons>		    
+	    </apex:pageBlock>
+    </apex:form>
+</apex:page>

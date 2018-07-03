@@ -1,0 +1,336 @@
+<apex:page standardController="Fixed_Asset__c" extensions="FixedAssetLinkToSerialExt" sidebar="false" showHeader="false">
+    <c:KendoResources /> 
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+    <style>
+        .item-label{
+            margin-left:100px;
+        }
+        #searchButton{
+            margin-left:70px;
+        }
+        
+    </style>
+    <script> 
+        //Call the remote action , get the Serials data based on the filter conditions
+        var faLinesData = function(){
+             var deferred       = $.Deferred();
+             var config         = JSONUtils.Parse('{!JSENCODE(faLinesConfigJson)}');
+             var filterCriteria = FASearchUtils.GetFilterCriteria();
+             // var grid = FASearchUtils.faLinesGrid;
+             // var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+             KenandyErp.BlockUI(); 
+             Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.FixedAssetLinkToSerialExt.getFALines}',
+                    filterCriteria,
+                    config,
+                    '{!JSENCODE(companyId)}',
+                    function (result, event) {
+                         KenandyErp.UnBlockUI(); 
+                         deferred.resolve(result, event);
+                      /* if(event.type == 'exception'){
+                                 KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                         }
+                        else{
+                              if(result.success){
+                                 KenandyErp.Message(result.message, KenandyErp.MessageType.Success, messageElement);
+                               
+                              }
+                              else{
+                                 KenandyErp.Message(result.message, KenandyErp.MessageType.Error,messageElement);            
+                              }
+                                 
+                        }*/
+                    },
+                    {escape: false}
+                );
+             return deferred.promise(); 
+        };
+         var FASearchUtils = function(){
+            return{
+                faLinesGrid: null,
+                faLinesGridInit :function(){
+                        // Destroy reqLinesGrid
+                        if (this.faLinesGrid) {
+                            //KenandyErp.ClearMessage(grid.element.closest("div.grid-container").find("div.grid-message:first"));  
+                            $('#{!faLinesConfig.uniqueId}').off();
+                            this.faLinesGrid.destroy();
+                             $('#{!faLinesConfig.uniqueId}').empty();
+                            
+                        }
+                        this.faLinesGrid = $('#{!faLinesConfig.uniqueId}').kendoGridActionList({
+                                namespace: '{!JSENCODE(NamespaceUU)}', 
+                                config: '{!faLinesConfigJson}', 
+                                fieldList: FASearchUtils.GetFieldList('{!faLinesFieldList}'), 
+                                lookupSearchAction: '{!$RemoteAction.FixedAssetLinkToSerialExt.lookupSearch}', 
+                                toolbarButtons: [ 
+                                    { name: "grid-attach-serial-command", text:"", 
+                                     template: "<input type='button' value='Link to Asset' class='k-button kndy-btn grid-attach-serial-command'/>"}//,
+                                   // { name: "grid-reset-command", text:"", 
+                                     //template: "<input type='button' value='Reset' class='k-button kndy-btn grid-reset-command'/>"},
+                                   /* { name: "grid-cancel-command", text:"", 
+                                     template: "<input type='button' value='Cancel and Return' class='k-button kndy-btn grid-cancel-command'/>"}*/
+                                     ], 
+                                getActionListFunction: faLinesData,
+                                height: '500',
+                                showIconButtons: true,
+                                
+                             }).data('kendoGridActionList');
+                             
+                    this.faLinesGrid.wrapper.on("click", ".grid-attach-serial-command",
+                                        $.proxy(AssetAttachActions.AttachSerialsToAsset, { grid: this.faLinesGrid})); 
+                    //this.faLinesGrid.wrapper.on("click", ".grid-reset-command", $.proxy(AssetAttachActions.ResetGrid, { grid: this.faLinesGrid }));
+                    //this.faLinesGrid.wrapper.on("click", ".grid-cancel-command", $.proxy(AssetAttachActions.CancelChanges, { grid: this.faLinesGrid })); 
+                    //this.faLinesGrid.bind('edit', $.proxy(FASearchUtils.OnEdit, { grid: this.faLinesGrid }));
+                    
+                },
+                /*OnEdit : function(event){
+                   if(event.model.Temporary_Value_Holder__c == "YES"){
+                      event.sender.closeCell(); 
+                   } 
+                },*/
+                GetFieldList: function(fieldList) {
+                    fieldList = JSON.parse(fieldList);  
+                    return JSON.stringify(fieldList);
+                },
+                //-- Clear the grid data and messages
+                ResetGrid :function(){
+                    var grid = FASearchUtils.faLinesGrid;
+                     //KenandyErp.ClearMessage(grid.element.closest("div.grid-container").find("div.grid-message:first"));  
+                     FASearchUtils.faLinesGridInit(); 
+                     //grid.refresh();
+                },
+                Validate: function() {
+                    KenandyErp.ClearMessage();
+                    
+                    var errorMessages = [];
+                    var item = $("#itemFilter").val().trim(); 
+                    var serial = $("#serialFilter").val().trim();  
+                    if (!item && !serial) {
+                        errorMessages.push({ message: 'Please enter an item or serial number', 
+                                             severity: KenandyErp.MessageType.Error });
+                    }
+                   
+                    if (errorMessages.length > 0) {
+                        KenandyErp.Messages(errorMessages);
+                        return false
+                    }
+                        
+                    return true;
+                },
+                SearchSerials :function(){
+                     
+                    //Check for item/serial  
+                    if(this.Validate()){
+                         //----Initialize the ActionListGrid with Serials data on top of Kendo Window
+                         FASearchUtils.faLinesGridInit();
+                         $('[id$=faLinesbeforeupdate]').show();     
+                    }
+                    return true;
+                   
+                },
+                GetFilterCriteria :function(){
+                    var filterCriteria = [];
+                    var itemFilter   = $('#itemFilter').val().trim(); 
+                    var serialFilter = $('#serialFilter').val().trim(); 
+                    if( this.Validate()){
+                        if(serialFilter != '' && itemFilter != ''){
+                            filterCriteria.push({ field: 'Item__c', 
+                                                  fieldType: KenandyErp.KendoGridOptions.ColumnType.String, 
+                                                  value: itemFilter, 
+                                                  operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+                            filterCriteria.push({ field: 'Id', 
+                                                   fieldType: KenandyErp.KendoGridOptions.ColumnType.String, 
+                                                   value: serialFilter, 
+                                                   operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+                        }
+                       else if(serialFilter == ''){
+                            filterCriteria.push({ field: 'Item__c', 
+                                                  fieldType: KenandyErp.KendoGridOptions.ColumnType.String, 
+                                                  value: itemFilter, 
+                                                  operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+                       }
+                       else{
+                             filterCriteria.push({ field: 'Id', 
+                                                   fieldType: KenandyErp.KendoGridOptions.ColumnType.String, 
+                                                   value: serialFilter, 
+                                                   operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+                        } 
+                    }
+                    
+                  return filterCriteria;
+                },
+                //-- Go back to detail page
+                CancelChanges :function(){ 
+                    var returnUrl = '{!ReturnUrl}';
+                    var recordId =  returnUrl.substring(returnUrl.lastIndexOf('/')+1,returnUrl.length);
+                    KenandyErp.NavigateToSObject(recordId,'detail');
+                    /*var grid = FASearchUtils.faLinesGrid;
+                    //FASearchUtils.faLinesGridInit();
+                    KenandyErp.ClearMessage(grid.element.closest("div.grid-container").find("div.grid-message:first")); 
+                  
+                    // if (confirm("Go back to Asset Detail Page?")){
+                         $("#dialog").data("kendoWindow").destroy();
+                         var returnUrl = '{!ReturnUrl}';
+                         window.location.href = returnUrl;   */            
+                     //}else{
+                       //e.preventDefault();       
+                     //} 
+                      
+                }
+            }
+            
+        }();
+        
+        var AssetAttachActions= function(){
+            return{ 
+                AttachSerialsToAsset: function(){
+                    var grid = FASearchUtils.faLinesGrid;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                    var selectedRows   = [];
+                    if(grid) {
+                        var gridUtils = new KendoGridUtils(grid, { isDml: false });
+                        selectedRows = gridUtils.SelectedRows();
+                    }
+                    if(selectedRows.length==0){
+                        KenandyErp.Message('Select one serial number to proceed', KenandyErp.MessageType.Error, messageElement);
+                    }
+                    else if(selectedRows.length>1){
+                        KenandyErp.Message('You cannot link more than one serial an Asset', KenandyErp.MessageType.Error, messageElement);
+                    }
+                    else{
+                        KenandyErp.ClearMessage(messageElement); 
+                        KenandyErp.BlockUI(); 
+                        //----Link the selected serials to Fixed Asset-- 
+                        Visualforce.remoting.Manager.invokeAction(
+                         '{!$RemoteAction.FixedAssetLinkToSerialExt.attachSerialsTOFA}',
+                         '{!JSENCODE(currentFAId)}',
+                          selectedRows,
+                          function (result, event) {
+                              KenandyErp.UnBlockUI();
+                              if(event.type == 'exception'){
+                                 KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                              }
+                              else{
+                                  if(result.success){
+                                     KenandyErp.Message(result.message, KenandyErp.MessageType.Success, messageElement);
+                                     FASearchUtils.ResetGrid();
+                                     var returnUrl = '{!ReturnUrl}';
+                                     //--Wait  and returns to FA Detail Page
+                                     setTimeout(function(){
+                                         var recordId =  returnUrl.substring(returnUrl.lastIndexOf('/')+1,returnUrl.length);
+                                         KenandyErp.NavigateToSObject(recordId,'detail');
+                                     },100);
+                                  }
+                                  else{
+                                     KenandyErp.Message(result.message, KenandyErp.MessageType.Error,messageElement);            
+                                  }
+                                 
+                              }
+                          },
+                         {escape: false}
+                        );
+                        
+                    }
+                    
+                }, 
+                //-- Clear the grid data and messages
+                ResetGrid :function(){
+                    var grid = FASearchUtils.faLinesGrid;
+                     KenandyErp.ClearMessage(grid.element.closest("div.grid-container").find("div.grid-message:first"));  
+                     FASearchUtils.faLinesGridInit(); 
+                }
+                
+            }
+            
+        }(); 
+    </script>
+   <div class="page-container" id='dialog'>
+     <div class="page-message"></div>
+      <apex:sectionHeader subtitle="Search for Serials"  help="{!HelpURL}"/>
+     <apex:pageMessages id="msgs"/>   
+     <apex:form >
+        <apex:pageblock title="{!$Label.Filters}" rendered="{!showSearch}">
+            <apex:panelGrid columns="2" width="100%" styleClass="search-filters" columnClasses="column-width">
+                <apex:outputPanel >
+                   <label class="item-label" for="itemFilter">{!$ObjectType.Item__c.Label}:</label>
+                   <input id="itemFilter" class="kendoWidgetSelector" />
+                </apex:outputPanel>
+                 <apex:outputPanel >
+                   <label class="serial-label" for="serialFilter">{!$ObjectType.Serial__c.Label}:</label>
+                   <input id="serialFilter" class="kendoWidgetSelector" />
+                </apex:outputPanel>
+            </apex:panelGrid> 
+            <apex:pageBlockButtons location="bottom">
+                <input name="searchBtn" id="searchButton" type="button" value="{!$Label.Search}" 
+                        onclick="FASearchUtils.SearchSerials();" class="k-button kndy-btn" />
+                <input name="cancelRtn" type='button' value='{!$Label.Cancel}' 
+                        onclick="FASearchUtils.CancelChanges();"  class='k-button kndy-btn' />
+            </apex:pageBlockButtons>
+      </apex:pageblock>
+         <apex:pageBlock id="faLinesbeforeupdate" title="Serial Numbers Available"  >    
+           <div class="grid-container">
+             <div class="grid-message"></div>
+               <div id="{!faLinesConfig.uniqueId}" ></div>
+          </div>
+       </apex:pageBlock> 
+    </apex:form>
+    </div>
+    
+    <script type="text/javascript">    
+        $(document).ready(function(){
+            
+            $('[id$=faLinesbeforeupdate]').hide();
+            //---Load kendo Window on VF page
+            $("#dialog").kendoWindow({
+              title: "",
+              visible: false,
+              width: 400,
+              scrollable: true,
+              resizable: true,
+              modal: true,
+              height: "80%",
+              width:"80%",
+              animation: {
+                close: {effects: "fade:out", duration: 200}
+              },
+              pinned: true,
+              visible: false
+              
+            });
+            setTimeout(function() {
+              $("#dialog").data("kendoWindow").center().open();
+            }, 10);
+            
+           if({!showSearch==true}){
+              var itemDropdown = $.fn.KendoComboBox($('#itemFilter'), 
+                                        { lookupSearchAction: '{!$RemoteAction.FixedAssetLinkToSerialExt.lookupSearchFilter}', 
+                                           referenceTo: 'Item__c', title: '{!$ObjectType.Item__c.Label}', value:'',
+                                           filterCriteria : 'Company__c  = \'{!companyId}\' AND Item_Attribute__r.Fixed_Asset__c =true'+ 
+                                                             ' AND Item_Attribute__r.Serial_Number__c = true'
+                                        }); 
+             var serialDropdown = $.fn.KendoComboBox($('#serialFilter'),
+                                        { lookupSearchAction: '{!$RemoteAction.FixedAssetLinkToSerialExt.lookupSearchFilter}', 
+                                          referenceTo: 'Serial__c', title: '{!$ObjectType.Serial__c.Label}', value:'',
+                                          filterCriteria: 'Company__c  = \'{!companyId}\' AND Item__c = \'#=Id#\' AND SKID__c != null '+
+                                                          ' AND Allow_Reentry__c=false AND Fixed_Asset__c=null'+
+                                                          ' AND SKID__r.Consigned_Owner__c=null',
+                                         cascadeFrom: 'itemFilter'
+                                        }); 
+                             
+           }                         
+                                        
+                                        
+                                        
+            //---Bind the kendowWindow close event to return to FA detail page
+            $("#dialog").data("kendoWindow").bind("close",function(){
+                var returnUrl = '{!ReturnUrl}';
+                var recordId =  returnUrl.substring(returnUrl.lastIndexOf('/')+1,returnUrl.length);
+                KenandyErp.NavigateToSObject(recordId,'detail');
+
+            }); 
+           
+        });  
+        
+    </script> 
+         
+ </apex:page>

@@ -1,0 +1,842 @@
+<apex:page controller="ManageItemSpecWorkOrderExt" sidebar="false" showHeader="true" docType="html-5.0">
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+
+    <apex:form id="theForm">
+        <div class="page-container">
+            <apex:sectionHeader title="{!pageTitle}" subtitle="{!subtitle}" />
+            <div class="page-message" />
+
+            <apex:pageBlock title="{!operationTitle}">
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton value="{!$Label.Go_Back}" action="{!cancel}" />
+                </apex:pageBlockButtons>
+
+
+                <div class="grid-container">
+                    <div class="grid-message" style="white-space: pre" />
+                    <div id="operationGrid" />
+                </div>
+            </apex:pageBlock>
+
+            <apex:pageBlock title="{!componentTitle}">
+                <div class="grid-container">
+                    <div class="grid-message" style="white-space: pre" />
+                    <div id="componentGrid" />
+                </div>
+            </apex:pageBlock>
+        </div>
+    </apex:form>
+
+    <div id="addWindow" class="kndy-hidden">
+        <apex:pageBlock >
+            <apex:panelGrid columns="1" width="100%" style="text-align:center;">
+                <div id ="filters">
+                    <label class="labelClass" for="itemSpec"><strong>Template Item Specification</strong></label>
+                    <input id="itemSpec" class="kendoWidgetSelector" />
+                    <input id="searchOperations" type="button" value="Search" onclick="ManageISWOActions.SearchStd('Operation');" class="btn" style="display:none;" />
+                    <input id="searchComponents" type="button" value="Search" onclick="ManageISWOActions.SearchStd('Component');" class="btn" style="display:none;" />
+                </div>
+            </apex:panelGrid>
+        </apex:pageBlock>
+
+        <apex:pageBlock >
+            <apex:pageBlockButtons location="top">
+                <apex:outputPanel layout="none">
+                    <input type="button" value="Add Selected" class="btn add-std-command" onclick="ManageISWOActions.AddStd();" />
+                </apex:outputPanel>
+            </apex:pageBlockButtons>
+
+            <div class="grid-container">
+                <div class="grid-message" />
+                <div id="addGrid" />
+            </div>
+        </apex:pageBlock>
+    </div>
+
+    <script type="text/javascript">
+        var objType = '{!objType}';
+
+        var stdRecords = [ ];
+
+        var operationData = function() {
+            var deferred = $.Deferred();
+            var messageElement = $("#operationGrid").closest("div.grid-container").find("div.grid-message");
+
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ManageItemSpecWorkOrderExt.getRecords}',
+                ManageISWOUtil.header.Id,
+                objType,
+                'Operation',
+                function(result,event) {
+                    if (event.type == 'exception') {
+                        KenandyErp.Message(event.message,KenandyErp.MessageType.Error,messageElement);
+                    } else if (result.success) {
+                        deferred.resolve(result,event);
+                    } else {
+                        KenandyErp.Messages(result.messages,messageElement);
+                        KenandyErp.UnBlockUI($("#operationGrid"));
+                    }
+                },
+                { escape: false }
+            );
+            return deferred.promise();
+        };
+
+        var componentData = function() {
+            var deferred = $.Deferred();
+            var messageElement = $("#componentGrid").closest("div.grid-container").find("div.grid-message");
+
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ManageItemSpecWorkOrderExt.getRecords}',
+                ManageISWOUtil.header.Id,
+                objType,
+                'Component',
+                function(result,event) {
+                    if (event.type == 'exception') {
+                        KenandyErp.Message(event.message,KenandyErp.MessageType.Error,messageElement);
+                    } else if (result.success) {
+                        deferred.resolve(result,event);
+                    } else {
+                        KenandyErp.Messages(result.messages,messageElement);
+                        KenandyErp.UnBlockUI($("#componentGrid"));
+                    }
+                },
+                { escape: false }
+            );
+            return deferred.promise();
+        };
+
+        var standardData = function() {
+            var deferred = $.Deferred();
+            deferred.resolve({ records: stdRecords, success: true }, { statusCode: 200 });
+            return deferred.promise();
+        }
+
+        $(document).on('KenandyErpReady',function(e) {
+            KenandyErp.KendoGridOptions.DefaultPageSize = KenandyErp.KendoGridOptions.PageSizes[0];
+
+            ManageISWOUtil.Init({
+                header: '{!JSENCODE(headerJson)}',
+
+                operationConfig: '{!JSENCODE(operationConfigJson)}',
+                operationFieldList: '{!JSENCODE(operationFieldListJson)}',
+
+                componentConfig: '{!JSENCODE(componentConfigJson)}',
+                componentFieldList: '{!JSENCODE(componentFieldListJson)}',
+
+                stdOperationFieldList: '{!JSENCODE(stdOperationFieldListJson)}',
+                stdComponentFieldList: '{!JSENCODE(stdComponentFieldListJson)}'
+            });
+        });
+
+        var ManageISWOUtil = function() {
+            return {
+                header: null,
+
+                operationConfig: null,
+                operationFieldList: null,
+                operationGrid: null,
+
+                componentConfig: null,
+                componentFieldList: null,
+                componentGrid: null,
+
+                stdOperationFieldList: null,
+                stdComponentFieldList: null,
+                addGrid: null,
+                addWindow: null,
+
+                mtPackagefields:null,
+
+                Init: function(args) {
+                    this.header = JSON.parse(args.header);
+                    KenandyErp.CleanNamespace(this.header,'{!namespaceUU}');
+                    this.header = Serializer.ParameterMap([this.header], { isDml: true })[0];
+                    delete this.header["attributes"];
+
+                    this.operationConfig = JSON.parse(args.operationConfig);
+                    this.operationFieldList = JSON.parse(args.operationFieldList);
+
+                    this.componentConfig = JSON.parse(args.componentConfig);
+                    this.componentFieldList = JSON.parse(args.componentFieldList);
+
+                    this.stdOperationFieldList = JSON.parse(args.stdOperationFieldList);
+                    this.stdComponentFieldList = JSON.parse(args.stdComponentFieldList);
+
+                    ManageISWOUtil.RenderOperationGrid();
+                    ManageISWOUtil.BindOperationActions();
+
+                    ManageISWOUtil.RenderComponentGrid();
+                    ManageISWOUtil.BindComponentActions();
+                    if(objType == 'Work Order')
+                    	ManageISWOUtil.GetPkgFieldList();
+                },
+                
+                GetPkgFieldList: function(){
+                	var deferred = $.Deferred();
+                	
+                	Visualforce.remoting.Manager.invokeAction(
+                			'{!$RemoteAction.ManageItemSpecWorkOrderExt.getpkgFieldList}',
+                			 function (result, event) {  
+                			 	deferred.resolve(result, event);  
+                				ManageISWOUtil.mtPackagefields = result.records;
+                            },
+                            {escape: false}
+                        );
+                        return deferred.promise();
+                },
+
+                RenderOperationGrid: function() {
+                    var messageElement = $("#operationGrid").closest("div.grid-container").find("div.grid-message");
+                    var operationDateFields = _.union(KenandyErp.KendoGridOptions.GetDateFields(this.operationFieldList),KenandyErp.KendoGridOptions.GetDateFields(this.componentFieldList));
+                    var operationReferenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(this.operationFieldList);
+
+                    var lookupSearchFilters = [ ];
+                    if (this.header.Facility__c) {
+                        lookupSearchFilters.push({ field: "Work_Center__c", filter: "Facility__c = \'" + this.header.Facility__c + "\'" });
+                    }
+                    lookupSearchFilters.push({ field: "Work_Center_Resource__c", filter: "Work_Center__c = \'#=Work_Center__c#\'" });
+
+                    var buttons = [ ];
+                    if (objType == 'Work Order' && (this.header.Quantity_Complete__c > 0 || this.header.Quantity_Scrapped__c > 0)) {
+                        KenandyErp.Message('Cannot modify operation trackings once work order has a completed or scrapped quantity',KenandyErp.MessageType.Info,messageElement);
+                    } else {
+                        buttons = [KenandyErp.KendoGridOptions.CommandType.AddRow,'Add Standard Routings',KenandyErp.KendoGridOptions.CommandType.Delete,KenandyErp.KendoGridOptions.CommandType.Save];
+                    }
+                    var getOperationToolbarButtons = function() {
+                        return KenandyErp.KendoGridOptions.GetToolbarButtons(buttons, { allowMassDelete: true });
+                    };
+
+                    if (this.operationGrid) {
+                        $('#operationGrid').off();
+                        this.operationGrid.destroy();
+                        $('#operationGrid').empty();
+                    }
+
+                    this.operationConfig.dateFields = operationDateFields;
+
+                    this.operationGrid = $('#operationGrid').kendoGridActionList({
+                        config: this.operationConfig,
+                        fieldList: this.operationFieldList,
+                        namespace: '{!namespaceUU}',
+                        lookupSearchAction: '{!$RemoteAction.ManageItemSpecWorkOrderExt.lookupSearchFilter}',
+                        getActionListFunction: operationData,
+                        lookupSearchFilters: lookupSearchFilters,
+                        showIconButtons: false,
+                        toolbarButtons: getOperationToolbarButtons(),
+                        referenceFields: operationReferenceFields,
+                        dateFields: operationDateFields,
+                        validateLookupOnBlur: "Promise"
+                    }).data('kendoGridActionList');
+
+                    if (objType == 'Work Order' && (this.header.Quantity_Complete__c > 0 || this.header.Quantity_Scrapped__c > 0)) {
+                        this.operationGrid.hideColumn('IsSelected__custom');
+                    }
+                },
+
+                BindOperationActions: function() {
+                    this.operationGrid.wrapper.off("click",".grid-add-row-command");
+                    this.operationGrid.wrapper.off("click",".grid-mass-delete-command");
+                    this.operationGrid.wrapper.off("click",".grid-save-command");
+
+                    this.operationGrid.bind('edit', $.proxy(ManageISWOUtil.OnOperationEdit, { grid: this.operationGrid }));
+
+                    this.operationGrid.wrapper.on("click", ".grid-add-row-command", $.proxy(ManageISWOActions.AddRow, { grid: this.operationGrid, parent: this.header, type: 'Operation' }));
+                    this.operationGrid.wrapper.on("click", ".grid-add-standard-routings-custom-command", $.proxy(ManageISWOUtil.RenderWindow, { grid: this.operationGrid, type: 'Operation', fieldList: this.stdOperationFieldList, parent: this.header }));
+                    this.operationGrid.wrapper.on("click", ".grid-mass-delete-command", $.proxy(ManageISWOActions.DeleteRow, { grid: this.operationGrid, type: 'Operation', fieldList: this.operationFieldList }));
+                    this.operationGrid.wrapper.on("click", ".grid-save-command", $.proxy(ManageISWOActions.Save, { grid: this.operationGrid, parent: this.header, fieldList: this.operationFieldList, type: 'Operation' }));
+                },
+
+                OnOperationEdit: function(e) {
+                    var row = e.container.closest('tr');
+                    var dataItem = this.grid.dataItem(row);
+                    var fieldName = e.container.find("input").length > 0 && e.container.find("input").attr("name") ? e.container.find("input").attr("name").toLowerCase() : '';
+
+                    if (dataItem.Quantity_Completed__c > 0 || dataItem.Quantity_Scrapped__c > 0 || (!dataItem.Work_Center__c && fieldName == 'work_center_resource__c')) {
+                        e.sender.closeCell();
+                    }
+                },
+
+                RenderComponentGrid: function() {
+                    var messageElement = $("#componentGrid").closest("div.grid-container").find("div.grid-message");
+                    var componentDateFields = _.union(KenandyErp.KendoGridOptions.GetDateFields(this.componentFieldList),KenandyErp.KendoGridOptions.GetDateFields(this.operationFieldList));
+                    var componentReferenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(this.componentFieldList);
+
+                    var itemField;
+                    if (objType == 'Item Specification') {
+                        itemField = 'Component_Item__c';
+                    } else if (objType == 'Work Order') {
+                        itemField = 'Item__c';
+                    }
+
+                    var lookupSearchFilters = [ ];
+                    lookupSearchFilters.push({ field: itemField, filter: "Company__c = \'" + this.header.Company__c + "\'" });
+                    if (objType == 'Item Specification') {
+                        lookupSearchFilters.push({ field: "Routing__c", filter: "Assembly_Item_Specification__c = \'" + this.header.Id + "\'" });
+                    } else if (objType == 'Work Order') {
+                        lookupSearchFilters.push({ field: "Operation_Tracking__c", filter: "Work_Order__c = \'" + this.header.Id + "\'" });
+                    }
+                    lookupSearchFilters.push({ field: "Supplier__c", filter: "RecordType.DeveloperName = \'Purchase_From\'" });
+                    var buttons = [KenandyErp.KendoGridOptions.CommandType.AddRow,'Add Standard Components',KenandyErp.KendoGridOptions.CommandType.Delete,KenandyErp.KendoGridOptions.CommandType.Save];
+                    var getComponentToolbarButtons = function() {
+                        return KenandyErp.KendoGridOptions.GetToolbarButtons(buttons, { allowMassDelete: true });
+                    };
+
+                    if (this.componentGrid) {
+                        $('#componentGrid').off();
+                        this.componentGrid.destroy();
+                        $('#componentGrid').empty();
+                    }
+
+                    this.componentConfig.dateFields = componentDateFields;
+
+                    this.componentGrid = $('#componentGrid').kendoGridActionList({
+                        config: this.componentConfig,
+                        fieldList: this.componentFieldList,
+                        namespace: '{!namespaceUU}',
+                        lookupSearchAction: '{!$RemoteAction.ManageItemSpecWorkOrderExt.lookupSearchFilter}',
+                        getActionListFunction: componentData,
+                        lookupSearchFilters: lookupSearchFilters,
+                        showIconButtons: false,
+                        toolbarButtons: getComponentToolbarButtons(),
+                        referenceFields: componentReferenceFields,
+                        dateFields: componentDateFields,
+                        validateLookupOnBlur: "Promise"
+                    }).data('kendoGridActionList');
+                },
+
+                BindComponentActions: function() {
+                    this.componentGrid.wrapper.off("click",".grid-add-row-command");
+                    this.componentGrid.wrapper.off("click",".grid-mass-delete-command");
+                    this.componentGrid.wrapper.off("click",".grid-save-command");
+
+                    this.componentGrid.bind('edit', $.proxy(ManageISWOUtil.OnComponentEdit, { grid: this.componentGrid }));
+
+                    this.componentGrid.wrapper.on("click", ".grid-add-row-command", $.proxy(ManageISWOActions.AddRow, { grid: this.componentGrid, parent: this.header, type: 'Component' }));
+                    this.componentGrid.wrapper.on("click", ".grid-add-standard-components-custom-command", $.proxy(ManageISWOUtil.RenderWindow, { grid: this.componentGrid, type: 'Component', fieldList: this.stdComponentFieldList, parent: this.header }));
+                    this.componentGrid.wrapper.on("click", ".grid-mass-delete-command", $.proxy(ManageISWOActions.DeleteRow, { grid: this.componentGrid, type: 'Component', fieldList: this.componentFieldList }));
+                    this.componentGrid.wrapper.on("click", ".grid-save-command", $.proxy(ManageISWOActions.Save, { grid: this.componentGrid, parent: this.header, fieldList: this.componentFieldList, type: 'Component' }));
+                },
+
+                OnComponentEdit: function(e) {
+                	var self = this;
+                    var grid = self.grid;
+                    var row = e.container.closest('tr');
+                    var dataItem = this.grid.dataItem(row);
+                    var columnIndex = this.grid.cellIndex(e.container);
+
+                    var fieldName = this.grid.thead.find("th").eq(columnIndex).data("field");
+         			var namespace = '{!namespaceUU}';
+                    var item = $(e.container).find('input[name="Item__c"]');
+
+                    item.on('focus', function() {
+    					 $(this).data('default_value', $(this).val());
+    				});
+    				item.focus();
+                    item.on('blur',
+                        $.proxy(ManageISWOUtil.GetItemInfo, { grid: grid })
+                    );
+
+
+
+                    if (dataItem.Quantity_Allocated__c > 0 || dataItem.Quantity_Issued__c > 0 || dataItem.Quantity_Used__c > 0 || dataItem.Quantity_Scrapped__c > 0 || ManageISWOUtil.header.Quantity_Complete__c > 0 || ManageISWOUtil.header.Quantity_Scrapped__c > 0) {
+                         $.each(ManageISWOUtil.mtPackagefields, function(idx,item) {
+                         		item = item.replace(namespace, '');
+ 		                        if (item.toLowerCase() == fieldName.toLowerCase()) {
+ 		                            e.sender.closeCell();
+ 		                        }
+ 		                });
+                    }
+
+                    if(e.model.isNew() && dataItem.Item__r && dataItem.Item__r.Source__c == 'Outside Processing' && dataItem.Quantity_Required__c != null){
+                    	dataItem.set('Quantity_Required__c',null);
+                    }
+
+                    if(dataItem.Item__r && dataItem.Item__r.Source__c == 'Outside Processing' && fieldName == 'Quantity_Required__c'){
+                    	e.sender.closeCell();
+                    }
+                },
+
+                GetItemInfo: function(e){
+
+                 	var self=this;
+                 	var grid=this.grid;
+                    var row = $(e.target).closest('tr');
+                    var dataItem = grid.dataItem(row);
+                    var dataItemIndex=grid.dataSource.indexOf(dataItem);
+
+
+                    if ($(e.target).val() == $(e.target).data('default_value')) {
+                        return;
+                    }
+
+                    if(objType == 'Work Order' && dataItem.Item__c != null){//&& dataItem.Item__c != dataItem.Item__r.Id
+	                    	var deferred = $.Deferred();
+				            var messageElement = $("#componentGrid").closest("div.grid-container").find("div.grid-message");
+
+				            Visualforce.remoting.Manager.invokeAction(
+				                '{!$RemoteAction.ManageItemSpecWorkOrderExt.getItemRecord}',
+				                dataItem.Item__c,
+				                function(result,event) {
+				                    if (event.type == 'exception') {
+				                        KenandyErp.Message(event.message,KenandyErp.MessageType.Error,messageElement);
+				                    } else if (result.success && result.records != null) {
+				                    	KenandyErp.CleanNamespace(result.records,'{!namespaceUU}');
+				                        dataItem.Item__r = result.records[0];
+				                        dataItem.Item__c = result.records[0].Id;
+
+				                        // set the Item__c and Item__r for the dataItem in the datasource.
+				                        var dataItemToUpdate = grid.dataSource.data()[dataItemIndex];
+				                        dataItemToUpdate.set("Item__r",dataItem.Item__r);
+                                        dataItemToUpdate.set("Item__c",dataItem.Item__c);
+				                        deferred.resolve(result,event);
+
+				                    } else {
+				                        KenandyErp.Messages(result.messages,messageElement);
+				                        KenandyErp.UnBlockUI($("#componentGrid"));
+				                    }
+				                },
+				                { escape: false }
+				            );
+				            return deferred.promise();
+                    }
+                },
+
+                RenderWindow: function() {
+                    var grid = this.grid;
+                    var type = this.type;
+                    var fieldList = this.fieldList;
+                    var dateFields = KenandyErp.KendoGridOptions.GetDateFields(fieldList);
+                    var referenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(fieldList);
+                    var messageElement = $("#addGrid").closest("div.grid-container").find("div.grid-message");
+
+                    var itemSpecLookup = $('#itemSpec').data('kendoComboBox');
+                    if (!itemSpecLookup) {
+                        $.fn.KendoComboBox($('#itemSpec'), {
+                            lookupSearchAction: '{!$RemoteAction.ManageItemSpecWorkOrderExt.lookupSearchFilter}',
+                            referenceTo: 'Item_Specification__c',
+                            title: 'Template Item Specification',
+                            filterCriteria: "Type__c = \'Template\'"
+                        });
+                    }
+                    $('#itemSpec').data('kendoComboBox').value("");
+
+                    if (!ManageISWOUtil.addWindow) {
+                        ManageISWOUtil.addWindow = $('#addWindow').kendoWindow({
+                            title: 'Add Standard ' + type + 's',
+                            modal: true,
+                            width: '80%'
+                        }).data('kendoWindow');
+                    }
+
+                    if (ManageISWOUtil.addGrid) {
+                        $('#addGrid').off();
+                        ManageISWOUtil.addGrid.destroy();
+                        $('#addGrid').empty();
+                        stdRecords = [ ];
+                    }
+
+                    ManageISWOUtil.addGrid = $('#addGrid').kendoGridActionList({
+                        fieldList: fieldList,
+                        namespace: '{!namespaceUU}',
+                        getActionListFunction: standardData,
+                        showIconButtons: false,
+                        referenceFields: referenceFields,
+                        dateFields: dateFields
+                    }).data('kendoGridActionList');
+
+                    $('#searchOperations').hide();
+                    $('#searchComponents').hide();
+
+                    if (type == 'Operation') {
+                        $('#searchOperations').show();
+                    } else if (type == 'Component') {
+                        $('#searchComponents').show();
+                    }
+
+                    ManageISWOUtil.addWindow.center().open();
+                }
+            };
+        }();
+
+        var ManageISWOActions = function() {
+            return {
+                AddRow: function() {
+                    var grid = this.grid;
+                    var parent = this.parent;
+                    var type = this.type;
+
+                    var messageElement;
+                    if (type == 'Operation')
+                        messageElement = $("#operationGrid").closest("div.grid-container").find("div.grid-message");
+                    else if (type == 'Component')
+                        messageElement = $("#componentGrid").closest("div.grid-container").find("div.grid-message");
+
+                    KenandyErp.ClearMessage(messageElement);
+                    KenandyErp.BlockUI(grid.element);
+
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.ManageItemSpecWorkOrderExt.addRecord}',
+                        parent,
+                        objType,
+                        type,
+                        function(result,event) {
+                            KenandyErp.UnBlockUI(grid.element);
+
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message,KenandyErp.MessageType.Error,messageElement);
+                            } else if (result.success && result.records.length > 0) {
+                                KenandyErp.CleanNamespace(result.records,'{!namespaceUU}');
+                                var newRow = result.records[0];
+                                newRow.IsSelected__custom = null;
+
+                                if (objType == 'Item Specification') {
+                                    if (type == 'Operation') {
+                                        newRow.sObjectType = 'Routing__c';
+                                    } else if (type == 'Component') {
+                                        newRow.sObjectType = 'Component__c';
+                                    }
+                                } else if (objType == 'Work Order') {
+                                    if (type == 'Operation') {
+                                        newRow.sObjectType = 'Operation_Tracking__c';
+                                    } else if (type == 'Component') {
+                                        newRow.sObjectType = 'Material_Tracking__c';
+                                    }
+                                }
+
+                                if (type == 'Operation') {
+                                    $.each(ManageISWOUtil.operationFieldList, function(ind,fld) {
+                                        if (!newRow.hasOwnProperty(fld.field)) {
+                                            if (fld.fieldtype == 'boolean') newRow[fld.field] = false;
+                                            else newRow[fld.field] = null;
+                                        }
+                                    });
+                                } else if (type == 'Component') {
+                                    $.each(ManageISWOUtil.componentFieldList, function(ind,fld) {
+                                        if (!newRow.hasOwnProperty(fld.field)) {
+                                            if (fld.fieldtype == 'boolean') newRow[fld.field] = false;
+                                            else newRow[fld.field] = null;
+                                        }
+                                    });
+                                }
+
+                                grid.dataSource.insert(0,newRow);
+                            } else {
+                                KenandyErp.Messages(result.messages,messageElement);
+                            }
+                        },
+                        { escape: false }
+                    );
+                },
+
+                DeleteRow: function() {
+                    var grid = this.grid;
+                    var type = this.type;
+                    var dateFields = KenandyErp.KendoGridOptions.GetDateFields(this.fieldList);
+
+                    var messageElement;
+                    if (type == 'Operation')
+                        messageElement = $("#operationGrid").closest("div.grid-container").find("div.grid-message");
+                    else if (type == 'Component')
+                        messageElement = $("#componentGrid").closest("div.grid-container").find("div.grid-message");
+
+                    KenandyErp.ClearMessage(messageElement);
+
+                    var errors = [ ];
+                    var selectedRows = $.map(grid.dataSource.data(),function(val,i) {
+                        if (val.IsSelected__custom) {
+                            if (objType == "Work Order" && type == "Operation" && (val.Quantity_Completed__c > 0 || val.Quantity_Scrapped__c > 0)) {
+                                errors.push(val.Name + ': Cannot delete an operation that has quantity associated with it');
+                            } else if (objType == 'Work Order' && type == 'Component' && (val.Quantity_Allocated__c > 0 || val.Quantity_Issued__c > 0 || val.Quantity_Used__c > 0 || val.Quantity_Scrapped__c > 0)) {
+                                errors.push(val.Name + ': Cannot delete material that has quantity associated with it');
+                            }
+                            return val;
+                        }
+                    });
+
+                    if (errors.length > 0) {
+                        KenandyErp.Message(errors.join("\n"),KenandyErp.MessageType.Error,messageElement);
+                        return;
+                    }
+
+                    var deleteFromDatabase = [ ];
+                    var rowsToRemove = [ ];
+                    $.each(selectedRows,function(i,val) {
+                        if (val.Id) {
+                            var rec = Serializer.ConvertToSFDCDate(JSON.parse(JSON.stringify(val)), { dateFields: dateFields });
+                            delete rec.IsSelected__custom;
+                            deleteFromDatabase.push(rec);
+                            rowsToRemove.push(val);
+                        } else {
+                            grid.dataSource.remove(val);
+                        }
+                    });
+
+                    if (deleteFromDatabase.length > 0) {
+                        deleteFromDatabase = Serializer.ParameterMap(JSON.parse(JSON.stringify(deleteFromDatabase)), { isDml: true });
+
+                        KenandyErp.BlockUI(grid.element);
+
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.ManageItemSpecWorkOrderExt.deleteRecords}',
+                            deleteFromDatabase,
+                            function(result,event) {
+                                KenandyErp.UnBlockUI(grid.element);
+
+                                if (event.type == 'exception') {
+                                    KenandyErp.Message(event.message,KenandyErp.MessageType.Error,messageElement);
+                                } else if (result.success) {
+                                    KenandyErp.Message("Deleted Successfully!",KenandyErp.MessageType.Success,messageElement);
+
+                                    $.each(rowsToRemove, function(i,val) {
+                                        grid.dataSource.remove(val);
+                                    });
+                                } else {
+                                    KenandyErp.Messages(result.messages,messageElement);
+                                }
+                            },
+                            { escape: false }
+                        );
+                    }
+                },
+
+                Save: function(e) {
+                    var grid = this.grid;
+                    var columns = grid.columns;
+                    var parent = this.parent;
+                    var type = this.type;
+                    var dateFields = KenandyErp.KendoGridOptions.GetDateFields(this.fieldList);
+
+                    var messageElement;
+                    if (type == 'Operation')
+                        messageElement = $("#operationGrid").closest("div.grid-container").find("div.grid-message");
+                    else if (type == 'Component')
+                        messageElement = $("#componentGrid").closest("div.grid-container").find("div.grid-message");
+
+					var noSupplierOSP = false;
+                    var currentData = $.map(grid.dataSource.data(),function(val,i) {
+                        var row = Serializer.ConvertFromSFDCDate(JSON.parse(JSON.stringify(val)), { dateFields: dateFields });
+                        row = Serializer.ConvertToSFDCDate(row, { dateFields: dateFields });
+
+                        if (row.sObjectType == 'Material_Tracking__c' && !row.Quantity_Per_Assembly__c && row.Quantity_Required__c) {
+                            row.Quantity_Per_Assembly__c = row.Quantity_Required__c / ManageISWOUtil.header.Order_Quantity__c;
+                        }
+
+                        if(type == 'Component' && objType == 'Item Specification'){
+
+                        	if(row.Component_Item__r){
+                        	    if(row.Component_Item__r.Source__c == 'Outside Processing' && row.Supplier__c == null){
+                        	    	noSupplierOSP = true;
+                        	    }
+                        	}
+                        }
+                        else if(type == 'Component' && objType == 'Work Order'){
+                        	if(row.Item__r.Source__c == 'Outside Processing' && row.Supplier__c == null){
+                        	   noSupplierOSP = true;
+                        	}
+                        }
+
+                        for (var i = 0; i < columns.length; i++) {
+
+                            var name = columns[i].field;
+
+                            if (name && name.indexOf('.') != -1) {
+							    delete row[name];
+							}
+					    }
+
+
+                        return row;
+                    });
+
+                    if(noSupplierOSP == true){
+	                    KenandyErp.Message("Supplier is required for Outside processing item.", KenandyErp.MessageType.Info, messageElement);
+	                    return;
+	                }
+
+                    var dirtyRowsInactive= grid.dataSource.data().filter(function(dataItem){
+                            return dataItem['dirty']==true
+                    }).filter(function(dataItem){
+                        return dataItem.hasOwnProperty('Item__r') && dataItem['Item__r'].hasOwnProperty('Active__c') && dataItem['Item__r']['Active__c']==false;
+                    });
+
+                    if(dirtyRowsInactive.length>0){
+                        var dirtyrowNames=dirtyRowsInactive.map(function(dataItem){
+                            return dataItem['Item__r']['Name'];
+                        }).join(',');
+
+                        KenandyErp.Message('Inactive Items found : '+dirtyrowNames,KenandyErp.MessageType.Error,messageElement);
+                        return;
+
+                    }
+
+
+
+                    currentData = Serializer.ParameterMap(currentData, { isDml: false });
+
+                    KenandyErp.ClearMessage(messageElement);
+                    KenandyErp.BlockUI(grid.element);
+
+                    dateFields = dateFields ? _.pluck(dateFields,KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.ManageItemSpecWorkOrderExt.saveRecords}',
+                        parent.Id,
+                        objType,
+                        type,
+                        currentData,
+                        dateFields,
+                        function(result,event) {
+                            KenandyErp.UnBlockUI(grid.element);
+
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message,KenandyErp.MessageType.Error,messageElement);
+                            } else if (result.success) {
+                                KenandyErp.Message("Saved Successfully!",KenandyErp.MessageType.Success,messageElement);
+                                grid.dataSource.read();
+
+                                if (objType == "Work Order" && type == "Operation") {
+                                    ManageISWOUtil.componentGrid.dataSource.read();
+                                }
+                            } else {
+                                KenandyErp.Messages(result.messages,messageElement);
+                            }
+                        },
+                        { escape: false }
+                    );
+                },
+
+                SearchStd: function(type) {
+                    var grid = ManageISWOUtil.addGrid;
+
+                    stdRecords = [ ];
+
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.ManageItemSpecWorkOrderExt.getStdRecords}',
+                        type,
+                        $('#itemSpec').data('kendoComboBox').value(),
+                        ManageISWOUtil.header,
+                        function (result,event) {
+                            if (event.type == 'exception') {
+                                KenandyErp.Alert(event.message);
+                            } else if (result.success && result.records != null) {
+                                KenandyErp.CleanNamespace(result.records,'{!namespaceUU}');
+                                stdRecords = result.records;
+
+                                $.each(stdRecords, function(i,row) {
+                                    if (type == 'Operation') {
+                                        row.sObjectType = 'Routing__c';
+                                    } else if (type == 'Component') {
+                                        row.sObjectType = 'Component__c';
+                                    }
+                                });
+
+                                grid.dataSource.read();
+
+                                grid.refresh();
+                            } else {
+                                KenandyErp.Messages(result.messages,messageElement);
+                            }
+                        },
+                        { escape: true }
+                    );
+                },
+
+                AddStd: function() {
+                    var grid = ManageISWOUtil.addGrid;
+                    var operationGrid = ManageISWOUtil.operationGrid;
+                    var componentGrid = ManageISWOUtil.componentGrid;
+                    var addWindow = ManageISWOUtil.addWindow;
+                    var messageElement = $("#addGrid").closest("div.grid-container").find("div.grid-message");
+
+                    KenandyErp.ClearMessage(messageElement);
+
+                    var selectedRows = $.map(grid.dataSource.data(), function(val,key) {
+                        if (val.IsSelected__custom) {
+                            return val;
+                        }
+                    });
+
+                    if (selectedRows.length == 0) {
+                        KenandyErp.Message('No records selected',KenandyErp.MessageType.Error,messageElement);
+                        return;
+                    }
+
+                    $.each(selectedRows, function(i,row) {
+                        row = JSON.parse(JSON.stringify(row));
+                        row.IsSelected__custom = null;
+
+                        if (objType == 'Item Specification') {
+                            row.Name = null;
+
+                            if (row.sObjectType == "Component__c") {
+                                row.Routing__c = null;
+                                row.Routing__r = null;
+                            }
+                        } else if (objType == 'Work Order') {
+                            if (row.sObjectType == 'Routing__c') {
+                                row = {
+                                    sObjectType: 'Operation_Tracking__c',
+                                    IsSelected__custom: null,
+                                    Sequence__c: row.Resource_Sequence__c,
+                                    Name: null,
+                                    Description__c: row.Description__c,
+                                    Work_Center__c: row.Work_Center__c,
+                                    Work_Center__r: row.Work_Center__r,
+                                    Work_Center_Resource__c: row.Work_Center_Resource__c,
+                                    Work_Center_Resource__r: row.Work_Center_Resource__r,
+                                    Resource_Quantity__c: row.Resource_Quantity__c,
+                                    Standard_Hours__c: row.Standard_Hours__c,
+                                    Backflush_Resource__c: row.Backflush_Resource__c,
+                                    Fixed_Hours__c: row.Fixed_Hours__c,
+                                    Actual_Hours__c: 0,
+                                    Quantity_Available__c: 0,
+                                    Quantity_Completed__c: 0,
+                                    Quantity_Scrapped__c: 0,
+                                    Work_Order__c: ManageISWOUtil.header.Id
+                                }
+                            } else if (row.sObjectType == 'Component__c') {
+                                row = {
+                                    sObjectType: 'Material_Tracking__c',
+                                    IsSelected__custom: null,
+                                    Component_Sequence__c: row.Component_Sequence__c,
+                                    Item__c: row.Component_Item__c,
+                                    Item__r: row.Component_Item__r,
+                                    Type__c: row.Type__c,
+                                    Yield__c: row.Yield__c,
+                                    Work_Order__c: ManageISWOUtil.header.Id
+                                }
+                            }
+                        }
+
+                        var fieldList;
+                        if (row.sObjectType == 'Routing__c' || row.sObjectType == 'Operation_Tracking__c') {
+                            fieldList = ManageISWOUtil.operationFieldList;
+                        } else if (row.sObjectType == 'Component__c' || row.sObjectType == 'Material_Tracking__c') {
+                            fieldList = ManageISWOUtil.componentFieldList;
+                        }
+
+                        $.each(fieldList, function(ind,fld) {
+                            if (!row[fld.field]) {
+                                if (fld.fieldtype == 'boolean') {
+                                    row[fld.field] = false;
+                                } else {
+                                    row[fld.field] = null;
+                                }
+                            }
+                        });
+
+                        if (row.sObjectType == 'Routing__c' || row.sObjectType == 'Operation_Tracking__c') {
+                            operationGrid.dataSource.insert(0,row);
+                        } else if (row.sObjectType == 'Component__c' || row.sObjectType == 'Material_Tracking__c') {
+                            componentGrid.dataSource.insert(0,row);
+                        }
+                    });
+
+                    addWindow.close();
+                }
+            };
+        }();
+    </script>
+</apex:page>

@@ -1,0 +1,45 @@
+<apex:page standardController="Contract__c" extensions="PurchaseAgreementCloneExt">
+    <apex:form id="theForm">
+    <c:busyWait />
+        <apex:sectionHeader subtitle="{!$Label.Clone_Purchase_Agreement}" title="{!$Label.Clone_Purchase_Agreement}"/>
+        <apex:pagemessages ></apex:pagemessages>
+    <apex:pageBlock >
+        <apex:pageBlockButtons >
+        <apex:commandButton value="{!$Label.Save} " action="{!save}" rendered="{!isVisible}" reRender="theForm" status="actionStatus" accessKey="s"/>
+        <apex:commandButton value="{!$Label.Cancel} " action="{!cancel}" reRender="mainform" status="actionStatus"/>
+        </apex:pageBlockButtons>
+        
+        <apex:pageBlockSection title="{!$Label.Purchase_Agreement_Information}" columns="2" collapsible="false">
+            <apex:repeat value="{!$ObjectType.Contract__c.FieldSets.New_Purchase_Agreement}" var="f" > 
+            <apex:inputField value="{!Contract__c[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+            </apex:repeat>            
+                            
+        </apex:pageBlockSection>
+        <apex:pageBlockSection title="{!$Label.Tolerances}" columns="2" collapsible="false">
+            <apex:repeat value="{!$ObjectType.Contract__c.FieldSets.New_Purchase_Agreement_Tolerances}" var="f" > 
+            <apex:inputField value="{!Contract__c[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+            </apex:repeat>               
+        </apex:pageBlockSection>
+        
+    </apex:pageBlock>
+    </apex:form>  
+      
+    <!--                this is to ensure the standard controller has all the fields  -->
+	 <div style="display: none; " >
+	 	<apex:outputText value="{!Contract__c.Company__c}" />
+	 	<apex:outputText value="{!Contract__c.Contract_End__c}" />
+	 	<apex:outputText value="{!Contract__c.Contract_Start__c}" />
+	 	<apex:outputText value="{!Contract__c.Payment_Term__c}" />
+	 	<apex:outputText value="{!Contract__c.Update_Open_PO_Lines__c}" />
+	 	<apex:outputText value="{!Contract__c.FOB_Term__c}" />
+	 	<apex:outputText value="{!Contract__c.Ship_to_Facility__c}" />
+	 	<apex:outputText value="{!Contract__c.Transportation_Mode__c}" />
+	 	<apex:outputText value="{!Contract__c.Contract_Number__c}" />
+	 	<apex:outputText value="{!Contract__c.Ship_to_Facility__c}" />
+	 	<apex:outputText value="{!Contract__c.Transportation_Mode__c}" />
+	 	<apex:outputText value="{!Contract__c.Contract_Number__c}" />
+	 	<apex:outputText value="{!Contract__c.Unit_Price_Tolerance_Over__c}" />
+	 	<apex:outputText value="{!Contract__c.Quantity_Tolerance_Over__c}" />
+	 	<apex:outputText value="{!Contract__c.Amount_Tolerance__c}" />
+	</div>
+</apex:page>

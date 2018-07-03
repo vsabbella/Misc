@@ -1,0 +1,53 @@
+<apex:page standardController="Accounting_Rule__c" 
+	extensions="AccountingRuleExt" 
+	recordSetVar="rules"	>
+    <apex:includeScript value="{!URLFOR($Resource.JQuery182)}" />
+<script>
+
+	$(document).ready(function() {
+	    $('td.dataCell.exceptionStyle').each( function() {
+	    	if ( $(this).text().length > 0 ) 
+	    		$(this).css('background-color','rgb(255, 168, 168)');
+	    });
+	});
+        
+        </script>
+<apex:form id="AccountEntryForm" >
+<c:busyWait />
+        <apex:sectionHeader subtitle="{!$Label.Validate_Accounting_Rules}" title="{!$Label.Generate_CustomerInvoice_Accounting}"/>
+<apex:pageMessages />
+
+<apex:pageMessage summary="{!$Label.No_rules_selected}" severity="warning" strength="3"  
+	rendered="{! selectedCount  == 0}"  />
+
+<apex:pageMessage summary="{!$Label.All_rules_validated_correctly}" severity="info" strength="3"  
+	rendered="{! errcount == 0  && selectedCount > 0}"  />
+	
+<apex:pageMessage summary="{!$Label.One_or_more_rules_are_invalid}" severity="warning" strength="3"  
+	rendered="{! errcount != 0 }" />
+	
+<apex:Pageblock >
+<apex:pageBlockTable value="{!therules}" var="the">
+<apex:column headerValue="{!$Label.Rule_Number}" >
+	<apex:outputLink value="/{!the.rule.id}"   >{!the.rule.name}</apex:outputLink>
+</apex:column>
+<!-- TODO use a field set   --> 
+<apex:column value="{!the.objectname}"  headerValue="{!$ObjectType.Accounting_Rule__c.Fields.Object_Name__c.Label}" /> 
+<apex:column value="{!the.rule.Transaction__c}"  />
+<apex:column value="{!the.rule.SubTransaction_Type__c}"  />
+<apex:column value="{!the.rule.Line_Type__c}"  />
+<apex:column value="{!the.rule.Rule_Type__c}"  />
+<!-- what about the custom segments ? -->
+
+<apex:column value="{!the.exceptionMsg}"  headerValue="{!$Label.Exceptions}"  styleClass="exceptionStyle" /> 
+
+<!--<apex:column value="{!the.rule.Transaction__c}"  />-->
+</apex:pageBlockTable>
+
+	<apex:pageBlockButtons >
+      		<apex:commandButton value="{!$Label.Go_Back} " action="{!cancel}" status="actionStatus" rerender="AccountEntryForm"/>
+      	</apex:pageBlockButtons> 
+</apex:Pageblock>
+</apex:form>
+
+ </apex:page>

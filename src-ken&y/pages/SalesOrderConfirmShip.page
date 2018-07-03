@@ -1,0 +1,175 @@
+<apex:page standardController="Sales_Order__c"
+                tabStyle="Sales_Order__c" 
+                extensions="SalesOrderConfirmShipExtension">
+                
+    <apex:sectionHeader subtitle="{!Sales_Order__c.Name}" title="{!$ObjectType.Sales_Order__c.Label}"/> 
+    
+    <apex:includeScript value="{!$Resource.JQuery182}" />
+    <script>
+        
+        function isAnyRecordSelected(){  
+            return jQuery('td.selectCol input:checkbox:checked').size() > 0; 
+        }
+        
+        function toggleSelectAll(element){
+            jQuery(element).closest('tr').next().find('td.selectCol  input:checkbox').each( function( i ) { 
+                jQuery(this).prop('checked', jQuery(element).is(':checked')?true:false);
+            });
+        }
+        
+        function confirmShip(){                  
+            result = window.confirm('{!$Label.ConfirmPacklist}');
+            if(result == true) {
+                confirmShipAF();
+            }
+            return false;
+        }
+        
+        function undoPickConfirm(){                  
+           if(isAnyRecordSelected()){
+               result = window.confirm('{!$Label.ConfirmUndoPick}');
+               if(result == true) {
+                    
+                    var selected_indexes = '';
+                    jQuery('td.selectCol  input:checkbox').each( function( i ) { 
+                        if ( jQuery(this).is(':checked') )
+                            selected_indexes += jQuery(this).closest('td').find('span').text()+',';
+                    });
+                    undoConfirmPickAF(selected_indexes);  
+               }
+           }else{
+              alert('{!$Label.Select_records}');
+           }
+           return false;
+        }
+        
+        function removeFromPicklist(){                  
+           if(isAnyRecordSelected()){
+               result = window.confirm('{!$Label.ConfirmRemove}'); 
+               if(result == true) {
+                    
+                    var selected_indexes = '';
+                    jQuery('td.selectCol  input:checkbox').each( function( i ) { 
+                        if ( jQuery(this).is(':checked') )
+                            selected_indexes += jQuery(this).closest('td').find('span').text()+',';
+                    });
+                    removeFromPicklistAF(selected_indexes);  
+               }
+           }else{
+              alert('{!$Label.Select_records}');
+           }
+           return false;
+        }
+      
+    function confirmFirst() {
+        if(isAnyRecordSelected()){
+            window.alert('{!$Label.Please_Unallocate_before_changing_page}');
+            return;
+        }
+        firstAF();
+    }    
+
+    function confirmPrevious() {
+        if(isAnyRecordSelected()){
+            window.alert('{!$Label.Please_Unallocate_before_changing_page}');
+            return;
+        }
+        previousAF();
+    }   
+
+    function confirmNext() {
+        if(isAnyRecordSelected()){
+            window.alert('{!$Label.Please_Unallocate_before_changing_page}');
+            return;
+        }
+        nextAF();
+    }
+
+    function confirmLast() {
+        if(isAnyRecordSelected()){
+            window.alert('{!$Label.Please_Unallocate_before_changing_page}');
+            return;
+        }
+        lastAF();
+    }   
+
+        function setFocusOnLoad() {}    //stops the datepicker from prompting onLoad
+        
+      
+    </script>
+    <apex:form id="theForm">
+        <c:busyWait />
+        <apex:actionFunction name="confirmShipAF" action="{!confirmShip}" status="actionStatus" reRender="thePageBlock" />
+        <apex:actionFunction name="undoConfirmPickAF" action="{!undoConfirmPick}" status="actionStatus" reRender="thePageBlock">
+            <apex:param name="selectedIndexes" value="" />
+        </apex:actionFunction>
+        
+        <apex:actionFunction name="firstAF" action="{!first}" status="actionStatus" reRender="thePageBlock" />
+        <apex:actionFunction name="previousAF" action="{!previous}" status="actionStatus" reRender="thePageBlock" />
+        <apex:actionFunction name="nextAF" action="{!next}" status="actionStatus" reRender="thePageBlock" />
+        <apex:actionFunction name="lastAF" action="{!last}" status="actionStatus" reRender="thePageBlock" />
+
+        <apex:pageBlock mode="detail" id="thePageBlock" title="{!$Label.Manage_Packlist}"> 
+            <apex:PageMessages />
+
+            <apex:pageBlockSection id="editDateBlock" title="{!$Label.Shipment_Details}" columns="2" collapsible="false">
+                <apex:outputField value="{!shipment.Name}" />
+                <apex:inputField value="{!shipment.Date_Shipped__c}" />
+            </apex:pageBlockSection>
+            
+
+            <apex:pageBlockSection id="lineBlock" title="{!$Label.Sales_Order_Lines}" columns="1" collapsible="false"> 
+                
+                <apex:pageBlockTable value="{!solPageList}" var="soLine" id="SalesOrderLinePBTableId" >
+                <apex:column headerValue="{!$Label.Select_For_Undo}" styleClass="selectAllCol" width="20px">
+                    <apex:inputCheckbox id="selectAll" onclick="toggleSelectAll(this);"/>
+                        <span style="display:none;">{!soLine.Id}</span>
+                </apex:column>
+                
+                <apex:repeat value="{!$ObjectType.Sales_Order_Line__c.FieldSets.Fulfillment_RO}" var="f">
+                    <apex:column headerValue="{!f.label}" styleClass="{!f.Type}  {!f.FieldPath}" >
+                            <apex:outputField value="{!soLine[f]}" />
+                    </apex:column>
+                </apex:repeat>
+                
+                <apex:column headerValue="{!$Label.Shipment_Details}" breakBefore="true" colspan="12">
+                        <apex:pageBlockTable value="{!soLine.Inventory_Transactions__r}" var="invTrans" rendered="{!!ISNULL(soLine.Inventory_Transactions__r)}" width="100%">
+                        <apex:column headerValue="{!$Label.Select}" styleClass="selectCol" width="20px">
+                            <apex:inputCheckbox />
+                            <span style="display:none;">{!invTrans.Id}</span>
+                        </apex:column>
+                        
+                        <apex:repeat value="{!attributesForDisplay}" var="f" >
+                                <apex:column headerValue="{!$ObjectType.Inventory_Transaction__c.fields[f].Label}" rendered="{!!IF(f == 'Location__c', true, false)}">
+                                    <apex:outputField value="{!invTrans[f]}" />
+                                </apex:column>  
+                                <apex:column headerValue="{!$ObjectType.Inventory_Transaction__c.fields['To_Location__c'].Label}" rendered="{!IF(f == 'Location__c', true, false)}">    
+                                    <apex:outputField value="{!invTrans['To_Location__c']}" />
+                                </apex:column> 
+                        </apex:repeat>
+                        
+                        <apex:repeat value="{!$ObjectType.Inventory_Transaction__c.FieldSets.ConfirmShipRONew}" var="f">
+                            <apex:column headerValue="{!f.label}" styleClass="{!f.Type}  {!f.FieldPath}" width="200px">
+                                <apex:outputField value="{!invTrans[f]}" />
+                            </apex:column>
+                        </apex:repeat>
+                    </apex:pageBlockTable>    
+                </apex:column>
+            </apex:pageBlockTable>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockButtons id="btnoutpanel" >
+                <apex:commandButton onclick="undoPickConfirm();return false;" value="{!$Label.Undo_Pick_Confirm}" rendered="{!!hideSave}" disabled="{!disableConfirmShip}" status="actionStatus" rerender="theForm"/>
+<!--                <apex:commandButton onclick="removeFromPicklist();return false;" value="Remove from Packlist" disabled="{!disableConfirmShip}" status="actionStatus" rerender="theForm"/> -->
+                <apex:commandButton onclick="confirmShip();return false;" value="{!$Label.Confirm_Ship}" rendered="{!!hideSave}" disabled="{!disableConfirmShip}" status="actionStatus" rerender="thePageBlock"/>
+                <apex:commandButton action="{!cancel}" value="{!$Label.Cancel}" immediate="true" status="actionStatus" rerender="theForm"/>
+
+                <apex:commandButton onclick="confirmFirst(); return false;" status="actionStatus" reRender="thePageBlock" value=" |< "  disabled="{!!hasPrevious}" title="First Page"/>
+                <apex:commandButton onclick="confirmPrevious(); return false;" status="actionStatus" reRender="thePageBlock" value=" < " disabled="{!!hasPrevious}" title="Previous Page"/>
+                <apex:commandButton onclick="confirmNext(); return false;" status="actionStatus" reRender="thePageBlock" value=" > " disabled="{!!hasNext}" title="Next Page"/>
+                <apex:commandButton onclick="confirmLast(); return false;" status="actionStatus" reRender="thePageBlock" value=" >| " disabled="{!!hasNext}" title="Last Page"/>
+                <apex:outputText >{!(pageNumber * pageSize)+1-pageSize}-{!IF((pageNumber * pageSize)>noOfRecords, noOfRecords,(pageNumber * pageSize))} of {!noOfRecords}</apex:outputText>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </apex:form> 
+</apex:page>

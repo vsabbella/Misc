@@ -1,0 +1,46 @@
+<apex:page standardController="Receiving_Document__c" sidebar="false" extensions="ReceivingDocumentReleaseExt" id="page">
+
+    <script type="text/javascript"> 
+        $(document).ready(function() { 
+            releaseConfirm();
+            return false;
+        });
+        
+        function releaseConfirm(){
+            
+            result = window.confirm('{!$Label.ConfirmRelease}');
+            if(result == true) {
+                confirmReleaseAF();
+            }
+            return false;
+        }
+        function goback(){
+            if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+                sforce.one.back(true);
+            } else {
+                window.location.href = '/{!Receiving_Document__c.Id}';
+            }
+        }
+    </script>
+    
+    
+    <apex:form id="form">
+        
+        <c:busyWait />
+        
+        <apex:pageBlock >
+        
+            <apex:outputPanel id="errPanel">
+                <apex:PageMessages />
+            </apex:outputPanel>
+		    
+		    <apex:actionFunction name="confirmReleaseAF" action="{!release}" status="actionStatus" reRender="errPanel" />
+		    
+		    <apex:pageBlockButtons location="bottom">
+			    <apex:commandButton value="{!$Label.Go_Back}" onClick="goback()" reRender="form" status="actionStatus" />
+		    </apex:pageBlockButtons>
+		    
+	    </apex:pageBlock>
+    </apex:form>
+
+</apex:page>

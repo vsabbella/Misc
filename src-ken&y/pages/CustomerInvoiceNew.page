@@ -1,0 +1,27 @@
+<apex:page standardController="Customer_Invoice__c" extensions="CustomerInvoiceNewExt">
+
+	<apex:sectionHeader subtitle="{!$Label.New} {!title}" title="{!$Label.New} {!title}"/>
+    <apex:form id="theForm" ><c:busyWait />
+        <apex:pageBlock id="pb" mode="edit">
+	    		<apex:pagemessages />
+	    
+	        <apex:pageBlockButtons >
+		        <apex:commandButton value="{!$Label.Save} " action="{!save}" rerender="theForm" status="actionStatus" accessKey="s" />
+		        <apex:commandButton value="{!$Label.Cancel} " action="{!cancel}" immediate="true" rerender="theForm" status="actionStatus" />
+	        </apex:pageBlockButtons>
+	 
+	         <apex:pageBlockSection id="pbs" title="{!$Label.Enter_Information}" columns="2" collapsible="false"	      >   
+	 	  	     <apex:repeat value="{!inputFields}" var="f" >  
+				       <apex:inputField value="{!Customer_Invoice__c[f]}" required="{!OR(f.required, f.dbrequired)}"  />
+		  		</apex:repeat>
+	  		</apex:pageBlockSection>
+	 </apex:pageBlock>
+	</apex:form>
+	
+
+     <div style="display:none;">
+         <apex:outputText value="{!Customer_Invoice__c.Invoice_Type__c}" />
+         <apex:outputText value="{!Customer_Invoice__c.Sold_To_Customer__c}" />
+         <apex:outputText value="{!Customer_Invoice__c.Bill_To_Customer__c}" />
+    </div>
+</apex:page>

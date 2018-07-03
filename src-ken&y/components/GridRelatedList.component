@@ -1,0 +1,58 @@
+<apex:component access="global" allowDML="true" layout="none" controller="GridRelatedListController">
+    <!-- Visualforce component implementing a kendo grid -->   
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+    
+    <apex:attribute name="uniqueId" description="Unique Id" type="string" required="true" assignTo="{!config.uniqueId}" access="global" />
+    <apex:attribute name="title" description="Display Title" type="string" required="false" assignTo="{!config.title}" access="global" />
+    <apex:attribute name="parentRecord" description="sObject parent record" type="sobject" required="true" assignTo="{!config.parentRecord}" access="global" />
+    <apex:attribute name="objectName" description="sObject name to query for the related list records" type="string" required="true" assignTo="{!config.objectName}" access="global" />
+    <apex:attribute name="parentField" description="Field of the related sObject that will contain the lookup information to the parent record" type="string" required="true" assignTo="{!config.parentField}" access="global" />
+    <apex:attribute name="fieldset" description="sObject Fieldset to invoke" type="string" required="true" assignTo="{!config.fieldset}" access="global" />
+    <apex:attribute name="additionalFields" description="Comma seperated list of additional fields from related record lookups used by client" type="string" required="false" assignTo="{!config.additionalFields}" access="global" />
+    <apex:attribute name="readOnlyFields" description="Comma seperated list of read only fields" type="string" required="false" assignTo="{!config.readOnlyFields}" access="global" />
+    <apex:attribute name="buttons" description="Comma seperated list of action buttons" type="string" required="false" assignTo="{!config.buttons}" access="global" />
+    <apex:attribute name="pageSize" type="int" description="Grid page size" required="false" assignTo="{!config.pageSize}" access="global" />
+    <apex:attribute name="height" type="string" description="Grid height in pixels" required="false" assignTo="{!config.height}" access="global" />
+    <apex:attribute name="sortField" description="Sort field name" type="string" required="false" assignTo="{!config.sortField}" access="global" />
+    <apex:attribute name="sortOrder" description="Sort order asc or desc" type="string" required="false" assignTo="{!config.sortOrder}" access="global" />
+    <apex:attribute name="namespace" description="Namespace for reading fieldsets in a different namespace" type="string" required="false" assignTo="{!config.namespace}" access="global" />
+    <apex:attribute name="addlWhereClause" description="Additional WHERE clause applied to the records queried in the grid" type="string" required="false" assignTo="{!config.addlWhereClause}" access="global" />
+
+    <apex:attribute name="alwaysUseFullDateTimeFormat" description="By default both date and datetime fields are shown with time component, set this to false to make only datetime fields show time" type="Boolean" required="false" default="false" assignTo="{!config.alwaysUseFullDateTimeFormat}" access="global" />
+    
+    <apex:pageblock title="{!title}">
+        <div class="grid-container">
+            <div class="grid-message"></div>
+            <div id="{!uniqueId}"></div>
+        </div>
+    </apex:pageblock>
+    
+    <script type="text/javascript">
+        var {!uniqueId}RelatedData = function() {
+          	var deferred = $.Deferred();
+            var remoteArgs = JSON.parse('{!JSENCODE(configJson)}');
+            
+            if (remoteArgs.parentRecord) {
+                // The stuff returned from Salesforce has extra properties like "attributes"
+                // which couldn't be deserialised back
+                remoteArgs.parentRecord = { Id: remoteArgs.parentRecord.Id };
+            }
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.GridRelatedListController.getRelatedList}',
+                remoteArgs, 
+                function (result, event) {
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+            );
+
+            return deferred.promise();
+        }
+
+        $(document).on('KenandyErpReady', function(e) {
+            $.fn.GridRelatedList($('#{!uniqueId}'), { namespace: '{!NamespaceUU}', config: '{!JSENCODE(configJson)}', fieldList: '{!fieldList}', lookupSearchAction: '{!$RemoteAction.GridRelatedListController.lookupSearchFilter}', getRelatedListFunction: {!uniqueId}RelatedData, saveRelatedListAction: '{!$RemoteAction.GridRelatedListController.saveList}' });
+        });
+    </script>
+</apex:component>

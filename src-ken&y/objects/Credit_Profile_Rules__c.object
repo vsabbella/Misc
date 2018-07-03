@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customSettingsType>List</customSettingsType>
+    <description>rules around setting risk tolerance and credit review cycle</description>
+    <enableFeeds>false</enableFeeds>
+    <fields>
+        <fullName>AR_Percent_Past_Due__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>Percent of AR a customer can be past due on.</inlineHelpText>
+        <label>AR Percent Past Due</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Percent</type>
+    </fields>
+    <fields>
+        <fullName>Days_Past_Due__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>Days past due on their balance</inlineHelpText>
+        <label>Days Past Due</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Percent_Over_Credit__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>Percent Over Credit this customer is allowed to go over.</inlineHelpText>
+        <label>Percent Over Credit</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Percent</type>
+    </fields>
+    <label>Credit Profile Rules</label>
+    <visibility>Protected</visibility>
+</CustomObject>

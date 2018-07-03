@@ -1,0 +1,390 @@
+<apex:page standardController="Agreement__c" extensions="AgreementExchangeExt" sidebar="false" showHeader="false">
+	<c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+	<apex:form >
+		<apex:pageBlock >
+			<apex:pageBlockSection title="Exchange" collapsible="false" columns="1"> 
+				<div class="grid-container">
+                    <div class="grid-message"></div>
+                    <div id="FulfillmentGrid"></div>
+                </div>
+			</apex:pageBlockSection>
+            <apex:pageBlockButtons location="bottom">
+                <apex:outputPanel layout="none">
+                    <input name="return" id="return" type="button" value="Save" onclick="ExchangeUtil.Save();" class="k-button kndy-btn" />
+                    <input name="cancel" id="cancel" type="button" value="Cancel" onclick="ExchangeUtil.RenderGrid();" class="k-button kndy-btn" />
+                </apex:outputPanel>
+            </apex:pageBlockButtons>
+		</apex:pageBlock>
+         
+	</apex:form>
+    <div id="SerialsWindow" class="kndy-hidden">
+                <apex:pageBlock >
+                    <apex:pageBlockSection title="Serials" columns="1" collapsible="false">
+                        <div class="grid-container">
+                            <div class="grid-message"></div>
+                            <div id="SerialsGrid"></div>
+                        </div>
+                    </apex:pageBlockSection>    
+                          
+                    <apex:pageBlockButtons location="both">
+                        <apex:outputPanel layout="none">
+                            <input type="button" value="Apply & Close" class="btn apply-command" onclick="SerialUtils.applySerials();"/>
+                            <!--<input type="button" value="Close" class="btn close-command"  onclick="SerialUtils.HideSerialsWindow();" />-->
+                        </apex:outputPanel>
+                    </apex:pageBlockButtons>
+                </apex:pageBlock>
+            </div>
+
+	<script type="text/javascript">
+        var showSerialTopBar = {!serialShowTopBar};
+        
+        function onComplete(errorMsg) {
+            KenandyErp.Messages(errorMsg, window.parent.$('.page-message'));
+            closeModalWindow();
+        }
+
+        function closeModalWindow(result) {
+            var win = window.parent.$("#agreementExchangewindow").data("kendoWindow");
+            if ( win) {
+                win.close();
+            }
+        }
+
+        function DisplaySerialQty(data, scale) {
+            if(data.flmt.Id != null){
+                var serialQty = (data.serialQty) ? data.serialQty : '';
+                return kendo.toString(serialQty, 'n' + scale);
+            }
+            return '';
+        }
+
+        var SerialsWindow = null;
+        var agrID = '{!agreementId}';
+        var flmtLineSelected = null;
+
+		var fulfillmentData = function() {
+	        var deferred = $.Deferred();
+	        
+	        Visualforce.remoting.Manager.invokeAction(
+		        '{!$RemoteAction.AgreementExchangeExt.getFulfillments}',
+                agrID,
+		        function (result, event) {
+		            deferred.resolve(result, event);
+		        },
+		        {escape: false} 
+	        );
+	        
+	        return deferred.promise();
+	    };
+
+        var serialsData = function() { 
+            var deferred = $.Deferred();
+            var serialGrid = $('#{!SerialsConfig.uniqueId}').data('kendoGridActionList');
+            var messageElement = serialGrid.element.closest("div.grid-container").find("div.grid-message:first");
+            
+            Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.AgreementExchangeExt.getSerials}',
+            flmtLineSelected.flmt.Product__r.Item__c,
+            flmtLineSelected.flmt.Product__r.Used__c,
+
+            function( result, event ) {
+                KenandyErp.UnBlockUI( serialGrid.element );
+                if ( event.type == "exception" ) {
+                    KenandyErp.Message( event.message, KenandyErp.MessageType.Error, messageElement ); 
+                } else {
+                    if ( result.success ) {
+                        KenandyErp.Messages(result.messages, messageElement);
+                        deferred.resolve(result, event);
+                    } else {
+                        KenandyErp.Messages( result.messages, messageElement );
+                    }
+                }
+            },
+            {escape: false}
+            );
+
+            return deferred.promise();
+        };
+
+
+
+	    $(document).on('KenandyErpReady', function(e) {
+            KenandyErp.KendoGridOptions.DefaultPageSize = KenandyErp.KendoGridOptions.PageSizes[0];
+               				
+            ExchangeUtil.Init({
+                fulfillmentLinesConfigJson: '{!JSENCODE(fulfillmentLinesConfigJson)}', 
+                fulfillmentLinesFieldList: '{!JSENCODE(fulfillmentLinesFieldList)}', 
+            });
+		});
+
+        var SerialUtils = function() {
+            return {
+
+                serialsGrid: null,
+
+                GetFieldList: function(fieldList) {
+                    fieldList = JSON.parse(fieldList);
+                    return JSON.stringify(fieldList);
+                },
+                
+                //initialize the serials grid. Appears as a hyperlink on the Create Sales Order UI and the grid is invoked by clicking the link
+                serialsGridInit: function(e){
+
+                    // Destroy serialsGrid
+                    if (this.serialsGrid) {
+                        $('#{!SerialsConfig.uniqueId}').off();
+                        this.serialsGrid.destroy();
+                        $('#{!SerialsConfig.uniqueId}').empty();
+                    }
+
+                    var serialFieldList = {!SerialsFieldList};
+                    var serialAttributes = {!serialAttributes};
+
+                    var i = serialFieldList.length;
+                    while (i--) {
+                        if ((_.contains(serialAttributes, serialFieldList[i].field.toLowerCase()))
+                            && ((!e.dataItem.flmt.Product__r.Item__r.Item_Attribute__r)
+                            || (e.dataItem.flmt.Product__r.Item__r.Item_Attribute__r[serialFieldList[i].field] ===false))) {
+                            serialFieldList.splice(i,1);
+                        }
+                    }
+
+                    this.serialsGrid = $('#{!SerialsConfig.uniqueId}').kendoGridActionList({
+                        namespace: '{!JSENCODE(NamespaceUU)}',
+                        config: '{!JSENCODE(SerialsConfigJson)}',
+                        fieldList: serialFieldList,
+                        lookupSearchAction: '{!$RemoteAction.AgreementExchangeExt.lookupSearch}', 
+                        getActionListFunction: serialsData,
+                    }).data('kendoGridActionList');
+                    
+                    if ( showSerialTopBar ) {
+                        $('#{!SerialsConfig.uniqueId}').prepend('<div class="{!SerialsConfig.uniqueId}-pager"/>');
+                        $('.{!SerialsConfig.uniqueId}-pager').kendoPager({
+                            dataSource: this.serialsGrid.dataSource,
+                            pageSizes: [10, 25, 50, 100, 200],
+                            input: true,
+                            numeric: false
+                        });
+                    }
+
+                },
+
+                searchSerials: function(){
+                    this.serialsGridInit();
+                },
+
+                //The apply button sets the list of serials selected to the agreement line wrapper
+                applySerials: function(){
+
+                    var serialGrid = this.serialsGrid;
+                    var gridUtils = new KendoGridUtils(serialGrid, { isDml: false });
+                    var selectedRows = gridUtils.SelectedRows();
+                    var messageElement = serialGrid.element.closest("div.grid-container").find("div.grid-message:first");
+
+                    if (selectedRows.length == 1){
+                        var row = selectedRows[0];
+                        //flmtLineSelected.set('serial_exchange',row.Name);
+                        flmtLineSelected.serial_exchange = row.Name;
+                        flmtLineSelected.serialID = row.Id;
+                        flmtLineSelected.serialexchange = row;
+                        flmtLineSelected.returnQty = 1;
+                        flmtLineSelected.skidexchange = row.SKID__r;
+                        var grid = $( "#FulfillmentGrid" ).data( "kendoGridActionList" );
+                        grid.refresh();
+                        SerialsWindow.data('kendoWindow').close();
+                    }
+                    else if (selectedRows.length == 0){
+                        KenandyErp.Message("No serials selected", KenandyErp.MessageType.Info, messageElement);
+                    }
+                    else if (selectedRows.length > 1){
+                        KenandyErp.Message("Only 1 serial can be picked to exchange", KenandyErp.MessageType.Error, messageElement);
+                    }
+
+                },
+
+                HideSerialsWindow: function() {
+                    SerialsWindow.data('kendoWindow').close();
+                },
+
+                //serials grid is shown on click of the hyperlink. This will initiate the container holding the serials grid
+                ShowSerialsWindow: function(e){
+
+                    var self = this;
+                    var row = $(e.target).closest('tr');
+                    var grid = self.grid;
+                    var dataItem = grid.dataItem(row);
+
+                    KenandyErp.ClearMessage();
+
+                    itemID = dataItem.itemID;
+                    flmtLineSelected = dataItem;
+                    SerialsWindow = $('#SerialsWindow');
+
+                    if (!SerialsWindow.data('kendoWindow')){
+                        SerialsWindow.kendoWindow({
+                            title: "Manage Serials",
+                            modal: true,
+                            height: "350px",
+                            width: "80%"
+                        });
+                    }
+
+                    SerialUtils.serialsGridInit({dataItem: dataItem, grid: grid});
+                    SerialsWindow.data('kendoWindow').center().open();
+                }
+
+            };
+        }();
+
+		var ExchangeUtil = function() {
+
+			return {
+                FulfillmentLinesConfigJson: null,
+                FulfillmentLinesFieldList: null, 
+                FulFillmentLinesDateFields: null,
+                FulfillmentGrid: null,
+
+                Init: function(args) {
+					// initialize defaults
+                   	this.FulfillmentLinesConfigJson = JSON.parse(args.fulfillmentLinesConfigJson);                  
+                   	this.FulfillmentLinesFieldList = JSON.parse(args.fulfillmentLinesFieldList);
+                    this.FulfillmentDateFields = KenandyErp.KendoGridOptions.GetDateFields(ExchangeUtil.FulfillmentLinesFieldList),
+                    this.RenderGrid();
+                },
+
+                getFulfillmentLinesFieldList: function() {
+
+                    var fieldList = ExchangeUtil.FulfillmentLinesFieldList;
+
+                    $.each(fieldList, function() { 
+                        if (this.field == 'serialQty'){
+                            this.template = "<a class='manage-serials-link' title='Manage Serials' href='javascript:void(0)';'>#=DisplaySerialQty(data, " + this.scale + ")#</a>";
+                        }
+                    });
+
+                    return fieldList
+                },
+
+                RenderGrid: function() {
+                    
+                    var linesLookupSearchFilters = [];
+                    //linesLookupSearchFilters.push({ field: "Location__c", filter: "Company__c = \'#=data.flmt.Company__c\'" });
+
+                    // Destroy FulfillmentGrid
+                    if (this.FulfillmentGrid) {
+                        $('#{!FulfillmentConfig.uniqueId}').off();
+                        this.FulfillmentGrid.destroy();
+                        $('#{!FulfillmentConfig.uniqueId}').empty();
+                    }
+                    //initialize the grid
+                    this.FulfillmentGrid = $('#{!FulfillmentConfig.uniqueId}').kendoGridActionList({
+                        namespace: '{!JSENCODE(NamespaceUU)}', 
+                        config: ExchangeUtil.fulfillmentLinesConfigJson, 
+                        fieldList: ExchangeUtil.getFulfillmentLinesFieldList(), 
+                        lookupSearchAction: '{!$RemoteAction.AgreementExchangeExt.lookupSearchFilter}', 
+                        lookupSearchFilters: linesLookupSearchFilters,
+                        getActionListFunction: fulfillmentData,
+                    }).data('kendoGridActionList'); 
+
+                    this.FulfillmentGrid.bind('edit', $.proxy(ExchangeUtil.FulfillmentGridEdit, { grid: this.FulfillmentGrid }));
+
+                    $( "#FulfillmentGrid" ).data( "kendoGridActionList" ).wrapper.on("click", ".manage-serials-link", $.proxy(SerialUtils.ShowSerialsWindow, { grid: $( "#FulfillmentGrid" ).data( "kendoGridActionList" ) }));
+                },  
+                
+                FulfillmentGridEdit: function(e) {
+                   var self = this;
+                   var detailList = self.detailList;
+                   var grid = self.grid;
+
+                    if ($(e.container).find('input[name="skid.Location__c"]').length > 0) {
+                        var locationCell = $(e.container).find('input[name="skid.Location__c"]');
+                        var lookupSearchFilters = [];
+                        if (e.model.get('flmt.Company__c')) {
+                            lookupSearchFilters.push({ field: "skid.Location__c", filter: "Facility__r.Company__c = \'" + e.model.get('flmt.Company__c') + "\'" });
+                        }
+                        locationCell.data('kendoLookup').options.criteria = lookupSearchFilters;
+                        
+                        locationCell.focus();
+                    }   
+
+                    if ($(e.container).find('input[name="skid.Bin__c"]').length > 0) {
+                        var binCell = $(e.container).find('input[name="skid.Bin__c"]');
+                        var lookupSearchFilters = [];
+                        if (e.model.get('skid.Location__c')) {
+                            lookupSearchFilters.push({ field: "skid.Bin__c", filter: "Location__c = \'" + e.model.get('skid.Location__c') + "\'" });
+                        }
+                        binCell.data('kendoLookup').options.criteria = lookupSearchFilters;
+                    
+                        binCell.focus();
+                        }
+
+                },
+
+                Save: function() {
+
+                    var grid = $('#{!FulfillmentConfig.uniqueId}').data('kendoGridActionList');
+                    var messageElement = grid.element.closest( "div.grid-container" ).find( "div.grid-message:first" );
+
+                    var selectedRows = _.filter(grid.dataSource.data(), function(item) {
+                        return item.returnQty;
+                    });
+
+                    var wrapperItems = [];
+                    var errorRows = 0;
+                    $.each( selectedRows, function( index, item ) {
+                        item = Serializer.ConvertToSFDCDate( item, { dateFields: ExchangeUtil.FulfillmentDateFields } );
+                        item = item.toJSON();
+                        var wrapper = {};
+                        wrapper = _.pick(item, 'flmt', 'serialexisting', 'serialexchange', 'skidexisting', 'skidexchange');
+                        wrapper.LocationID = item.skid.Location__c;
+                        wrapper.BinID = item.skid.Bin__c;
+                        //Collect all the rows where exchange serials are selected and location is not specified
+                        if (wrapper.LocationID == null){
+                            errorRows = errorRows + 1;
+                        }
+                        wrapperItems.push(wrapper);
+                    });
+
+                    //if any error rows are found, throw an error and return
+                    if (errorRows > 0){
+                        return KenandyErp.Message( "Please enter a valid location to exchange serial", 'ERROR', messageElement );
+                    }
+
+                    wrapperItems = Serializer.ParameterMap( wrapperItems , { isDml: false } );
+                    if (wrapperItems.length > 0){
+                        KenandyErp.BlockUI(grid.element);
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.AgreementExchangeExt.exchangeSerials}',
+                            wrapperItems,
+                            function( result, event ) {
+                                KenandyErp.UnBlockUI( grid.element );
+                                if ( event.type == "exception" ) {
+                                    KenandyErp.Message( event.message, KenandyErp.MessageType.Error, messageElement );
+                                } else {
+                                    if ( result.success ) {
+                                        onComplete(result.messages)
+                                    } else {
+                                        KenandyErp.Messages( result.messages, messageElement );
+                                    }
+                                }
+                            },
+                            { escape: false }
+                        );
+
+
+                    }else {
+                        KenandyErp.UnBlockUI( grid.element );
+                        return KenandyErp.Message( "Please select a serial to exchange in at least one line", 'ERROR', messageElement );
+                    }
+
+                }
+
+
+            };            
+
+
+		}();
+		
+	</script>
+</apex:page>

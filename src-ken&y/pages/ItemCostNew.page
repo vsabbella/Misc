@@ -1,0 +1,28 @@
+<apex:page standardController="Item_Cost__c">
+    <apex:form id="theForm" >
+        <c:busyWait />
+        <apex:sectionHeader subtitle="{!$ObjectType.Item_Cost__c.Label}" title="{!$Label.New_Item_Cost}"/>
+        <apex:pagemessages ></apex:pagemessages>
+    <apex:pageBlock >
+        <apex:pageBlockButtons >
+        <apex:commandButton value="{!$Label.Save} " action="{!save}" rerender="theForm" status="actionStatus" accessKey="s"/>
+        <apex:commandButton value="{!$Label.Cancel} " action="{!cancel}" rerender="theForm" status="actionStatus"/>
+        </apex:pageBlockButtons>
+        
+        <apex:pageBlockSection title="{!$Label.Item_Cost_Information}" columns="2" collapsible="false">
+            <apex:repeat value="{!$ObjectType.Item_Cost__c.FieldSets.New_Item_Cost}" var="f" > 
+            <apex:inputField value="{!Item_Cost__c[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+            </apex:repeat>            
+        </apex:pageBlockSection>
+        
+        <apex:pageBlockSection title="{!$Label.Cost_Components}" columns="2" collapsible="false">   
+            <apex:repeat value="{!$ObjectType.Item_Cost__c.FieldSets.New_Item_Cost_Components}" var="f" > 
+            <apex:inputField value="{!Item_Cost__c[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+            </apex:repeat> 
+        </apex:pageBlockSection>  
+  
+    </apex:pageBlock>
+    </apex:form>  
+      <div id="responseErrors" style="display:none;">
+    </div>
+</apex:page>

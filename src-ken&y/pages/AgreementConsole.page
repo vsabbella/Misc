@@ -1,0 +1,137 @@
+<apex:page standardController="Agreement__c" extensions="AgreementConsoleExt" sidebar="false" showHeader="false" id="pg">
+	<c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+    <apex:pageBlock >
+    	<apex:pageBlock >
+            <div id="example">
+                    <div class="demo-section k-header">
+                            <div id="tabstrip">
+                                <ul>
+                                    <li class="k-state-active">
+                                        Orders
+                                    </li>
+                                    <li>
+                                        Billings
+                                    </li>
+                                    <li>
+                                        Revenue
+                                    </li>
+                                    <li>
+                                        Assets
+                                    </li>
+                                    <li>
+                                        Install Base
+                                    </li>
+                                </ul>
+                                <div>
+
+                                    <c:GridRelatedList uniqueId="Grid{!Agreement__c.Id}Orders"
+                        					parentRecord="{!Agreement__c}"
+                        					objectName="Sales_Order_Line__c"
+                        					fieldset="Agreement_Console"
+                        					parentField="Agreement__c"
+                        					sortField="Name"
+                        					readOnlyFields="Name"
+                        					buttons=""/>
+                                </div>
+                                <div>
+                                    <c:GridRelatedList uniqueId="Grid{!Agreement__c.Id}Billing"
+                        					parentRecord="{!Agreement__c}"
+                        					objectName="Customer_Invoice_Line__c"
+                        					fieldset="Agreement_Console"
+                        					parentField="Agreement__c"
+                        					sortField="Name"
+                        					readOnlyFields="Name"
+                        					buttons=""/>
+                                </div>
+                                <div>
+                                    <c:GridRelatedList uniqueId="Grid{!Agreement__c.Id}Revenue"
+                        					parentRecord="{!company}"
+                        					objectName="Accounting_Entry_Line__c"
+                        					fieldset="Agreement_Console"
+                        					parentField="Company__c"
+                        					sortField="Name"
+                        					readOnlyFields="Name"
+                        					buttons=""
+                        					addlWhereClause="Customer_Invoice_Line__r.Sales_Order_Line__r.Agreement_Line__r.Agreement__c = '{!Agreement__c}' AND (GL_Account__r.GL_Type__r.Accounting_Type__c = 'Revenue' OR GL_Account__r.Income_Statement_Report_Section_Grouping__c = 'Revenue')"/>
+                					<!--
+                					<apex:outputPanel layout="block" id="myPanel">
+
+                                        <apex:chart height="500" width="700" data="{!revenueData}">
+                                            <apex:pieSeries dataField="val1" labelField="name" donut="50"/>
+                                            <apex:legend position="right"/>
+                                        </apex:chart>
+                                    </apex:outputPanel>
+                                    -->
+                                </div>
+                                <div>
+                                    <c:GridRelatedList uniqueId="Grid{!Agreement__c.Id}Assets"
+                        					parentRecord="{!Agreement__c}"
+                        					objectName="Fixed_Asset__c"
+                        					fieldset="Agreement_Console"
+                        					parentField="Agreement__c"
+                        					sortField="Name"
+                        					readOnlyFields="Name"
+                        					buttons=""/>
+                                </div>
+                                <div>
+                                    <c:GridRelatedList uniqueId="Grid{!Agreement__c.Id}SKIDs"
+                        					parentRecord="{!Agreement__c}"
+                        					objectName="SKID__c"
+                        					fieldset="Agreement_Console"
+                        					parentField="Agreement__c"
+                        					sortField="Name"
+                        					readOnlyFields="Name"
+                        					buttons=""/>
+                                </div>
+                            </div>
+                    </div>
+
+
+                    <style>
+
+                    #tabstrip h2 {
+                        font-weight: lighter;
+                        font-size: 5em;
+                        line-height: 1;
+                        padding: 0 0 0 30px;
+                        margin: 0;
+                    }
+
+                    #tabstrip h2 span {
+                        background: none;
+                        padding-left: 5px;
+                        font-size: .3em;
+                        vertical-align: top;
+                    }
+
+                    #tabstrip p {
+                        margin: 0;
+                        padding: 0;
+                    }
+                </style>
+
+                <script>
+                    $(document).ready(function() {
+                        $("#tabstrip").kendoTabStrip({
+                            animation:  {
+                                open: {
+                                    effects: "fadeIn"
+                                }
+                            }
+                        });
+
+
+
+                    });
+                </script>
+
+
+                </div>
+        </apex:pageBlock>
+        <apex:form >
+        	<apex:inputHidden value="{!Agreement__c.Company__c}"/>
+        </apex:form>
+	</apex:pageBlock>
+</apex:page>

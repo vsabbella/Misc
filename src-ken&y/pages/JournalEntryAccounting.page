@@ -1,0 +1,34 @@
+<apex:page standardController="Journal_Entry__c" 
+					tabStyle="Journal_Entry__c" 
+	               	 sidebar="false" 
+				recordSetVar="journals"
+                  extensions="JournalEntryAccountingExt">
+    <apex:form id="theForm" >
+    <c:busyWait />
+        <apex:sectionHeader subtitle="{!$Label.Generate_Journal_Entry_Accounting}" title="{!$Label.Generate_Journal_Entry_Accounting}"/>
+    	<apex:pageBlock id="pblock">
+    	<apex:pageMessages id="pageMessages" ></apex:pageMessages>
+    		<apex:pageBlockTable value="{!objectList}" var="line" id="JournalPBTableId" rendered="{!not(selecterror)}">
+
+                    <apex:repeat value="{!$ObjectType.Journal_Entry__c.FieldSets.Journal_Entry_AE_RO}" var="f" >
+                        <apex:column headerValue="{!f.label}"  styleClass="{!f.Type}  {!f.FieldPath}"  rendered="{!f.FieldPath!='Line_Value__c'}">
+                            <apex:outputField value="{!line[f]}" />
+                        </apex:column>
+                    </apex:repeat>                    
+                                      
+            </apex:pageBlockTable>
+            
+        	<apex:pageBlockButtons >
+        		<apex:commandButton value="{!$Label.Generate}" 
+        											action="{!GenerateJournalEntryAccounting}" 
+        											reRender="pblock" status="actionStatus" rerender="theForm"/>
+        		<apex:commandButton value="{!$Label.Cancel} " action="{!cancel}" status="actionStatus" rerender="theForm"/>
+        	</apex:pageBlockButtons> 
+        	   
+    	</apex:pageBlock>
+    	
+    </apex:form>
+    
+    <div id="responseErrors" >
+    </div>
+</apex:page>

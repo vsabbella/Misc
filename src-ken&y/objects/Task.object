@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fieldSets>
+        <fullName>Exception_Tasks</fullName>
+        <description>ExceptionTasks.component</description>
+        <displayedFields>
+            <field>Subject</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>WhatId</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Description</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Source_Document__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Status</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Priority</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Exception_Code__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>CreatedDate</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Exception Tasks</label>
+    </fieldSets>
+    <validationRules>
+        <fullName>Exception_cannot_be_updated</fullName>
+        <active>true</active>
+        <errorConditionFormula>ISPICKVAL(Type, &apos;Exception&apos;) &amp;&amp; 
+(
+(ISNEW() &amp;&amp; NOT(ISPICKVAL(Status, &apos;Open&apos;))) ||
+( ISCHANGED(Status) &amp;&amp; NOT(ISPICKVAL(PRIORVALUE(Status), &apos;Open&apos;)))
+)</errorConditionFormula>
+        <errorDisplayField>Status</errorDisplayField>
+        <errorMessage>Invalid status. Exception is not open.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Exception_code_required</fullName>
+        <active>true</active>
+        <description>Exception code is required for tasks of type Exception.</description>
+        <errorConditionFormula>ISPICKVAL( Type, &apos;Exception&apos;) &amp;&amp; 
+(ISNULL(Exception_Code__c) || ISBLANK(Exception_Code__c))</errorConditionFormula>
+        <errorDisplayField>Exception_Code__c</errorDisplayField>
+        <errorMessage>You must enter an exception code.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Only_exception_tasks_can_be_overridden</fullName>
+        <active>true</active>
+        <errorConditionFormula>AND( not(ISPICKVAL(Type,&quot;Exception&quot;)) , ISPICKVAL(Status, &quot;Overridden&quot;))</errorConditionFormula>
+        <errorMessage>Only exception tasks can be overridden.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Prohibit_Override</fullName>
+        <active>true</active>
+        <errorConditionFormula>IF(
+   AND(ISPICKVAL(Status,&apos;Overridden&apos;),
+   Prohibit_Override__c),
+TRUE,FALSE)</errorConditionFormula>
+        <errorMessage>This Exception Task cannot be overridden.</errorMessage>
+    </validationRules>
+</CustomObject>

@@ -1,0 +1,23 @@
+<apex:page standardController="Supplier_Payment__c" extensions="CompanyDefaultExt">
+	<apex:form id="theForm" >
+	<c:busyWait />
+        <apex:sectionHeader subtitle="{!$Label.New_Supplier_Payment}" title="{!$Label.New_Supplier_Payment}"/>
+        <apex:pagemessages />
+    <apex:pageBlock mode="edit"  >
+        <apex:pageBlockButtons >
+        <apex:commandButton value="{!$Label.Save}" action="{!save}"  status="actionStatus" rerender="theForm" accessKey="s"/>
+        <apex:commandButton value="{!$Label.Cancel}" action="{!cancel}"  immediate="true" status="actionStatus" reRender="theForm" />
+        </apex:pageBlockButtons>
+        
+        <apex:pageBlockSection title="{!$Label.Supplier_Payment_Information}" columns="2" collapsible="false" >
+            <apex:repeat value="{!$ObjectType.Supplier_Payment__c.FieldSets.New_Supplier_Payment}" var="f" > 
+            <apex:inputField value="{!Supplier_Payment__c[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+            </apex:repeat>            
+        </apex:pageBlockSection>
+        
+	</apex:pageBlock>
+    </apex:form>  
+    <div id="ensurefield" style="display:none;">
+    	<apex:outputText value="{!Supplier_Payment__c.Company__c}" />  
+    </div>
+</apex:page>

@@ -1,0 +1,40 @@
+<apex:page standardController="MRP__c" id="pageID" 
+     recordSetVar="POss" sidebar="false" extensions="MRPPlannedPurchaseExtension">
+    <apex:form id="form1" >
+    <c:busyWait />
+    <apex:pagemessages ></apex:pagemessages>  
+    
+       <apex:pageBlock title="{!$Label.Selected_MRP_Plans_To_Release}">  
+        <apex:pageBlockTable value="{!selected}" var="line" id="POPickPBPanelId" >
+            
+       <!--  <apex:column headerValue="{!$Label.Select}"  styleClass="selectCol" >
+            <apex:inputCheckBox onclick=" enableDisableFuntion('SelectButtonId')" id="checkBoxId"  />
+        </apex:column> -->
+            
+        <apex:repeat value="{!$ObjectType.MRP__c.FieldSets.Purchase_Release_Display_List}" var="f" >
+            <apex:column headerValue="{!f.label}"  styleClass="{!f.Type}  {!f.FieldPath}"  rendered="{!f.FieldPath!='Line_Value__c'}">
+                <apex:outputField value="{!line[f]}" />
+            </apex:column>
+        </apex:repeat>
+        
+        </apex:pageBlockTable>
+        <apex:pageBlockButtons id="btnoutpanel" >
+            <apex:commandButton action="{!generate}" value="{!$Label.Generate_One_Purchase_Order_per_MRP_Plan}" reRender="form1"   status="actionStatus"  rendered="{!not(selecterror)}" />
+            <apex:commandButton action="{!generate1}" value="{!$Label.Generate_One_Purchase_Order_per_Supplier}" reRender="form1"   status="actionStatus"  rendered="{!not(selecterror)}" />
+            <apex:commandButton action="{!cancel}" value="{!$Label.Cancel}"  immediate="true" reRender="form1"   status="actionStatus" />                    
+        </apex:pageBlockButtons>
+        
+<!--                Javascript methods that call into the Apex controller 
+not used yet
+-->
+        <apex:actionFunction name="select" action="{!save}"  immediate="true" 
+                status="actionStatus" reRender="PurchaseOrderDetPBPanel, btnoutpanel" >
+                <apex:param name="selected_indexes"  value="" />
+            </apex:actionFunction>   
+
+      
+        </apex:pageBlock>
+           
+    </apex:form>                  
+             
+</apex:page>

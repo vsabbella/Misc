@@ -1,0 +1,1673 @@
+<apex:page sidebar="false" controller="InventoryValuationReportExt" id="page" docType="html-5.0">
+ 
+<!-- BEGIN UPGRADED KENDO COMPONENT --> 
+ 
+    <c:KendoResources />
+
+
+	
+    <style>
+    	.item-class-blue {
+    		background-color: #E0FFFF;
+    	}
+    	.item-olive {
+    		background-color: #FFE5B4;
+    	}
+    	.location-orange {
+    		background-color: #FFCBA4;
+    	}
+    	.cc-white {
+    		background-color: #FFFFFF;
+    	}
+    	
+    </style>
+     
+    <script type="text/javascript">
+		var __sfdcSessionId = '{!GETSESSIONID()}',
+		    availableCostBuckets = JSON.parse('{!availableCostBucketsJson}');
+	</script>
+
+	<script src="../../soap/ajax/38.0/connection.js" type="text/javascript" />
+   	
+
+	<script>	
+  	//=====================================
+  	// patching one function in the connection.js resource, so we don't get 
+  	// Refused to set unsafe header "User-Agent" errror
+  	//=====================================
+	
+	sforce.Transport = function(url) {
+	    this.url = url;
+	    this.connection = null;
+	
+	    this.newConnection = function() {
+	        try {
+	            this.connection = new ActiveXObject('Msxml2.XMLHTTP');
+	        } catch(e) {
+	            try {
+	                this.connection = new ActiveXObject('Microsoft.XMLHTTP');
+	            } catch(e) {
+	                this.connection = new XMLHttpRequest();
+	            }
+	        }
+	
+	        return this.connection;
+	    };
+	
+	    this.send = function (envelope, callback, async, timeout) {
+	        this.newConnection();
+	        if (async) {
+	            this.connection.onreadystatechange = this.httpConnectionCallback;
+	        }
+	        var holder = new sforce.internal.ConnectionHolder(this.connection, callback);
+	        sforce.internal._connections.push(holder);
+	        this.connection.open("POST", this.url, async);
+	        this.connection.setRequestHeader("Content-Type", "text/xml; charset=UTF-8");
+	        this.connection.setRequestHeader("SOAPAction", "\"\"");
+	        this.connection.setRequestHeader("Accept", "text/xml");
+	        //this.connection.setRequestHeader("User-Agent", "SFAJAX 1.0"); //here is the one line we are patching
+	        this.connection.send(envelope);
+	        if (async && typeof(timeout) !== "undefined") {
+	            this.setTimeoutOn(holder, timeout);
+	        }
+	        if (!async) {
+	            this.httpConnectionCallback();
+	        }
+	    };
+	
+	    this.setTimeoutOn = function (holder, timeout) {
+	        function abortConnection() {
+	            if (holder.connection.readyState !== 4) {
+	                holder.timedout = true;
+	                holder.connection.abort();
+	            }
+	        }
+	        setTimeout(abortConnection, timeout);
+	    };
+	
+	    this.httpConnectionCallback = function () {
+	
+	        for (var i = 0; i < sforce.internal._connections.length; i++) {
+	            var holder = sforce.internal._connections[i];
+	            if (holder !== null) {
+	                if (holder.timedout) {
+	                    sforce.internal._connections[i] = null;
+	                    sforce.internal._connections.slice(i,1);
+	                    holder.callback.httpCallback("Remote invocation timed out", false);
+	                } else  if (holder.connection.readyState == 4) {
+	                    sforce.internal._connections[i] = null;
+	                    sforce.internal._connections.slice(i,1);
+	                    var success = holder.connection.status == 200;
+	                    if (sforce.debug.trace) {
+	                        sforce.debug.log("Response : status - " + holder.connection.status);
+	                        sforce.debug.logXml(holder.connection.responseText);
+	                    }
+	                    if (sforce.debug.apexTrace) {
+	                        sforce.debug.logApex(holder.connection.responseText);
+	                    }
+	                    if (holder.connection.responseXML && holder.connection.responseXML.documentElement) {
+	                        holder.callback.httpCallback(holder.connection.responseXML.documentElement, success);
+	                    } else {
+	                        holder.callback.httpCallback("Remote invocation failed, due to: " + holder.connection.responseText +
+	                                                     " status code: ", holder.connection.status);
+	                    }
+	                }
+	            }
+	        }
+	    };
+	};
+	</script>	
+
+    <script type="text/javascript">
+    
+    
+	//begin component
+	//chunks will have to be used this way:
+	//WHERE Id >= min AND Id < max
+	
+	var chunkList = {};
+	var offsetIdMap = {};
+	var totalQueryMoreSize = {};
+	var totalQueriesCompleted = {};
+	
+	var itArray = [];
+	var itemArray = [];
+	var locArray = [];
+    var currency;
+    var itemMap ={};
+    var itemCostArray = [];
+    var locationMap = {};
+    var skidMap = {};
+    var itReceiptNonConsignedMap = {};
+    var itReceiptConsignedMap = {};
+    var itIssueNonConsignedMap = {};
+    var itemCostMap = {};
+    var onHandFlatList = [];
+    var icArray = []; 
+    var itFlag=false; 
+    var itFlag=false;
+    var objectQueriesCompleted = {};
+    
+    var chunkSize;
+    
+    chunkSize = {!ivChunkSize};
+    if(!chunkSize){
+    	chunkSize = 10000;
+    }
+    
+    var objectAllQueriesCompleted = {};
+    var undoConsignedIT = 'Undo Transfer Of Ownership';
+    var poreceiptIT = 'Purchase Order Receipt';
+    var voidIntransitIT='Void - In-Transit Purchase Order Receipt';
+    var itTypes = ['Activate Proposed Costs','Transfer of Ownership','Transfer',
+    				'In-Transit',
+					'Void In-Transit',
+					'Sales Order Pick',
+					'Sales Order Allocation',
+					'Transfer Order Pick',
+					'Transfer Order Allocation',
+					'Adjustment Decrease',
+					'Adjustment Increase',
+					'Cycle Count',
+					'Purchase Order Receipt',
+					'Transfer Order Receipt',
+					'QA Sample',
+					'Sales Order Undo Shipment',
+					'Work Order Assembly Completion',
+					'Work Order Assembly Scrap',
+					'Work Order Component Return',
+					'Work Order Component Scrap',
+					'By-product',
+					'Work Order Component Issue',
+					'Sales Order Shipment',
+					'Transfer Order Shipment',
+					'Work Order Assembly Uncompletion',
+					'By-product Uncompletion',
+					'Void - Transfer Order Receipt',
+					'Void - Purchase Order Receipt',
+					'Transfer Order Undo Shipment',
+					'Transfer Order Unallocation',
+					'Transfer Order Undo Pick',
+					'Sales Order Undo Pick',
+					'Sales Order Unallocation',
+					'Purchase Order Return'];    
+    
+    
+    
+    
+    	
+			var itemClassGrandTotal;
+        $(document).ready(function(){
+        
+        	document.getElementById("showCurrency").style.display = "hidden";
+
+            KenandyErp.Init({
+
+                Culture: 'en-US',
+
+                TimeZone: 'America/Los_Angeles',
+
+                DateFormat: UserContext.dateFormat,
+
+                DateTimeFormat: UserContext.dateTimeFormat.replace('a', 'tt'),
+
+                ExportExcelUrl: '/apex/ExportExcel',
+
+                ExportPdfUrl: '/apex/ExportPdf',
+
+                NamespacePrefix : '{!NamespaceUU}'
+
+            });
+
+            $(document).trigger('KenandyErpReady');
+            $("#facilityFilter").data("kendoComboBox").text('');
+            $('#asOfDate').data('kendoDateTimePicker').value('');
+            
+			drawTreeList();
+        }); 
+        
+        function drawTreeList() {
+        
+        	var newColumns = [];
+        	
+            var col = {};
+            col.field = "name";
+            col.title = "Name";
+            col.expandable = true;
+            col.width = 175;
+            newColumns.push(col);
+            
+            var col1 = {};
+            col1.field = "listType";
+            col1.title = "Type";
+            col1.width = 100;
+            col1.filterable =  false;
+            newColumns.push(col1);
+            
+            var colSUOM = {};
+            colSUOM.field = "UOM";
+            colSUOM.title = "UOM";
+            colSUOM.width = 75;
+            colSUOM.filterable =  false;
+            newColumns.push(colSUOM);
+            
+            var col2 = {};
+            col2.field = "qty";
+            col2.title = "Quantity";
+            col2.width = 70;
+            col2.attributes = { "class": "kndy-text-right" };
+            col2.filterable =  false;
+            newColumns.push(col2);
+            
+            var col3 = {};
+            col3.field = "unitCost";
+            col3.title = "Unit Cost";
+            col3.width = 70;
+            col3.filterable =  false;
+            col3.attributes = { "class": "kndy-text-right" };
+            newColumns.push(col3);
+            
+            var col4 = {};
+            col4.field = "extendedCost";
+            col4.title = "Cost Component - Extended Cost";
+            col4.width = 175;
+            col4.filterable =  false;
+            col4.attributes = { "class": "kndy-text-right" };
+            newColumns.push(col4);
+            
+            var col5 = {};
+            col5.field = "totalExtendedCost_Location";
+            col5.title = "Location - Extended Cost";
+            col5.width = 135;
+            col5.filterable =  false;
+            col5.attributes = { "class": "kndy-text-right" };
+            newColumns.push(col5);
+            
+            var col6 = {};
+            col6.field = "totalExtendedCost_Item";
+            col6.title = "Item - Extended Cost";
+            col6.filterable =  false
+            col6.attributes = { "class": "kndy-text-right" };
+            col6.width = 125;
+            newColumns.push(col6);
+            
+            var col7 = {};
+            col7.field = "totalExtendedCost_ItemClass";
+            col7.title = "Item Class - Extended Cost";
+            col7.width = 150;
+            col7.filterable =  false
+            col7.attributes = { "class": "kndy-text-right" };
+            newColumns.push(col7);
+			
+            columns = newColumns;
+            
+            var fields = {};            
+            fields.parentId = { type: "string",  nullable: true };
+            fields.nodeId   = { type: "string" };
+            fields.listType   = { type: "string",  nullable: true};
+            fields.UOM   = { type: "string",  nullable: true };
+            
+            
+            var model = {};
+            model.id = 'nodeId';
+            model.fields = fields;
+            model.expanded = true;
+            
+            var data = '{!JSENCODE(hierDataJson)}';
+           
+            if (data) {
+           		data = JSON.parse(data);
+           	}
+           
+           	var getTreeListDataSource = function() {
+	            var dataSource = new kendo.data.TreeListDataSource({
+					transport: {
+						read: function (options) {
+							
+							var promise = getTreeListData(options.data.readOptions);
+							promise.done(function(result, event){
+						        	if (event.type == 'exception') {
+						        		KenandyErp.Alert("An error occurred while processing your request. Please contact support"); 
+									} else {
+						            	options.success(result.records);
+									}
+					            });
+						}
+					},
+					schema: {
+						model: model
+					},
+					aggregate: [
+                        //{ field: "totalExtendedCost_ItemClass", aggregate: "sum" }
+                    ]
+				});
+	
+				return dataSource;
+            };
+            
+            var treeList = $("#treeList").kendoTreeList({
+            	dataSource: getTreeListDataSource(),
+                filterable: true,
+                sortable: true,
+                resizable: true,
+                columns: columns,
+                dataBound: onTreeListDataBound,
+                toolbar: [{ name: 'Export', click: function() { exportData(); } }]
+             }).data('kendoTreeList');        
+        
+        
+        }
+        
+        function onTreeListDataBound(e) {
+        	//var treeList = this;
+        	//var data = treeList.dataSource.view();
+        	//var rows = $("tr.k-treelist-group", treeList.tbody);
+		  	//$.each(rows, function(idx, row) {
+		    	//treeList.collapse(row);
+		  	//});
+		  	//this.collapse($("tr.k-treelist-group"));
+		  	
+        }
+        
+        var defaultItemId = '';
+        var facilityFilter;
+        var asOfDate;
+        var isHideResults = true;
+        
+        var getTreeListData = function(readOptions) { 
+            var deferred = $.Deferred();
+            
+            if (isHideResults) {
+                setTimeout(function() {
+                    deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+                }, 100);
+            }
+            else { 
+                var data = (readOptions && readOptions.data) ? readOptions.data : [];
+                
+                setTimeout(function() {
+                    deferred.resolve({ records: data, success: true, total: data.total }, { statusCode: 200 });
+                }, 100);
+                
+               
+            }
+            
+            return deferred.promise();
+        }
+        
+        $(document).on('KenandyErpReady', function(e) {
+            LotMasterViewActions.Init();
+        });
+        
+        var TreeListUtils = function() {
+            return {
+                GetFieldList: function(fieldList) {
+                    fieldList = JSON.parse(fieldList);
+                    
+                    $.each(fieldList, function() {
+                        var aggregateField = _.where(aggregates, {field: this.field})[0];
+                        
+                        if (aggregateField && this.field == aggregateField.field) {
+                            this.aggregate = aggregateField.aggregate;
+                        }
+                    });
+        
+                    return JSON.stringify(fieldList);
+                },
+                
+                GetFilterCriteria: function() {
+                    var filterCriteria = [];
+                    if (asOfDate.value()) {
+                        filterCriteria.push({ field: '{!NamespaceUU}CreatedDate', fieldType: KenandyErp.KendoGridOptions.ColumnType.DateTime, value: '', operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+                    }
+                    
+                    if (facilityFilter.value().trim() != '') {
+                        filterCriteria.push({ field: '{!NamespaceUU}Facility__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: facilityFilter.value(), operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+                    }
+                     
+                    return filterCriteria;
+                }
+            };
+        }();
+        
+        var LotMasterViewActions = function() {
+            
+            return { 
+            
+                Init: function() {
+                    // Hide grid on page load
+                    $('[id$=treeListContainer]').hide();
+                    
+                    // Initialize Transaction Custom From Date Lookup
+                    asOfDate = $.fn.KendoDateTimePicker($("input[id='asOfDate']"));
+                     
+                    var facilityFilterCriteria = "Company__c='{!defaultCompany}'";
+                    if ({!allowAllFacilities} == false) {
+                        facilityFilterCriteria += " AND Id = '{!defaultFacility}'";
+                    }  
+                    
+                    // Initialize Facility Lookup
+                    facilityFilter = $.fn.KendoComboBox($('#facilityFilter'), { 
+                        lookupSearchAction: '{!$RemoteAction.InventoryValuationReportExt.lookupSearchFilter}', 
+                        referenceTo: '{!NamespaceUU}Facility__c', 
+                        title: '{!$ObjectType.Facility__c.Label}', 
+                        value: '{!defaultFacility}',
+                        filterCriteria: facilityFilterCriteria,
+                    });
+                },
+                
+                OnTransactionDateFilterOperatorChange: function() {
+                    var operatorType = this.value;
+                    
+                    if (operatorType == 'custom') {
+                        $('.custom-date-range').show();
+                    }
+                    else {
+                        $('.custom-date-range').hide();
+                    }
+                },
+                
+                Validate: function() {                    
+                    KenandyErp.ClearMessage();
+                    
+                    if (facilityFilter.value().trim() == '' || facilityFilter.select() == -1) {
+                        KenandyErp.Message('{!$Label.Select_a_valid_Facility}');
+                        return false;
+                    }
+                    
+                    if (!asOfDate.value()) {
+                    	KenandyErp.Message('As of Date is required.');
+                    	return false;
+                    }
+                    
+                    return true;
+                },
+                
+                Search: function() {
+                	if (this.Validate()) {
+                		
+                		isHideResults = false;
+                    	
+                    	$('[id$=treeListContainer]').show();
+                    	
+                    	KenandyErp.BlockUI($('#treeList'));
+                        
+                        SearchDB();
+                    }
+                    
+                    return true;
+                },
+                
+                Reset: function() {
+                
+                	
+                	$('[id$=treeListContainer]').hide();
+                	$("#facilityFilter").data("kendoComboBox").text('');
+                	$('#asOfDate').data('kendoDateTimePicker').value('');
+                    $('#TransDateFilterOperator').val('range').trigger('change');
+                },
+            };
+        }();
+        
+        
+
+		
+
+    
+    
+
+        function SearchDB() {
+        	chunkList = {};
+			offsetIdMap = {};
+			totalQueryMoreSize = {};
+			totalQueriesCompleted = {};
+			
+			itemMap ={};
+	    	facilityMap = {};
+	     	itemCostArray = [];
+	     	locationMap = {};
+	     	skidMap = {};
+	     	itReceiptNonConsignedMap = {};
+	     	itReceiptConsignedMap = {};
+	     	itIssueNonConsignedMap = {};
+	    	itemCostMap ={};
+	     	onHandFlatList = [];
+		
+			chunkEntireDB('{!NamespaceUU}Facility__c');
+			
+			chunkEntireDB('{!NamespaceUU}Item__c');
+			
+			chunkEntireDB('{!NamespaceUU}Location__c');
+			
+			chunkEntireDB('{!NamespaceUU}Inventory_Transaction__c');
+			
+			chunkEntireDB('{!NamespaceUU}SKID__c');
+			
+			chunkEntireDB('{!NamespaceUU}Item_Cost__c');
+			
+		}
+
+
+
+	function chunkEntireDB(objectName) {
+		
+		chunkList[objectName] = [];
+		objectQueriesCompleted[objectName] = 0;
+		objectAllQueriesCompleted[objectName] = false;
+		
+		totalQueriesCompleted[objectName] = 0;
+		
+		var SOQL = ("SELECT Id FROM "+objectName+" ORDER BY Id");
+		
+		
+		var result = sforce.connection.query(SOQL, {
+			onSuccess: function(result) {
+				
+				//console.log('success');
+
+				var resultValues = getResultValues(result);
+				
+				//console.log('resultValues');
+				//console.log(resultValues);
+				
+				//console.log('offsetIdMap');
+				//console.log(offsetIdMap);		
+				
+				var objectName = resultValues.type;		
+				
+				
+				//add the first result to our object before we fire off all the subsequent ones in parallel
+				if(resultValues.type in offsetIdMap) {
+					offsetIdMap[objectName][resultValues.offset] = resultValues; 
+				} else {	
+					offsetIdMap[objectName] = {};
+					offsetIdMap[objectName][resultValues.offset] = resultValues; 
+				}
+		
+				
+				//console.log(objectName + ': ' + ', resultValues.totalSize: ' + resultValues.totalSize + ', chunkSize: ' + chunkSize);
+				
+				
+				
+			
+				if (resultValues.totalSize <= 2000) {
+					//this means there is no cursor Id, we got all the records returned to us
+					//chunk is just the first and last Id in the locator, jump right to success
+			       	totalQueryMoreSize[objectName] = 1;
+			       	qmSuccess(result);					
+				} else {
+					//> 2000 records means that we need to chunk
+					
+					//get the loop size
+					var loopSize = Math.floor(resultValues.totalSize / chunkSize);
+					
+					//we need to know ahead of time how many times we are going to call doQueryMore, so when the 
+					//results come back async, we know if we are done or not
+					totalQueryMoreSize[objectName] = loopSize;
+			
+					//in case it didn't divide evenly, will have to fire off one more query of a custom size
+					//the offset will be the total number of records in the querylocator minus the leftover
+					//EX: 100,002, R=2, offset = 100,002 - 2 = 100,000
+					var remainder = resultValues.totalSize % chunkSize;		
+					
+					//in some cases we don't need another queryMore for the remainder.
+					//if total records - running total is less than chunk size, the last id query will get us everything
+					var runningTotal = (chunkSize * loopSize);
+					if ((resultValues.totalSize - runningTotal) < chunkSize) {
+						remainder = 0;
+					}
+					
+					
+					if (remainder > 0) {
+						totalQueryMoreSize[objectName] ++;
+					}	
+				
+					//add in one more for the query of the last Id
+					totalQueryMoreSize[objectName] ++;
+			
+					//fire off all the queryMore's for loopSize
+			        for (var i=1; i<=loopSize; i++) {
+			            var offset = chunkSize * i;
+			            doQueryMore(resultValues.cursorId, offset); 
+			        } 
+			        
+					//fire off one more if there was a remainder
+					if (remainder > 0) {
+						var offset = (resultValues.totalSize - remainder);
+						doQueryMore(resultValues.cursorId, offset); 	
+					}				
+			
+			
+			
+					//now fire off one more to get the last Id in the cursor
+					var offset = (resultValues.totalSize - 1);
+					doQueryMore(resultValues.cursorId, offset); 	
+				
+				}
+			
+			},
+			onFailure: function(error) {
+				queryError		
+			}
+		});		
+	
+	}
+
+
+
+
+	function allQueriesComplete(type) {
+	
+
+		
+		//build an array of all the keys so we can sort them
+		var offsetArray = [];
+		for (var offset in offsetIdMap[type]) {
+			offsetArray.push(parseInt(offset));
+		}
+											
+		offsetArray.sort(function(a,b) { return a - b; });
+		
+		//loop from the beginning to the next to last one
+		//don't need the last since it just contains the very last Id - special case
+		
+		if(offsetArray.length==1)
+		{
+			var range = {};
+			
+			range.first = offsetIdMap[type][offsetArray[0]].firstRecordId;
+			range.last = offsetIdMap[type][offsetArray[0]].lastRecordId;
+			range.isLast = true;
+			chunkList[type].push(range);
+			
+		}
+		else
+		{
+			
+			for (var i=0; i<(offsetArray.length-1); i++) {
+				var range = {};
+				range.first = '';
+				range.last = '';
+				range.isLast = false;
+				
+				var currOffset = offsetArray[i];
+				var nextOffset = offsetArray[i+1];
+				range.first = offsetIdMap[type][currOffset].firstRecordId;
+			
+				var lastLoop = false;
+				if (i == (offsetArray.length-2)) {
+					lastLoop = true;
+				}
+	
+				if (lastLoop) {
+					range.isLast = true;
+					
+					//the last Id will be the actual last Id from the very last chunk
+					range.last  = offsetIdMap[type][nextOffset].lastRecordId;
+				} else {
+					//the last Id will be the first from the next chunk (have to use < logic)
+					range.last  = offsetIdMap[type][nextOffset].firstRecordId; 			
+				}
+				chunkList[type].push(range);
+				
+			}
+		}
+
+		//console.log('allQueriesComplete: ' + type);
+
+		for(var i=0;i<chunkList[type].length;i++)
+		{
+			CallRemoting(chunkList[type][i].first,chunkList[type][i].last,type,chunkList[type][i].isLast);	
+		}
+		
+		
+	}
+
+	function CallRemoting(first,last,objectName,isLast)
+	{
+		var RemoteDeferredItem = $.Deferred(); 
+		var RemoteDeferred; 
+        var RemoteDeferredDel;
+        var RemoteDeferredDelAES;
+        var transflag = $('#useTrnxDate').is(":checked");
+        	
+	    
+        RemoteDeferred= new Array();        
+            RemoteDeferredDel= new Array();  
+            RemoteDeferredDelAES= new Array();
+            RemoteDeferredReverse=new Array();          
+            RemoteDeferred.push(RemoteDeferredItem);
+		Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.InventoryValuationReportExt.getAllTransactions}',
+                facilityFilter.value().trim(),$('#asOfDate').val(),first, last, 50000,objectName,isLast,transflag,
+                function (result, event) {
+                    if (event.status) {
+						if(result.objectName == '{!NamespaceUU}Facility__c')
+						{
+							for(var j=0;j<result.sObjects.length;j++)
+							{
+								if(result.sObjects[j] && result.sObjects[j].{!NamespaceUU}Company__r && result.sObjects[j].{!NamespaceUU}Comp_Currency__c!='')
+								{
+									currency = result.sObjects[j].{!NamespaceUU}Company__r.{!NamespaceUU}Comp_Currency__r.{!NamespaceUU}ISO_Code__c;
+								}
+							}
+						}
+						if(result.objectName == '{!NamespaceUU}Item__c')
+						{
+							for(var j=0;j<result.sObjects.length;j++)
+							{
+								itemMap[result.sObjects[j].Id] = result.sObjects[j];
+							}
+						}
+						
+						if(result.objectName == '{!NamespaceUU}Location__c')
+						{
+							for(var j=0;j<result.sObjects.length;j++)
+							{
+								locationMap[result.sObjects[j].Id] = result.sObjects[j];
+							}
+						}
+						
+						
+						
+						
+						if(result.objectName == '{!NamespaceUU}Inventory_Transaction__c')
+						{
+							for(var j=0;j<result.sObjects.length;j++)
+							{
+								itArray.push(result.sObjects[j]);
+								//Query 1 -  for non-consigned 
+								if(result.sObjects[j].{!NamespaceUU}Type__c != undoConsignedIT.toLowerCase() && (result.sObjects[j].{!NamespaceUU}To_Location__c!=null)  && ((result.sObjects[j].{!NamespaceUU}Type__c!=itTypes[0] && result.sObjects[j].{!NamespaceUU}Type__c.toLowerCase()!=itTypes[1].toLowerCase() && result.sObjects[j].{!NamespaceUU}Type__c.toLowerCase()!=itTypes[4].toLowerCase())) 
+								&& (result.sObjects[j].{!NamespaceUU}Net_Quantity__c>=0 || result.sObjects[j].{!NamespaceUU}Type__c.toLowerCase()==voidIntransitIT.toLowerCase()) && result.sObjects[j].{!NamespaceUU}Consigned_Owner__c==null)
+								{	
+									var mapReceiptNonConsignedKey = result.sObjects[j].{!NamespaceUU}Item__c+'-'+result.sObjects[j].{!NamespaceUU}To_Location__c;
+	    							if((itReceiptNonConsignedMap[mapReceiptNonConsignedKey]))
+									{
+										itReceiptNonConsignedMap[mapReceiptNonConsignedKey] += Math.abs(result.sObjects[j].{!NamespaceUU}Quantity_Stocking_UOM__c);
+									}
+									else
+									{
+										itReceiptNonConsignedMap[mapReceiptNonConsignedKey] = Math.abs(result.sObjects[j].{!NamespaceUU}Quantity_Stocking_UOM__c);
+									}
+    							}
+    							
+    							//Receipt array 
+								//Query 2 -  consigned flows to pick the owned goods 
+								
+    							if((result.sObjects[j].{!NamespaceUU}To_Location__c!=null) && (result.sObjects[j].{!NamespaceUU}Type__c.toLowerCase()==itTypes[1].toLowerCase()))
+								{
+									var mapReceiptConsignedKey = result.sObjects[j].{!NamespaceUU}Item__c+'-'+result.sObjects[j].{!NamespaceUU}To_Location__c;
+	    							 
+	    							if((mapReceiptConsignedKey in itReceiptConsignedMap))
+									{
+										itReceiptConsignedMap[mapReceiptConsignedKey] += Math.abs(result.sObjects[j].{!NamespaceUU}Quantity_Stocking_UOM__c);
+									}
+									else
+									{
+										itReceiptConsignedMap[mapReceiptConsignedKey] = Math.abs(result.sObjects[j].{!NamespaceUU}Quantity_Stocking_UOM__c);
+									}
+    							}
+								
+								
+								//Deducting the Undo Consigned ITs
+    							if((result.sObjects[j].{!NamespaceUU}To_Location__c!=null) && (result.sObjects[j].{!NamespaceUU}Type__c == undoConsignedIT.toLowerCase()))
+								{	var mapReceiptConsignedKey = result.sObjects[j].{!NamespaceUU}Item__c+'-'+result.sObjects[j].{!NamespaceUU}To_Location__c;
+	    							 
+	    							if((mapReceiptConsignedKey in itReceiptConsignedMap))
+									{	
+										itReceiptConsignedMap[mapReceiptConsignedKey] -= Math.abs(result.sObjects[j].{!NamespaceUU}Quantity__c);
+									}
+									else
+									{
+										itReceiptConsignedMap[mapReceiptConsignedKey] = Math.abs(result.sObjects[j].{!NamespaceUU}Quantity__c);
+									}
+    							}
+								
+								//Issue array-
+								//Query 3 - for non-consigned
+								
+								if(result.sObjects[j].{!NamespaceUU}Type__c != undoConsignedIT.toLowerCase() && (result.sObjects[j].{!NamespaceUU}From_Location__c!=null) && ((result.sObjects[j].{!NamespaceUU}Type__c!=itTypes[0] && result.sObjects[j].{!NamespaceUU}Type__c.toLowerCase()!=itTypes[1].toLowerCase() && result.sObjects[j].{!NamespaceUU}Type__c.toLowerCase()!=itTypes[3].toLowerCase())) && (result.sObjects[j].{!NamespaceUU}Net_Quantity__c<=0 || 
+								    (result.sObjects[j].{!NamespaceUU}Type__c.toLowerCase()==poreceiptIT.toLowerCase() && result.sObjects[j].{!NamespaceUU}From_Location__c!=null && result.sObjects[j].{!NamespaceUU}To_Location__c!=null)) && (result.sObjects[j].{!NamespaceUU}Consigned_Owner__c==null))  //|| !result.sObjects[j].{!NamespaceUU}Consigned_Owner__c
+								{	
+									var mapIssueNonConsignedKey = result.sObjects[j].{!NamespaceUU}Item__c+'-'+result.sObjects[j].{!NamespaceUU}From_Location__c;
+	    							
+	    							if((mapIssueNonConsignedKey in itIssueNonConsignedMap))
+									{
+										itIssueNonConsignedMap[mapIssueNonConsignedKey] += Math.abs(result.sObjects[j].{!NamespaceUU}Quantity_Stocking_UOM__c);
+									}
+									else
+									{
+										itIssueNonConsignedMap[mapIssueNonConsignedKey] = Math.abs(result.sObjects[j].{!NamespaceUU}Quantity_Stocking_UOM__c);
+									}
+    							}			
+								
+							}
+							
+						}
+						else if(result.objectName == '{!NamespaceUU}SKID__c')
+						{
+							for(var j=0;j<result.sObjects.length;j++)
+							{
+								var mapKey = result.sObjects[j].{!NamespaceUU}Item__c +'-'+ result.sObjects[j].{!NamespaceUU}Location__c;
+								if(mapKey in skidMap)
+								{
+									skidMap[mapKey] += result.sObjects[j].{!NamespaceUU}Quantity_Stocking_UOM__c;
+								}
+								else
+								{
+									skidMap[mapKey] = result.sObjects[j].{!NamespaceUU}Quantity_Stocking_UOM__c;
+								}
+							}
+
+						}
+						else if(result.objectName == '{!NamespaceUU}Item_Cost__c')
+						{
+						
+							for(var j=0;j<result.sObjects.length;j++)
+							{
+								itemCostArray.push(result.sObjects[j]);
+							}
+						}
+						
+						objectQueriesCompleted[result.objectName] ++;
+						
+						if(chunkList[result.objectName].length == objectQueriesCompleted[result.objectName])
+						{
+							objectAllQueriesCompleted[result.objectName] = true;
+						}
+						
+						if('{!NamespaceUU}Facility__c' in objectAllQueriesCompleted && '{!NamespaceUU}Item__c' in objectAllQueriesCompleted && '{!NamespaceUU}Location__c' in objectAllQueriesCompleted && '{!NamespaceUU}Inventory_Transaction__c' in objectAllQueriesCompleted &&  '{!NamespaceUU}SKID__c' in objectAllQueriesCompleted &&  '{!NamespaceUU}Item_Cost__c' in objectAllQueriesCompleted  )
+						{	
+							
+							
+							if((objectAllQueriesCompleted['{!NamespaceUU}Facility__c'] == true) && (objectAllQueriesCompleted['{!NamespaceUU}Item__c'] == true) && (objectAllQueriesCompleted['{!NamespaceUU}Location__c'] == true) && (objectAllQueriesCompleted['{!NamespaceUU}Inventory_Transaction__c'] == true) && (objectAllQueriesCompleted['{!NamespaceUU}SKID__c'] == true) && (objectAllQueriesCompleted['{!NamespaceUU}Item_Cost__c'] == true))
+							{
+								itemCostMap = getItemCostMap(itemCostArray);
+								doOnHandMath(itemMap,locationMap,itReceiptNonConsignedMap,itReceiptConsignedMap,itIssueNonConsignedMap,skidMap,itemCostMap,currency);
+							}
+						}
+					}
+				},
+            	{escape: false, buffer: false}
+			);
+			
+		return RemoteDeferredItem.promise();
+      }
+	
+	
+	function getItemCostMap(itemCosts) {
+        var costMap = { };
+        $.each(itemCosts, function(i,itemCost) {
+            var cost = JSON.parse(JSON.stringify(itemCost));
+            KenandyErp.CleanNamespace(cost,"{!NamespaceUU}");
+
+            var oldCost;
+            if (costMap[cost.Item__c]) {
+                oldCost = JSON.parse(JSON.stringify(costMap[cost.Item__c]));
+                KenandyErp.CleanNamespace(oldCost,"{!NamespaceUU}");
+            }
+
+            if (!oldCost || (!oldCost.Facility__c && cost.Facility__c) || ((!oldCost.Facility__c || cost.Facility__c) && cost.Start_Date__c > oldCost.Start_Date__c)) {
+                costMap[cost.Item__c] = itemCost;
+            }
+        });
+        return costMap;
+    }
+						
+	var sortObjectByKey = function(obj){
+	    var keys = [];
+	    var sorted_obj = {};
+	
+	    for(var key in obj){
+	        if(obj.hasOwnProperty(key)){
+	            keys.push(key);
+	        }
+	    }
+	
+	    // sort keys
+	    keys.sort();
+	
+	    // create new array based on Sorted Keys
+	    jQuery.each(keys, function(i, key){
+	        if ( obj[key] ) {
+	            sorted_obj[key] = obj[key];
+	        } 
+	        else {
+	            sorted_obj[key] = 0;
+	        }
+	            
+	    });
+	
+	    return sorted_obj;
+	};
+	
+	function doOnHandMath(itemMap,locationMap,itReceiptNonConsignedMap,itReceiptConsignedMap,itIssueNonConsignedMap,skidMap,itemCostMap,currency)
+	{
+		var itNewArray = [];
+	    var skdOnHandArray = [];
+	    var icOnHandArray = [];
+	    var receiptMap = {};
+	    
+	    for(key in itReceiptNonConsignedMap)
+	    {
+	    	if(itReceiptConsignedMap[key])
+	    	{
+	    		itReceiptConsignedMap[key] +=itReceiptNonConsignedMap[key];
+	    	}
+	    	else
+	    	{
+	    		var newKey = key;
+	    		itReceiptConsignedMap[newKey] =  itReceiptNonConsignedMap[key];
+	    	}
+	    	
+	    }
+	    for(key in itIssueNonConsignedMap)
+	    {
+	    	if(itIssueNonConsignedMap[key])
+	    	{
+	    		itIssueNonConsignedMap[key] =  (-1) * (itIssueNonConsignedMap[key]);
+	    	}
+	    }
+	    for(key in itReceiptConsignedMap)
+	    {
+	    	if(itIssueNonConsignedMap[key])
+	    	{
+	    		itIssueNonConsignedMap[key] = itReceiptConsignedMap[key] + itIssueNonConsignedMap[key];
+	    	}
+	    	else
+	    	{
+	    		var newKey = key;
+	    		itIssueNonConsignedMap[newKey] =  itReceiptConsignedMap[key];
+	    	}
+	    }
+	    var flatListMap = {};
+	    for(key in skidMap)
+	    {
+	    	var itemId = key.split('-')[0];
+	    	var locationId = key.split('-')[1];
+	    	var classId ='';
+	    	
+	    	if(!locationMap[locationId]){
+	    	
+	    		continue;
+	    	
+	    	}
+	    	
+	    	if(itemMap[itemId] && itemMap[itemId].{!NamespaceUU}Class__c)
+    		{
+    			classId = itemMap[itemId].{!NamespaceUU}Class__c +'-';
+    		}
+    		else
+    		{
+    			classId = '123456789abcedf-';
+    		}
+	    	
+	    	if(itIssueNonConsignedMap[key])
+	    	{	
+	    		flatListMap[classId+key] = skidMap[key] - (itIssueNonConsignedMap[key]);
+	    		delete itIssueNonConsignedMap[key];
+	    	}
+	    	else
+	    	{ 
+	    		var newKey = key;
+	    		flatListMap[classId+key] = skidMap[key];
+	    	}
+	    	
+	    }
+	    for(key in itIssueNonConsignedMap)
+	    {
+	    	var itemId = key.split('-')[0];
+	    	var locationId = key.split('-')[1];
+	    	var classId ='';
+	    	
+	    	if(!locationMap[locationId]){
+	    	
+	    		continue;
+	    	
+	    	}
+	    	
+	    	if(itemMap[itemId] && itemMap[itemId].{!NamespaceUU}Class__c)
+    		{
+    			classId = itemMap[itemId].{!NamespaceUU}Class__c +'-';
+    		}
+    		else
+    		{
+    			classId = '123456789abcedf-';
+    		}
+    		if((!flatListMap[classId+key]) && (itIssueNonConsignedMap[key]<0 || itIssueNonConsignedMap[key] >0)){
+    			flatListMap[classId+key] = (-1) * itIssueNonConsignedMap[key];
+	    	}
+	    }
+	    
+	    createFlatList(itemMap,locationMap,itemCostMap,flatListMap,currency);
+	}
+	
+	
+	function createFlatList(itemMap,locationMap,itemCostMap,flatListMap,currency)
+	{
+		onHandFlatList = [];
+		var flatListProcessMap = {};
+		itemClassGrandTotal = 0;
+		var itemClassMap = {};
+		var itemClassExists = {};
+		var itemExists = {};
+		var locationExists = {};
+		var itemClassExtendedCost = 0;
+		var itemTotal ={};
+		var itemClassTotalMap = {};
+		var itemClassTotalQtyMap = {};
+		var itemClassTotalArray = [];
+		var itemQuantityTotalMap = {};
+		var totalQty = 0;
+		
+		flatListProcessMap = sortObjectByKey(flatListMap);
+
+		var groupedByItems = function ( map ) {
+	    	var result = {} ;
+	    	
+	    	for(key in flatListProcessMap) {
+	    		var itemTmp = key.substring (key.indexOf('-')+1,key.lastIndexOf('-')) ; 
+	    		if ( result[itemTmp] != undefined ) {
+	    			result[itemTmp] += flatListProcessMap[key] ;
+	    		}
+	    		else {
+	    			result[itemTmp] = flatListProcessMap[key] ;
+	    		}
+	    	}
+	    	return result ; 
+	    } (flatListProcessMap) ;
+	    
+	    for(key in flatListProcessMap)
+		{
+			var keyCombination= key.split('-');
+			var itemClassId = keyCombination[0];
+			var itemId = keyCombination[1];
+			var locationId = keyCombination[2];
+			var itemClassArray = {};
+			var UOM = '';
+			var nodeId;
+			var itemClassName;
+			var itemArray = {};
+			var locationArray = {};
+		    totalLocationsCost = 0;
+		    var itemTotal = 0;
+		    var locationExtendedCost = 0;
+		    
+		    if(!locationMap[locationId]){
+	    	
+	    		continue;
+	    	
+	    	}
+		    
+			if(itemMap[itemId] && itemMap[itemId].{!NamespaceUU}Stocking_UOM__c)
+			{
+				UOM = itemMap[itemId].{!NamespaceUU}Stocking_UOM__r.Name;
+			}
+			
+			
+			if(itemMap[itemId] && itemMap[itemId].{!NamespaceUU}Class__c)
+			{
+				nodeId = itemMap[itemId].{!NamespaceUU}Class__c;
+				itemClassName = itemMap[itemId].{!NamespaceUU}Class__r.Name;
+				
+			}
+			else
+			{
+				nodeId = '123456789abcedf';
+				itemClassName = 'Blank-Class';
+			}
+			
+			if(!itemClassExists[nodeId])
+			{
+				itemClassArray.nodeId=nodeId;
+				itemClassArray.parentId=null;
+				itemClassArray.name=itemClassName;
+				itemClassArray.listType='Item Class';
+			}
+			
+			groupedByItems[itemId] = roundDecimals (groupedByItems[itemId], 6) ;
+			flatListProcessMap[key] = roundDecimals(flatListProcessMap[key], 6);
+			
+		    if(!itemExists[itemId+nodeId] && (itemMap[itemId]))
+		    {
+		    	itemArray.nodeId=itemId+nodeId;
+				itemArray.parentId=nodeId;
+				itemArray.name=itemMap[itemId].Name;
+				itemArray.listType='Item';
+				itemArray.totalExtendedCost_Item=0
+				itemArray.unitCost = 0;
+				if(itemCostMap[itemId])
+				{
+					if(itemCostMap[itemId].{!NamespaceUU}Standard_Cost__c)
+					{
+						itemArray.unitCost = itemCostMap[itemId].{!NamespaceUU}Standard_Cost__c;
+					}
+				}
+				itemArray.qty = groupedByItems[itemId];
+				totalQty += itemArray.qty;
+				itemArray.UOM = UOM;
+			}
+			totalComponentCost = 0;
+	        if(!locationExists[itemId + locationId])
+		    {	
+		    	
+		       	locationArray.nodeId=itemId + locationId;
+				locationArray.parentId=itemId+nodeId;
+				locationArray.name=locationMap[locationId].Name;
+				locationArray.listType='Location';
+				locationArray.qty= flatListProcessMap[key];
+				locationArray.UOM = UOM;
+			}
+	        
+	        // KNDY-13067 - support for custom cost buckets
+	        if(itemCostMap[itemId])
+	        {
+	            if ( availableCostBuckets && availableCostBuckets.length > 0) {
+	               for ( var idx=0;idx<availableCostBuckets.length; idx++ ) {
+	                    var bucket = availableCostBuckets[idx];
+	                    if(itemCostMap[itemId][bucket.field] > 0) {
+	                        var costComponentArray = {};
+        		            costComponentArray.nodeId=itemCostMap[itemId].Id+itemId+locationId;
+        					costComponentArray.parentId=locationArray.nodeId;
+        					costComponentArray.name=bucket.label;
+        					costComponentArray.listType='Cost Component';
+        					costComponentArray.unitCost= itemCostMap[itemId][bucket.field];
+        					costComponentArray.extendedCost=flatListProcessMap[key] * costComponentArray.unitCost;//costComponent.extendedCostComponent;
+        					locationExtendedCost += costComponentArray.extendedCost;
+        					costComponentArray.unitCost = kendo.toString(costComponentArray.unitCost,"n6");
+        					costComponentArray.extendedCost = kendo.toString(costComponentArray.extendedCost,"n6");
+        					costComponentArray.qty = locationArray.qty;
+        					onHandFlatList.push(costComponentArray);
+	                    }
+	               }
+	            }
+			}
+			
+			if(!locationExists[itemId + locationId])
+	    	{	
+	    		locationExists[itemId + locationId] =true;
+	    		locationArray.unitCost = 0;
+				if(itemCostMap[itemId])
+				{
+					if(itemCostMap[itemId].{!NamespaceUU}Standard_Cost__c)
+					{
+						locationArray.unitCost = itemCostMap[itemId].{!NamespaceUU}Standard_Cost__c;
+					}
+				}
+				locationArray.totalExtendedCost_Location= locationExtendedCost;
+				locationArray.unitCost = kendo.toString(locationArray.unitCost,"n6");
+				locationArray.totalExtendedCost_Location = kendo.toString(locationArray.totalExtendedCost_Location,"n6");
+				onHandFlatList.push(locationArray);
+			}
+			
+			if(!itemExists[itemId+nodeId])
+	    	{	
+	    		itemExists[itemId+nodeId] = true;
+	    		itemArray.totalExtendedCost_Item = itemArray.qty * itemArray.unitCost;
+	    		itemClassExtendedCost += itemArray.qty;
+	    		if(itemClassTotalMap[itemClassId])
+	    		{
+	    			itemClassTotalMap[itemClassId] += itemArray.totalExtendedCost_Item;
+	    		}
+	    		else
+	    		{
+	    			itemClassTotalMap[itemClassId] = itemArray.totalExtendedCost_Item;
+	    		}
+	    		if(itemClassTotalQtyMap[itemClassId])
+	    		{
+	    			itemClassTotalQtyMap[itemClassId] += itemArray.qty;
+	    			
+	    		}
+	    		else
+	    		{
+	    			itemClassTotalQtyMap[itemClassId] = itemArray.qty;
+	    		}
+
+	    		itemArray.unitCost = kendo.toString(itemArray.unitCost,"n6");
+				itemArray.totalExtendedCost_Item = kendo.toString(itemArray.totalExtendedCost_Item,"n6");
+	    		onHandFlatList.push(itemArray);
+			}
+			
+			if(!itemClassExists[nodeId])
+			{
+				itemClassExists[nodeId] = true;
+				onHandFlatList.push(itemClassArray);
+				
+			}
+		}
+		
+		$.each(onHandFlatList, function(el, i){
+		    if(this.nodeId){
+		    	this.expanded=false;
+		    	if(this.listType == "Item Class")
+		    	{
+		    		if(itemClassTotalMap[this.nodeId]){
+		    		
+		    			onHandFlatList[el].totalExtendedCost_ItemClass = itemClassTotalMap[this.nodeId];
+			        	
+			        	
+			        	itemClassGrandTotal+=onHandFlatList[el].totalExtendedCost_ItemClass;
+			        	
+			        	onHandFlatList[el].totalExtendedCost_ItemClass = kendo.toString(itemClassTotalMap[this.nodeId],"n6");
+			        	
+			        }
+			        else
+			        {
+			        	onHandFlatList[el].totalExtendedCost_ItemClass = 0;
+			        	onHandFlatList[el].totalExtendedCost_ItemClass = kendo.toString(0,"n6");
+			        }
+			        
+			        if(itemClassTotalQtyMap[this.nodeId]){
+		    			onHandFlatList[el].qty = itemClassTotalQtyMap[this.nodeId];
+
+			        	
+			        }
+			        else
+			        {
+			        	onHandFlatList[el].qty = 0;
+
+			        }
+
+			    }
+		    }
+		});
+		if(itemClassGrandTotal)
+		{	
+			itemClassGrandTotal = kendo.toString(itemClassGrandTotal,"n6");
+		}
+		
+		KenandyErp.UnBlockUI($('#treeList'));
+		
+		$('#treeList').data('kendoTreeList').dataSource.read({
+		    readOptions: {
+		        data: onHandFlatList
+		    }
+		});
+		
+		if(document.getElementById("currency") && currency)
+		{
+			document.getElementById("showCurrency").style.display = "block";
+			document.getElementById("currency").innerHTML = "Company Currency : "+ currency;
+		}
+		else
+		{
+			document.getElementById("showCurrency").style.display = "hidden";
+			
+		}
+		if(document.getElementById("totalQty"))
+	  	{
+	  		document.getElementById("totalQty").innerHTML = totalQty;
+	  	}
+		if(document.getElementById("total"))
+	  	{
+	  		document.getElementById("total").innerHTML = itemClassGrandTotal;
+	  	}
+  
+  		//console.log('onHandFlatList');
+  		//console.log(onHandFlatList);
+  
+  }
+	
+	
+	$(document).ready(function() {
+		  var treeList = $("#treeList").data("kendoTreeList");
+		  var rows = $("tr.k-treelist-group", treeList.tbody);
+		  $.each(rows, function(idx, row) {
+		    treeList.collapse(row);
+		  });
+	});
+	function doQueryMore(cursorId, offset) {
+		var ql = cursorId + '-' + offset;
+		
+		//console.log('ql: ' + ql);
+		
+		sforce.connection.queryMore(ql, {
+			onSuccess: qmSuccess,
+			onFailure: queryError
+		});
+	}
+	
+	function qmSuccess(result) {
+		var resultValues = getResultValues(result);
+		
+		
+		if(resultValues.type in offsetIdMap)
+		{
+			offsetIdMap[resultValues.type][resultValues.offset] = resultValues; 
+		}
+		else
+		{	
+			offsetIdMap[resultValues.type] = {};
+			offsetIdMap[resultValues.type][resultValues.offset] = resultValues; 
+		}
+		totalQueriesCompleted[resultValues.type] ++;
+
+		if (totalQueryMoreSize[resultValues.type] == totalQueriesCompleted[resultValues.type]) {
+			allQueriesComplete(resultValues.type);
+		}
+	}
+
+	function queryError(error) {
+		KenandyErp.Message(error);
+	}
+
+    function roundDecimals( sourceVal, decimalPlaces) {
+        if ( !decimalPlaces ) {
+            decimalPlaces = 2;
+        }
+        return sourceVal ? parseFloat(sourceVal.toFixed( decimalPlaces ).toString()) : 0;
+    }
+
+
+
+	function getResultValues(result) {
+		var retObj = {};
+		retObj.totalSize = -1;
+		retObj.cursorId = '';
+		retObj.offset = 999999999999; //~1T records.  using this to put last result at the end of the sort, it's QL will be null
+		retObj.firstRecordId = '';
+		retObj.lastRecordId = '';
+		retObj.type = '';
+		
+		//get the querylocator from the result
+		var ql = result.queryLocator;
+		
+		//ql will look like this:
+		//01gJ000000IYnYLIA1-2000
+		
+		//split the ql into cursorId and offset
+		if (ql != null) { //if there are no more records to get, ql will be null
+			var arrQL = ql.split('-');
+			if (arrQL.length == 2) {
+				retObj.cursorId = arrQL[0];
+				retObj.offset 	= arrQL[1];
+			}	
+		}
+
+		
+		//get the total size, convert to int
+		retObj.totalSize = parseInt(result['size']);		
+		
+		//get the first record Id
+		var firstRecordFound = false;
+		if ('records' in result) {
+			//see if it is in an array
+			if (Object.prototype.toString.call(result.records) === '[object Array]') {
+				if (result.records.length > 0) {
+					retObj.firstRecordId = result.records[0].Id;
+					retObj.type = result.records[0].type;
+					firstRecordFound = true;
+				}			
+			} else {
+				//or else just a single object
+				if ('Id' in result.records) {
+					retObj.firstRecordId = result.records.Id;
+					retObj.type = result.records.type;
+					firstRecordFound = true;				
+				}
+			}
+		}
+		
+		//get the last record Id
+		var lastRecordFound = false;
+		if ('records' in result) {
+			//see if it is in an array
+			if (Object.prototype.toString.call(result.records) === '[object Array]') {
+				if (result.records.length > 0) {
+					retObj.lastRecordId = result.records[result.records.length-1].Id;
+					lastRecordFound = true;
+				}			
+			} else {
+				//or else just a single object
+				if ('Id' in result.records) {
+					retObj.lastRecordId = result.records.Id;
+					lastRecordFound = true;				
+				}
+			}
+		}
+		return retObj;
+	}
+
+        function convertNumberString(x) {
+            return Number(x.toString().replace(/,/g,'')).toString();
+        }
+
+        function exportData() {
+            var treeList = $('#treeList').data('kendoTreeList');
+            if (!treeList || treeList.dataSource.data().length == 0) {
+                KenandyErp.Alert('No data to export');
+                return;
+            }
+
+            var columns = [
+                { field: 'cls', title: 'Class', fieldtype: 'string' },
+                { field: 'item', title: 'Item', fieldtype: 'string' },
+                { field: 'loc', title: 'Location', fieldtype: 'string' },
+                { field: 'costComp', title: 'Cost Component', fieldtype: 'string' },
+                { field: 'lineType', title: 'Type', fieldtype: 'string' },
+                { field: 'uom', title: 'UOM', fieldtype: 'string' },
+                { field: 'qty', title: 'Quantity', fieldtype: 'string' },
+                { field: 'unitCost', title: 'Unit Cost', fieldtype: 'string' },
+                { field: 'extCost', title: 'Cost Component - Extended Cost', fieldtype: 'string' },
+                { field: 'locExtCost', title: 'Location - Extended Cost', fieldtype: 'string' },
+                { field: 'itemExtCost', title: 'Item - Extended Cost', fieldtype: 'string' },
+                { field: 'clsExtCost', title: 'Item Class - Extended Cost', fieldtype: 'string' }
+            ];
+
+            var treeData = { };
+            $.each(treeList.dataSource.data(), function(i,node) {
+                if (!treeData.hasOwnProperty(node.parentId)) {
+                    treeData[node.parentId] = [node];
+                } else {
+                    treeData[node.parentId].push(node);
+                }
+            });
+
+            var rows = [ ];
+            $.each(treeData[null], function(i,node1) {
+                rows.push({
+                    cls: node1.name,
+                    item: '',
+                    loc: '',
+                    costComp: '',
+                    lineType: 'Item Class',
+                    uom: '',
+                    qty: convertNumberString(node1.qty),
+                    unitCost: '',
+                    extCost: '',
+                    locExtCost: '',
+                    itemExtCost: '',
+                    clsExtCost: convertNumberString(node1.totalExtendedCost_ItemClass)
+                });
+
+                if (treeData.hasOwnProperty(node1.id)) {
+                    $.each(treeData[node1.id], function(j,node2) {
+                        rows.push({
+                            cls: node1.name,
+                            item: node2.name,
+                            loc: '',
+                            costComp: '',
+                            lineType: 'Item',
+                            uom: node2.UOM,
+                            qty: convertNumberString(node2.qty),
+                            unitCost: convertNumberString(node2.unitCost),
+                            extCost: '',
+                            locExtCost: '',
+                            itemExtCost: convertNumberString(node2.totalExtendedCost_Item),
+                            clsExtCost: ''
+                        });
+
+                        if (treeData.hasOwnProperty(node2.id)) {
+                            $.each(treeData[node2.id], function(k,node3) {
+                                rows.push({
+                                    cls: node1.name,
+                                    item: node2.name,
+                                    loc: node3.name,
+                                    costComp: '',
+                                    lineType: 'Location',
+                                    uom: node3.UOM,
+                                    qty: convertNumberString(node3.qty),
+                                    unitCost: convertNumberString(node3.unitCost),
+                                    extCost: '',
+                                    locExtCost: convertNumberString(node3.totalExtendedCost_Location),
+                                    itemExtCost: '',
+                                    clsExtCost: ''
+                                });
+
+                                if (treeData.hasOwnProperty(node3.id)) {
+                                    $.each(treeData[node3.id], function(l,node4) {
+                                        rows.push({
+                                            cls: node1.name,
+                                            item: node2.name,
+                                            loc: node3.name,
+                                            costComp: node4.name,
+                                            lineType: 'Cost Component',
+                                            uom: '',
+                                            qty: convertNumberString(node4.qty),
+                                            unitCost: convertNumberString(node4.unitCost),
+                                            extCost: convertNumberString(node4.extendedCost),
+                                            locExtCost: '',
+                                            itemExtCost: '',
+                                            clsExtCost: ''
+                                        });
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+            
+            rows.push({
+                cls: 'Grand Totals for Facility',
+                item: '',
+                loc: '',
+                costComp: '',
+                lineType: '',
+                uom: '',
+                qty: $('#totalQty') && $('#totalQty').html() ? convertNumberString($('#totalQty').html()) : '',
+                unitCost: '',
+                extCost: '',
+                locExtCost: '',
+                itemExtCost: '',
+                clsExtCost: $('#total') && $('#total').html() ? convertNumberString($('#total').html()) : '',
+            });
+
+            $('#gridExportFrame').remove();
+            $('#gridExportForm').remove();
+            
+            $('body').append('<iframe id="gridExportFrame" style="display: none;" width="0px;" height="0px;" />');
+    
+            var gridExportForm = $('<form />').appendTo('body');
+
+            $(gridExportForm).attr({
+                'id': 'gridExportForm',
+                'action': KenandyErp.ExportExcelUrl,
+                'method': 'post',
+                'target': 'gridExportFrame'
+            }).append($('<input />').attr({
+                'name': 'print',
+                'value': '0',
+                'type': 'hidden'
+            })).append($('<input />').attr({
+                'name': 'gridHeader',
+                'value': [ ],
+                'type': 'hidden'            
+            })).append($('<input />').attr({
+                'name': 'gridColumns',
+                'value': JSON.stringify(columns),
+                'type': 'hidden'
+            })).append($('<input />').attr({
+                'name': 'gridRows',
+                'value': JSON.stringify(rows),
+                'type': 'hidden'
+            })).submit();
+        }
+    </script>      
+       
+<apex:sectionHeader title="Inventory Valuation Report" help="{!URLFOR($Page.HelpInventoryMaster)}"/>
+
+
+
+<div class="page-container" >
+
+    <div class="page-message"></div>
+    <apex:pageMessages id="msgs"/>
+    
+
+  <!-- END UPGRADED KENDO COMPONENT --> 
+
+    
+
+
+
+    <apex:form >
+
+        <apex:pageBlock >
+            <table border="0" width="25%"> 
+                <tr width="40%">
+                    <td>
+                    <apex:outputLabel value="{!$ObjectType.Facility__c.Label}" for="facilityFilter" />:</td>
+                    <td >
+                       <input id="facilityFilter" class="kendoWidgetSelector" />
+                    </td>
+                </tr>
+                <tr width="40%">
+                    <td >
+                        <apex:outputLabel value="As of Date" />:
+                    </td>
+                    <td >
+                    <input id="asOfDate" />
+                    </td>
+                </tr>
+                 <tr width="40%">
+                    <td >
+                        <apex:outputLabel value="Use Transaction Date" />:
+                    </td>
+                    <td >
+                    <input type="checkbox" id="useTrnxDate"  checked="checked" />
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="1">&nbsp;</td>
+                    <td>
+                        <input name="searchFilter" id="searchFilter" type="button" value="{!$Label.Search}" onclick="LotMasterViewActions.Search();" class="btn" />
+                        <input name="clearFilters" id="clearFilters" type="button" value="{!$Label.Clear}" onclick="LotMasterViewActions.Reset();" class="btn" />
+                    </td>
+                </tr>
+            </table>
+         </apex:pageBlock>
+         
+         <apex:pageBlock id="treeListContainer">
+             <div class="tree-list-container">
+                <div id="showCurrency">
+	                 <table border="0" width="100%">
+	                     <tr>
+	                     <td width="100%" align="left"><b><label id="currency" for="currency"></label></b>
+	                     </td>
+	                     </tr>
+	                </table>
+                </div>
+                <div id="treeList"></div>
+                <div>
+                    <table border="0" width="100%">
+	                <tr>
+	                <tr></tr>
+	                <td  width = "33%" align="left">
+	                    <b>Grand Totals for Facility:</b>
+	                </td>
+	                <td align="right" width = "6%" >
+	                &nbsp;<b><label id="totalQty" for="totalQty"></label></b>
+	                </td>     
+	                <td align="right" width="61%">
+	                &nbsp;<b><label id="total" for="total"></label></b>
+	                </td>
+	                </tr>
+	                </table>
+                </div>
+            </div>
+       </apex:pageBlock>
+     </apex:form>
+ </div>
+
+ </apex:page>

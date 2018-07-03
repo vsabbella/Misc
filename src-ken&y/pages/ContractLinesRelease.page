@@ -1,0 +1,670 @@
+<apex:page showHeader="true" sidebar="true" extensions="ContractLinesReleaseExtension" standardController="Contract__c" tabStyle="Purchase_Agreements_Release__tab" docType="html-5.0" >
+    <style type="text/css">
+        .column-width {
+            width: 25%;
+        }
+    </style>
+    
+    <c:KendoResources />
+    <script src="../../soap/ajax/38.0/connection.js" type="text/javascript"> </script>
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+    <c:QLPKChunk completeCallback="OnCompleteQLPK"  chunkSize="2000"  />
+    <c:QueryChunk uniqueId="SourcingPolicy"/> 
+    <c:QueryChunk uniqueId="PurchaseAgreementLines"/> 
+        
+    <script type="text/javascript">
+    console.log('{!NspaceUU}');
+    var NameSpaceUU = '{!NspaceUU}';
+    var baseQuerySP = '{!spQuery}';
+    var baseFilterSP = "{!spQueryCondition}";
+    
+    var baseQueryPAL = '{!palQuery}';
+    var baseFilterPAL = "{!palQueryCondition}";
+
+    var finalDataArray = [];
+    var finalDataArrayPAL = [];
+  
+    //QL chunks are complete, call the chunk queries
+    OnCompleteQLPK = function(type){
+          switch (type) {
+              case NameSpaceUU+'Item_Cross_Reference__c':
+                  parallelStart_SourcingPolicy(baseQuerySP, chunkList[type], chunkCallbackSP, completeCallbackSP, checkErrors, updateStatus,baseFilterSP);
+                  break;
+              case NameSpaceUU+'Contract_Line__c':
+                  parallelStart_PurchaseAgreementLines(baseQueryPAL, chunkList[type], chunkCallbackPAL, completeCallbackPAL, checkErrors, updateStatus,baseFilterPAL);
+                  break;
+          }
+     };                    
+      
+  
+     //====== BEGIN QueryChunk.component methods
+     //this is the function that each chunk query from the QueryChunk.component will call back to.
+     //we are defining it here and passing it into the component
+       var chunkCallbackSP = function(result, event) {
+           
+           KenandyErp.CleanNamespace(result, NameSpaceUU);
+           for (index = 0; index < result.length; ++index) {
+                   finalDataArray.push(result[index]);
+           }
+          
+       };
+       
+       var chunkCallbackPAL = function(result, event) {
+           
+           KenandyErp.CleanNamespace(result, NameSpaceUU);
+           for (index = 0; index < result.length; ++index) {
+                   finalDataArrayPAL.push(result[index]);
+           }
+          
+       };
+       
+       var updateStatus = function (msgLocation, statusMsg) { 
+           if (msgLocation == 2) {
+               window.setTimeout(function(){
+                   $("#status-message2").text(statusMsg);
+               }); 
+           } else {
+               window.setTimeout(function(){
+                   $("#status-message1").text(statusMsg);
+               });     
+           } 
+       }; 
+       
+       var checkErrors = function (event) { 
+           if (event.status) {            
+               } else if (event.type === 'exception') {
+                   errors.push(event.message + ' : ' + event.type);
+               } else {
+                   errors.push(event.message);
+               }
+               if (errors.length == 0) {
+               } else {
+                   console.log('***errors***');
+                   console.log(errors);
+            }
+       };  
+
+        //this is the function that QueryChunk.component will call back to when all chunks are complete.
+        //we are defining it here and passing it into the component
+        var completeCallbackSP = function(uniqueId) {
+            
+            console.log('all chunks complete: ' + uniqueId); 
+            
+            // Initialize Sourcing Policy Grid
+            var sourcingPolicyGrid = $.fn.GridRelatedList($('#{!sourcingPolicyConfig.uniqueId}'), { namespace: NameSpaceUU, config: '{!sourcingPolicyConfigJson}', fieldList: ContractReleaseUtils.GetFieldList('{!sourcingPolicyFieldList}'), lookupSearchAction: '{!$RemoteAction.ContractLinesReleaseExtension.lookupSearch}', getRelatedListFunction: getSourcingPolicyData });
+            
+        };
+       
+       var completeCallbackPAL = function(uniqueId) {
+       
+        console.log('all chunks complete: ' + uniqueId);
+        
+        // Initialize Contract Lines Grid
+        var contractLinesGrid = $.fn.GridRelatedList($('#{!contractLinesConfig.uniqueId}'), { namespace: NameSpaceUU, config: '{!contractLinesConfigJson}', fieldList: ContractReleaseUtils.GetFieldList('{!contractLinesFieldList}'), lookupSearchAction: '{!$RemoteAction.ContractLinesReleaseExtension.lookupSearch}', getRelatedListFunction: getContractLinesData });
+        
+        // Initialize Release Lines Grid
+        var releaseLinesGrid = $.fn.GridRelatedList($('#{!releaseLinesConfig.uniqueId}'), { namespace: NameSpaceUU, config: '{!releaseLinesConfigJson}', fieldList: ContractReleaseUtils.GetFieldList('{!releaseLinesFieldList}'), lookupSearchAction: '{!$RemoteAction.ContractLinesReleaseExtension.lookupSearch}', getRelatedListFunction: getReleaseLinesData });
+         
+        // Bind Grid Events
+        $('.add-command').on("click", $.proxy(ContractReleaseActions.Add, { grid: contractLinesGrid }));
+        $('.release-command').on("click", $.proxy(ContractReleaseActions.Release, { grid: releaseLinesGrid, contractLinesGrid: contractLinesGrid, dateFields: KenandyErp.KendoGridOptions.GetDateFields(JSON.parse(contractLinesFieldList)) }));
+          
+        // Bind grid edit event to attach needDate validation
+         
+         contractLinesGrid.bind('edit', function(e){
+             if (e.model.Contract_Start__c && e.model.Contract_End__c && $(e.container).find('input[name="needDate"]').data('kendoDatePicker')) {
+                 $(e.container).find('input[name="needDate"]').data('kendoDatePicker').min(new Date());
+                 $(e.container).find('input[name="needDate"]').data('kendoDatePicker').max(e.model.Contract_End__c);
+             }
+             
+             // Validate MOQ on quantity to release field
+             $(e.container).find('input[name="quantityToRelease"]').bind('blur', 
+             $.proxy(ContractReleaseActions.ValidateQtyToRelease, { grid: contractLinesGrid }) // KNDY-10601
+             ); 
+         });
+         
+         // Bind grid edit event to attach needDate validation
+         releaseLinesGrid.bind('edit', function(e){
+             if (e.model.Contract_Start__c && e.model.Contract_End__c && $(e.container).find('input[name="needDate"]').data('kendoDatePicker')) {
+                 $(e.container).find('input[name="needDate"]').data('kendoDatePicker').min(new Date());
+                 $(e.container).find('input[name="needDate"]').data('kendoDatePicker').max(e.model.Contract_End__c);
+             } 
+         });
+           
+       };
+    
+     var addNameSpace = function(sObjects){
+        var nsSobjects = []; 
+        
+        if( NameSpaceUU == ''){
+            return sObjects;
+            
+        }else{
+             var newSobject = [];
+             var nsSobject = {};
+             for(var i=0;i<sObjects.length;i++){ 
+                var sObject = sObjects[i];
+                addNStoMultiLevel(sObject);
+                
+             }
+        }
+     };
+    
+    var addNStoMultiLevel =  function recurseSobject(node) {
+        
+        var arrChildren = [];
+        for (var field in node) {
+           
+           if(node.hasOwnProperty(field)) {
+                 var isChild = false;
+                    if (field.toLowerCase().indexOf('__r') != -1) {
+                        isChild = true;
+                    }
+                
+                if (field.toLowerCase().indexOf('__c') != -1 || field.toLowerCase().indexOf('__r') != -1) {
+                    var newField = NameSpaceUU+field;
+                    node[newField] = node[field];
+                    delete node[field];
+                    if (isChild) {
+                        arrChildren.push(newField);
+                    }
+                }
+                
+            }
+        }    
+        
+        for (var i=0; i<arrChildren.length; i++) {
+            recurseSobject(node[arrChildren[i]]);
+        }
+        
+    };
+    
+    </script> 
+
+    <apex:form id="form">
+        <div class="page-container">
+            <apex:sectionHeader subtitle="{!$Label.Purchase_Agreement_Release}" help="{!HelpURL}"/>
+    
+            <div class="page-message"></div>
+        
+            <apex:pageBlock title="{!$Label.Filters}">  
+                <apex:panelGrid columns="5" width="100%" styleClass="search-filters" columnClasses="column-width">
+                    <apex:outputPanel >
+                        <label class="company-label" for="companyFilter">{!$ObjectType.Company__c.Label}:</label>
+                        <input id="companyFilter" class="kendoWidgetSelector" />
+                    </apex:outputPanel>
+        
+                    <apex:outputPanel >
+                        <label class="facility-label" for="facilityFilter">{!$ObjectType.Facility__c.Label}:</label>
+                        <input id="facilityFilter" class="kendoWidgetSelector" />
+                    </apex:outputPanel>
+                    
+                    <apex:outputPanel >
+                        <label class="supplier-label" for="supplierFilter">{!$ObjectType.Supplier__c.Label}:</label>
+                        <input id="supplierFilter" class="kendoWidgetSelector" />
+                    </apex:outputPanel>
+                    
+                    <apex:outputPanel >
+                        <label class="item-label" for="itemFilter">{!$ObjectType.Item__c.Label}:</label>
+                        <input id="itemFilter" class="kendoWidgetSelector" />
+                    </apex:outputPanel>
+        
+                    <apex:outputPanel >
+                        <input name="searchFilter" id="searchFilter" type="button" value="{!$Label.Search}" onclick="ContractReleaseActions.Search();" class="btn" />
+                    </apex:outputPanel> 
+        
+                    <apex:outputPanel >
+                        &nbsp;
+                    </apex:outputPanel>
+                </apex:panelGrid>
+                
+                <apex:panelGrid columns="5" width="100%" styleClass="display-filters k-hidden" columnClasses="column-width">
+                    <apex:outputPanel >
+                        <label class="company-label">{!$ObjectType.Company__c.Label}: <span id="companyName"></span></label>
+                        <input id="companyId" type="hidden" />
+                    </apex:outputPanel>
+        
+                    <apex:outputPanel >
+                        <label class="facility-label">{!$ObjectType.Facility__c.Label}: <span id="facilityName"></span></label>
+                        <input id="facilityId" type="hidden" />
+                    </apex:outputPanel>
+                    <apex:outputPanel >
+                        <label class="supplier-label">{!$ObjectType.Supplier__c.Label}: <span id="supplierName"></span></label>
+                        <input id="supplierId" type="hidden" />
+                    </apex:outputPanel>
+        
+                    <apex:outputPanel >
+                        <label class="item-label">{!$ObjectType.Item__c.Label}: <span id="itemName"></span></label>
+                        <input id="itemId" type="hidden" />
+                    </apex:outputPanel>
+        
+                    <apex:outputPanel >
+                        <input name="changeFilters" id="changeFilters" type="button" value="{!$Label.Change_Filters}" onclick="ContractReleaseActions.ChangeFilters();" class="btn" />
+                    </apex:outputPanel> 
+        
+                    <apex:outputPanel >
+                        &nbsp;
+                    </apex:outputPanel>
+                </apex:panelGrid>
+            </apex:pageBlock>
+            <apex:pageBlock title="{!$Label.Sourcing_Policy}" rendered="{!showSourcingGrid}">
+                <div class="grid-container">
+                    <div class="grid-message"></div>
+                    <div id="{!sourcingPolicyConfig.uniqueId}" ></div>
+                </div>
+            </apex:pageBlock>
+            <apex:pageBlock title="{!$ObjectType.Contract_Line__c.LabelPlural}">    
+                <div class="grid-container">
+                    <div class="grid-message"></div>
+                    <div id="{!contractLinesConfig.uniqueId}" ></div>
+                </div>
+                
+                <apex:pageBlockButtons >
+                    
+                    <apex:outputPanel layout="none">
+                        <input name="addLines" id="addLines" type="button" value="{!$Label.Add}" class="btn add-command" />
+                    </apex:outputPanel>
+                    <apex:outputPanel layout="none">
+                        <a href="{!previousPage}" style="text-decoration: none;"><input type="button" value="{!$Label.Go_Back}" class="btn" /></a>
+                    </apex:outputPanel>
+               
+                </apex:pageBlockButtons>
+            </apex:pageBlock>
+            
+            <apex:pageBlock title="{!$Label.Release_Lines}">    
+                <div class="grid-container">
+                    <div class="grid-message"></div>
+                    <div id="{!releaseLinesConfig.uniqueId}" ></div>
+                </div>
+                <apex:pageBlockButtons >
+                    
+                    <apex:outputPanel layout="none">
+                        <input name="createRelease" id="createRelease" type="button" value="{!$Label.Create_Release}" class="btn release-command" />
+                    </apex:outputPanel>
+               
+                </apex:pageBlockButtons>
+            </apex:pageBlock>
+        </div> 
+    </apex:form>
+
+    <script type="text/javascript">  
+        var enableSourcingPolicy = false;
+        var contractLinesFieldList = '{!contractLinesFieldList}';
+		var purchaseFromRT = '{!purchaseFromRT}';
+		
+        var getContractLinesData = function() {
+            var deferred = $.Deferred();
+            if(finalDataArrayPAL != undefined || finalDataArrayPAL != null ){
+            	 deferred.resolve({records: finalDataArrayPAL}, {type: "none"});
+             }else{
+                 console.log('finalDataArrayPAL is undefined or NULL');
+                 deferred.resolve({records: []}, {type: "none"});
+            }
+            return deferred.promise();
+        };    
+        
+        var getReleaseLinesData = function() {
+            var deferred = $.Deferred();
+
+            setTimeout(function() {
+                deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+            }, 100);
+            
+            return deferred.promise();
+        };
+
+        var getSourcingPolicyData = function() {
+            var deferred = $.Deferred();
+            if(finalDataArray != undefined || finalDataArray != null ){
+            	  deferred.resolve({records: finalDataArray}, {type: "none"});
+             }else{
+                 console.log('finalDataArray is undefined or NULL');
+                 deferred.resolve({records: []}, {type: "none"});
+             }
+            return deferred.promise();
+        };    
+        
+        $(document).ready(function() {
+            
+            // Initialize Company Lookup
+            var companyDropdown = $.fn.KendoComboBox($('#companyFilter'), { lookupSearchAction: '{!$RemoteAction.ContractLinesReleaseExtension.lookupSearchFilter}', referenceTo: 'Company__c', title: '{!$ObjectType.Company__c.Label}', value: '{!defaultCompany}' });
+            
+            // Initialize Facility Lookup
+            $.fn.KendoComboBox($('#facilityFilter'), { lookupSearchAction: '{!$RemoteAction.ContractLinesReleaseExtension.lookupSearchFilter}', referenceTo: 'Facility__c', title: '{!$ObjectType.Facility__c.Label}', value: '{!defaultFacility}', filterCriteria: "Company__c = \'#=Id#\'", cascadeFrom: 'companyFilter' });
+            
+            $.fn.KendoComboBox($('#supplierFilter'), { lookupSearchAction: '{!$RemoteAction.ContractLinesReleaseExtension.lookupSearchFilter}', referenceTo: 'Supplier__c', title: '{!$ObjectType.Supplier__c.Label}', value: '', filterCriteria: "Company__c = \'#=Id#\' and RecordTypeId = \'#=purchaseFromRT#\'", cascadeFrom: 'companyFilter' });
+            $.fn.KendoComboBox($('#itemFilter'), { lookupSearchAction: '{!$RemoteAction.ContractLinesReleaseExtension.lookupSearchFilter}', referenceTo: 'Item__c', title: '{!$ObjectType.Item__c.Label}', value: '', filterCriteria: "Company__c = \'#=Id#\'", cascadeFrom: 'companyFilter' });
+        });
+            
+        var ContractReleaseUtils = function() {
+            return {
+                GetFieldList: function(fieldList) {
+                    fieldList = JSON.parse(fieldList);
+                    
+                    $.each(fieldList, function() { 
+                        if (this.field == 'quantityToRelease') {
+                            this.min = 0;
+                        }
+                    });
+                    
+                   return JSON.stringify(fieldList);
+                }
+            };
+        }();
+        
+        var ContractReleaseActions = function() {
+
+            
+            return { 
+            
+                Search: function() {
+                    var companyFilter = $('#companyFilter').data('kendoComboBox');
+                    var facilityFilter = $('#facilityFilter').data('kendoComboBox');
+                    var supplierFilter = $('#supplierFilter').data('kendoComboBox');
+                    var itemFilter = $('#itemFilter').data('kendoComboBox');
+                    
+                    var companyId = companyFilter.value();
+                    var companyName = companyFilter.text();
+                    var facilityId = facilityFilter.value();
+                    var facilityName = facilityFilter.text();
+                    var supplierId = supplierFilter.value();
+                    var supplierName = supplierFilter.text();
+                    var itemId = itemFilter.value();
+                    var itemName = itemFilter.text();
+                    
+                    KenandyErp.ClearMessage();
+                    
+                    if (!companyId) {
+                        KenandyErp.Message('{!$Label.Company_is_required}');
+                        return false;
+                    }
+                    /*else if (!facilityId) { //KNDY-19719
+                        KenandyErp.Message('{!$Label.Facility_is_required}');
+                        return false;
+                    }*/
+                    
+                     finalDataArray = [];
+                     finalDataArrayPAL = [];
+                     
+                     //building the queries
+                     baseQuerySP = '{!spQuery}';
+                     baseFilterSP = "{!spQueryCondition}";
+                    
+                     baseFilterSP = baseFilterSP + '\''  + facilityId+  '\') order by Item__c asc ';
+                   
+                     baseQueryPAL = '{!palQuery}';
+                     baseFilterPAL = "{!palQueryCondition}";
+                     if (facilityId)
+                     	baseFilterPAL = baseFilterPAL + '\''  + companyId +  '\'' + ' and ( Contract__r.Ship_to_Facility__c = null or Contract__r.Ship_to_Facility__c = ' + '\''  + facilityId+  '\' )	';
+                     else
+                     	baseFilterPAL = baseFilterPAL + '\''  + companyId +  '\'';
+                     	
+                    	
+                    if (supplierId)
+                     	baseFilterPAL = baseFilterPAL + ' and Contract__r.Supplier__c = ' + '\''  + supplierId +  '\'';
+                     
+                     if (itemId)
+                     	baseFilterPAL = baseFilterPAL + ' and Item__c = ' + '\''  + itemId +  '\'';
+                    
+                    baseFilterPAL = baseFilterPAL + ' order by Line__c asc';
+                    
+                    $('.search-filters').hide();
+                    $('.display-filters').show();
+                    
+                    // Invoking the Chunking mechanism
+                    if ({!showSourcingGrid}){
+                        chunkEntireDB(NameSpaceUU+'Item_Cross_Reference__c');
+                    }
+                    chunkEntireDB(NameSpaceUU+'Contract_Line__c');
+                
+                    
+                    $('#companyId').val(companyFilter.value());
+                    $('#companyName').html(KenandyErp.LookupHoverDetail(companyId, companyName, true));
+                    $('#facilityId').val(facilityFilter.value());
+                    $('#facilityName').html(KenandyErp.LookupHoverDetail(facilityId, facilityName, true));
+                    $('#supplierId').val(supplierFilter.value());
+                    $('#supplierName').html(KenandyErp.LookupHoverDetail(supplierId, supplierName, true));
+                    $('#itemId').val(itemFilter.value());
+                    $('#itemName').html(KenandyErp.LookupHoverDetail(itemId, itemName, true));
+                    return true;
+                },
+                
+                ChangeFilters: function() {
+                    $('.search-filters').show();
+                    $('.display-filters').hide();
+                },
+                
+                ValidateQtyToRelease: function(e) {
+                    var self = this;
+                    var grid = this.grid;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message");
+                    var cell = grid.editable.element;
+                    var row = $(e.target).closest("tr"); //get the row
+                    var dataItem = grid.dataItem(row); // get the row data
+                    var supplierId = (dataItem.get('Contract__r') && dataItem.get('Contract__r.Supplier__c')) ? dataItem.get('Contract__r.Supplier__c') : null;
+                    var itemId = dataItem.get('Item__c') ? dataItem.get('Item__c') : null;
+                    var facilityFilter = $('#facilityFilter').data('kendoComboBox');
+                    var facilityId = facilityFilter.value();
+                    var quantity = dataItem.get('quantityToRelease') ? dataItem.get('quantityToRelease') : null;
+                    var needDateValue = dataItem.get('needDate') ? dataItem.get('needDate') : null;
+                    var ctLines = [];
+                    var dateFields = KenandyErp.KendoGridOptions.GetDateFields(JSON.parse(contractLinesFieldList));
+                    
+                    //deep cloning the Contract Line
+                    var ctLineItem = $.extend( true, dataItem, {});
+                    
+                    ctLineItem = ctLineItem.toJSON();
+                    ctLineItem = Serializer.ConvertToSFDCDate(ctLineItem, { dateFields: dateFields });
+                    ctLines.push(ctLineItem);
+                    
+                    if (ctLines.length > 0) {
+                        ctLines = Serializer.ParameterMap(ctLines);
+                        ctLineItem = ctLines[0];
+                        delete ctLineItem['needDate'];
+                        delete ctLineItem['quantityToRelease'];
+                       
+                    }
+                    
+                    if (dataItem.get('quantityToRelease') <= 0) {
+                        $('.add-command').removeAttr('disabled');
+                        $('.add-command').removeClass('btnDisabled');           
+                        return;
+                    }
+                    
+                    KenandyErp.BlockUI();
+                            
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.ContractLinesReleaseExtension.isWithinMOQ}',
+                            ctLineItem,
+                            supplierId,
+                            itemId,
+                            facilityId,
+                            needDateValue,
+                            quantity,
+                            function (result, event) {
+                                KenandyErp.UnBlockUI();
+                                
+                                 if (event.type == 'exception') {
+                                     KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                                 } 
+                                
+                                else {
+                                    KenandyErp.CleanNamespace(result.records, NameSpaceUU);
+                                    
+                                    if (result.success) {
+                                        
+                                        try {
+                                            grid.closeCell();
+                                            $('.add-command').removeAttr('disabled');
+                                            $('.add-command').removeClass('btnDisabled');
+                                            
+                                        }
+                                        catch(e){
+                                        }
+                                    }
+                                    else {
+                                        grid.editCell(cell);
+                                        KenandyErp.Message(event.result.message, KenandyErp.MessageType.Error, messageElement);
+                                        $('.add-command').attr('disabled', 'disabled');
+                                        $('.add-command').addClass('btnDisabled');
+
+                                        
+                                    }
+                                }
+                            },
+                            {escape: false}
+                        );
+                },
+                
+                Add: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    var releaseLinesGrid = $('#{!releaseLinesConfig.uniqueId}').data('kendoGrid');
+                    
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message").first();
+                    var currentData = grid.dataSource.data();
+                    var updatedRows = {};
+                    var columns = grid.columns;
+                    var checkFlag = false; 
+                    var checkQuantity = false; 
+                    var invalidQtyToRelease = '';
+                    updatedRows = $.map(currentData, function(item, index) {                        
+                        item = item.toJSON();
+                        if (item.quantityToRelease > 0 || item.needDate != null) {
+                         return item; 
+                        }
+                    });
+                    
+                    updatedRows = $.each(updatedRows, function(index, item) {                        
+                        
+                        if (item.quantityToRelease != null && item.needDate != null ) {
+                            if(item.quantityToRelease === 0){
+                              checkQuantity = true;
+                            }
+                        }else{
+                          checkFlag = true;  
+                        }    
+                        
+                        if(item.quantityToRelease && item.Minimum_Order_Quantity__c  &&
+                            item.quantityToRelease < item.Minimum_Order_Quantity__c){
+                            invalidQtyToRelease += item.Name + ',';
+                        }
+                    });
+                    
+                    if (checkFlag) {
+                        KenandyErp.Message("{!$Label.Need_date_and_Order_quantity_are_required}", KenandyErp.MessageType.Error, messageElement);
+                        return;
+                    }
+                    
+                    if (checkQuantity) {
+                        KenandyErp.Message("{!$Label.Order_quantity_should_be_greater_than_zero}", KenandyErp.MessageType.Error, messageElement);
+                        return;
+                    }
+					if (invalidQtyToRelease != '') {// KNDY-10905
+						var pos = invalidQtyToRelease.lastIndexOf(",");
+						var errLines = invalidQtyToRelease.slice(0,pos); // remove the last ,
+						KenandyErp.Message("{!$Label.Quantity_entered_to_release_is_less_than_minimum_order_quantity}" + ':   ' + errLines, KenandyErp.MessageType.Error, messageElement);
+						return;
+					}
+                    if (updatedRows.length == 0) {
+                        KenandyErp.Message("{!$Label.No_records_changed}", KenandyErp.MessageType.Info, messageElement);
+                        return;
+                    }
+                    
+                    releaseLinesGrid.dataSource.data(updatedRows);
+                },
+                
+                Release: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    var contractLinesGrid = self.contractLinesGrid;
+                    var dateFields = self.dateFields;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message").first();
+                    
+                    if (grid.editable && !grid.editable.validatable.validate()) {
+                        e.preventDefault();
+                        return false;
+                    }
+                    
+                    var currentData = grid.dataSource.data();
+                    var updatedRows = {};
+                    var columns = grid.columns;
+                                    
+                    updatedRows = $.map(currentData, function(item, index) {
+                        if (item) {
+                            item = item.toJSON();
+                            item = Serializer.ConvertToSFDCDate(item, { dateFields: dateFields });
+                            
+                            return item;
+                        }
+                    });
+                    
+                    if (updatedRows.length == 0) {
+                        KenandyErp.Message("{!$Label.No_records_changed}", KenandyErp.MessageType.Info, messageElement);
+                        return;
+                    }
+                    
+                    var updatedRowsClone = $.extend( true, updatedRows,[]);
+                    addNameSpace(updatedRowsClone);
+                    updatedRowsClone = JSON.stringify(updatedRowsClone);
+                    
+                    if (updatedRows.length > 0) {
+                        updatedRows = Serializer.ParameterMap(updatedRows, { isDml: false });
+                    }
+                    
+                    dateFields = _.pluck(dateFields, KenandyErp.KendoGridOptions.FieldInfo.Field);
+                    // Remove the prefix for the date fields
+                    dateFields = $.map(dateFields, function(item, index) {
+                        if (item.indexOf('.') != -1) {
+                            item = item.split('.')[1];
+                        }
+                        
+                        return item;
+                    });
+                    
+                    dateFields.pop('needDate');
+                    
+                    updatedRows = Serializer.ParameterMap(updatedRows);
+                    updatedRows = JSON.stringify(updatedRows);
+                    
+                  
+                    dateFields = _.pluck(dateFields, KenandyErp.KendoGridOptions.FieldInfo.Field);
+                    KenandyErp.BlockUI(grid.element);
+                                    
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.ContractLinesReleaseExtension.release}',
+                        $('#companyId').val(),
+                        $('#facilityId').val(),             
+                        updatedRows,
+                        updatedRowsClone,
+                        dateFields,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI(grid.element);
+                                        
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                                if (result.success) {
+                                    //refresh the grid
+                                    grid.dataSource._destroyed = [];
+                                    grid.dataSource.read();
+                                    
+                                    // refresh contract lines grid
+                                    contractLinesGrid.dataSource.read();
+                                    
+                                    KenandyErp.Messages(result.messages, messageElement);
+                                }
+                                else {
+                                    KenandyErp.Messages(result.messages, messageElement);
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                }
+            };
+        }();
+    </script>
+
+
+</apex:page>

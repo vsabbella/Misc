@@ -1,0 +1,178 @@
+<apex:page standardController="Bank_Transaction__c" extensions="BankTransactionVoidCancelExt">
+    <apex:form id="form">
+          <script>
+    var arrayLst= new Array();
+        </script>
+        <c:KendoResources />
+        <c:busyWait includescripts="false"/>
+        <div id="MessagesBlock">  
+            <apex:pagemessages id="Messages" />
+            <div class="page-message"></div>
+        </div>
+       
+        <apex:pageBlock >
+            <apex:pageBlockButtons location="bottom">
+                <apex:commandButton value="Return" onClick="goback();return false;"  immediate="true"  html-formnovalidate="formnovalidate"/>
+                 <input onclick="{!IF(disableVoid, '' , 'bankTransactionActions.ConfirmVoid()')}" type="button" id="voidBtn" value="Void Bank Transaction" class="{!IF(disableVoid, 'btnDisabled', 'btn')}"   />
+                 <input onclick="{!IF(disableCancel, '', 'bankTransactionActions.ConfirmCancel()')}" type="button" id="cancelBtn" value="Cancel Bank Transaction" class="{!IF(disableCancel, 'btnDisabled', 'btn')}" />
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection >
+                <apex:repeat value="{!$ObjectType.Bank_Transaction__c.FieldSets.Void}" var="v">  
+                 <apex:outputField value="{!Bank_Transaction__c[v]}" rendered="{!v.fieldpath != namespace+'Void_Date__c'}"/>
+                </apex:repeat>
+                <apex:outputPanel rendered="{!Not(disableVoid)}"> 
+                        <tr><th class="labelCol vfLabelColTextWrap " scope="row">Void Date</th>
+                        <td class="dataCol">
+                           <div class="kndy-required-input">
+                            <div class="kndy-required-block"></div>
+                             <input id="voidDateEdit" name="voidDateEdit" data-role="datepicker" class="kendoMassUpdateWidgetSelector" type="datetime" />
+                            </div> 
+                        </td></tr>
+                </apex:outputPanel>
+                <apex:outputField value="{!Bank_Transaction__c.Bank_Transaction_Group__r.Void_Date__c}" rendered="{!disableVoid}"  id="voidDateOutput"/>  
+            </apex:pageBlockSection>
+            <div id="tab" >
+	        <apex:pageBlockSection >
+	        	<apex:pageBlockSection title="Void Details" columns="1">
+	        		<apex:pageBlockTable value="{!VoidDetails}" var="msg">
+	        			<apex:column >
+	        				<apex:outputText value="{!msg}"/>
+	        			</apex:column>
+	        		</apex:pageBlockTable>
+	        	</apex:pageBlockSection>
+	       		<apex:pageBlockSection title="Cancel Details" columns="1">
+	       			<apex:pageBlockTable value="{!CancelDetails}" var="msgc">
+		       			<apex:column >
+		       				<apex:outputText value="{!msgc}"/>
+		       			</apex:column>
+	       			</apex:pageBlockTable>
+	        	</apex:pageBlockSection>
+	        </apex:pageBlockSection>	
+        </div>
+            
+            <table class="kndy-table">
+                <tr>
+                    <td align="center">
+                        <div id="ProgressBar" ></div>
+                    </td>
+                </tr>
+            </table>
+        </apex:pageBlock>
+    </apex:form>
+    <script>
+    function goback(){
+		if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+			sforce.one.back(true);
+		} else {
+			window.location.href = '/{!Bank_Transaction__c.Id}';
+		}
+	  }
+	$(document).on('KenandyErpReady', function(e) {					
+
+	//Set the disabled property
+	var disableVoid = '{!disableVoid}';
+	var disableCancel = '{!disableCancel}';
+	console.log(disableVoid);
+	console.log(disableCancel);
+    var  messageElement = $("#MessagesBlock");
+    arrayLst =JSON.parse('{!lstBTJson}');
+    KenandyErp.CleanNamespace(arrayLst, KenandyErp.NamespacePrefix);
+
+
+    if(arrayLst != 'null' && arrayLst.length==1 && arrayLst[0].Bank_Transaction_Group__r.Status__c != 'Void' && arrayLst[0].Bank_Transaction_Group__r.Status__c != 'Cancelled') {
+        if(arrayLst != 'null' && arrayLst.length==1 && arrayLst[0].Match_Approved__c == false){
+         KenandyErp.Message('Existing matches will be deleted.', KenandyErp.MessageType.Info,messageElement);
+        }else if(arrayLst != 'null' && arrayLst.length==1 && arrayLst[0].Match_Approved__c == true){
+            KenandyErp.Message('Existing approved matches will be deleted.', KenandyErp.MessageType.Info,messageElement);
+        }else if(arrayLst != 'null' && arrayLst.length==1 && arrayLst[0].Reconciled_Hidden__c == true) {
+            KenandyErp.Message('Existing matches have been approved and reconciled. If you proceed, all matches will be deleted and bank transaction will be unreconciled.', KenandyErp.MessageType.Info);
+        }
+    }
+
+   bankTransactionActions.Init();
+                        
+    });
+    var bankTransactionActions = function(){
+    	return{
+            ConfirmVoid: function(){
+            bankTransactionActions.Confirm('void');
+            },
+            ConfirmCancel: function(){
+            bankTransactionActions.Confirm('cancel');
+            },
+    		Confirm: function(action){
+                var messageElement = $("#MessagesBlock");
+    			var cnfrm;
+    		    var voidDateValue = $('input[id$="voidDateEdit"]').val();
+        	    KenandyErp.BlockUI();
+    			if(voidDateValue != null && voidDateValue != ""){
+    			  var vd = KenandyErp.IsValidDateTime(voidDateValue);
+    			  if(vd == true){
+                    var voidDate = $('input[id$="voidDateEdit"]').val();
+                    voidDate = JSON.stringify(voidDate);
+                    voidDate = KenandyErp.ParseSFDCDateTime(voidDate);
+        		    bankTransactionActions.StartVoidCancel(action,voidDate);
+        		 }else{
+        		    var  messageElement = $("#MessagesBlock");
+                    KenandyErp.Message('{!$Label.Void_date_format_is_invalid}', KenandyErp.MessageType.Error,messageElement);
+                    KenandyErp.UnBlockUI();
+                    $('span[id$="Messages"]').css('display','none');
+                 }
+               }else{
+	                 if(action == 'void'){
+                        var  messageElement = $("#MessagesBlock");
+	                    KenandyErp.Message('{!$Label.Void_Date_is_a_required_field}', KenandyErp.MessageType.Error,messageElement);
+                        KenandyErp.UnBlockUI();
+                        $('span[id$="Messages"]').css('display','none');
+	                 }else{
+	                    voidDate = new Date();
+	                    bankTransactionActions.StartVoidCancel(action,voidDate);
+	                 }   
+               }  
+    		},
+    		VoidCancel: function(options){
+    			KenandyErp.BlockUI();
+                var  messageElement = $("#MessagesBlock");
+       			Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.BankTransactionVoidCancelExt.voidCancelBankTransactionGroup}',
+                        options.records,
+                        options.action,
+                        options.voidDate,
+                         function (result, event) {
+                          	KenandyErp.UnBlockUI();            
+                            if (event.type == 'exception') {
+                            	KenandyErp.UnBlockUI();
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error,messageElement);
+                            } else {
+                            	if (result.success) {
+                                    KenandyErp.Messages(result.messages,messageElement);
+                                    KenandyErp.NavigateToURL('{!$Page.BankTransactionVoidCancel}' + '?id={!Bank_Transaction__c}', true);
+                                }
+                                else {
+                                    KenandyErp.UnBlockUI();
+                                    KenandyErp.Messages(result.messages,messageElement);
+                                    
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+    		},
+    		StartVoidCancel: function(action,voidDate){
+    			KenandyErp.BlockUI();
+                var lstBT = '{!lstBT[0]}';
+                console.log(lstBT);
+                console.log('lstBT');
+                bankTransactionActions.VoidCancel({records : lstBT , action: action, voidDate: voidDate});
+    		},
+    		
+    		Init: function(){
+               var vDate = $.fn.KendoDateTimePicker($('#voidDateEdit'), {
+                    value: KenandyErp.Now()
+               });
+    		}
+    		
+    	}
+    }();
+    </script>
+</apex:page>

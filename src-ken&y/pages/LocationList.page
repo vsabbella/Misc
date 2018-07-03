@@ -1,0 +1,47 @@
+<apex:page standardController="Stock_Movement_Rule__c" 
+    extensions="LocationListExtension" 
+    sidebar="false" 
+    showHeader="false" >
+
+ <apex:includeScript value="{!$Resource.JQuery182}" /> 
+    <style>
+        #ll .individualPalette .secondaryPalette {    border-color: transparent; }
+        #ll .editPage .bPageBlock { border-top-width: 0; } 
+        .lookupHoverDetailOverridable{
+           visibility: hidden!important;
+          }
+    </style>
+    
+    <script>
+      $(document).ready(function() {
+       $('.openInNewWindow a').click(function(event) {
+           event.preventDefault();
+           window.open($(this).attr('href'));
+       });
+
+   });
+   </script> 
+
+    <apex:form >
+    <apex:pagemessages /> 
+    
+    <div  id="ll" >
+
+        <apex:pageBlock mode="edit"  >
+            <apex:pageBlockTable value="{!smrList}"  var="smr" >
+                <apex:column headerValue="Sequence">{!smr.Sequence__c}</apex:column>
+                <apex:column headervalue="Location" styleClass="openInNewWindow">                
+                   <a href="/{!smr.Location__c}" target="_blank" >
+                       <apex:outputfield value="{!smr.Location__c}" />
+                   </a> 
+                </apex:column>  
+            </apex:pageBlockTable>    
+        </apex:pageBlock>
+    </div>    
+    <div id="hiddenDiv" style="display:none">
+        <apex:inputField value="{!Stock_Movement_Rule__c.Location_List__c}" />
+        <apex:inputField value="{!Stock_Movement_Rule__c.Name}" />
+    </div> 
+    
+    </apex:form>
+</apex:page>

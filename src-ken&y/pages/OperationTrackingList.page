@@ -1,0 +1,59 @@
+<apex:page standardController="Work_Order__c" extensions="OperationTrackingListExt" sidebar="false" showHeader="false" docType="html-5.0">
+    <c:KendoResources />
+    <apex:pageBlock >
+        <apex:pageBlockTable var="op" value="{!operations}" styleClass="opTable">
+            <apex:repeat value="{!$ObjectType.Operation_Tracking__c.FieldSets.ViewOperations}" var="f">
+                <apex:column headerValue="{!f.label}">
+                    <apex:outputLink value="/{!op['Id']}" rendered="{!f.fieldPath == 'Name'}"><apex:outputField value="{!op[f]}" /></apex:outputLink>
+                    <apex:outputField value="{!op[f]}" rendered="{!NOT(f.fieldPath == 'Name')}" />
+                </apex:column>
+            </apex:repeat>
+
+            <apex:column headerValue="Action">
+                <input type="button" value="Record" class="btn" onclick="openRecord('{!op.Id}');" />
+                <input type="button" value="Unrecord" class="btn" onclick="openUnrecord('{!op.Id}');" />
+                <input type="button" value="Print Picklist" class="btn" onclick="openPicklist('{!op.Id}');" />
+            </apex:column>
+        </apex:pageBlockTable>
+    </apex:pageBlock>
+
+    <script type="text/javascript">
+        function openPicklist(opId) {
+            var redirectUrl = '/apex/{!namespaceUU}WOPrintPage?wo={!woId}&op=' + opId;
+            navigateToURL(redirectUrl,"_blank","height=600");
+        }
+        function openRecord(opId) {
+            var redirectUrl='/apex/{!namespaceUU}WorkOrderCompleteV2?wo={!woId}&op=' + opId;
+            navigateToURL(redirectUrl,"_top",null);
+        }
+        function openUnrecord(opId) {
+            var redirectUrl="/apex/{!namespaceUU}WorkOrderUncompleteV2?wo={!woId}&op=" + opId;
+            navigateToURL(redirectUrl,"_top",null);
+        }
+
+        $(document).ready(function() {
+            $(".opTable a").click(function(e) {
+                e.preventDefault();
+                window.open($(this).attr("href"),"_top");
+            });
+        });
+        function navigateToURL(url,targetAttr, height) {
+            if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+                sforce.one.navigateToURL(url, false);
+            } else {
+                if(height)
+                   window.open(url,targetAttr,height);
+                else
+                    window.open(url,targetAttr);
+            }
+        }
+    </script>
+
+    <style type="text/css">
+        .bPageBlock {
+            border-top: none;
+            border: none !important;
+            background-color: #fff !important;
+        }
+    </style>
+</apex:page>

@@ -1,0 +1,927 @@
+<apex:component controller="Datatable2">
+<!--  
+all styles are inline in this component, goal is to look like a related list in a standard page
+-->
+ <!-- <apex:stylesheet value="{!URLFOR($Resource.DataTables,'/media/css/demo_table_jui.css')}" />  -->
+<!--  <apex:stylesheet value="{!URLFOR($Resource.DataTables,'/media/css/demo_table.css')}" />  -->
+<!--  <apex:stylesheet value="{!URLFOR($Resource.DataTables,'/examples/examples_support/themes/smoothness/jquery-ui-1.8.4.custom.css')}" /> -->
+<!--  <apex:stylesheet value="{!URLFOR($Resource.DataTables,'/media/css/jquery.dataTables.css')}" />  -->
+<!--  <apex:stylesheet value="{!URLFOR($Resource.DataTables,'/media/css/jquery.dataTables_themeroller.css')}" />  -->
+
+    <!-- XSS sanitization filters FROM https://github.com/SalesforceEng/secure-filters -->
+    <apex:includeScript value="{!$Resource.URI}" /> <!-- https://medialize.github.io/URI.js/ https://github.com/medialize/URI.js -->    
+    <apex:includeScript value="{!$Resource.SecureFilters}" />
+    <apex:includeScript value="{!$Resource.Sanitize}" />  	
+    <apex:includeScript value="{!$Resource.AddManage}"/>
+  
+  
+<apex:attribute name="subject" 
+        description="the SObject record to display" 
+        type="sobject"  
+        required="true"  />
+<apex:attribute name="fieldset" 
+        description="the object fieldset to invoke" 
+        type="string" 
+        required="true"  />
+
+<apex:attribute name="relatedlist" 
+        description="the relatedlist  invoke build" 
+        type="string" 
+        required="true"  />
+<apex:attribute name="title" 
+        description="the title to show" 
+        type="string" 
+        required="false"  default="" />     
+     
+<apex:attribute name="parentfield" 
+        description="the parentfield of the related list table that will lookup to subject" 
+        type="string" 
+        required="true"  />
+      
+      
+     <apex:pageBlock >
+        <div id="responseErrors" ></div>
+        <table cellpadding="0" cellspacing="0" border="0" 
+                    class="list display" 
+                    id="grid" width="100%">
+        </table>
+    </apex:pageBlock>
+            
+<script type="text/javascript" charset="utf-8">
+var oTable; 
+
+    
+
+    $(document).ready(function() { 
+    
+        var idVar = '{!subject.id}';
+        if( idVar == '' || idVar == null || idVar == undefined ) return;
+        
+         Visualforce.remoting.Manager.invokeAction( 
+            '{!$RemoteAction.Datatable2.foobar}','{!subject.id}', '{!relatedlist}', '{!fieldset}', '{!parentfield}' ,
+            remotingCallback );              
+    }); 
+
+    function loadResultsToData( result, event ) {
+        if ( result == null ) return; 
+        var lineList = result.lines;
+        var rows = []; 
+        
+        // format info we want to pass into the parser
+        $(result.fieldset).each ( function( ii) {
+            if ( result.fieldset[ii].FieldPath == 'Line__c' ) result.fieldset[ii].Fixed = 0;
+        } );
+        
+        // loop over the data now
+        for ( var i=0;i<lineList.length; i++ ) 
+        { 
+            rows[i] = parseSobjectToDataRow( lineList[i], result.fieldset);
+        }
+        return rows;
+    } 
+   
+    function remotingCallback( result, event) { 
+        checkErrors( event);
+        
+        oTable = $('#grid').dataTable( {
+         // "bAutoWidth": false, // Disable the auto width calculation
+            "sScrollY": "125px",
+            "aaData":  loadResultsToData(  result , event ),
+            "aoColumns": loadColumns( result, event),
+            "aaSorting": [[ 1, "asc" ]],
+            "aLengthMenu": [5,10,25,100],
+            "iDisplayLength" : 5,
+            "sPaginationType": "full_numbers",
+            "sDom": '<<"pbTitleCustom">f<rt><"foot"il<"mid"p>>>',
+            "bJQueryUI": true,
+            "fnDrawCallback": function () {
+                fcmcAddRows(this, result.fieldset.length-1 , 5);
+                $('thead >tr',oTable).addClass('headerRow');
+                $('tbody >tr',oTable).addClass('dataRow');              
+                $('.pbTitleCustom').text('{!title}');
+            }
+            
+        }  );
+        
+        // style like related lists
+        $('thead >tr',oTable).addClass('headerRow');
+        $('tbody >tr',oTable).addClass('dataRow');
+        
+        $('.pbTitleCustom').text('{!title}');
+        if( clickHand != undefined && typeof(clickHand) == "function"){ clickHand(); }  ;
+    }
+    
+    
+    
+    function fcmcAddRows(obj, numberColumns, targetRows) {
+      var tableRows = obj.find('tbody tr'); // grab the existing data rows
+      var numberNeeded = targetRows - tableRows.length; // how many blank rows are needed to fill up to targetRows
+      var lastRow = tableRows.last(); // cache the last data row
+      var lastRowCells = lastRow.children('td'); // how many visible columns are there?
+      var cellString;
+      var highlightColumn;
+      var rowClass;
+     
+      // The first row to be added actually ends up being the last row of the table.
+      // Check to see if it should be odd or even.
+      if (targetRows%2) {
+        rowClass= "odd";
+      } else {
+        rowClass = "even"; //
+      }
+     
+      // We only sort on 1 column, so let's find it based on its classname
+      lastRowCells.each(function(index) {
+        if ($(this).hasClass('sorting_1')) {
+          highlightColumn = index;
+        }
+      });
+     
+      /* Iterate through the number of blank rows needed, building a string that will
+       * be used for the HTML of each row. Another iterator inside creates the desired
+       * number of columns, adding the sorting class to the appropriate TD.
+       */
+      for (i=0;i<numberNeeded;i++) {
+        cellString = "";
+        for (j=0;j<numberColumns;j++) {
+          if (j == highlightColumn) {
+            cellString += '<td class="sorting_1">&nbsp;</td>';
+          } else {
+            cellString += '<td>&nbsp;</td>';
+          }
+        }
+     
+        // Add the TR and its contents to the DOM, then toggle the even/odd class
+        // in preparation for the next.
+        lastRow.after('<tr class="'+rowClass+' dataRow">'+cellString+'</tr>');
+        rowClass = (rowClass == "even") ? "odd" : "even";
+      }
+      obj.find('thead tr').addClass('headerRow');
+    }
+
+
+
+
+
+/* these JS functions are generally useful for any sobject 
+ * and they know about datatable API as well as sobject and 
+ * Datatable.fieldSetData {} 
+ * 
+ */
+
+/* expects the following data structure in 'r.fieldset' see Datatable.cls
+    public class fieldSetData { 
+        public String FieldPath; 
+        public string Label; 
+        public string Type; } 
+ */
+    function loadColumns( r, e ) 
+    { 
+            if (  r == null ) return; 
+            
+        var cols = []; var last = 0; 
+        for ( var i=0;i<r.fieldset.length; i++ ) 
+        { 
+            var fld = r.fieldset[i];
+            
+            var ob  =  { "sTitle" : fld.Label };
+            if ( fld.Label == 'Id' )  {
+                ob.bSearchable = false;
+                ob.bVisible =   false ;
+            }
+                if ( fld.Type == 'DOUBLE' ) { 
+                    // set a classname
+                    ob.sClass = 'numericalColumn';
+                }
+            cols[i] = ob;
+            last = i;
+        } 
+        return cols;
+    }
+    
+    function parseSobjectToDataRow( sobject , fieldset ) { 
+        if ( sobject == undefined) return;
+        var dataRow = new Array;        
+                    
+        for ( var c=0; c< fieldset.length; c++ ) { // loop across each column in result.fieldset   
+            var fld = fieldset[c]; 
+            dataRow[c] = ''; 
+            
+            if ( fld.Type == 'REFERENCE'  )         // look for __r.Name
+            {   
+                var path = fld.FieldPath.replace(/__c/,'__r');
+                if (  sobject[path] != undefined ) {  
+                    dataRow[c] = resolve ( sobject[path]['Name'] );
+                    // make this into a link if we have the ID available 
+                    if (  sobject[path]['Id'] != undefined ) { 
+                        dataRow[c] = '<a href="/'+sobject[path]['Id']+'">'+dataRow[c]+'</a>';
+                    }
+                }
+                    
+            } else if ( fld.Type == 'DATE' )        // is this format ok ? 
+            {           
+                dataRow[c] = resolve ( sobject[fld.FieldPath] );
+            
+//             dataRow[c] = new Date( dataRow[c]).toDateString();
+                dataRow[c] =new Date( dataRow[c]).toLocaleDateString();
+                
+            } else if ( fld.Type == 'DOUBLE' )        // 2 or 6 for now ?
+            {           
+                    var num = resolve ( sobject[fld.FieldPath] );
+                     //KNDY-2948
+                    var fixed_len = (fld.Fixed != null ? fld.Fixed : 6 );
+                    // setting field length for 'Line__c'
+                    var lastidxof = fld.FieldPath.lastIndexOf('__');
+                    var lastidxslice = fld.FieldPath.slice(0, lastidxof); // in case of 'KNDY3__Line__c', this should return just 'KNDY3__Line'
+                    var firstidxof = lastidxslice.indexOf('__'); // in case of Line__c, this should return -1
+                    if (firstidxof == -1){
+                    	//no namespace, compare with field name
+                    	if (lastidxslice == 'Line') fixed_len = 0;
+                    }else{
+                    	//namespace applied, slice until first occurence and slice from last index, compare remaining
+                    	var firstidxslice = lastidxslice.slice(firstidxof + 2); // in case of KNDY3__Line, this should return Line
+                    	if (firstidxslice == 'Line') fixed_len = 0;
+                    }
+                    
+                    dataRow[c] =  ( num == "" ) ? (0).toFixed(fixed_len) : num.toFixed(fixed_len);
+                
+            } else                                  // string, picklist, percent, textarea, ...
+            {                                       
+                dataRow[c] = resolve ( sobject[fld.FieldPath] );
+            }
+        }
+        return dataRow;
+    }
+
+    function resolve( v ) { return ( v != undefined ? v : '' ); }
+
+    function fnGetSelected( oTableLocal ) 
+    {
+        var aReturn = new Array();
+        var aTrs = oTableLocal.fnGetNodes();
+        
+        for ( var i=0 ; i<aTrs.length ; i++ )
+        {
+            if ( $(aTrs[i]).hasClass('row_selected') )
+            {
+                aReturn.push( aTrs[i] );
+            }
+        }
+        return aReturn;
+    }
+    
+    function clearSelectedRows() {
+        var aTrs = oTable.fnGetNodes();
+        
+        for ( var i=0 ; i<aTrs.length ; i++ )
+        {
+            if ( $(aTrs[i]).hasClass('row_selected') )
+                $(aTrs[i]).removeClass('row_selected');
+        }
+    }
+</script>
+<style>
+/* for datatable widget styles */        
+/*.ui-widget { font-family: Verdana,Arial,sans-serif; font-size: 1.1em; }
+.ui-widget-header { border: 1px solid #aaaaaa; 
+    background: rgba(204, 204, 204, 0.23) url(images/ui-bg_highlight-soft_75_cccccc_1x100.png) 50% 50% repeat-x;
+    color: #222222; font-weight: bold; }
+.ui-widget-header a { color: #222222; }
+
+table.dataTable td {    padding: 6px 10px; }
+
+.ui-state-default { 
+background: #f2f3f3;
+border-width: 0 0 1px 1px;
+border-color: #e0e3e5;
+color: #000;
+font-size: .9em;
+font-weight: bold;
+padding: 5px 2px 4px 5px;
+}
+table.dataTable tr.even, 
+table.dataTable tr.odd { background-color: #fff; }
+*/
+
+/* dialog needs this */
+body .ui-widget-overlay {background-image: none; background-color: rgb(111, 111, 111); opacity:0.8;}
+body .datePicker, body .helpText  { z-index: 103; }
+.ui-dialog  .ui-dialog-content { padding: 3px; } 
+.datePicker { position:fixed; }  /* important */
+
+
+.apexp .bPageBlock.apexDefaultPageBlock .pbBody { margin: 7px 4px; }  /* make p block widerer */
+
+table.dataTable th,
+.list .headerRow th { white-space: normal; } 
+
+.pbBody div.foot { height: 30px; }
+.pbBody div.mid { float: left; width: 35%; }
+
+/*  from dataTables.css
+
+ * Table
+ */
+table.dataTable {
+    margin: 0 auto;
+    clear: both;
+    width: 100%;
+}
+
+table.dataTable thead th {
+    /*padding: 3px 18px 3px 10px;
+    border-bottom: 1px solid black;*/
+    font-weight: bold;
+    cursor: pointer;
+    *cursor: hand;
+}
+
+table.dataTable tfoot th {
+    padding: 3px 18px 3px 10px;
+    border-top: 1px solid black;
+    font-weight: bold;
+}
+
+table.dataTable td {
+    
+}
+
+table.dataTable td.center,
+table.dataTable td.dataTables_empty {
+    text-align: center;
+}
+
+/*table.dataTable tr.odd { background-color: #E2E4FF; }*/
+table.dataTable tr.odd , 
+table.dataTable tr.even { background-color: white; }
+
+table.dataTable tr.odd td.sorting_1 ,
+table.dataTable tr.odd td.sorting_2 ,
+table.dataTable tr.odd td.sorting_3 ,
+table.dataTable tr.even td.sorting_1 ,
+table.dataTable tr.even td.sorting_2 ,
+table.dataTable tr.even td.sorting_3 { background-color: #E6E6E6; }
+
+
+table.display tr.even.row_selected td,
+table.dataTable tr.even.row_selected td.sorting_1,
+table.dataTable tr.even.row_selected td.sorting_2,
+table.dataTable tr.even.row_selected td.sorting_3,
+table.dataTable tr.even.row_selected td.sorting_4,
+table.dataTable tr.even.row_selected td.sorting_5,
+table.dataTable tr.even.row_selected td.sorting_6,
+table.dataTable tr.odd.row_selected td,
+table.dataTable tr.odd.row_selected td.sorting_1,
+table.dataTable tr.odd.row_selected td.sorting_2,
+table.dataTable tr.odd.row_selected td.sorting_3,
+table.dataTable tr.odd.row_selected td.sorting_4,
+table.dataTable tr.odd.row_selected td.sorting_5,
+table.dataTable tr.odd.row_selected td.sorting_6,
+table.dataTable tr.even.row_selected td.sorting_1
+{
+    background-color: #B0BED9;
+}
+
+
+/*
+ * Table wrapper
+ */
+.dataTables_wrapper {
+    position: relative;
+    clear: both;
+    *zoom: 1;
+}
+
+
+/*
+ * Page length menu
+ */
+.dataTables_length {
+    float: left;
+    padding-left: 15px; 
+}
+
+
+/*
+ * Filter
+ */
+.dataTables_filter {
+    float: right;
+    text-align: right;
+}
+
+
+/*
+ * Table information
+ */
+.dataTables_info {
+    clear: both;
+    float: left;
+    padding-top: 5px;
+}
+
+
+/*
+ * Pagination
+ */
+.dataTables_paginate {
+    float: right;
+    text-align: right;
+}
+
+/* Two button pagination - previous / next */
+.paginate_disabled_previous,
+.paginate_enabled_previous,
+.paginate_disabled_next,
+.paginate_enabled_next {
+    height: 19px;
+    float: left;
+    cursor: pointer;
+    *cursor: hand;
+    color: #111 !important;
+}
+.paginate_disabled_previous:hover,
+.paginate_enabled_previous:hover,
+.paginate_disabled_next:hover,
+.paginate_enabled_next:hover {
+    text-decoration: none !important;
+}
+.paginate_disabled_previous:active,
+.paginate_enabled_previous:active,
+.paginate_disabled_next:active,
+.paginate_enabled_next:active {
+    outline: none;
+}
+
+.paginate_disabled_previous,
+.paginate_disabled_next {
+    color: #666 !important;
+}
+.paginate_disabled_previous,
+.paginate_enabled_previous {
+    padding-left: 23px;
+}
+.paginate_disabled_next,
+.paginate_enabled_next {
+    padding-right: 23px;
+    margin-left: 10px;
+}
+
+
+/* Full number pagination */
+.paging_full_numbers {
+    height: 22px;
+    line-height: 22px;
+}
+.paging_full_numbers a:active {
+    outline: none
+}
+.paging_full_numbers a:hover {
+    text-decoration: none;
+}
+
+.paging_full_numbers a.paginate_button,
+.paging_full_numbers a.paginate_active {
+    border: 1px solid #aaa;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    padding: 2px 5px;
+    margin: 0 3px;
+    cursor: pointer;
+    *cursor: hand;
+    color: #333 !important;
+}
+
+.paging_full_numbers a.paginate_button {
+    background-color: #ddd;
+}
+
+.paging_full_numbers a.paginate_button:hover {
+    background-color: #ccc;
+    text-decoration: none !important;
+}
+
+.paging_full_numbers a.paginate_active {
+    background-color: #99B3FF;
+}
+
+
+/*
+ * Processing indicator
+ */
+.dataTables_processing {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 250px;
+    height: 30px;
+    margin-left: -125px;
+    margin-top: -15px;
+    padding: 14px 0 2px 0;
+    border: 1px solid #ddd;
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+    background-color: white;
+}
+
+
+
+table.dataTable thead th:active,
+table.dataTable thead td:active {
+    outline: none;
+}
+
+
+
+/*
+ * Sorting
+ */
+table.dataTable thead th div.DataTables_sort_wrapper {
+    position: relative;
+    padding-right: 16px;
+}
+
+table.dataTable thead th div.DataTables_sort_wrapper span {
+    position: absolute;
+    top: 50%;
+    margin-top: -8px;
+    right: 0;
+}
+
+table.dataTable th:active {
+    outline: none;
+}
+
+
+/*
+ * Scrolling
+ */
+.dataTables_scroll {
+    clear: both;
+}
+
+.dataTables_scrollBody {
+    *margin-top: -1px;
+    -webkit-overflow-scrolling: touch;
+}
+
+
+
+
+
+
+
+
+
+
+/*
+ * jQuery UI CSS Framework @VERSION
+ *
+ * Copyright 2010, AUTHORS.txt (http://jqueryui.com/about)
+ * Dual licensed under the MIT or GPL Version 2 licenses.
+ * http://jquery.org/license
+ *
+ * http://docs.jquery.com/UI/Theming/API
+ */
+
+/* Layout helpers
+----------------------------------*/
+.ui-helper-hidden { display: none; }
+.ui-helper-hidden-accessible { position: absolute; left: -99999999px; }
+.ui-helper-reset { margin: 0; padding: 0; border: 0; outline: 0; line-height: 1.3; text-decoration: none; font-size: 100%; list-style: none; }
+.ui-helper-clearfix:after { content: "."; display: block; height: 0; clear: both; visibility: hidden; }
+.ui-helper-clearfix { display: inline-block; }
+/* required comment for clearfix to work in Opera \*/
+* html .ui-helper-clearfix { height:1%; }
+.ui-helper-clearfix { display:block; }
+/* end clearfix */
+.ui-helper-zfix { width: 100%; height: 100%; top: 0; left: 0; position: absolute; opacity: 0; filter:Alpha(Opacity=0); }
+
+
+/* Interaction Cues
+----------------------------------*/
+.ui-state-disabled { cursor: default !important; }
+
+
+/* Icons
+----------------------------------*/
+
+/* states and images */
+.ui-icon { display: block; text-indent: -99999px; overflow: hidden; background-repeat: no-repeat; }
+
+
+/* Misc visuals
+----------------------------------*/
+
+/* Overlays */
+.ui-widget-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+
+/*
+ * jQuery UI CSS Framework @VERSION
+ *
+ * Copyright 2010, AUTHORS.txt (http://jqueryui.com/about)
+ * Dual licensed under the MIT or GPL Version 2 licenses.
+ * http://jquery.org/license
+ *
+ * http://docs.jquery.com/UI/Theming/API
+ *
+ */
+
+
+/* Component containers
+----------------------------------*/
+.ui-widget { font-family: Verdana,Arial,sans-serif; font-size: 1.1em; }
+.ui-widget .ui-widget { font-size: 1em; }
+.ui-widget input, .ui-widget select, .ui-widget textarea, .ui-widget button { font-family: Verdana,Arial,sans-serif; font-size: 1em; }
+.ui-widget-content { border: 1px solid #aaaaaa; background: #ffffff url(images/ui-bg_flat_75_ffffff_40x100.png) 50% 50% repeat-x; color: #222222; }
+.ui-widget-content a { color: #222222; }
+.ui-widget-header { border: 1px solid #aaaaaa; background: #cccccc url(images/ui-bg_highlight-soft_75_cccccc_1x100.png) 50% 50% repeat-x; color: #222222; font-weight: bold; }
+.ui-widget-header a { color: #222222; }
+
+/* Interaction states
+----------------------------------*/
+.ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default { border: 1px solid #d3d3d3; background: transparent; font-weight: normal; color: #555555; }
+.ui-state-default a, .ui-state-default a:link, .ui-state-default a:visited { color: #555555; text-decoration: none; }
+.ui-state-hover, .ui-widget-content .ui-state-hover, .ui-widget-header .ui-state-hover, .ui-state-focus, .ui-widget-content .ui-state-focus, .ui-widget-header .ui-state-focus { border: 1px solid #999999; background: #dadada url(images/ui-bg_glass_75_dadada_1x400.png) 50% 50% repeat-x; font-weight: normal; color: #212121; }
+.ui-state-hover a, .ui-state-hover a:hover { color: #212121; text-decoration: none; }
+.ui-state-active, .ui-widget-content .ui-state-active, .ui-widget-header .ui-state-active { border: 1px solid #aaaaaa; background: #ffffff url(images/ui-bg_glass_65_ffffff_1x400.png) 50% 50% repeat-x; font-weight: normal; color: #212121; }
+.ui-state-active a, .ui-state-active a:link, .ui-state-active a:visited { color: #212121; text-decoration: none; }
+.ui-widget :active { outline: none; }
+
+/* Interaction Cues
+----------------------------------*/
+.ui-state-highlight, .ui-widget-content .ui-state-highlight, .ui-widget-header .ui-state-highlight  {border: 1px solid #fcefa1; background: #fbf9ee url(images/ui-bg_glass_55_fbf9ee_1x400.png) 50% 50% repeat-x; color: #363636; }
+.ui-state-highlight a, .ui-widget-content .ui-state-highlight a,.ui-widget-header .ui-state-highlight a { color: #363636; }
+.ui-state-error, .ui-widget-content .ui-state-error, .ui-widget-header .ui-state-error {border: 1px solid #cd0a0a; background: #fef1ec url(images/ui-bg_glass_95_fef1ec_1x400.png) 50% 50% repeat-x; color: #cd0a0a; }
+.ui-state-error a, .ui-widget-content .ui-state-error a, .ui-widget-header .ui-state-error a { color: #cd0a0a; }
+.ui-state-error-text, .ui-widget-content .ui-state-error-text, .ui-widget-header .ui-state-error-text { color: #cd0a0a; }
+.ui-priority-primary, .ui-widget-content .ui-priority-primary, .ui-widget-header .ui-priority-primary { font-weight: bold; }
+.ui-priority-secondary, .ui-widget-content .ui-priority-secondary,  .ui-widget-header .ui-priority-secondary { opacity: .7; filter:Alpha(Opacity=70); font-weight: normal; }
+.ui-state-disabled, .ui-widget-content .ui-state-disabled, .ui-widget-header .ui-state-disabled { opacity: .35; filter:Alpha(Opacity=35); background-image: none; }
+
+/* Icons
+----------------------------------*/
+
+/* states and images */
+.ui-icon { width: 16px; height: 16px; 
+    background-image: url({!URLFOR($Resource.DataTables,'/examples/examples_support/themes/ui-lightness/images/ui-icons_222222_256x240.png')}); 
+}
+.ui-widget-content .ui-icon ,
+.ui-widget-header .ui-icon ,
+.ui-state-default .ui-icon {
+    opacity: 0.5; 
+    background-image: url({!URLFOR($Resource.DataTables,'/examples/examples_support/themes/ui-lightness/images/ui-icons_222222_256x240.png')}); 
+}
+.ui-state-hover .ui-icon, .ui-state-focus .ui-icon {background-image: url(images/ui-icons_454545_256x240.png); }
+.ui-state-active .ui-icon {background-image: url(images/ui-icons_454545_256x240.png); }
+.ui-state-highlight .ui-icon {background-image: url(images/ui-icons_2e83ff_256x240.png); }
+.ui-state-error .ui-icon, .ui-state-error-text .ui-icon {background-image: url(images/ui-icons_cd0a0a_256x240.png); }
+
+/* positioning */
+.ui-icon-carat-1-n { background-position: 0 0; }
+.ui-icon-carat-1-ne { background-position: -16px 0; }
+.ui-icon-carat-1-e { background-position: -32px 0; }
+.ui-icon-carat-1-se { background-position: -48px 0; }
+.ui-icon-carat-1-s { background-position: -64px 0; }
+.ui-icon-carat-1-sw { background-position: -80px 0; }
+.ui-icon-carat-1-w { background-position: -96px 0; }
+.ui-icon-carat-1-nw { background-position: -112px 0; }
+.ui-icon-carat-2-n-s { background-position: -128px 0; }
+.ui-icon-carat-2-e-w { background-position: -144px 0; }
+.ui-icon-triangle-1-n { background-position: 0 -16px; }
+.ui-icon-triangle-1-ne { background-position: -16px -16px; }
+.ui-icon-triangle-1-e { background-position: -32px -16px; }
+.ui-icon-triangle-1-se { background-position: -48px -16px; }
+.ui-icon-triangle-1-s { background-position: -64px -16px; }
+.ui-icon-triangle-1-sw { background-position: -80px -16px; }
+.ui-icon-triangle-1-w { background-position: -96px -16px; }
+.ui-icon-triangle-1-nw { background-position: -112px -16px; }
+.ui-icon-triangle-2-n-s { background-position: -128px -16px; }
+.ui-icon-triangle-2-e-w { background-position: -144px -16px; }
+.ui-icon-arrow-1-n { background-position: 0 -32px; }
+.ui-icon-arrow-1-ne { background-position: -16px -32px; }
+.ui-icon-arrow-1-e { background-position: -32px -32px; }
+.ui-icon-arrow-1-se { background-position: -48px -32px; }
+.ui-icon-arrow-1-s { background-position: -64px -32px; }
+.ui-icon-arrow-1-sw { background-position: -80px -32px; }
+.ui-icon-arrow-1-w { background-position: -96px -32px; }
+.ui-icon-arrow-1-nw { background-position: -112px -32px; }
+.ui-icon-arrow-2-n-s { background-position: -128px -32px; }
+.ui-icon-arrow-2-ne-sw { background-position: -144px -32px; }
+.ui-icon-arrow-2-e-w { background-position: -160px -32px; }
+.ui-icon-arrow-2-se-nw { background-position: -176px -32px; }
+.ui-icon-arrowstop-1-n { background-position: -192px -32px; }
+.ui-icon-arrowstop-1-e { background-position: -208px -32px; }
+.ui-icon-arrowstop-1-s { background-position: -224px -32px; }
+.ui-icon-arrowstop-1-w { background-position: -240px -32px; }
+.ui-icon-arrowthick-1-n { background-position: 0 -48px; }
+.ui-icon-arrowthick-1-ne { background-position: -16px -48px; }
+.ui-icon-arrowthick-1-e { background-position: -32px -48px; }
+.ui-icon-arrowthick-1-se { background-position: -48px -48px; }
+.ui-icon-arrowthick-1-s { background-position: -64px -48px; }
+.ui-icon-arrowthick-1-sw { background-position: -80px -48px; }
+.ui-icon-arrowthick-1-w { background-position: -96px -48px; }
+.ui-icon-arrowthick-1-nw { background-position: -112px -48px; }
+.ui-icon-arrowthick-2-n-s { background-position: -128px -48px; }
+.ui-icon-arrowthick-2-ne-sw { background-position: -144px -48px; }
+.ui-icon-arrowthick-2-e-w { background-position: -160px -48px; }
+.ui-icon-arrowthick-2-se-nw { background-position: -176px -48px; }
+.ui-icon-arrowthickstop-1-n { background-position: -192px -48px; }
+.ui-icon-arrowthickstop-1-e { background-position: -208px -48px; }
+.ui-icon-arrowthickstop-1-s { background-position: -224px -48px; }
+.ui-icon-arrowthickstop-1-w { background-position: -240px -48px; }
+.ui-icon-arrowreturnthick-1-w { background-position: 0 -64px; }
+.ui-icon-arrowreturnthick-1-n { background-position: -16px -64px; }
+.ui-icon-arrowreturnthick-1-e { background-position: -32px -64px; }
+.ui-icon-arrowreturnthick-1-s { background-position: -48px -64px; }
+.ui-icon-arrowreturn-1-w { background-position: -64px -64px; }
+.ui-icon-arrowreturn-1-n { background-position: -80px -64px; }
+.ui-icon-arrowreturn-1-e { background-position: -96px -64px; }
+.ui-icon-arrowreturn-1-s { background-position: -112px -64px; }
+.ui-icon-arrowrefresh-1-w { background-position: -128px -64px; }
+.ui-icon-arrowrefresh-1-n { background-position: -144px -64px; }
+.ui-icon-arrowrefresh-1-e { background-position: -160px -64px; }
+.ui-icon-arrowrefresh-1-s { background-position: -176px -64px; }
+.ui-icon-arrow-4 { background-position: 0 -80px; }
+.ui-icon-arrow-4-diag { background-position: -16px -80px; }
+.ui-icon-extlink { background-position: -32px -80px; }
+.ui-icon-newwin { background-position: -48px -80px; }
+.ui-icon-refresh { background-position: -64px -80px; }
+.ui-icon-shuffle { background-position: -80px -80px; }
+.ui-icon-transfer-e-w { background-position: -96px -80px; }
+.ui-icon-transferthick-e-w { background-position: -112px -80px; }
+.ui-icon-folder-collapsed { background-position: 0 -96px; }
+.ui-icon-folder-open { background-position: -16px -96px; }
+.ui-icon-document { background-position: -32px -96px; }
+.ui-icon-document-b { background-position: -48px -96px; }
+.ui-icon-note { background-position: -64px -96px; }
+.ui-icon-mail-closed { background-position: -80px -96px; }
+.ui-icon-mail-open { background-position: -96px -96px; }
+.ui-icon-suitcase { background-position: -112px -96px; }
+.ui-icon-comment { background-position: -128px -96px; }
+.ui-icon-person { background-position: -144px -96px; }
+.ui-icon-print { background-position: -160px -96px; }
+.ui-icon-trash { background-position: -176px -96px; }
+.ui-icon-locked { background-position: -192px -96px; }
+.ui-icon-unlocked { background-position: -208px -96px; }
+.ui-icon-bookmark { background-position: -224px -96px; }
+.ui-icon-tag { background-position: -240px -96px; }
+.ui-icon-home { background-position: 0 -112px; }
+.ui-icon-flag { background-position: -16px -112px; }
+.ui-icon-calendar { background-position: -32px -112px; }
+.ui-icon-cart { background-position: -48px -112px; }
+.ui-icon-pencil { background-position: -64px -112px; }
+.ui-icon-clock { background-position: -80px -112px; }
+.ui-icon-disk { background-position: -96px -112px; }
+.ui-icon-calculator { background-position: -112px -112px; }
+.ui-icon-zoomin { background-position: -128px -112px; }
+.ui-icon-zoomout { background-position: -144px -112px; }
+.ui-icon-search { background-position: -160px -112px; }
+.ui-icon-wrench { background-position: -176px -112px; }
+.ui-icon-gear { background-position: -192px -112px; }
+.ui-icon-heart { background-position: -208px -112px; }
+.ui-icon-star { background-position: -224px -112px; }
+.ui-icon-link { background-position: -240px -112px; }
+.ui-icon-cancel { background-position: 0 -128px; }
+.ui-icon-plus { background-position: -16px -128px; }
+.ui-icon-plusthick { background-position: -32px -128px; }
+.ui-icon-minus { background-position: -48px -128px; }
+.ui-icon-minusthick { background-position: -64px -128px; }
+.ui-icon-close { background-position: -80px -128px; }
+.ui-icon-closethick { background-position: -96px -128px; }
+.ui-icon-key { background-position: -112px -128px; }
+.ui-icon-lightbulb { background-position: -128px -128px; }
+.ui-icon-scissors { background-position: -144px -128px; }
+.ui-icon-clipboard { background-position: -160px -128px; }
+.ui-icon-copy { background-position: -176px -128px; }
+.ui-icon-contact { background-position: -192px -128px; }
+.ui-icon-image { background-position: -208px -128px; }
+.ui-icon-video { background-position: -224px -128px; }
+.ui-icon-script { background-position: -240px -128px; }
+.ui-icon-alert { background-position: 0 -144px; }
+.ui-icon-info { background-position: -16px -144px; }
+.ui-icon-notice { background-position: -32px -144px; }
+.ui-icon-help { background-position: -48px -144px; }
+.ui-icon-check { background-position: -64px -144px; }
+.ui-icon-bullet { background-position: -80px -144px; }
+.ui-icon-radio-off { background-position: -96px -144px; }
+.ui-icon-radio-on { background-position: -112px -144px; }
+.ui-icon-pin-w { background-position: -128px -144px; }
+.ui-icon-pin-s { background-position: -144px -144px; }
+.ui-icon-play { background-position: 0 -160px; }
+.ui-icon-pause { background-position: -16px -160px; }
+.ui-icon-seek-next { background-position: -32px -160px; }
+.ui-icon-seek-prev { background-position: -48px -160px; }
+.ui-icon-seek-end { background-position: -64px -160px; }
+.ui-icon-seek-start { background-position: -80px -160px; }
+/* ui-icon-seek-first is deprecated, use ui-icon-seek-start instead */
+.ui-icon-seek-first { background-position: -80px -160px; }
+.ui-icon-stop { background-position: -96px -160px; }
+.ui-icon-eject { background-position: -112px -160px; }
+.ui-icon-volume-off { background-position: -128px -160px; }
+.ui-icon-volume-on { background-position: -144px -160px; }
+.ui-icon-power { background-position: 0 -176px; }
+.ui-icon-signal-diag { background-position: -16px -176px; }
+.ui-icon-signal { background-position: -32px -176px; }
+.ui-icon-battery-0 { background-position: -48px -176px; }
+.ui-icon-battery-1 { background-position: -64px -176px; }
+.ui-icon-battery-2 { background-position: -80px -176px; }
+.ui-icon-battery-3 { background-position: -96px -176px; }
+.ui-icon-circle-plus { background-position: 0 -192px; }
+.ui-icon-circle-minus { background-position: -16px -192px; }
+.ui-icon-circle-close { background-position: -32px -192px; }
+.ui-icon-circle-triangle-e { background-position: -48px -192px; }
+.ui-icon-circle-triangle-s { background-position: -64px -192px; }
+.ui-icon-circle-triangle-w { background-position: -80px -192px; }
+.ui-icon-circle-triangle-n { background-position: -96px -192px; }
+.ui-icon-circle-arrow-e { background-position: -112px -192px; }
+.ui-icon-circle-arrow-s { background-position: -128px -192px; }
+.ui-icon-circle-arrow-w { background-position: -144px -192px; }
+.ui-icon-circle-arrow-n { background-position: -160px -192px; }
+.ui-icon-circle-zoomin { background-position: -176px -192px; }
+.ui-icon-circle-zoomout { background-position: -192px -192px; }
+.ui-icon-circle-check { background-position: -208px -192px; }
+.ui-icon-circlesmall-plus { background-position: 0 -208px; }
+.ui-icon-circlesmall-minus { background-position: -16px -208px; }
+.ui-icon-circlesmall-close { background-position: -32px -208px; }
+.ui-icon-squaresmall-plus { background-position: -48px -208px; }
+.ui-icon-squaresmall-minus { background-position: -64px -208px; }
+.ui-icon-squaresmall-close { background-position: -80px -208px; }
+.ui-icon-grip-dotted-vertical { background-position: 0 -224px; }
+.ui-icon-grip-dotted-horizontal { background-position: -16px -224px; }
+.ui-icon-grip-solid-vertical { background-position: -32px -224px; }
+.ui-icon-grip-solid-horizontal { background-position: -48px -224px; }
+.ui-icon-gripsmall-diagonal-se { background-position: -64px -224px; }
+.ui-icon-grip-diagonal-se { background-position: -80px -224px; }
+
+
+/* Misc visuals
+----------------------------------*/
+
+/* Corner radius */
+.ui-corner-tl { -moz-border-radius-topleft: 4px; -webkit-border-top-left-radius: 4px; border-top-left-radius: 4px; }
+.ui-corner-tr { -moz-border-radius-topright: 4px; -webkit-border-top-right-radius: 4px; border-top-right-radius: 4px; }
+.ui-corner-bl { -moz-border-radius-bottomleft: 4px; -webkit-border-bottom-left-radius: 4px; border-bottom-left-radius: 4px; }
+.ui-corner-br { -moz-border-radius-bottomright: 4px; -webkit-border-bottom-right-radius: 4px; border-bottom-right-radius: 4px; }
+.ui-corner-top { -moz-border-radius-topleft: 4px; -webkit-border-top-left-radius: 4px; border-top-left-radius: 4px; -moz-border-radius-topright: 4px; -webkit-border-top-right-radius: 4px; border-top-right-radius: 4px; }
+.ui-corner-bottom { -moz-border-radius-bottomleft: 4px; -webkit-border-bottom-left-radius: 4px; border-bottom-left-radius: 4px; -moz-border-radius-bottomright: 4px; -webkit-border-bottom-right-radius: 4px; border-bottom-right-radius: 4px; }
+.ui-corner-right {  -moz-border-radius-topright: 4px; -webkit-border-top-right-radius: 4px; border-top-right-radius: 4px; -moz-border-radius-bottomright: 4px; -webkit-border-bottom-right-radius: 4px; border-bottom-right-radius: 4px; }
+.ui-corner-left { -moz-border-radius-topleft: 4px; -webkit-border-top-left-radius: 4px; border-top-left-radius: 4px; -moz-border-radius-bottomleft: 4px; -webkit-border-bottom-left-radius: 4px; border-bottom-left-radius: 4px; }
+.ui-corner-all { -moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px; }
+
+/*
+ * jQuery UI Selectable @VERSION
+ *
+ * Copyright 2010, AUTHORS.txt (http://jqueryui.com/about)
+ * Dual licensed under the MIT or GPL Version 2 licenses.
+ * http://jquery.org/license
+ *
+ * http://docs.jquery.com/UI/Selectable#theming
+ */
+.ui-selectable-helper { position: absolute; z-index: 100; border:1px dotted black; }
+
+/*
+ * jQuery UI Button @VERSION
+ *
+ * Copyright 2010, AUTHORS.txt (http://jqueryui.com/about)
+ * Dual licensed under the MIT or GPL Version 2 licenses.
+ * http://jquery.org/license
+ *
+ * http://docs.jquery.com/UI/Button#theming
+ */
+.ui-button { display: inline-block; position: relative; 
+padding: 1px 5px; 
+    margin-right: .1em; text-decoration: none !important; cursor: pointer; text-align: center; zoom: 1; overflow: visible; } /* the overflow property removes extra width in IE */
+.ui-button-icon-only { width: 2.2em; } /* to make room for the icon, a width needs to be set here */
+button.ui-button-icon-only { width: 2.4em; } /* button elements seem to need a little more width */
+.ui-button-icons-only { width: 3.4em; } 
+button.ui-button-icons-only { width: 3.7em; } 
+
+/*button text element */
+.ui-button .ui-button-text { display: block; line-height: 1.4;  }
+.ui-button-text-only .ui-button-text { padding: .4em 1em; }
+.ui-button-icon-only .ui-button-text, .ui-button-icons-only .ui-button-text { padding: .4em; text-indent: -9999999px; }
+.ui-button-text-icon-primary .ui-button-text, .ui-button-text-icons .ui-button-text { padding: .4em 1em .4em 2.1em; }
+.ui-button-text-icon-secondary .ui-button-text, .ui-button-text-icons .ui-button-text { padding: .4em 2.1em .4em 1em; }
+.ui-button-text-icons .ui-button-text { padding-left: 2.1em; padding-right: 2.1em; }
+/* no icon support for input elements, provide padding by default */
+input.ui-button { padding: .4em 1em; }
+
+/*button icon element(s) */
+.ui-button-icon-only .ui-icon, .ui-button-text-icon-primary .ui-icon, .ui-button-text-icon-secondary .ui-icon, .ui-button-text-icons .ui-icon, .ui-button-icons-only .ui-icon { position: absolute; top: 50%; margin-top: -8px; }
+.ui-button-icon-only .ui-icon { left: 50%; margin-left: -8px; }
+.ui-button-text-icon-primary .ui-button-icon-primary, .ui-button-text-icons .ui-button-icon-primary, .ui-button-icons-only .ui-button-icon-primary { left: .5em; }
+.ui-button-text-icon-secondary .ui-button-icon-secondary, .ui-button-text-icons .ui-button-icon-secondary, .ui-button-icons-only .ui-button-icon-secondary { right: .5em; }
+.ui-button-text-icons .ui-button-icon-secondary, .ui-button-icons-only .ui-button-icon-secondary { right: .5em; }
+
+/*button sets*/
+.ui-buttonset { margin-right: 7px; }
+.ui-buttonset .ui-button { margin-left: 0; 
+margin-right: 0em; }
+
+.pbTitleCustom { float: left; font-weight: bold; font-size: 1.3em;}
+</style>
+</apex:component>

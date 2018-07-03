@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpAccountingDefaults</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>The default values for document lines, used to hold accounting segments for the COA</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableEnhancedLookup>true</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Company</description>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Accounting Defaults</relationshipLabel>
+        <relationshipName>Accounting_Defaults</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Debit_Credit__c</fullName>
+        <description>Debit or credit</description>
+        <externalId>false</externalId>
+        <label>Debit/Credit</label>
+        <length>2</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>GL_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The default general ledger account.</description>
+        <externalId>false</externalId>
+        <label>GL Account</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>The GL account that you selected is inactive. Select an active GL account.</errorMessage>
+            <filterItems>
+                <field>GL_Account__c.Active__c</field>
+                <operation>equals</operation>
+                <value>True</value>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>GL_Account__c</referenceTo>
+        <relationshipLabel>Accounting Defaults</relationshipLabel>
+        <relationshipName>Accounting_Defaults</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Intercompany__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Intercompany</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Accounting Defaults (Intercompany)</relationshipLabel>
+        <relationshipName>Interco_Accounting_Defaults</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>SubTransaction_Type__c</fullName>
+        <description>Select the sub transaction type for this accounting default</description>
+        <externalId>false</externalId>
+        <label>SubTransaction Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Sales Tax</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Purchase Price Variance</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Write Off</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Earned Discount</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Unearned Discount</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Deduction</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Overpayment</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Work Order Assembly Completion</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Work Order Assembly Scrap</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Work Order Component Issue</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Work Order Component Scrap</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Cycle Count - Increase</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Cycle Count - Decrease</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Payment</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Invoice</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>On Account</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Activate Proposed Costs</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Transaction_Type__c</fullName>
+        <description>Select the transaction type for this accounting default</description>
+        <externalId>false</externalId>
+        <label>Transaction Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Shipment</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Customer Invoice</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Customer Receipt</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Purchase Receipt</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Supplier Invoice</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Supplier Payment</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Supplier Credit Memo</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Customer Credit Memo</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Inventory Change</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Work Order</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <label>Accounting Default</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Transaction_Type__c</columns>
+        <columns>SubTransaction_Type__c</columns>
+        <columns>Debit_Credit__c</columns>
+        <columns>GL_Account__c</columns>
+        <columns>Company__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <displayFormat>AD-{0000000000}</displayFormat>
+        <label>Accounting Default</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Accounting Defaults</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>GL_Account__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Transaction_Type__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>SubTransaction_Type__c</customTabListAdditionalFields>
+        <lookupDialogsAdditionalFields>Transaction_Type__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>SubTransaction_Type__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>GL_Account__c</lookupDialogsAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

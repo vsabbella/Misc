@@ -1,0 +1,2014 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <content>SupplierClone</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <comment>Override to edit supplier address in the same page.</comment>
+        <content>SupplierNew</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <comment>Override edit page to enter supplier address in the same page.</comment>
+        <content>SupplierNew</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpSuppliers</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Supplier object</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableEnhancedLookup>true</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>Consignment_Information</fullName>
+        <description>SupplierNew Page</description>
+        <displayedFields>
+            <field>Consigned_Aging_in_Days__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Last_Consigned_Report_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Consigned_Report_Interval_in_Days__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Consigned_Contact_s_Email__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Consignment Information</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Contact_Information</fullName>
+        <description>Used on the Supplier New &amp; Edit pages</description>
+        <displayedFields>
+            <field>Primary_Contact_Name__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Primary_Contact_Email__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Primary_Contact_Phone__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Contact Information</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>New</fullName>
+        <description>SupplierNew.page Default Field Set</description>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Status__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Top_Parent_Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Parent_Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Supplier_ID__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>DUNS_Number__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Minimum_Shelf_Life_In_Days__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Create_RTV_Credit_Memo__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Create_RTV_PO__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Aliases__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>New</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>New_Purchase_From</fullName>
+        <availableFields>
+            <field>Website__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <description>SupplierNew.page when RecordType = Purchase From</description>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Status__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Top_Parent_Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Parent_Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Supplier_ID__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>DUNS_Number__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Minimum_Shelf_Life_In_Days__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Remit_To__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Aliases__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>New Purchase From</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>New_Remit_To</fullName>
+        <availableFields>
+            <field>Website__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <description>SupplierNew.page when RecordType = Remit To</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Status__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Top_Parent_Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Parent_Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Supplier_ID__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>DUNS_Number__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Minimum_Shelf_Life_In_Days__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Aliases__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>New Remit To</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Order_Preferences</fullName>
+        <description>SupplierNew.page</description>
+        <displayedFields>
+            <field>Order_Method__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Preferred_Correspondence__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Order Preferences</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Overview</fullName>
+        <description>Overview button on standard page layout</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Supplier_ID__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Payment_Method_G__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Tax_ID__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>City__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>State__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Overview</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Procurement_Preferences</fullName>
+        <description>Used on the Supplier New &amp; Edit pages</description>
+        <displayedFields>
+            <field>Default_Receiving_Tolerance__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Hold_Purchasing__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>FOB_Term__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Payment_Term__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Create_RTV_Credit_Memo__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Create_RTV_PO__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Invoice_Matching__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Procurement Preferences</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Remittance_Preferences</fullName>
+        <availableFields>
+            <field>Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Parent_Hold_Payment__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Top_Parent_Hold_Payment__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <description>SupplierNew.page</description>
+        <displayedFields>
+            <field>Payment_Method_G__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Bank_Routing_Number__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Pay_Per_Invoice__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Bank_Account_Number__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Payment_Term__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Payment_Portal__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Hold_Payment__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Create_Invoice_Automatically_on_Receipt__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Always_Take_Discount__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Remittance Preferences</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>RequestItemNewSupplier</fullName>
+        <description>ShoppingRequest.page</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Primary_Contact_Name__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Primary_Contact_Email__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Primary_Contact_Phone__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Request Item New Supplier</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Tax_Info</fullName>
+        <availableFields>
+            <field>VAT_ID__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <description>SupplierNew.page</description>
+        <displayedFields>
+            <field>Tax_ID__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>W9_Submitted__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>X1099_Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>X1099_Box_G__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Alternate_Name__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Tax Info</label>
+    </fieldSets>
+    <fields>
+        <fullName>Address__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookupt to Account</description>
+        <externalId>false</externalId>
+        <label>Address</label>
+        <referenceTo>Account</referenceTo>
+        <relationshipLabel>Suppliers</relationshipLabel>
+        <relationshipName>Suppliers1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Aliases__c</fullName>
+        <externalId>false</externalId>
+        <label>Aliases</label>
+        <length>131072</length>
+        <trackTrending>false</trackTrending>
+        <type>LongTextArea</type>
+        <visibleLines>3</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Alternate_Name__c</fullName>
+        <description>The alternate name is used when the supplier is operating under [doing business as] a different name.</description>
+        <externalId>false</externalId>
+        <label>Alternate Name</label>
+        <length>80</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Always_Take_Discount__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Acts as an indicator flag to always take the discount earned on payment terms regardless of the discount due date</description>
+        <externalId>false</externalId>
+        <label>Always Take Discount</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Bank_Account_Number__c</fullName>
+        <description>Bank account number to receive payment</description>
+        <externalId>false</externalId>
+        <label>Bank Account Number</label>
+        <length>30</length>
+        <maskChar>asterisk</maskChar>
+        <maskType>all</maskType>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>EncryptedText</type>
+    </fields>
+    <fields>
+        <fullName>Bank_Routing_Number__c</fullName>
+        <externalId>false</externalId>
+        <label>Bank Routing Number</label>
+        <length>15</length>
+        <maskChar>asterisk</maskChar>
+        <maskType>lastFour</maskType>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>EncryptedText</type>
+    </fields>
+    <fields>
+        <fullName>City__c</fullName>
+        <externalId>false</externalId>
+        <formula>If(ISBLANK(Supplier_City__c), Address__r.BillingCity, Supplier_City__c)</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>City</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to company</description>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Suppliers</relationshipLabel>
+        <relationshipName>Suppliers1_del</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Consigned_Aging_in_Days__c</fullName>
+        <description>Consigned Aging in Days</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The number of days the inventory may be kept in consigned status.</inlineHelpText>
+        <label>Consigned Aging in Days</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Consigned_Contact_s_Email__c</fullName>
+        <description>Consigned Contact&apos;s Email</description>
+        <externalId>false</externalId>
+        <inlineHelpText>For consigned material.</inlineHelpText>
+        <label>Consigned Contact&apos;s Email</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Email</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Consigned_Report_Interval_in_Days__c</fullName>
+        <description>Consigned Report Interval in Days</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Number of days between consigned material reports.</inlineHelpText>
+        <label>Consigned Report Interval in Days</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Country__c</fullName>
+        <externalId>false</externalId>
+        <formula>If(ISBLANK(Supplier_Country__c), Address__r.BillingCountry, Supplier_Country__c)</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Country</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Create_Invoice_Automatically_on_Receipt__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <inlineHelpText>A check mark indicates that a supplier invoice is automatically created  when a receipt is recorded from the supplier.</inlineHelpText>
+        <label>Self Billed Invoice</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Create_RTV_Credit_Memo__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Create RTV Credit Memo</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Create_RTV_PO__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Create RTV PO</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Currency__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to currency</description>
+        <externalId>false</externalId>
+        <label>Default Currency</label>
+        <referenceTo>Currency__c</referenceTo>
+        <relationshipLabel>Supplier Transaction Currency</relationshipLabel>
+        <relationshipName>Supplier_Transaction_Currency</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>DUNS_Number__c</fullName>
+        <description>D&amp;B Number to identify this company</description>
+        <externalId>false</externalId>
+        <inlineHelpText>A unique nine-digit ID for the customer&apos;s physical location.</inlineHelpText>
+        <label>DUNS Number</label>
+        <length>30</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Default_Receiving_Tolerance__c</fullName>
+        <defaultValue>0</defaultValue>
+        <description>default delivery tolerance which gets copied as the default receiving tolerance on the Purchase order line</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The default delivery tolerance is copied to the PO line as the default receiving tolerance.</inlineHelpText>
+        <label>Default Receiving Tolerance</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Percent</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>FOB_Term__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>FOB Term</label>
+        <referenceTo>FOB_Terms__c</referenceTo>
+        <relationshipLabel>Suppliers</relationshipLabel>
+        <relationshipName>Suppliers</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Hold_Payment__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Indicates that you cannot issue a payment to this supplier</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Indicates that you cannot issue a payment to this supplier.</inlineHelpText>
+        <label>Hold Payment</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Hold_Purchasing__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Indicates that you cannot create a new Purchase order for this supplier, does not affect existing POs or any downstream processes.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Indicates that you cannot create a new purchase order for this supplier.</inlineHelpText>
+        <label>Hold Purchasing</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Invoice_Matching__c</fullName>
+        <externalId>false</externalId>
+        <label>Invoice Matching</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Three Way</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Two Way</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Last_Consigned_Report_Date__c</fullName>
+        <description>Last Consigned Report Date</description>
+        <externalId>false</externalId>
+        <label>Last Consigned Report Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Minimum_Shelf_Life_In_Days__c</fullName>
+        <description>The minimum shelf life required for an item to be received against a PO for this supplier. If given a value, this will take precedence over the minimum shelf life on the class.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The minimum shelf life required for an item to be received against a PO for this supplier. If given a value, this will take precedence over the minimum shelf life on the class.</inlineHelpText>
+        <label>Minimum Shelf Life In Days</label>
+        <precision>5</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Name_Control__c</fullName>
+        <description>1099 Payer Name Control field - Required field on 1099s</description>
+        <externalId>false</externalId>
+        <label>DEPRECATED</label>
+        <length>4</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Order_Method__c</fullName>
+        <description>Method supplier would like to receive purchase orders</description>
+        <externalId>false</externalId>
+        <label>Order Method</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Email</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Fax</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>EDI</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>cXML</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Parent_Hold_Payment__c</fullName>
+        <description>Is the parent supplier on payment hold</description>
+        <externalId>false</externalId>
+        <formula>Parent_Supplier__r.Hold_Payment__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Parent Hold Payment</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Parent_Supplier__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The parent supplier</description>
+        <externalId>false</externalId>
+        <label>Parent Supplier</label>
+        <referenceTo>Supplier__c</referenceTo>
+        <relationshipLabel>Suppliers (Parent Supplier)</relationshipLabel>
+        <relationshipName>ChildSuppliers</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Pay_Per_Invoice__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Checkbox to indicate if payments should be created separately for each invoice against this supplier.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Indicates that separate payments are to be created for each invoice.</inlineHelpText>
+        <label>Pay Per Invoice</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Payment_Method_G__c</fullName>
+        <defaultValue>&apos;Check&apos;</defaultValue>
+        <description>Defines how the supplier would like to be paid</description>
+        <externalId>false</externalId>
+        <label>Remittance Method</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <restricted>true</restricted>
+            <valueSetName>Payment_Method</valueSetName>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Payment_Method__c</fullName>
+        <description>Defines how the supplier would like to be paid</description>
+        <externalId>false</externalId>
+        <label>DEPRECATED</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Check</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Credit Card</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>ACH</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Online</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Payment_Portal__c</fullName>
+        <externalId>false</externalId>
+        <label>Payment Portal</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Payment_Term__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Payment Term</label>
+        <referenceTo>Payment_Term__c</referenceTo>
+        <relationshipLabel>Suppliers</relationshipLabel>
+        <relationshipName>Suppliers1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Preferred_Correspondence__c</fullName>
+        <description>Preferred correspondence method</description>
+        <externalId>false</externalId>
+        <label>Preferred Correspondence</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Chatter</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Email</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Fax</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Mail</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Telephone</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Primary_Contact_Email__c</fullName>
+        <externalId>false</externalId>
+        <label>Primary Contact&apos;s Email</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Email</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Primary_Contact_Name__c</fullName>
+        <externalId>false</externalId>
+        <label>Primary Contact&apos;s Name</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Primary_Contact_Phone__c</fullName>
+        <externalId>false</externalId>
+        <label>Primary Contact&apos;s Phone</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Phone</type>
+    </fields>
+    <fields>
+        <fullName>Record_Type_Name__c</fullName>
+        <description>Used while data load is running to set record type</description>
+        <externalId>false</externalId>
+        <label>Record Type Name</label>
+        <length>32</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Remit_To__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The Remit-To supplier that this purchasing supplier belongs to.</description>
+        <externalId>false</externalId>
+        <label>Remit-To</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Supplier__c.Type__c</field>
+                <operation>equals</operation>
+                <value>Remit-To</value>
+            </filterItems>
+            <infoMessage>Select the Remit-To supplier</infoMessage>
+            <isOptional>true</isOptional>
+        </lookupFilter>
+        <referenceTo>Supplier__c</referenceTo>
+        <relationshipLabel>Suppliers (Purchasing)</relationshipLabel>
+        <relationshipName>PurchasingSuppliers</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>State__c</fullName>
+        <externalId>false</externalId>
+        <formula>If(ISBLANK(Supplier_State__c), Address__r.BillingState, Supplier_State__c)</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>State</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Status__c</fullName>
+        <description>Supplier Status</description>
+        <externalId>false</externalId>
+        <label>Status</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Pending</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Active</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Inactive</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Street_1__c</fullName>
+        <description>Captures additional street address information for the supplier</description>
+        <externalId>false</externalId>
+        <label>Street 1</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Street_2__c</fullName>
+        <description>Allows to capture additional street address information for the supplier</description>
+        <externalId>false</externalId>
+        <label>Street 2</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Street__c</fullName>
+        <externalId>false</externalId>
+        <formula>IF(ISBLANK(Supplier_Street__c), Address__r.BillingStreet, Supplier_Street__c  &amp; IF(ISBLANK(Street_1__c), &quot;&quot;, &quot; &quot; &amp; Street_1__c) &amp; 
+        IF(ISBLANK(Street_2__c), &quot;&quot;, &quot; &quot; &amp; Street_2__c))</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Street</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Supplier_City__c</fullName>
+        <description>Supplier City</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Supplier City</inlineHelpText>
+        <label>Supplier City</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Supplier_Country__c</fullName>
+        <description>Supplier Country</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Supplier Country</inlineHelpText>
+        <label>Supplier Country</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Supplier_ID__c</fullName>
+        <externalId>true</externalId>
+        <label>Supplier ID</label>
+        <length>25</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Supplier_State__c</fullName>
+        <description>Supplier State</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Supplier State</inlineHelpText>
+        <label>Supplier State</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Supplier_Street__c</fullName>
+        <description>Supplier Street</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Supplier Street</inlineHelpText>
+        <label>Supplier Street</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Supplier_Unique__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>Supplier plus company unique check</description>
+        <externalId>false</externalId>
+        <label>Supplier Unique</label>
+        <length>160</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Supplier_Zip_Code__c</fullName>
+        <description>Supplier Zip Code</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Supplier Zip Code</inlineHelpText>
+        <label>Supplier Zip Code</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Tax_ID__c</fullName>
+        <description>Tax identification number for the supplier</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Tax identification number for the supplier</inlineHelpText>
+        <label>Tax Identification</label>
+        <length>30</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Top_Parent_Hold_Payment__c</fullName>
+        <description>Is the Top parent supplier on payment hold</description>
+        <externalId>false</externalId>
+        <formula>Top_Parent_Supplier__r.Hold_Payment__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <inlineHelpText>The top parent supplier of the supplier on payment hold. For example, Supplier C is on payment hold. C&apos;s parent is Supplier B, and B&apos;s parent is Supplier A. In this case, the top parent on payment hold is Supplier A.</inlineHelpText>
+        <label>Top Parent Hold Payment</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Top_Parent_Supplier__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The ultimate parent record for a set of related Suppliers</description>
+        <externalId>false</externalId>
+        <label>Top Parent Supplier</label>
+        <referenceTo>Supplier__c</referenceTo>
+        <relationshipLabel>Suppliers (Top Parent Supplier)</relationshipLabel>
+        <relationshipName>TopSupplier</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Type__c</fullName>
+        <description>The type of supplier record.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Type of supplier record. Options include: Purchasing and Remit-To.</inlineHelpText>
+        <label>Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Parent</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Purchasing</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Remit-To</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>VAT_ID__c</fullName>
+        <externalId>false</externalId>
+        <label>VAT ID</label>
+        <length>50</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>W9_Submitted__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Tracks whether a W9 form has been submitted for this supplier</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Indicates whether a W9 form has been submitted for this supplier. For 1099 payers.</inlineHelpText>
+        <label>W9 Submitted</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Website__c</fullName>
+        <externalId>false</externalId>
+        <label>Website</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Url</type>
+    </fields>
+    <fields>
+        <fullName>X1099_Box_G__c</fullName>
+        <externalId>false</externalId>
+        <label>1099 Box</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <restricted>true</restricted>
+            <valueSetName>X1099_Box</valueSetName>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>X1099_Box__c</fullName>
+        <description>List of boxes on the 1099 that a supplier&apos;s payments will get summarized on</description>
+        <externalId>false</externalId>
+        <label>DEPRECATED</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>1 Rents</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>2 Royalties</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>3 Other Income</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>4 Federal Income Tax Withheld</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>5 Fishing Boat Proceeds</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>6 Medical</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>7 Nonemployee Compensation</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>8 Substitute Payments</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>9 Payer Direct Sales</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>10 Crop Insurance</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>13 Excess golden parachute</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>14 Gross proceeds to Attorney</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>15a Section 409A Deferrals</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>15b Section 409A Income</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>X1099_Supplier__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Indicates whether this supplier is a 1099 supplier.</description>
+        <externalId>false</externalId>
+        <label>1099 Supplier</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Zip_Code__c</fullName>
+        <externalId>false</externalId>
+        <formula>If(ISBLANK(Supplier_Zip_Code__c), Address__r.BillingPostalCode, Supplier_Zip_Code__c)</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Zip Code</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <label>Supplier</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Company__c</columns>
+        <columns>Type__c</columns>
+        <columns>Status__c</columns>
+        <columns>Street__c</columns>
+        <columns>City__c</columns>
+        <columns>State__c</columns>
+        <columns>Country__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <listViews>
+        <fullName>Approved_Supplier_List</fullName>
+        <columns>NAME</columns>
+        <columns>Supplier_ID__c</columns>
+        <columns>Payment_Method_G__c</columns>
+        <columns>Order_Method__c</columns>
+        <columns>Website__c</columns>
+        <columns>DUNS_Number__c</columns>
+        <filterScope>Everything</filterScope>
+        <filters>
+            <field>Status__c</field>
+            <operation>equals</operation>
+            <value>Active</value>
+        </filters>
+        <label>Approved Supplier List</label>
+    </listViews>
+    <listViews>
+        <fullName>Suppliers_on_Payment_Hold</fullName>
+        <columns>NAME</columns>
+        <columns>Hold_Payment__c</columns>
+        <columns>Hold_Purchasing__c</columns>
+        <columns>Parent_Supplier__c</columns>
+        <columns>Parent_Hold_Payment__c</columns>
+        <columns>Payment_Term__c</columns>
+        <columns>Status__c</columns>
+        <columns>Top_Parent_Supplier__c</columns>
+        <columns>Top_Parent_Hold_Payment__c</columns>
+        <columns>Payment_Method_G__c</columns>
+        <filterScope>Everything</filterScope>
+        <filters>
+            <field>Hold_Payment__c</field>
+            <operation>equals</operation>
+            <value>1</value>
+        </filters>
+        <filters>
+            <field>Parent_Hold_Payment__c</field>
+            <operation>equals</operation>
+            <value>1</value>
+        </filters>
+        <filters>
+            <field>Top_Parent_Hold_Payment__c</field>
+            <operation>equals</operation>
+            <value>1</value>
+        </filters>
+        <label>Suppliers on Pymt Hold</label>
+    </listViews>
+    <nameField>
+        <label>Supplier</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Suppliers</pluralLabel>
+    <recordTypes>
+        <fullName>Purchase_From</fullName>
+        <active>true</active>
+        <description>Supplier that you purchase from</description>
+        <label>Purchase From</label>
+        <picklistValues>
+            <picklist>Invoice_Matching__c</picklist>
+            <values>
+                <fullName>Three Way</fullName>
+                <default>true</default>
+            </values>
+            <values>
+                <fullName>Two Way</fullName>
+                <default>false</default>
+            </values>
+        </picklistValues>
+        <picklistValues>
+            <picklist>Order_Method__c</picklist>
+            <values>
+                <fullName>EDI</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Email</fullName>
+                <default>true</default>
+            </values>
+            <values>
+                <fullName>Fax</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>cXML</fullName>
+                <default>false</default>
+            </values>
+        </picklistValues>
+        <picklistValues>
+            <picklist>Payment_Method_G__c</picklist>
+            <values>
+                <fullName>ACH</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Cash</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Check</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Credit Card</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>EFT</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Online</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Wire</fullName>
+                <default>false</default>
+            </values>
+        </picklistValues>
+        <picklistValues>
+            <picklist>Payment_Method__c</picklist>
+            <values>
+                <fullName>ACH</fullName>
+                <default>false</default>
+            </values>            
+            <values>
+                <fullName>Check</fullName>
+                <default>true</default>
+            </values>
+            <values>
+                <fullName>Credit Card</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Online</fullName>
+                <default>false</default>
+            </values>
+        </picklistValues>
+        <picklistValues>
+            <picklist>Preferred_Correspondence__c</picklist>
+            <values>
+                <fullName>Chatter</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Email</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Fax</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Mail</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Telephone</fullName>
+                <default>false</default>
+            </values>
+        </picklistValues>
+        <picklistValues>
+            <picklist>Status__c</picklist>
+            <values>
+                <fullName>Active</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Inactive</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Pending</fullName>
+                <default>true</default>
+            </values>
+        </picklistValues>
+        <picklistValues>
+            <picklist>Type__c</picklist>
+            <values>
+                <fullName>Purchasing</fullName>
+                <default>true</default>
+            </values>
+        </picklistValues>
+        <picklistValues>
+            <picklist>X1099_Box_G__c</picklist>
+            <values>
+                <fullName>1 Rents</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>10 Crop Insurance</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>13 Excess golden parachute</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>14 Gross proceeds to Attorney</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>15a Section 409A Deferrals</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>15b Section 409A Income</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>2 Royalties</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>3 Other Income</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>4 Federal Income Tax Withheld</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>5 Fishing Boat Proceeds</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>6 Medical</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>7 Nonemployee Compensation</fullName>
+                <default>true</default>
+            </values>
+            <values>
+                <fullName>8 Substitute Payments</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>9 Payer Direct Sales</fullName>
+                <default>false</default>
+            </values>
+        </picklistValues>
+        <picklistValues>
+            <picklist>X1099_Box__c</picklist>
+            <values>
+                <fullName>1 Rents</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>10 Crop Insurance</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>13 Excess golden parachute</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>14 Gross proceeds to Attorney</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>15a Section 409A Deferrals</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>15b Section 409A Income</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>2 Royalties</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>3 Other Income</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>4 Federal Income Tax Withheld</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>5 Fishing Boat Proceeds</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>6 Medical</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>7 Nonemployee Compensation</fullName>
+                <default>true</default>
+            </values>
+            <values>
+                <fullName>8 Substitute Payments</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>9 Payer Direct Sales</fullName>
+                <default>false</default>
+            </values>
+        </picklistValues>
+    </recordTypes>
+    <recordTypes>
+        <fullName>Remit_To</fullName>
+        <active>true</active>
+        <description>Supplier that receives payments</description>
+        <label>Remit To</label>
+        <picklistValues>
+            <picklist>Invoice_Matching__c</picklist>
+            <values>
+                <fullName>Three Way</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Two Way</fullName>
+                <default>false</default>
+            </values>
+        </picklistValues>
+        <picklistValues>
+            <picklist>Order_Method__c</picklist>
+            <values>
+                <fullName>EDI</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Email</fullName>
+                <default>true</default>
+            </values>
+            <values>
+                <fullName>Fax</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>cXML</fullName>
+                <default>false</default>
+            </values>
+        </picklistValues>
+        <picklistValues>
+            <picklist>Payment_Method_G__c</picklist>
+            <values>
+                <fullName>ACH</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Cash</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Check</fullName>
+                <default>true</default>
+            </values>
+            <values>
+                <fullName>Credit Card</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>EFT</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Online</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Wire</fullName>
+                <default>false</default>
+            </values>
+        </picklistValues>
+        <picklistValues>
+            <picklist>Payment_Method__c</picklist>
+            <values>
+                <fullName>ACH</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Check</fullName>
+                <default>true</default>
+            </values>
+            <values>
+                <fullName>Credit Card</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Online</fullName>
+                <default>false</default>
+            </values>
+        </picklistValues>
+        <picklistValues>
+            <picklist>Preferred_Correspondence__c</picklist>
+            <values>
+                <fullName>Chatter</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Email</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Fax</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Mail</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Telephone</fullName>
+                <default>false</default>
+            </values>
+        </picklistValues>
+        <picklistValues>
+            <picklist>Status__c</picklist>
+            <values>
+                <fullName>Active</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Inactive</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Pending</fullName>
+                <default>true</default>
+            </values>
+        </picklistValues>
+        <picklistValues>
+            <picklist>Type__c</picklist>
+            <values>
+                <fullName>Remit-To</fullName>
+                <default>true</default>
+            </values>
+        </picklistValues>
+        <picklistValues>
+            <picklist>X1099_Box_G__c</picklist>
+            <values>
+                <fullName>1 Rents</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>10 Crop Insurance</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>13 Excess golden parachute</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>14 Gross proceeds to Attorney</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>15a Section 409A Deferrals</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>15b Section 409A Income</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>2 Royalties</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>3 Other Income</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>4 Federal Income Tax Withheld</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>5 Fishing Boat Proceeds</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>6 Medical</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>7 Nonemployee Compensation</fullName>
+                <default>true</default>
+            </values>
+            <values>
+                <fullName>8 Substitute Payments</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>9 Payer Direct Sales</fullName>
+                <default>false</default>
+            </values>
+        </picklistValues>
+        <picklistValues>
+            <picklist>X1099_Box__c</picklist>
+            <values>
+                <fullName>1 Rents</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>10 Crop Insurance</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>13 Excess golden parachute</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>14 Gross proceeds to Attorney</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>15a Section 409A Deferrals</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>15b Section 409A Income</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>2 Royalties</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>3 Other Income</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>4 Federal Income Tax Withheld</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>5 Fishing Boat Proceeds</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>6 Medical</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>7 Nonemployee Compensation</fullName>
+                <default>true</default>
+            </values>
+            <values>
+                <fullName>8 Substitute Payments</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>9 Payer Direct Sales</fullName>
+                <default>false</default>
+            </values>
+        </picklistValues>
+    </recordTypes>
+    <searchLayouts>
+        <customTabListAdditionalFields>Company__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Status__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Street__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>City__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>State__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Country__c</customTabListAdditionalFields>
+        <lookupDialogsAdditionalFields>Type__c</lookupDialogsAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>Bank_Routing_Required_for_ACH</fullName>
+        <active>true</active>
+        <description>Bank Routing information is required for ACH payment method</description>
+        <errorConditionFormula>AND( ISPICKVAL( Payment_Method_G__c , &apos;ACH&apos;),
+len( Bank_Routing_Number__c )=0)</errorConditionFormula>
+        <errorDisplayField>Bank_Routing_Number__c</errorDisplayField>
+        <errorMessage>Bank Routing Number is required for ACH Transfers</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Max_TIN_Length</fullName>
+        <active>false</active>
+        <description>Max TIN Length</description>
+        <errorConditionFormula>Not(IsBlank(Tax_ID__c)) &amp;&amp; LEN(Tax_ID__c) &gt; 11</errorConditionFormula>
+        <errorDisplayField>Tax_ID__c</errorDisplayField>
+        <errorMessage>Tax identification number exceeds the valid length.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Require_Bank_Account_for_ACH</fullName>
+        <active>true</active>
+        <description>For ACH transfers, we need to make sure we have Bank Account info</description>
+        <errorConditionFormula>AND(ISPICKVAL( Payment_Method_G__c , &apos;ACH&apos;), LEN(Bank_Account_Number__c)=0)</errorConditionFormula>
+        <errorDisplayField>Bank_Account_Number__c</errorDisplayField>
+        <errorMessage>Bank Account Number Required for ACH transfers</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>x1099_Box_is_required</fullName>
+        <active>true</active>
+        <errorConditionFormula>if(X1099_Supplier__c &amp;&amp;  ISPICKVAL(X1099_Box_G__c ,&quot;&quot;)
+,true, false)</errorConditionFormula>
+        <errorDisplayField>X1099_Box_G__c</errorDisplayField>
+        <errorMessage>You must select a 1099 Box value for a 1099 reportable supplier.</errorMessage>
+    </validationRules>
+    <webLinks>
+        <fullName>Overview</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Overview</masterLabel>
+        <openType>sidebar</openType>
+        <page>SupplierView</page>
+        <protected>false</protected>
+    </webLinks>
+</CustomObject>

@@ -1,0 +1,574 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <content>BankTransactionMatchingRules</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>false</enableReports>
+    <enableSearch>false</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>Additional_Fieldset</fullName>
+        <description>This fieldset will be used to add any additional fields  to be used.</description>
+        <label>Additional Fieldset</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>BT_Matching_Rules</fullName>
+        <description>This field set is used to query matching rules for automatch</description>
+        <displayedFields>
+            <field>Rank__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Company__r.Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Bank_Account__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Description__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Start_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>End_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Is_Active__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>BT Matching Rules</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Header_Fieldset</fullName>
+        <description>This Fieldset is used on the header of the BT Matching Rule creation page.</description>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Bank_Account__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Start_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Documents__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>End_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Header Fieldset</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>MatchingRuleQuery</fullName>
+        <description>This field set is used to query matching rules for automatch</description>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Bank_Account__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Amount_Threshold__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Keep_In_Match_Pool__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Amount__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Auto_Approve__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Transaction_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Date_Threshold__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Rank__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Documents__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Reference__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Transacted_With__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Is_Active__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>MatchingRuleQuery</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Matching_Fieldset</fullName>
+        <description>This fieldset is used to identify the matching fields of the rule.</description>
+        <displayedFields>
+            <field>Amount__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Amount_Threshold__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Transaction_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Date_Threshold__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Reference__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Transacted_With__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Keep_In_Match_Pool__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Auto_Approve__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Matching Fieldset</label>
+    </fieldSets>
+    <fields>
+        <fullName>Amount_Threshold__c</fullName>
+        <defaultValue>0.00</defaultValue>
+        <externalId>false</externalId>
+        <label>Amount Threshold +/-</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>2</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Amount__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Amount</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Auto_Approve__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Auto Approve</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Bank_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Bank Account</label>
+        <referenceTo>Bank_Account__c</referenceTo>
+        <relationshipLabel>Transaction Matching Rules</relationshipLabel>
+        <relationshipName>Transaction_Matching_Rules</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Transaction Matching Rules</relationshipLabel>
+        <relationshipName>Transaction_Matching_Rules</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Date_Threshold__c</fullName>
+        <defaultValue>0</defaultValue>
+        <description>Number of Days the transaction date can be approximated.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Number of Days the transaction date can be approximated.</inlineHelpText>
+        <label>Date Threshold (Days) +/-</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Description__c</fullName>
+        <externalId>false</externalId>
+        <formula>IF(!IsBlank(Company__r.Name), &apos;For &apos;+ Company__r.Name+&apos;,&apos;,NULL) + IF(!IsBlank(Bank_Account__r.Name), &apos;For &apos;+ Bank_Account__r.Name+&apos;,&apos;,NULL) + IF(!IsBlank(Documents__c), &apos; For &apos;,NULL) + IF(INCLUDES( Documents__c, &quot;Customer Receipts&quot;), &quot; Customer Receipts,&quot;, NULL) + IF(INCLUDES( Documents__c , &quot;Supplier Payments&quot;), &quot;Supplier Payments,&quot;, NULL)  + IF(INCLUDES( Documents__c, &quot;Payments&quot;), &quot;Payments&quot;, NULL) + IF(INCLUDES( Documents__c, &quot;Journal Entry Lines&quot;), &quot;Journal Entry Lines&quot;, NULL) + IF(Amount__c &amp;&amp; IsBlank(Amount_Threshold__c),&apos;, Match on Amount&apos; , NULL) + IF(!IsBlank(Amount_Threshold__c) &amp;&amp; Amount__c, &apos;, Match on Amount(+/-  &apos;+ Text(Amount_Threshold__c)+&apos;$)&apos;,NULL) + IF(Transaction_Date__c &amp;&amp; IsBlank(Date_Threshold__c),&apos;, Match on Transaction Date&apos; , NULL ) + IF(!IsBlank(Date_Threshold__c) &amp;&amp; Transaction_Date__c, &apos;, Match on Transaction Date(+/-  &apos;+ Text(Date_Threshold__c) +&apos; days)&apos;,NULL) +   IF(Reference__c,&apos;, Match on Reference Number&apos;,NULL) + IF(Transacted_With__c,&apos;, Match on Transacted With&apos;,NULL) + IF(Keep_In_Match_Pool__c,&apos;, Keep in Match Pool&apos;,&apos;, Do not Keep in Match Pool&apos;) + IF(Auto_Approve__c,&apos;, Auto Approve&apos;,NULL)</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Description</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Documents__c</fullName>
+        <externalId>false</externalId>
+        <label>Documents</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>MultiselectPicklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Customer Receipts</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Supplier Payments</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Payments</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Journal Entry Lines</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+        <visibleLines>4</visibleLines>
+    </fields>
+    <fields>
+        <fullName>End_Date__c</fullName>
+        <externalId>false</externalId>
+        <label>End Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>For_Amount_Threshold__c</fullName>
+        <defaultValue>&apos;0.00&apos;</defaultValue>
+        <description>This Field hold the Amount Threshold as a Text Value.</description>
+        <externalId>false</externalId>
+        <label>For Amount Threshold</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>For_Date_Threshold_Days__c</fullName>
+        <defaultValue>&apos;0&apos;</defaultValue>
+        <description>This field hold the Text value of the Date Threshold</description>
+        <externalId>false</externalId>
+        <label>For Date Threshold (Days)</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Is_Active__c</fullName>
+        <description>To Validate if the bank transaction matching rule is active or not.</description>
+        <externalId>false</externalId>
+        <formula>and(Start_Date__c &lt;= now()  ,  or( ISBLANK(End_Date__c) ,(End_Date__c &gt;now())))</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Is Active</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Keep_In_Match_Pool__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>If only one source doc is found as a match for a Bank Transaction, then matching source doc is removed from match pool, unless &quot;Keep In Match Pool&quot; is checked.</description>
+        <externalId>false</externalId>
+        <label>Keep In Match Pool</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Rank_Key__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>This stores a key of Company, Bank Account and rank to ensure uniqueness.</description>
+        <externalId>false</externalId>
+        <label>Rank Key</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Rank__c</fullName>
+        <externalId>false</externalId>
+        <label>Rank</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Reference__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Reference</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Start_Date__c</fullName>
+        <externalId>false</externalId>
+        <label>Start Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Transacted_With__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Transacted With</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Transaction_Date__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Transaction Date</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <label>Bank Transaction Match Rule</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Company__c</columns>
+        <columns>Bank_Account__c</columns>
+        <columns>Rank__c</columns>
+        <columns>Is_Active__c</columns>
+        <columns>Start_Date__c</columns>
+        <columns>End_Date__c</columns>
+        <columns>Auto_Approve__c</columns>
+        <columns>Amount_Threshold__c</columns>
+        <columns>Date_Threshold__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <displayFormat>MR-{000000000}</displayFormat>
+        <label>Name</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Bank Transaction Match Rules</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Rank__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Amount__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Reference__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Transacted_With__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Transaction_Date__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Documents__c</customTabListAdditionalFields>
+        <searchResultsAdditionalFields>Rank__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Documents__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Reference__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Transacted_With__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Transaction_Date__c</searchResultsAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>Amount_Threshold_Cannot_be_Negative</fullName>
+        <active>true</active>
+        <description>Amount Threshold value cannot be a negative amount.</description>
+        <errorConditionFormula>Amount_Threshold__c &lt; 0.00</errorConditionFormula>
+        <errorMessage>Amount Threshold cannot be a negative value.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Atleast_one_matching_criteria_Selection</fullName>
+        <active>true</active>
+        <description>To set a Bank Transaction Matching Rule, atleast one matching criteria should be selected.</description>
+        <errorConditionFormula>AND( NOT(Amount__c),AND(NOT(ISBLANK(Amount_Threshold__c)), Amount_Threshold__c == 0.00),NOT(Transaction_Date__c),AND(NOT(ISBLANK(Date_Threshold__c)), Date_Threshold__c == 0),NOT(Auto_Approve__c),NOT(Keep_In_Match_Pool__c),NOT(Auto_Approve__c), NOT(Transacted_With__c),NOT(Reference__c))</errorConditionFormula>
+        <errorMessage>Atleast one Matching Criteria should be added to the rule.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Bank_Account_Association_with_Company</fullName>
+        <active>true</active>
+        <description>Bank Account should be associated with the company selected on the Bank Transaction Matching Rules.</description>
+        <errorConditionFormula>OR(ISNULL(Bank_Account__c), AND(NOT(ISBLANK(Bank_Account__c)),(Company__c !=  Bank_Account__r.Company__c)))</errorConditionFormula>
+        <errorMessage>Bank Account is not associated with the company.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Cannot_CheckBoth_AutoApprove_KeepMatchPL</fullName>
+        <active>true</active>
+        <description>Both Auto Approve and Keep in Match Pool can be set both for the Matching Rule.</description>
+        <errorConditionFormula>AND(Auto_Approve__c,Keep_In_Match_Pool__c)</errorConditionFormula>
+        <errorMessage>Cannot set both Keep in Match Pool and Auto Approve.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Date_Threshold_Cannot_be_Negative</fullName>
+        <active>true</active>
+        <description>Date Threshold value cannot be negative days.</description>
+        <errorConditionFormula>Date_Threshold__c &lt; 0</errorConditionFormula>
+        <errorMessage>Date Threshold cannot be a negative value.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Documents_are_Required</fullName>
+        <active>true</active>
+        <description>Atleast one document is required.</description>
+        <errorConditionFormula>ISNULL(Documents__c)</errorConditionFormula>
+        <errorMessage>Atleast one Document is required.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Must_Select_Amount_Matching_Criteria</fullName>
+        <active>true</active>
+        <description>Amount threshold can be set only if the amount matching criteria is checked.</description>
+        <errorConditionFormula>AND(NOT(Amount__c),AND(NOT(ISBLANK(Amount_Threshold__c)), Amount_Threshold__c != 0.00))</errorConditionFormula>
+        <errorMessage>Amount threshold can only be set if the Amount matching criteria is checked.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Must_Select_Transaction_Date_Criteria</fullName>
+        <active>true</active>
+        <description>Days threshold can be set only if the transaction date matching criteria is checked.</description>
+        <errorConditionFormula>AND(NOT(Transaction_Date__c),AND(NOT(ISBLANK(Date_Threshold__c)), Date_Threshold__c != 0))</errorConditionFormula>
+        <errorMessage>Days threshold can only be set if the Transaction Date matching criteria is checked.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Start_Date_is_Required</fullName>
+        <active>true</active>
+        <description>Start Date is required.</description>
+        <errorConditionFormula>ISNULL(Start_Date__c )</errorConditionFormula>
+        <errorMessage>Start Date is required.</errorMessage>
+    </validationRules>
+</CustomObject>

@@ -1,0 +1,146 @@
+<apex:page standardController="Facility__c" extensions="FacilityViewExt"  >
+
+	<apex:includeScript value="{!URLFOR($Resource.JQuery182)}" />
+	<apex:includeScript value="{!URLFOR($Resource.dynatree124,'/jquery/jquery-ui.custom.js')}" />
+	<apex:includeScript value="{!URLFOR($Resource.dynatree124,'/jquery/jquery.cookie.js')}" />
+	<apex:stylesheet value="{!URLFOR($Resource.dynatree124,'/src/skin-vista/ui.dynatree.css')}" />
+	<apex:includeScript value="{!URLFOR($Resource.dynatree124,'/src/jquery.dynatree.js')}" />
+	<!--	our custom styling     -->
+	<apex:stylesheet value="{!URLFOR($Resource.CustomerStyle)}" />
+	<apex:stylesheet value="{!URLFOR($Resource.jquery_ui_110,'/jquery-ui-1.10.0.custom/css/cupertino/jquery-ui-1.10.0.custom.css')}" />
+	
+<!--{!subject}	-->
+
+<script type="text/javascript"> 
+
+var tree, rootNode
+$(function(){
+    $("#tree").dynatree({ 	
+    	onActivate: null ,
+    	 /*
+    	 onRender: function(node, nodeSpan) {		
+    	 	// default on render adds a link to the record
+            $(nodeSpan).append('<a href="/'+node.data.key+'"><span class="ui-icon ui-icon-extlink" style="display:inline-block;" ></span></a>');
+        },
+        */
+       
+        onDblClick:  function(node, event) {  var recordId=node.data.key;
+                                              navigateToSObject(recordId);
+                                            }	// go there now
+    });
+    
+    // pages which use this comonent can set callbacks on the tree using these vars
+    rootNode = $("#tree").dynatree("getRoot");
+    tree = $("#tree").dynatree("getTree"); 
+    
+    Visualforce.remoting.Manager.invokeAction(
+       '{!$RemoteAction.FacilityViewExt.getHierarchy}',      '{!subject}',
+       function(result, event){                    // load the nodes  -- result is a 'Node'
+           checkErrors( event);  		
+           addNode( rootNode, result);     				// recursive build of tree
+           
+           // activate the node mentioned in the URL, ensure it's visible
+	       tree.activateKey( '{!CASESAFEID(subject)}' );  
+        
+      	}
+	);
+   
+   	// add click handlers to operate on the tree 
+    $("#kndytree a.ExpandButton").click(function(){
+        var button_data = $(this).attr('data-vis')
+        $("#tree").dynatree("getRoot").visit(function(node){
+            if ( button_data == 'none' )        	node.expand( false );
+            else if ( button_data == 'all' ) 		node.expand( true );     
+            // other options here ?            
+        });
+        return false;
+    });
+        
+});  // end document ready
+
+String.prototype.contains = function(it) { return this.indexOf(it) != -1; };
+String.prototype.normalizeClassName = function() {    return this.replace(/\s/g, '').toLowerCase(); };
+
+function nodeClass( result ) {
+    var ret = 'kndy';
+    if  ( result.node.RecordType != undefined && 
+    	  result.node.RecordType.DeveloperName != undefined) {
+    	ret = result.node.RecordType.DeveloperName;
+    }
+    if ( result.objectName != null ) { 
+    	ret = result.objectName;
+    }
+    return ret.normalizeClassName();
+}
+
+function addNode( parentNode , result )  {   
+	if ( result == null || typeof(result) != "object"  ) return;
+    var childNode = parentNode.addChild({
+        title: result.node.Name,
+        key: result.node.Id,
+        href: '/'+ result.node.Id,
+        addClass: nodeClass(result) ,   // Class name added to the node's span tag.
+        activate: false,                    // Initial active status.
+        focus: false,                       // Initial focused status.
+      	expand: true,                     // Initial expanded status.// NOTE this can be much slower on very large trees
+        select: false,                      // Initial selected status.
+        hideCheckbox: true,        // Suppress checkbox display for this node.
+        tooltip: result.node.Name
+    }); 
+    for ( var key in result.children ) { 
+        addNode( childNode, result.children[key] );
+    }   
+    return childNode; 
+}
+
+/* TODO this can use jquery instead of getElementById */
+function checkErrors ( event ) { 
+    if (event.status) {   ; // ok
+    } else if (event.type === 'exception') {
+            document.getElementById("responseErrors").innerHTML = event.message + "<br/>\n<pre>" + event.where + "</pre>";
+    } else {
+            document.getElementById("responseErrors").innerHTML = event.message;
+    }
+}
+function debug_object( object, element ) {
+    var output = '';
+    for (property in object) {    output += property + ': ' + object[property]+'; '; } 
+    $(element).html( output );
+}
+
+function navigateToSObject(recordId) {
+    view='detail';
+    if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+        sforce.one.navigateToSObject(recordId, view);
+    } else {
+        window.location.href = "/" + recordId;
+    }
+}
+
+
+</script>
+
+<div id="kndytree" >
+	<p id="controls">
+		<a href="#" class="ExpandButton  "  data-vis="none">{!$Label.Collapse_All}</a> &nbsp;
+		<a href="#" class="ExpandButton  "	data-vis="all">{!$Label.Expand_All}</a>
+		
+		<span class="muted" >&nbsp;&nbsp;{!$Label.Double_click_to_navigate_to_a_Facility_or_Location}</span>
+	</p>
+	<div id="tree"></div>
+	<div id="responseErrors"></div>
+</div>
+
+<div style="display: none; " >
+	<apex:outputText value="{!Facility__c.Company__c}" />
+	</div>
+	
+<style>
+.muted {
+  color: #999999;
+}
+.stock_route_destination__c span.dynatree-icon { 
+	background-image : url(/img/icon/plane32.png) ;
+	}
+</style>
+</apex:page>

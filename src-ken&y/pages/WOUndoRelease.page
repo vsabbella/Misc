@@ -1,0 +1,19 @@
+<apex:page standardController="Work_Order__c" recordSetVar="wo" sidebar="false" extensions="WOUndoReleaseExtension">
+    <apex:form id="form1">
+        <c:busyWait />
+        <apex:pageMessages /> 
+        <apex:pageBlock title="{!$Label.Undo_Release_Selected_Work_Orders}">  
+            <apex:pageBlockTable value="{!selected}" var="line" id="pb" >
+                <apex:repeat value="{!$ObjectType.Work_Order__c.FieldSets.Release_Display_List}" var="f" >
+                    <apex:column headerValue="{!f.label}" styleClass="{!f.Type} {!f.FieldPath}">
+                        <apex:outputField value="{!line[f]}" />
+                    </apex:column>
+                </apex:repeat>
+            </apex:pageBlockTable>
+            <apex:pageBlockButtons id="btnoutpanel" >
+                <apex:commandButton action="{!undoRelease}" value="{!$Label.UndoRelease}" status="actionStatus" disabled="{!disable}" rerender="form1" />
+                <apex:commandButton action="{!cancel}" value="{!$Label.Go_Back}"  status="actionStatus" rerender="form1" immediate="true" />                    
+            </apex:pageBlockButtons>
+        </apex:pageBlock>       
+    </apex:form> 
+</apex:page>

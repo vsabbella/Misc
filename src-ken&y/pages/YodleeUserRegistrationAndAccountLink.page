@@ -1,0 +1,339 @@
+<apex:page standardController="Bank_Account__c" tabStyle="Bank_Account__c" docType="html-5.0" title="{!$Label.Manage_Yodlee_Account_Links}" extensions="YodleeUserRegistrationAndAccountLinkExt,YodleeTransactionSearchExt" sidebar="false" recordSetVar="bankAccount">
+
+<style type="text/css">
+        .column-label {
+            vertical-align: middle !important;
+            width: 30%;
+        }
+        
+        .column-field {
+            vertical-align: middle !important;
+            width: 60%;
+        }
+        
+        .filter-operator {
+            
+        }
+        
+        .custom-filter-options {
+            width: 30%;
+        }
+        
+        .custom-filter-fields {
+            width: 95%;
+        }
+    .custom-remove-button-opacity{
+            opacity: 0.4;
+            cursor: default;
+            pointer-events: none;
+        }
+    .NoShow{
+        display: none;
+    }
+    .k-tooltip{
+     	display: block;
+        position:absolute;
+        top:1.25em; 
+        left : 30px;
+        width:25em;
+        border:1px solid orange;
+        background-color:#FEFDB9;
+        color:black;
+        text-align:left;
+      }
+    </style>
+    
+	<c:KendoResources />
+    
+
+    <apex:includeScript value="{!$Resource.GridActionListJS}" /> 
+    <apex:includeScript value="{!$Resource.BankTransactionYodleeJS}"/>
+    <apex:includeScript value="{!$Resource.YodleeRegisterUserAndLinkAccountJS}"/>
+    
+    
+    <script type="text/javascript">
+        
+       
+        var allDateFields = [];
+        var allGridDateFields = [];
+        
+        //Remoting Actions
+        
+         var getitemData = function(readOptions) {
+            var deferred = $.Deferred();
+            
+            setTimeout(function() {
+                var records = [];
+
+                deferred.resolve({ records: records, success: true, total: records.total }, { statusCode: 200 });
+            }, 100);
+            
+            return deferred.promise();
+            
+        };
+        
+        $(document).ready(function() {
+            $("#tabstrip").kendoTabStrip({
+                animation:  {
+                    open: {
+                        duration: 0,
+                        effects: "fadeIn"
+                    }
+                }
+            });
+        });
+        
+       window.onload = function () {
+       	  window.initPage1 = window.location.href;  
+          history.pushState({loc: window.location.href}, 'inital page', window.location.href);
+          if (typeof history.pushState === "function") {
+                   window.onpopstate = function () {
+                       $('#mIframe').attr('src','about:blank');
+                       // Handle the back (or forward) browser buttons here
+                       ywindow.close();
+                       window.history.go(-1);
+                   };
+           }
+           
+           $('#addAccount').on('click', function (e) {
+                e.preventDefault();
+                startAddAccount();
+        });
+           
+       };      
+        
+    	Visualforce.remoting.timeout = 120000;
+        var nspaceForYodlee = '{!nspace}';
+    	var gridConfigId = '{!YodleeLinkedAccountGridConfig.uniqueId}';
+        var gridConfig = '{!LinkedAccountGridConfig}';
+        //KNDY-14649
+        var fieldList = '';
+        if ( '{!YodleeLinkedAccountFieldList}' != '')
+        	fieldList = JSON.parse('{!YodleeLinkedAccountFieldList}');
+        //KNDY-13289
+        var gridSiteConfigId = '{!YodleeSiteLinkedGridConfig.uniqueId}';
+        var gridSiteConfig = '{!SiteLinksToYodleeGridConfig}';
+        //KNDY-14649
+        var fieldListSite = '';
+        if ( '{!SiteLinksToYodleeFieldList}' != '')
+        	fieldListSite = JSON.parse('{!SiteLinksToYodleeFieldList}');
+        var delinkMessage = '{!$Label.Delink_Message}';
+        var delink = '{!$Label.Delink}';
+        var delinkTitle = '{!$Label.Delink_Financial_Account}'
+        var yodleeIFrameTitle = '{!$Label.Yodlee_Account_Registration}'
+        var lastRefreshed = '{!$Label.Last_Refreshed}' + ': ';
+        var lastRefreshAttempt = '{!$Label.Last_Refresh_Attempt}' + ': ';
+        var nextRefresh = '{!$Label.Next_Refresh_Scheduled}' +': ';
+        var editSiteCredLabel = '{!$Label.Yodlee_Edit_Site_Credentials}';
+        var removeLabel ='{!$Label.Remove}';
+        var getRefreshStatusLabel = '{!$Label.Yodlee_Get_Refresh_Status}';
+        var RefreshLabel = '{!$Label.Refresh}';
+        var messageElement;
+        var ywindow;
+        var delinkWindow;
+        var global_grid_width = $(window).width() - $('#sidebarDiv').width() - 100;
+         $(document).on('KenandyErpReady', function(e) { 
+         	messageElement = document.getElementById("user-message");
+         	var yodleeWin = $("#iframediv");
+		    ywindow  = yodleeWin.kendoWindow({
+				       	content: "",
+				       	title: yodleeIFrameTitle,
+				       	height: "600px",
+		                width: "820px",
+		                close: startSiteLinkage,
+		                visible: false,
+		                iframe: true,
+		                modal: true
+		     }).data("kendoWindow").title(" ");
+         	$(this).find('input[type=submit]').hide();
+            // initialize delink confirmation msg pop up 
+	        var delinkWindowDiv = $("#yDelinkMsgDiv");
+	            
+	          delinkWindow = delinkWindowDiv.kendoWindow({
+	               height: "150px",
+	               width: "500px",
+	               title: "", 
+	               visible: false, //ENSURES POPUP DOESNT LOAD ON PAGELOAD
+	               modal: true,
+	               title: delinkTitle	              
+	   		}).data("kendoWindow").title(" ");
+         	if(!{!isError}){
+                $("#yDelinkMsgDiv").hide(); 
+                if({!isUserCreated}){
+                    $("#divUserRegistration").hide();
+                    $("#divAccountSetup").show();
+                
+                    gridSiteConfig.actionColumnWidth = 200;
+                    gridConfig.actionColumnWidth = 400;
+	         		startSiteLinkage();
+                    
+                    
+	         	}else{
+	         		$("#divAddAccount").hide();
+                    $("#divUserRegistration").removeClass("NoShow");
+                    $("#divUserRegistration").show();
+                    $("#submitRegBtn").addClass('custom-remove-button-opacity');
+                    $("#divAccountSetup").hide();
+	         	}
+	        }else{
+	        	$("#divAddAccount").hide();
+                $("#divUserRegistration").addClass("NoShow");
+                $("#divUserRegistration").hide();
+                $("#divAccountSetup").show();
+                //KNDY-14649
+                $("#iframediv").hide();
+                $("#iframediv").addClass("NoShow");
+                $("#tabstrip").addClass("NoShow");
+                $("#tabstrip").hide();
+               
+	        }
+            $('#activateYodleeReg').change(function() {
+                if($(this).is(":checked")) {
+                    $("#submitRegBtn").removeClass('custom-remove-button-opacity');
+                }else{
+                    $("#submitRegBtn").addClass('custom-remove-button-opacity');
+                }
+                      
+            });
+        });  
+        
+	</script>
+    <apex:form id="ItemInfoForm">
+        <apex:sectionHeader title="{!$Label.Manage_Yodlee_Account_Links}" help="{!URLFOR($Page.HelpManageBankTransactions)}"  />
+    	<div class="user-message" id="user-message"></div> 
+        <div id="yDelinkMsgDiv" class="NoShow">
+        <apex:pageBlock >
+        <apex:outputPanel id="op">
+        
+            <apex:pageMessage summary="{!$Label.Delink_Message}" severity="warning" strength="3" escape="false" />
+         </apex:outputPanel>
+        <center>
+            <input name="ok" style="left-margin: 40%;" id="okBtn" type="button" value="{!$Label.Ok}" class="btn" onclick="okToDelink();" />
+        </center>
+        </apex:pageBlock>
+        
+    </div>
+        <div id="divUserRegistration" class="NoShow">
+            <apex:pageBlock id="pbUserReg" > 
+                <apex:outputPanel id="op1" >
+                    <apex:pageMessage summary="{!$Label.Yodlee_User_Registration_Message}" severity="info" strength="3" escape="false" />
+                    
+                    <center>
+                        <input type="checkbox" id="activateYodleeReg"  />
+                        <apex:outputLabel value="{!$Label.Yodlee_Activate_User_Registration_Message}" style="font-weight:bold" for="activateYodleeReg" />
+                        <br/>
+                        <br/>
+                        
+                        <input name="goback" style="left-margin: 40%;" id="gobackbtn" type="button" value="{!$Label.Go_Back}" class="btn" onclick ="location.replace('{!goback}');" /> 
+                        <input name="submitRegistration" style="left-margin: 40%;" id="submitRegBtn" type="button" value="{!$Label.Yodlee_Submit_Registration}" class="btn" onclick ="startRegistration();" /> 
+                    </center>
+                    
+                    <input type="hidden" name="username" value="{!loginName}" id="login"/>
+                    <input type="hidden" name="password" value="{!loginPasswd}" id="password"/>
+                    <input type="hidden" name="email" value="{!loginEmail}" id="email"/>
+                    <input type="hidden" name="fName" value="{!firstName}" id="fName"/>
+                    <input type="hidden" name="lName" value="{!lastName}" id="lName"/>
+                </apex:outputPanel>
+            </apex:pageBlock>
+        </div>
+    <div id="divAccountSetup">
+    	<apex:pageBlock id="mainDetail">    
+           <div class="page-container">   
+            <apex:pagemessages rendered="{!isError}"/>               
+           	<center>
+				 <input name="cancel" style="left-margin: 40%;" id="cancel1" type="button" value="{!$Label.Go_Back}" class="btn" onclick ="location.replace('{!goback}');" />
+            </center>
+
+           </div>
+             <div id="iframediv">
+                <iframe name="iframe" height="600px" width="800px" src="about:blank" id="mIframe"></iframe> 
+            </div> 
+			 <!--  <div class="user-message" id="user-message"></div>     -->  		
+			        		
+            <div id="tabstrip" accesskey="w">
+                <ul>
+                    <li class="k-state-active">
+                       {!$Label.Site_Link_to_Yodlee}
+                    </li>
+                    <li>
+                        {!$Label.Account_Links_to_Kenandy}                        
+                    </li>
+			        		
+                </ul>
+			        		
+			        		
+                <div>
+			        		
+                     <apex:pageBlockSection collapsible="false" columns="1">
+                         <center>
+                            <input name="{!$Label.Link_Sites_to_Yodlee}" style="left-margin: 25%;" id="addAccount" type="button" value="{!$Label.Link_Sites_to_Yodlee}" class="btn" onclick ="startAddAccount();" />
+			        		
+                         </center>
+			        		
+			        		
+                    </apex:pageBlockSection>
+                     <apex:pageBlockSection title="{!$Label.Financial_Institution_Sites_Linked_to_Yodlee}" collapsible="false" columns="1">
+                        <div class="grid-container">
+                            <div class="grid-message"></div>
+                            <div id="{!YodleeSiteLinkedGridConfig.uniqueId}" ></div>
+                        </div>
+                    </apex:pageBlockSection>
+                    </div>
+                    <div>
+                            <div>
+                                <table width="95%">
+                                    <tr>
+                                        <td style="vertical-align:middle">
+                                            <apex:outputLabel value="{!$Label.Account_in_Yodlee} " for="siteAccounts" />
+                                        </td>
+                                        <td >
+                                            <div class="kndy-required-input">
+                                                <div class="kndy-required-block"></div>
+                                                <input id="siteAccounts" />
+                                             </div>
+                                        </td>
+                                        <td style="vertical-align:middle">
+                                            <apex:outputLabel value="{!$Label.Account_in_Kenandy} " for="accounts" />
+                                        </td>
+                                        <td >
+                                            <div class="kndy-required-input">
+                                                <div class="kndy-required-block"></div>
+                                                <input id="accounts" />
+                                             </div>
+                                        </td>
+                              			
+                                        <td>
+                                            <input name="Link Account" style="left-margin: 40%;" id="linkAccount" type="button" value="{!$Label.Link_Account}" class="btn" onclick ="startlinkingBankAccountWithSite();" />
+                                        </td>
+                                        <td style="padding-right:10px"></td>
+                                        <td style="padding-right:10px"></td>
+                                    </tr>
+                                </table>
+                        </div>
+                            <apex:pageBlockSection title="{!$Label.Linked_Accounts}" collapsible="false" columns="1">
+                            <div class="grid-container">
+                                <div class="grid-message"></div>
+                                <div id="{!YodleeLinkedAccountGridConfig.uniqueId}" ></div>
+                            </div>
+                        </apex:pageBlockSection>
+        		</div>      
+             </div>
+			</apex:pageBlock>
+        </div>
+	</apex:form>
+	<div id="divAddAccount">
+		<form target="iframe" action="{!URL}" method="post">
+			<input type="hidden" name="rsession" size="255" value="" id="rsession"></input>
+			<input type="hidden" name="token" size="150" value="" id="token"></input>
+			<input type="hidden" name="app" value="{!AppId}" id="app"></input>
+			<input type="hidden" name="redirectReq" value="true" id="redirectReq"></input>
+			<input type="submit" value="Submit" id="Submit"></input>
+            <input type="hidden" name="extraParams" value="" id="extraParams"></input>
+		</form>
+	</div>
+	
+        
+       
+         
+
+</apex:page>

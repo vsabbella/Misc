@@ -1,0 +1,588 @@
+<apex:page standardcontroller="Transaction_Matching_Rule__c"
+           extensions="BankTransactionMatchingRulesExt" title="{!$Label.Bank_Transaction_Match_Rules}"   sidebar="false">
+    <apex:sectionHeader title="{!$Label.Bank_Transaction_Match_Rules}"  help="{!URLFOR($Page.HelpBankTransactionMatchingRules)}"/>
+    <style>
+	 .k-picker-wrap {
+		width: 100px;
+		
+	}
+	.k-multiselect  {
+		width: 400px;
+	}
+	</style>       
+    <apex:form id="mainForm"> 
+        <div id="page-container">
+            <div class="page-message"></div>
+            <apex:outputPanel id="errMsg">
+                <apex:pageMessages />
+            </apex:outputPanel>    
+            <c:KendoResources />
+            <apex:includeScript value="{!$Resource.GridActionListJS}" />
+            <c:busyWait includeScripts="false"/>
+            <apex:pageBlock title="{!$Label.Bank_Transaction_Match_Rules}" id="pbread">
+                <apex:pageBlockSection title="Rules" collapsible="false" >
+                    <div class="grid-container"  >
+                        <div class="grid-message"></div>
+                        <div id="Gridtmr">
+                            
+                        </div>
+                    </div>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+        </div>
+    </apex:form>
+    <!-- Create a separate div and apex: form for the pop up. This will store the Detail List which allows you to create/update a rule.  -->
+    <div id="popUp">
+        <apex:form id="popUpForm">
+        <!--<apex:outputText >*Fulfillments will be grouped for invoicing based upon rules defined. Transaction currency and payment term are implied, mandatory groupings.</apex:outputText>-->
+            <apex:pageBlock id="popupBlock" >
+                <apex:pageBlockSection columns="1">
+                    <div class="grid-container"  >
+                        <div class="grid-message"></div> 
+                        <div id="NewRuleUI"></div>
+                    </div>
+                    <input type="button" id="saveButton" class="btn" value="Save" style="margin-left: 40%;" onclick="BTMRUtils.Upsert();" accesskey="s" />
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+        </apex:form>
+    </div>
+    <style>
+        .highlightblue { 
+          background-color: #03a9f4;
+        }
+   		.k-grid tbody tr {
+           cursor: move;	
+        }
+    </style>
+    
+  <script type="text/javascript">
+  
+    var getBtmrData = function(readOptions) { 
+        var deferred = $.Deferred();
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.BankTransactionMatchingRulesExt.getBTMRs}',
+            function (result, event) {
+                deferred.resolve(result, event);
+            },
+            {escape: false}
+        );
+        
+        return deferred.promise();
+    }
+    
+    var fieldList = JSONUtils.Parse('{!btmrFieldList}');
+    //below loop sets width for the colums
+    $.each( fieldList, function( index, item ) {
+        if(item.field == 'banktransactionmatchingrule.Description__c'){
+            item.width = 450;
+        }else{
+            item.width = 100;
+        }
+    });
+    var dateFields = KenandyErp.KendoGridOptions.GetDateFields(fieldList);
+    var saveActions=  {!$RemoteAction.BankTransactionMatchingRulesExt.saveBTMRs};
+    var companyDropdown; 
+    var bankAccountDropdown
+    var showInactive;
+    
+    $(document).on('KenandyErpReady', function(e) {
+        //KENDO WINDOW
+        var window = $("#popUp");
+        if(!window.data("kendoWindow")) {
+            window.kendoWindow({
+                height: "80%",
+                width: "1200px",
+                title: "New Grouping Rule: ", 
+                visible: false, //ENSURES POPUP DOESNT LOAD ON PAGELOAD
+                modal: true,
+                position: {
+                    top: 100,
+                    left: 100
+                },
+                actions: [
+                    "Pin",
+                    "Minimize",
+                    "Maximize",
+                    "Close"
+                ]
+            });
+        }
+        //window.wrapper.on("close", ".grid-new-custom-command", $.proxy(BTMRUtils.NewRule, { grid: rulesGrid, options: { } }));
+        //actionColumnButtons is a new way to add buttons to a row. In this case we use it to updatea record by showing the popup window
+        var gridConfig = '{!BTMrGridConfigJson}';
+		gridConfig = JSON.parse(gridConfig);
+        gridConfig['actionColumnWidth'] = 100;
+        gridConfig['scrollable'] = true;
+        var rulesGrid = $('#Gridtmr').width('1200px').kendoGridActionList({
+            namespace: '{!NamespaceUU}', 
+            config: gridConfig, 
+            fieldList: JSON.stringify(fieldList),
+            saveAction: saveActions,
+            lookupSearchAction: '{!$RemoteAction.BankTransactionMatchingRulesExt.lookupSearchFilter}', 
+            getActionListFunction: getBtmrData,
+            modelIdField: 'banktransactionmatchingrule.Id', //since we are using a wrapper we need to pass the full path to the id here
+            filterable: true,
+            toolbarButtons: [ 
+                // { name: "grid-save-custom-command", text:"", template: "<input type='button' value='Save' class='btn grid-save-custom-command' />" }, //OUR SAVE METHOD
+                { name: "grid-new-custom-command", text:"", template: "<a class='k-button' title='Add New'><span class='fa fa-plus-circle fa-lg kndy-green grid-new-custom-command'></span></a> "},
+               // { name: "grid-delete-custom-command", text:"", template: "<a class='k-button' title='Delete'><span class='fa fa-trash fa-lg kndy-red grid-delete-custom-command'></span></a>"},
+            ],
+                actionColumnButtons: [
+                { name: "custom-update-command", text:"", template: "<input type='button' value='{!$Label.view_details}' class='btn grid-custom-update-command' />" },
+            ]
+        }).data('kendoGridActionList');
+        
+      //  rulesGrid.wrapper.on("click", ".grid-save-custom-command", $.proxy(BTMRUtils.SaveBTMr, { grid: rulesGrid, options: { } }));
+        rulesGrid.wrapper.on("click", ".grid-new-custom-command", $.proxy(BTMRUtils.NewRule, { grid: rulesGrid, options: { } }));
+        rulesGrid.table.on("click", ".grid-custom-update-command", $.proxy(BTMRUtils.UpdateRule, { grid: rulesGrid, options: {} }));
+       // rulesGrid.wrapper.on("click", ".grid-delete-custom-command", $.proxy(BTMRUtils.deleteBTMr, { grid: rulesGrid, options: { } }));
+        
+        rulesGrid.dataSource.bind("change", function (e) {
+            // BTMRUtils.SaveBTMr(e);
+            //alert('method fired');
+        });
+        
+        rulesGrid.dataSource.sort({ field: "sortorder", dir: "asc" });
+        
+        //DRAGGABLE CODE TO BE ADDED               
+        rulesGrid.table.kendoDraggable({
+            filter: "tbody > tr",
+            group: "gridGroup",
+            drag: function (e) { 
+               $(e.target.closest("tr")).addClass("highlightblue").siblings().removeClass("highlightblue");   
+              },
+             
+            container: $("#container"),
+            hint: function(e) {
+                return $('<div id ="tempDrag"   class="k-grid k-widget" style="white-space: nowrap; margin-top:50px "  > <table><tbody><tr>' + e.html() + '</tr></tbody></table> </div>');                
+            }
+        });
+        //END  DRAGGABLE CODE     
+        
+        //DROP ROW CODE                   
+        rulesGrid.table.kendoDropTarget({
+            group: "gridGroup",
+            drop: function(e) {   
+                tgttrowid= e.target.closest("tr").dataset.uid;
+                desttrowid= e.draggable.currentTarget.closest("tr").data().uid;          
+                
+                var tgtt =rulesGrid.dataItem(rulesGrid.tbody.find("tr[data-uid='"+tgttrowid+ "']")).get('rank'),
+                    destt = rulesGrid.dataItem(rulesGrid.tbody.find("tr[data-uid='"+desttrowid+ "']")).get('rank');
+                
+                if((tgtt!=null || tgtt !=undefined )   && (destt!=null || destt!=undefined) ){
+                    rulesGrid.dataItem(rulesGrid.tbody.find("tr[data-uid='"+tgttrowid+ "']")).rank= destt;        
+                    rulesGrid.dataItem(rulesGrid.tbody.find("tr[data-uid='"+desttrowid+ "']")).rank=tgtt;                  
+                    rulesGrid.dataItem(rulesGrid.tbody.find("tr[data-uid='"+tgttrowid+ "']")).sortorder =destt; 
+                    rulesGrid.dataItem(rulesGrid.tbody.find("tr[data-uid='"+desttrowid+ "']")).sortorder = tgtt;
+                    
+                    
+                    rulesGrid.dataSource.sort({ field: "sortorder", dir: "asc" });
+                    var cell= rulesGrid.tbody.find("tr[data-uid='"+tgttrowid+ "']").find("td:nth-child(2)"); 
+                    var cell2= rulesGrid.tbody.find("tr[data-uid='"+desttrowid+ "']").find("td:nth-child(2)");  
+                    
+                    
+                    
+                    BTMRUtils.dirtyCells.push(cell); 
+                    BTMRUtils.dirtyCells.push(cell2);
+                    
+                    for (i = 0; i < BTMRUtils.dirtyCells.length; i++) {
+                        BTMRUtils.dirtyCells[i].dirty=true;
+                        BTMRUtils.dirtyCells[i].addClass("k-dirty-cell");
+                        BTMRUtils.dirtyCells[i].prepend("<span class='k-dirty'></span>");
+                    }
+                    
+                }
+                BTMRUtils.SaveBTMr(rulesGrid);  
+            }                        	
+            
+            //END DROP ROW CODE                            
+        }); 
+        
+    });
+    
+    var BTMRUtils = function() { 
+        
+        return {
+            returnVal: '' ,
+            igrConfigJson: null,
+            btmrFieldList: null,  
+            igrGrid: null,                         
+            dirtyCells : [] ,
+            NewRule: function(e) {
+                var self = this;
+                var grid = self.grid;
+                var options = self.options;
+                var modelIdField = grid.dataSource.options.schema.model.idField;
+                var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                BTMRUtils.RenderRuleDetailView(null);
+                var window = $("#popUp").data("kendoWindow");
+                window.title('{!$Label.New_Bank_Transaction_Match_Rule}');
+                window.center();
+                window.open();		
+            },
+            
+            RenderRuleDetailView: function(ruleId) {
+                var lookupSearchFilters = [];
+                var ruleDetailView = $('#NewRuleUI').data('kendoDetailList');
+                var messageElement = $('.detailList').find('.grid-message .message'); 
+                
+                if(messageElement){
+                   //removes the alert/error div
+                   messageElement.remove();
+                }    
+                
+                if (ruleDetailView) { //if it was rendered before destroy and recreate it. 
+                    ruleDetailView.destroy();
+                    $('#NewRuleUI').off();
+                    $('#NewRuleUI').empty();
+                }
+                
+                var newRule = $('#NewRuleUI').kendoDetailList({
+                    namespace: '{!NamespaceUU}',  
+                    autoExpandSections: true,  //this will by default expand all the sections. TODO on widget: push this option to each section giving users more control. 
+                    sections: [
+                        {
+                            fields: JSON.parse('{!RuleHeaderFieldList}') //the main sections
+                        },
+                        {
+                            name: 'banktransaction-header-grouping-info', //keep adding as many sections as required. 
+                            title: 'Matching Criteria',
+                            fields: JSON.parse('{!RuleMatchingFieldList}')
+                        },
+                        {
+                            name: 'banktransaction-header-addl-info',
+                            title: 'Additional Information',
+                            fields: JSONUtils.Parse('{!RuleAdditionalFieldList}')
+                        }
+                    ],
+                    lookupSearchAction: '{!$RemoteAction.BankTransactionMatchingRulesExt.lookupSearchFilter}',
+                    lookupSearchFilters: lookupSearchFilters,
+                    getDetailListFunction: function() {
+                        
+                        var deferred = $.Deferred();
+                        
+                        if (ruleId) { //if you have a ruleID query the data and load the detail list
+                            Visualforce.remoting.Manager.invokeAction(
+                                '{!$RemoteAction.BankTransactionMatchingRulesExt.getRule}',
+                                ruleId,
+                                function (result, event) {
+                                    deferred.resolve(result, event);
+                                },
+                                {escape: false}
+                            );
+                        }
+                        else { //just UI gimmick to show a progress bar. 
+                            setTimeout(function() {
+                                deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+                            }, 100);
+                        }
+                        return deferred.promise();
+                    } 
+                }).data('kendoDetailList');
+                
+                var allFields = newRule.getFieldList();
+                var disableHeaderFields = [];
+                $.each(allFields,function(index, item){
+					if(item.field != 'End_Date__c'){
+						disableHeaderFields.push(item.field);
+					}
+				});
+                if (!ruleId){ //if a new record default the company from main filter to the popup. 
+                    newRule.element.bind('OnReadSuccess', function() {
+                        var ruleDetailList = $(this).data('kendoDetailList');
+                        var multiselect = $('#Documents__c').data("kendoMultiSelect");
+                        var optionsArr = new Array();
+                        var multiselectvalues = new Array();
+                        optionsArr = multiselect.dataSource.options;
+						var len = optionsArr.data.length;
+                        for (var i=0; i<len; ++i) {
+  							if (optionsArr.data[i].value != "") {
+								multiselectvalues.push(optionsArr.data[i].value);
+                          }
+                        }
+        			    multiselect.value(multiselectvalues);
+                        ruleDetailList.data.set('Documents__c', multiselect.value());
+                    	//KNDY-16113 - Bind Type change event
+                    	BTMRUtils.bindBankFilterComponent();
+                    	newRule.enable(true,{disabledFields: disableHeaderFields});	
+                    });
+                }else{ 
+	                //KNDY-16113 - Bind Type change event
+	                 newRule.element.bind('OnReadSuccess', BTMRUtils.bindBankFilterComponent);
+	                 //KNDY-15794
+	                 var isBTMRUsedPromise = BTMRUtils.IsBTMRuleUsedForAutoMatch(ruleId);
+		             isBTMRUsedPromise.then(
+		             	function(result){
+		                	var isBTMRUsed = result.total>0?true:false;
+				            if(isBTMRUsed){
+				            	newRule.enable(false,{disabledFields: disableHeaderFields});
+				            }else{
+				            	newRule.enable(true,{disabledFields: disableHeaderFields});
+				            }
+				            KenandyErp.UnBlockUI();
+		                },function(result,event){
+		                	if(event.message){
+		                		KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+		                	}else{
+		                		KenandyErp.Messages(result.messages, messageElement);
+		                	}
+		                	KenandyErp.UnBlockUI();
+		                }
+		            );
+                }  
+            },
+            //KNDY-16113 - bind events for company and bank
+            bindBankFilterComponent: function(){
+           	 	$.each($(".k-autocomplete input"), function(){
+                     $(this).data("kendoLookup").options.minLength = 1;
+                      if(this.id=='Bank_Account__r.Name'){                            			
+                         BTMRUtils.bankAccountLookup=this;
+   						 BTMRUtils.UpdateBankAccountFilters();
+                      }
+                });
+                $('input[name="Company__c"]').bind('change', 
+                   BTMRUtils.OnCompanyChange
+                ); 	  
+                $('input[name="Bank_Account__c"]').bind('change', 
+                   BTMRUtils.OnBankAccountChange
+                ); 	              
+            },
+            //KNDY-16113 - apply bank filters depending on company selection
+            bankAccountLookup: null,
+            UpdateBankAccountFilters: function() {
+            	var filterText = [];  
+            	filterText.push("Active__c = true");        	 
+            	 if($('input[name="Company__c"]').val() != "") {
+            	 	var companyId = $('#NewRuleUI').data('kendoDetailList').element.find('#Company__c').val();            	 	
+            	 	filterText.push("Company__c = \'"+companyId+"\'");            	 	
+            	 	$(BTMRUtils.bankAccountLookup).data('kendoLookup').options.criteria = filterText.join(' and '); 
+            	 }else{
+            	 	$(BTMRUtils.bankAccountLookup).data('kendoLookup').options.criteria =  filterText[0];
+            	 }
+            	 
+            },
+            //KNDY-16113 update filters of bank on company change
+            OnCompanyChange: function(e) {
+            	$(BTMRUtils.bankAccountLookup).data('kendoLookup').value (  '' );
+               	$('#NewRuleUI').data('kendoDetailList').data.set('Bank_Account__c', '') ;
+               	$('#NewRuleUI').data('kendoDetailList').data.set('Bank_Account__r', {Id: '', Name: '' });
+            	BTMRUtils.UpdateBankAccountFilters();
+            },
+            //KNDY-16113 Fetch company information from bank
+            OnBankAccountChange: function(e) {
+            	var detailList = $('#NewRuleUI').data('kendoDetailList');
+            	var messageElementPopup = detailList.element.closest("div.grid-container").find("div.grid-message:first");// todo
+            	if ( $('input[name="Bank_Account__c"]').val() != '') {
+            	 	var bankAccountId = $('#NewRuleUI').data('kendoDetailList').element.find('#Bank_Account__c').val();
+            	 	KenandyErp.BlockUI();
+            	 	Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.BankTransactionMatchingRulesExt.getCompanyInfoFromBank}',
+                        bankAccountId,
+                        function (result, event) {
+                           if (event.type == 'exception' ) {
+                           		KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElementPopup);
+                           		KenandyErp.UnBlockUI();
+                           }else {
+                           		KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                           		if (result.success ) {                                                                    
+                                  	if(result.records.length > 0){
+	                                   	var defaultBank = result.records[0];
+	                                   	$('#NewRuleUI').data('kendoDetailList').data.set('Company__c', defaultBank.Company__c) ;
+	                                   	$('#NewRuleUI').data('kendoDetailList').data.set('Company__r', {Id: defaultBank.Company__c, Name: defaultBank.Company__r.Name });	                                   		                                   
+                                   		BTMRUtils.UpdateBankAccountFilters();
+									}	
+                                   	KenandyErp.UnBlockUI();
+            
+                                  }else {
+                                  	KenandyErp.ClearMessage(messageElementPopup);
+		                           	KenandyErp.Messages(result.messages, messageElementPopup);
+		                           	KenandyErp.UnBlockUI();
+		                         }
+                           	}
+                        },
+                        {escape: false}
+                    );
+            	} 
+            },
+            Upsert: function(e) {
+                var self = this;
+                var grid = $('#Gridtmr').data('kendoGridActionList');
+                var messageElementGrid = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                var detailList = $('#NewRuleUI').data('kendoDetailList');
+                var messageElementPopup = detailList.element.closest("div.grid-container").find("div.grid-message:first");// todo
+                
+                
+                var headerDateFields = detailList.getDateFields();
+                var headerRowsList = [];
+                var headerRows = [];
+                
+                 if (!detailList.validate()) {
+                     //KenandyErp.Message("Please fix the highlighted errors.",messageElementPopup);
+                 	 return false;
+                 } 
+                
+                headerRowsList.push(detailList.data);
+                //need to convert the date time issues in kendo
+                headerRows = $.map(headerRowsList, function(item, index) {
+                    item = item.toJSON();
+                    item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+                    
+                    return item;
+                });
+                
+                if (headerRows.length > 0) {
+                    headerRows = Serializer.ParameterMap(headerRows);
+                }
+                
+                headerDateFields = headerDateFields ? _.pluck(headerDateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.BankTransactionMatchingRulesExt.upsertRule}',
+                    headerRows,
+                    headerDateFields, 
+                    function (result, event) {
+                        KenandyErp.UnBlockUI(grid.element);
+                        if (event.type == 'exception') {
+                            KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                        } else {
+                            if (result.success) {
+                                // reset detailData
+                                grid.dataSource._destroyed = [];
+                                grid.dataSource.read({
+                                    readOptions: {
+                                        //companyId: $('#companyFilter').data('kendoComboBox').value(),
+                                        //bankAccountId: $('#bankAccountFilter').data('kendoComboBox').value()
+                                    }
+                                });
+                                KenandyErp.Messages(result.messages, messageElementGrid);
+                                var window = $("#popUp").data("kendoWindow");  
+                                window.close();
+                            }
+                            else {
+                                KenandyErp.ClearMessage(messageElementPopup);
+                                KenandyErp.Messages(result.messages, messageElementPopup);
+                            } 
+
+                        }
+                    },
+                    {escape: false}
+                );
+            },
+            
+            
+            UpdateRule: function(e) {
+                var self = this;
+                var grid = self.grid;
+                var options = self.options; 
+                var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                
+                var row = $(e.target).closest("tr"); //get the row for deletion
+                var dataItem = grid.dataItem(row); // get the row data
+                
+                BTMRUtils.RenderRuleDetailView(dataItem.banktransactionmatchingrule.Id);
+                var window = $("#popUp").data("kendoWindow");
+                window.title("Update Rule: "+ dataItem.banktransactionmatchingrule.Name );
+                window.center();
+                window.open();
+                
+                var detailList = $('#NewRuleUI').data('kendoDetailList');
+                var messageElementPopup = detailList.element.closest("div.grid-container").find("div.grid-message:first");
+                KenandyErp.ClearMessage(messageElementPopup);
+            },
+            
+            SaveBTMr: function(e) {
+                var grid ;
+                var options={};
+                if(e.grid){
+                    var self = this;
+                    grid = self.grid;
+                    options = self.options;
+                }else{
+                    grid = e;
+                    
+                }
+                
+                
+                var columns = grid.columns;
+                var modelIdField = grid.dataSource.options.schema.model.idField;
+                var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                //Reset the warning header
+                showWarningHeader = false;
+                
+                KenandyErp.ClearMessage(messageElement);
+                var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields, isDml: false });
+                var allRows = grid.dataSource.data();
+                var updatedRows = [];
+                $.each(allRows, function(index, item) {
+                    
+                    item = item.toJSON();
+                    item = Serializer.ConvertToSFDCDate(item, { dateFields: dateFields });
+                    // Remove the extra attributes Kendo Grid creates for supporting wrapper classes
+                    for (var i = 0; i < columns.length; i++) {
+                        var name = columns[i].field;
+                        if (name && name.indexOf('.') != -1) {
+                            delete item[name];
+                        }
+                    }
+                    updatedRows.push(item);
+                });
+                if (updatedRows.length > 0) {
+                    allRows = Serializer.ParameterMap(updatedRows);
+                }
+                var dFields = KenandyErp.KendoGridOptions.GetDateFields(fieldList);
+                dFields = dFields ? _.pluck(dFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.BankTransactionMatchingRulesExt.saveBTMRs}',
+                    allRows,
+                    dFields, 
+                    function (result, event) {
+                        KenandyErp.UnBlockUI(grid.element);
+                        if (event.type == 'exception') {
+                            KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                        } else {
+                            if (result.success) {
+                                // reset detailData
+                                grid.dataSource._destroyed = [];
+                                grid.dataSource.read({
+                                    readOptions: {
+                                        //companyId: $('#companyFilter').data('kendoComboBox').value(),
+                                        //bankAccountId: $('#bankAccountFilter').data('kendoComboBox').value()
+                                    }
+                                });
+                                KenandyErp.Messages(result.messages, messageElement);
+                            }
+                            else {
+                                KenandyErp.Messages(result.messages, messageElement);
+                            }
+                        }
+                    },
+                    {escape: false}
+                );
+            },
+            
+            //KNDY-15794
+            IsBTMRuleUsedForAutoMatch: function(ruleId){
+    			var deferred = $.Deferred();
+                if(ruleId){
+	                Visualforce.remoting.Manager.invokeAction(
+	                    '{!$RemoteAction.BankTransactionMatchingRulesExt.IsBTMRuleUsedForAutoMatch}',
+	                     ruleId, 
+	                    function(result, event){
+	                        if(event.type == 'exception') {
+	                            deferred.reject(result,event);
+	                        }else {
+	                            if(result.success){
+	                                deferred.resolve(result,event);
+	                            }else{
+	                            	deferred.reject(result,event);
+	                            }
+	                        }
+	                    },
+	                    {escape: false}
+	                );
+	            }
+	            return deferred.promise();
+            },
+        };
+    }();
+  </script>
+</apex:page>

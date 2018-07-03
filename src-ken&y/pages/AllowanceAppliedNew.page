@@ -1,0 +1,88 @@
+<apex:page standardController="Allowance_Applied__c" extensions="AllowancesAppliedNewExt">
+    
+    <apex:sectionHeader title="{!$Label.Sales_Order_Allowance}" 
+                        subtitle="{!$Label.New_Sales_Order_Allowance}"></apex:sectionHeader>
+    
+    <apex:form id="form"><c:busyWait />
+        <apex:pageBlock mode="edit">
+            <apex:pageMessages />
+            <apex:pageBlockButtons >
+                <apex:commandButton value="{!$Label.Save}" status="actionStatus" disabled="{!disableSave}" action="{!saveAllowance}" reRender="form" accessKey="s" />
+                <apex:commandButton value="{!$Label.Cancel}" action="{!cancel}"  immediate="true" status="actionStatus" reRender="form"/>        
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockSection >
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.Allowance_Applied__c.fields.Allowance_Rule2__c.Label}" />
+
+                    <apex:outputPanel >
+                        
+                        <apex:selectList value="{!selectedRule}" multiselect="false" 
+                                         onchange="didchange();">
+                            <apex:selectOptions value="{!Rules}"/>
+                        </apex:selectList>
+                        
+                        <apex:actionFunction name="didchange"    action="{!didchange}" rerender="form"  />
+                        
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.Allowance_Applied__c.fields.Allowance_Code__c.Label}" />
+                    <apex:outputPanel >
+                        <apex:selectList value="{!selectedCode}" multiselect="false"
+                                         onchange="allowanceCodeChange();">
+                            <apex:selectOptions value="{!Codes}"/>
+                        </apex:selectList>
+
+                        <!-- <apex:inputField id="allowanceCode" value="{!allowance.Allowance_Code__c}" onchange="didchange();" >
+                            <apex:actionSupport event="onchange" action="{!allowanceCodeChange}" rerender="form"/>
+                        </apex:inputField>-->
+
+                        <apex:actionFunction name="allowanceCodeChange"    action="{!allowanceCodeChange}" rerender="form"  />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+
+                <!--              
+                some rules have a fixed amount, others allow a user to input an amount
+                we need to show or hide depending on the rule ? or make required ....
+                -->
+
+                <!-- OVERRIDE VALUE -->
+                <apex:pageBlockSectionItem rendered="{!disableOverride==false}" >
+                    <apex:outputLabel value="{!$ObjectType.Allowance_Applied__c.fields.Override_Value__c.Label}" />
+                    <apex:inputField id="overrideValue" value="{!allowance.Override_Value__c}" >
+                        <apex:actionSupport event="onchange" action="{!overrideValueChange}" rerender="form"/>
+                    </apex:inputField>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem rendered="{!disableOverride==true}" >
+                    <apex:outputLabel value="{!$ObjectType.Allowance_Applied__c.fields.Override_Value__c.Label}" />
+                    <apex:outputField id="overrideValue" value="{!allowance.Override_Value__c}" />
+                </apex:pageBlockSectionItem>
+                <!-- OVERRIDE VALUE END -->
+
+                <apex:outputField value="{!allowance.Sales_Order__c}" />
+
+                <apex:outputField value="{!allowance.Allowance_Amount__c}" rendered="{!allowance.Allowance_Type__r.Type__c != 'Accrual'}"/>
+                <apex:outputField value="{!allowance.BillBack_Commitment__c}" rendered="{!allowance.Allowance_Type__r.Type__c == 'Accrual'}"/>
+                <apex:outputField value="{!allowance.Beneficiary__c}" rendered="{!allowance.Allowance_Type__r.Type__c == 'Accrual'}"/>
+
+                <apex:outputField value="{!allowance.Sales_Order_Line__c}" />
+
+            </apex:pageBlockSection>
+            <apex:pageBlockSection rendered="{!$ObjectType.Allowance_Applied__c.FieldSets.New.size > 0}" title="Additional Information" columns="2">
+                <apex:repeat value="{!$ObjectType.Allowance_Applied__c.FieldSets.New}" var="field">
+                     <apex:pageBlockSectionItem >
+                         <apex:repeat value="{!field}" var="currentField">
+                            <apex:outputLabel value="{!$ObjectType.Allowance_Applied__c.fields[currentField].Label}" />
+                            <apex:inputField value="{!allowance[currentField]}" required="{!field.required}"/>
+                         </apex:repeat>
+                     </apex:pageBlockSectionItem>
+                </apex:repeat>
+            </apex:pageBlockSection>
+        </apex:pageBlock>    
+    </apex:form>
+
+</apex:page>

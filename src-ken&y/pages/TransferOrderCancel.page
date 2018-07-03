@@ -1,0 +1,46 @@
+<apex:page standardController="Order__c" sidebar="false" extensions="TransferOrderCancelExt" id="page">
+
+    <script type="text/javascript"> 
+        $(document).ready(function() { 
+            cancelConfirm();
+            return false;
+        });
+        
+        function cancelConfirm(){
+            
+            result = window.confirm('{!$Label.ConfirmCancel}');
+            if(result == true) {
+                CancelAF();
+            }
+            return false;
+        }
+        function goback(){
+            if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+                sforce.one.back(true);
+            } else {
+                window.location.href = '/{!Order__c.Id}';
+            }
+        }
+    </script>    
+    
+    
+    <apex:form id="mainFormID">
+        
+        <c:busyWait />
+        
+        <apex:pageBlock >
+        
+            <apex:outputPanel id="errPanel">
+                <apex:PageMessages />
+            </apex:outputPanel>
+            
+            <apex:actionFunction name="CancelAF" action="{!cancel}" status="actionStatus" reRender="errPanel" />            
+            <apex:outputField value="{!Order__c.Status__c}" rendered="false"/>           
+            <apex:pageBlockButtons location="bottom">
+                <apex:commandButton value="{!$Label.Go_Back}" onClick="goback();return false;" reRender="mainFormID"  status="actionStatus"/>
+            </apex:pageBlockButtons>
+            
+        </apex:pageBlock>
+    </apex:form>
+
+</apex:page>

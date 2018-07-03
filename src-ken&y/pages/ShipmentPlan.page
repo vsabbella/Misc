@@ -1,0 +1,744 @@
+<apex:page standardController="Facility__c" 
+		   extensions="ShipmentPlanExt,KSE" 
+		   docType="html-5.0"
+		   id="thePage"
+		   sidebar="false"
+		   showHeader="false">
+
+    <c:KendoResources />
+	<c:busyWait includeScripts="false"/>
+	<apex:includeScript value="{!$Resource.GridActionListJS}" />
+	
+	<style>
+		a.k-link {
+			font-weight: bold;
+		}
+		
+		.k-grid-header .k-header{
+			font-weight: bold;
+		}
+		
+		tr.k-master-row {
+			background-color: #E8E8E8;
+		}
+		
+		.filterLabel {
+            font-weight: bold;
+            font-size: 93%;
+        }
+		
+		.filterInput {
+        	width: 90%;
+        }
+        
+		.filterDateInput {
+        	width: 100px;
+        }
+        
+        .dateRange {
+            border: 1px solid lightgray;
+            padding: 5px;
+            border-radius: 5px;
+            text-align: center;
+            width: 250px;
+        }
+
+	    .column-width {
+        	width: 25%;
+        }
+	</style>
+	
+	
+	<div id="salesOrderPlan" class="page-container">
+		<apex:form id="theForm">
+			<apex:sectionHeader title="Shipment Planning" rendered="true" />
+			
+			<script>
+    			var detailData = [];
+    			var salesOrderLinesGrid = null;
+	        	var filters = [];
+					    		
+				var SalesOrderLinesGridActions = function() {
+          				return {
+          					init: function(btn){ // Initialize Sales Order Lines Grid
+          							var lookupSearchFilters = [];
+          							
+          							if (salesOrderLinesGrid) {
+          								salesOrderLinesGrid.destroy();
+                                        
+          							}
+								
+									if(btn && btn.id == 'applyFilters'){
+							    		var shipFromId = $('#shipFromFilter').data('kendoComboBox').value();
+							    		var customerId = $('#customerFilter').data('kendoComboBox').value();
+										var salesOrderId = $('#salesOrderFilter').data('kendoComboBox').value();
+										
+										var fromEstimatedShipDateFilter = $('#fromEstimatedShipDateFilter').val();
+										var toEstimatedShipDateFilter = $('#toEstimatedShipDateFilter').val();
+										
+										if(shipFromId && shipFromId.length > 0) 
+											filters.push('Ship_From_Location__r.Facility__c = \'' + shipFromId + '\'');
+										
+										if(customerId && customerId.length > 0) 
+											filters.push('Sales_Order__r.Customer__c = \'' + customerId + '\'');
+										
+										if(salesOrderId && salesOrderId.length > 0) 
+											filters.push('Sales_Order__c = \'' + salesOrderId + '\'');
+										
+										if(fromEstimatedShipDateFilter && fromEstimatedShipDateFilter.length > 0) 
+											filters.push('Earliest_Ship_Date__c <= ' + moment(toEstimatedShipDateFilter).tz(KenandyErp.TimeZone).utc().format('YYYY-MM-DDThh:mm:ss') + 'z');
+										
+										if(toEstimatedShipDateFilter && toEstimatedShipDateFilter.length > 0) 
+											filters.push('Latest_Ship_Date__c >= ' + moment(fromEstimatedShipDateFilter).tz(KenandyErp.TimeZone).utc().format('YYYY-MM-DDThh:mm:ss') + 'z');
+									}
+									else
+									if(btn && btn.id == 'clearFilters'){
+										
+										// Clear filter values
+										$('#shipFromFilter').data('kendoComboBox').value('');
+								       	$('#customerFilter').data('kendoComboBox').value('');
+								       	$('#salesOrderFilter').data('kendoComboBox').value('');
+								       	
+								       	// Initialize Date Filters
+								       	$('#fromEstimatedShipDateFilter').val(null);
+								       	$('#toEstimatedShipDateFilter').val(null);
+									}
+									
+						            salesOrderLinesGrid = $.fn.GridFulfillmentLines($('#{! salesOrderLinesGridConfig.uniqueId}'), {
+						                                             namespace: '{!NamespaceUU}',  
+						                                             config: '{!salesOrderLinesGridConfigJson}', 
+						                                             masterFieldList: SalesOrderLinesGridActions.GetFieldList('{!salesOrderLineFieldList}'), 
+						                                             detailFieldList: '{!fulfillmentLinesFieldList}', 
+						                                             lookupSearchAction: '{!$RemoteAction.ShipmentPlanExt.lookupSearchFilter}', 
+						                                             getSalesOrderLinesData: SalesOrderLinesGridActions.getSalesOrderLines, 
+						                                             lookupSearchFilters: lookupSearchFilters 
+						                                       });
+						                                       
+						            //salesOrderLinesGrid.hideColumn(0);
+						                                       
+						            salesOrderLinesGrid.bind("dataBound", function() {
+						               
+										var masterRows = this.tbody.find("tr.k-master-row");
+				                        for (var i = masterRows.length - 1; i >= 0; i--) {
+					                    	this.expandRow(masterRows.eq(i));
+					                    }
+			                    
+										//$(this.element).find(".k-hierarchy-cell").remove();
+			   							//$(this.element).find(".k-hierarchy-col").remove();
+								                
+						            });
+						            
+						            return salesOrderLinesGrid;
+          					},
+          					
+          					getSalesOrderLines: function(readOptions) {
+          						var deferred = $.Deferred();
+					    		
+					    		Visualforce.remoting.Manager.invokeAction(
+					                '{!$RemoteAction.ShipmentPlanExt.getSalesOrderLines}',
+					                filters,
+					                function (result, event) {
+
+					                	// if (event.type == 'exception'){
+					                		// throw error
+					                	// } else {
+					                		KenandyErp.CleanNamespace(result.records, KenandyErp.NamespacePrefix);	
+					                	// }
+					                	
+					                    deferred.resolve(result, event);
+					                },
+					                {escape: false}
+					            );
+								
+								filters = []; //Reset after query,
+					            return deferred.promise();
+					    	},
+					    	
+					    	refresh: function(e){
+					    		var self = this;
+					    		
+					    		if(e != undefined && e.items.length > 0){
+			                   	    
+			                        var balanceAmount;
+			                        
+			                        if (e.action == 'itemchange') {
+			                            if(e.field == 'IsSelected__custom'){
+			                            	
+											var rowUid = self.masterRowUid;
+						                    var masterRow = salesOrderLinesGrid.table.find("tr[data-uid='" + rowUid + "']");
+						                        
+			                    			if (masterRow) {
+						                        var totalProductWeight = 0.000000;
+						                        
+						                        var detailGrid = masterRow.next('tr.k-detail-row').find(".open-sales-order-lines-grid").data('kendoGridActionList');
+					                    		
+					                    		if(detailGrid){	
+							                        // Get selected detail records
+							                        var gridUtils = new KendoGridUtils(detailGrid);
+					           						var selectedLines = gridUtils.SelectedRows();
+						            						
+							                        // Calculate the selected lines weight.
+							                        $.each(selectedLines, function(indx, item) { 
+							                        	totalProductWeight += item['Product_Weight__c'];
+								                    });
+								                    
+								                    if(rowUid){
+                                        				$('#' + rowUid + 'TotalProductWeight').text(kendo.toString(totalProductWeight, 'n6'));
+                                        			}  
+							                    }
+						                    }
+			                            }
+			                        } 
+			                    }
+			                },
+					    	
+					    	GetFieldList: function(fieldList) {
+			                    fieldList = JSON.parse(fieldList);
+			                    var namespace = '{!NamespaceUU}';
+			                    $.each(fieldList, function() { 
+			                        if (this.field == 'selectedPlan.' + 'Total_Product_Weight__c') {
+			                            this.template = '#= SalesOrderLinesGridActions.SetTotalProductWeight(data) #';
+			                        }
+			                    });
+			
+			                    
+			                    return JSON.stringify(fieldList);
+			                },
+			                
+			                SetTotalProductWeight: function(data) {
+			                    var rowUid = '';
+			                    var totalProductWeight = 0.000000;
+			                    
+			                    if (data) {
+			                        rowUid = data.uid;
+			                        
+			                        var masterRow = salesOrderLinesGrid.table.find("tr[data-uid='" + rowUid + "']");
+			                        var detailGrid = masterRow.next('tr.k-detail-row').find(".open-sales-order-lines-grid").data('kendoGridActionList');
+		                    		
+		                    		if(detailGrid){	
+				                        // Get selected detail records
+				                        var gridUtils = new KendoGridUtils(detailGrid);
+		           						var selectedLines = gridUtils.SelectedRows();
+			            						
+				                        // Calculate the selected lines weight.
+				                        $.each(selectedLines, function(indx, item) { 
+				                        	totalProductWeight += item['Product_Weight__c'];
+					                    });  
+				                    }
+			                         
+			                    }
+			                    
+			                    return '<span id="' + rowUid + 'TotalProductWeight">' + kendo.toString(totalProductWeight, 'n6') + '</span>';
+			                },
+			                
+          					save: function(e) {
+                  
+	                            e.stopPropagation();
+	                            
+                                var grid = $('#{!salesOrderLinesGridConfig.uniqueId}').data('kendoGrid');
+		                        var options = grid.options;
+		                        var namespace = '{!NamespaceUU}';
+		                        var gridData = grid.dataSource.data();
+		                        var columns = grid.columns;
+		                        var planWrapperList = [];
+		                        var masterDateFields = KenandyErp.KendoGridOptions.GetDateFields(JSON.parse('{!salesOrderLineFieldList}'));
+	                			var detailDateFields = KenandyErp.KendoGridOptions.GetDateFields(JSON.parse('{!fulfillmentLinesFieldList}')); 
+	                			var isValid = true;
+	                	        
+		                        $.each(gridData, function(index, item) {
+		                           
+		                            var wrapperName = columns[1].field.split('.')[0];
+		                            
+	                                var masterRow = grid.table.find("tr[data-uid='" + item.uid + "']");
+	                    			var detailGrid = masterRow.next('tr.k-detail-row').find(".open-sales-order-lines-grid").data('kendoGridActionList');
+	                                var detailColumns = detailGrid.columns;
+	                                var planWrapper = {};
+	                                
+	                                var selected =  masterRow.next('tr.k-detail-row').find("input[type='radio']:checked").attr("value");
+	                                
+	                                if(selected && detailGrid){
+	                                	var gridUtils = new KendoGridUtils(detailGrid);
+	            						
+	            						var selectedLines = [];
+	            						$.each(gridUtils.SelectedRows(), function(a, b) {
+	            							Serializer.ConvertToSFDCDate(b, { dateFields: detailDateFields });
+	            							selectedLines.push(b);
+	            						});
+		                                
+		                                if(selectedLines && selectedLines.length > 0){
+		                                	planWrapper.selectedPlan = new Object();
+			                                planWrapper.availablePlans = [{}];
+			                                
+
+
+			                                if (!masterRow.next('tr.k-detail-row').find('.planned-shipment-date-required').hasClass('kndy-hidden')) {
+	                                			masterRow.next('tr.k-detail-row').find('.planned-shipment-date-required').addClass('kndy-hidden');
+	                                		}
+	                                		
+	                                		if (!masterRow.next('tr.k-detail-row').find('.available-plans-required').hasClass('kndy-hidden')) {
+	                                			masterRow.next('tr.k-detail-row').find('.available-plans-required').addClass('kndy-hidden');
+	                                		}
+	                                		
+			                                //populate the id or date for the shipment.
+			                                if(selected == 'new'){
+			                                	var plannedShipmentDate =  masterRow.next('tr.k-detail-row').find("input[name='plannedShipmentDate']").val();
+
+			                                	if (plannedShipmentDate) {
+			                                		planWrapper.selectedPlan['Shipment_Date_Estimated__c'] = new Date(plannedShipmentDate);
+                                                    Serializer.ConvertToSFDCDate(planWrapper, { dateFields: [ { field: 'selectedPlan.' + 'Shipment_Date_Estimated__c', fieldtype: 'date' } ] });
+			                                	}
+			                                	else {
+			                                		masterRow.next('tr.k-detail-row').find('.planned-shipment-date-required').removeClass('kndy-hidden');
+			                                		isValid = false;
+			                                		//return false;
+			                                	}
+			                                }
+			                                else
+			                                if(selected == 'existing'){
+			                                	var selectedPlanId = masterRow.next('tr.k-detail-row').find("select").val();
+			                                	
+			                                	if (selectedPlanId) {
+			                                		planWrapper.selectedPlan['Id'] = selectedPlanId;
+			                                	}
+			                                	else {
+			                                		masterRow.next('tr.k-detail-row').find('.available-plans-required').removeClass('kndy-hidden');
+			                                		isValid = false;
+			                                		//return false;
+			                                	}
+			                                }
+			                                  
+		                                    planWrapper.linesToPlan = selectedLines;
+		                                    planWrapperList.push(planWrapper);
+                                		}
+                                	}
+		                        });
+		                        
+		                        if (!isValid) {
+		                        	return false;
+		                        }
+		                        
+		                        if (planWrapperList && planWrapperList.length > 0) {
+		                            planWrapperList = Serializer.ParameterMap(planWrapperList);
+		                        }
+		                        
+		                        var cnfrm = window.confirm('{!$Label.ConfirmSave}');
+		                        
+		                        if(cnfrm){
+			                      	KenandyErp.BlockUI();
+			                      	
+			                        Visualforce.remoting.Manager.invokeAction(
+	                                    '{!$RemoteAction.ShipmentPlanExt.plan}', 
+	                                    planWrapperList,
+	                                    function (result, event) {
+	                                        if (event.type == 'exception') {
+	                                            KenandyErp.Message(event.message);
+	                                        } else {
+	                                            KenandyErp.CleanNamespace(result.records, KenandyErp.NamespacePrefix);	
+	                                            
+	                                            if (result.success) {
+	                                            	grid.dataSource.data(result.records);
+	                                            	
+	                                            	if(e && e.target && e.target.id == 'save'){
+	                                                	window.location.reload();
+	                                                }
+	                                                else
+	                                                if(e && e.target && e.target.id == 'saveReturn'){
+	                                                	cancelAF();
+	                                                }
+	                                            }
+	                                                
+	                                            KenandyErp.Messages(result.messages);
+	                                        }
+	                                        KenandyErp.UnBlockUI();
+	                                    },
+	                                    {escape: false}
+	                                );
+                                }
+		                                
+					            return true;
+                        },
+                        
+	                    getFulfillmentLines: function(id) {
+		                    var data = _.where(detailData, {Id: id});
+		                    var fulfillmentLinesData = [];
+		                    
+		                    if (data && data.length > 0) {
+		                        fulfillmentLinesData = data[0].linesToPlan;
+		                    }
+		                    
+		                    return fulfillmentLinesData;
+		                },
+		                
+		                setFulfillmentLines: function(id, fulfillmentLinesData) {
+		                
+		                    var found = false;
+		                    
+		                    $.each(detailData, function() {
+		                        if (this.Id == id) {
+		                            this.linesToPlan = fulfillmentLinesData;
+		                            found = true;
+		                            return false;
+		                        }
+		                    });
+		                    
+		                    if (!found) {
+		                        detailData.push({ Id: id, linesToPlan: fulfillmentLinesData });
+		                        found = false; // Reset found for next round
+		                    }
+		                },
+		                
+			    		DetailInit: function(e) {
+		                    var self = this;
+		                    var detailConfig = {! fulfillmentLinesGridConfigJson };
+		                    var detailRow = e.detailRow;
+		                    var detailFieldList = self.detailFieldList;
+		                    var lookupSearchAction = self.lookupSearchAction;
+		                    var uid = e.data.uid;
+		                    var detailReferenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(detailFieldList); // get the list of reference fields for the detail grid
+		                    var fulfillmentLinesData = SalesOrderLinesGridActions.getFulfillmentLines(uid);
+		                    var dateFields = KenandyErp.KendoGridOptions.GetDateFields(JSONUtils.Parse(detailFieldList)); // get the list of date fields
+		                    var detailButtons = $.map(detailConfig.buttons.split(','), $.trim);
+		                    
+		                    detailRow.find("[name='plannedShipmentDate']").kendoDatePicker().find(".k-datepicker").css("margin-left", "50px");
+		                    
+		                    if (fulfillmentLinesData && fulfillmentLinesData.length == 0 && (!_.contains(_.pluck(detailData, 'Id'), uid))) {
+		                        if (e.data.get('linesToPlan')) {
+		                            fulfillmentLinesData = JSON.parse(JSON.stringify(e.data.get('linesToPlan')));
+		                        }
+		                    }
+		                    
+		                    var getDetailModel = function() {
+		                        var fields = KenandyErp.KendoGridOptions.GetFields(detailFieldList); 
+		                        var model = kendo.data.Model.define({ id: "Id", fields: fields });
+		                                
+		                        return model;
+		                    };
+		                    
+		                    var getDetailToolbarButtons = function() {
+		                        return KenandyErp.KendoGridOptions.GetToolbarButtons(detailButtons);
+		                    };
+		                            
+		                    var getDetailColumns = function() {
+		                        return KenandyErp.KendoGridOptions.GetColumns(detailFieldList, { lookupSearchAction: lookupSearchAction, buttons: detailButtons});
+		                    };
+		                    
+		                    var getDetailDataSource = function() {
+		                        var dataSource = new kendo.data.DataSource({
+		                            data: fulfillmentLinesData, 
+		                            batch: true,
+		                            schema: {
+		                                model: getDetailModel(),
+		                                parse:function (response) {
+								                $.each(response, function (idx, item) {
+								                	item = Serializer.IncludeNulls(item, { fields: detailReferenceFields });
+						                    		item = Serializer.ConvertFromSFDCDate(item, { dateFields: dateFields });
+											    });
+											    
+								                return response;
+								        }
+		                            }
+		                        });
+		            
+		                        return dataSource;
+		                    };
+		                    
+		                    var detailsGrid = detailRow.find(".open-sales-order-lines-grid").kendoGridActionList({
+		                    	namespace: '{!NamespaceUU}',  
+		                        fieldList: detailFieldList,
+		                        lookupSearchAction: '{!$RemoteAction.ShipmentPlanExt.lookupSearchFilter}', 
+		                        getActionListFunction: function () {
+		                        	var deferred = $.Deferred();
+					                
+					                setTimeout(function() {
+					                    deferred.resolve({ records: fulfillmentLinesData, success: true, total: fulfillmentLinesData.length }, { statusCode: 200 });
+					                }, 100);
+					            
+				            
+				            		return deferred.promise();
+		                        },
+		                    }).data('kendoGridActionList');
+		                    
+		                    var detailsGridTitle = '<span style="font-weight:bold; font-size:12; margin-left:5px; margin-top:5px; margin-right:2%; float:left; display:block;">' 
+		                    						+ detailConfig.title 
+		                    						+ '</span>';
+		                    detailsGrid.element.find('div.k-grid-toolbar').append(detailsGridTitle);
+		                    
+		                    detailsGrid.dataSource.bind("change", $.proxy(SalesOrderLinesGridActions.refresh, { masterRowUid: uid }));
+		                    
+		                    if(e.data && e.data.availablePlans){ 			
+								for (var i = 0; i < e.data.availablePlans.length; i++) { 
+							    	detailRow.find("select").append('<option value="' + e.data.availablePlans[i].Id + '">' + e.data.availablePlans[i].Name + '</option>');
+      							}
+							}
+							
+		                    // bind click events to the custom buttons
+		                    KenandyErp.KendoGridOptions.BindEvents(detailsGrid, detailButtons, 
+		                        { 
+		                            referenceFields: detailReferenceFields,
+		                        }
+		                    );
+		                }
+			        };
+       			}(); 
+				
+				
+		        (function ($) {
+		            $.fn.GridFulfillmentLines = function(selector, options) {
+		                var config = JSON.parse(options.config);
+		                var masterFieldList = JSON.parse(options.masterFieldList);
+		                var detailFieldList = JSON.parse(options.detailFieldList);
+		                var buttons = $.map(config.buttons.split(','), $.trim);             
+		                var namespace = options.namespace;
+		                var lookupSearchAction = options.lookupSearchAction;
+		                var getSalesOrderLinesData = options.getSalesOrderLinesData;
+		                var masterReferenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(masterFieldList); // get the list of reference fields for the master grid
+		                var dateFields = KenandyErp.KendoGridOptions.GetDateFields(masterFieldList); // get the list of date fields for the master grid
+		                var lookupSearchFilters = (options.lookupSearchFilters) ? options.lookupSearchFilters : [];
+		                
+		                var getMasterModel = function() {
+		                    var fields = KenandyErp.KendoGridOptions.GetFields(masterFieldList);    
+		                    var model = kendo.data.Model.define({ id: "Id", fields: fields });
+		                    return model;
+		                };
+		                        
+		                var getMasterColumns = function() {
+		                    var columns = KenandyErp.KendoGridOptions.GetColumns(masterFieldList, { lookupSearchAction: lookupSearchAction, buttons: buttons, lookupSearchFilters: lookupSearchFilters });
+		                    return columns;
+		                };
+		                
+		                var getMasterToolbarButtons = function() {
+		                    return KenandyErp.KendoGridOptions.GetToolbarButtons(buttons);
+		                };
+		                    
+		                var getMasterDataSource = function() {
+		                
+		                    var dataSource = new kendo.data.DataSource({
+		                        transport: {
+		                            read: function (options) {
+		                                    KenandyErp.BlockUI(selector);
+	                                        var messageElement = $("div.grid-container").find("div.grid-message:first");
+	                                        
+	                                        var promise = getSalesOrderLinesData();
+		                                    
+		                                    promise.done(function(result, event){
+		                                        KenandyErp.ClearMessage(messageElement);
+		                                        
+		                                        if (event.type == 'exception') {
+		                                            KenandyErp.Alert("{!$Label.Error_occurred_contact_support}");
+		                                            KenandyErp.Message(event.message);
+		                                        } else {
+		                                        	if(result.records && result.records.length > 0){
+		                                        		
+		                                        		KenandyErp.CleanNamespace(result.records, KenandyErp.NamespacePrefix);	
+
+			                                            options.success(result.records);
+			                                            $('#save').prop("disabled", true).removeClass("btnDisabled");
+		                                        	}else{
+		                                        		$('#save').prop("disabled", true).addClass("btnDisabled");
+		                                            }
+		                                            
+		                                            KenandyErp.Messages(result.messages, messageElement);
+		                                        }
+
+      			                                    KenandyErp.UnBlockUI(selector);
+		                                        
+		                                    });
+		                                  }
+		                        },
+		                        batch: true,
+		                        pageSize: KenandyErp.KendoGridOptions.DefaultPageSize,
+		                        schema: {
+		                            model: getMasterModel(),
+		                            parse: function (response) {
+		                                       $.each(response, function (idx, item) {
+		                                       		item = Serializer.IncludeNulls(item, { fields: masterReferenceFields });
+		                                            item = Serializer.ConvertFromSFDCDate(item, { dateFields: dateFields });
+		                                       });
+		                                        
+		                                       return response;
+		                                   }
+		                        }           
+		                    });
+		        
+		                    return dataSource;
+		                };
+		                
+		                var masterGrid = $(selector).kendoGrid({
+		                                    dataSource: getMasterDataSource(), 
+		                                    navigatable: true,
+		                                    pageable: { 
+		                                        input: true,
+		                                        numeric: false,
+		                                        pageSizes: KenandyErp.KendoGridOptions.PageSizes 
+		                                    },  
+		                                    toolbar: getMasterToolbarButtons(), 
+		                                    columns: getMasterColumns(),
+		                                    sortable: true,
+		                                    filterable: true,
+		                                    resizable: true,
+		                                    detailTemplate: kendo.template($("#detailTemplate").html()),
+		                                    detailInit: $.proxy(SalesOrderLinesGridActions.DetailInit, { detailFieldList: detailFieldList, lookupSearchAction: lookupSearchAction }),
+		                                    editable: true,
+		                                    edit: $.proxy(KenandyErp.KendoGridActions.Edit, { referenceFields: masterReferenceFields })
+		                                 }).data('kendoGrid');
+		                
+		                var masterGridTitle = '<span style="font-weight:bold;font-size:12;margin-left:5px;margin-top:5px;margin-right:33%;float:left;display:block;">' 
+		                    				  + config.title 
+		                    				  + '</span>';
+		                    						
+		                masterGrid.element.find('div.k-grid-toolbar').append(masterGridTitle);
+		                    
+		                // bind click events to the custom buttons
+		                KenandyErp.KendoGridOptions.BindEvents( masterGrid, 
+		                										buttons, 
+		                										{ 
+						                                            referenceFields: masterReferenceFields, 
+						                                            config: config, 
+						                                            dateFields: dateFields 
+							                                    }
+							                                  );
+		                
+		                // bind grid detailExpand/detailCollapse events
+		                masterGrid.bind("detailExpand", $.proxy(SalesOrderLinesGridActions.DetailExpand, { grid: masterGrid }));
+		                masterGrid.bind("detailCollapse", $.proxy(SalesOrderLinesGridActions.DetailCollapse, { grid: masterGrid }));
+		                
+		                return masterGrid;
+		            };
+		        })(jQuery);
+			</script>
+			
+			<script type="text/x-kendo-template" id="detailTemplate">
+    			<div class="grid-container grid-detail-container k-block k-info-colored">
+            		<apex:pageBlock mode="maindetail">
+						<apex:pageBlockSection title="Please choose an option" collapsible="false" columns="2">
+							<apex:pageBlockSectionItem dataStyle="width: 15%">
+								<br/>
+                				<span style="display:inline-block; margin-left: 50px; margin-right: 10px;">
+									<input type="radio" id="new-shipment-#=uid#" name="#=uid#" class="new-shipment-radio-btn" value="new" /> 
+									<label for="new-shipment-#=uid#" style="font-weight:bold;"> Create a new shipment </label>
+									<br/><br/>
+									<span class="filterLabel" style="display:inline-block; margin-left: 50px; margin-right: 10px;">
+										<span style="margin-right: 10px;">{!$ObjectType.Shipment__c.Fields.Shipment_Date_Estimated__c.Label}</span>
+										<input name="plannedShipmentDate" data-role="datepicker" class="planned-shipment-date kendoWidgetSelector filterDateInput" type="date" />
+										<br/>
+										<span class="kndy-hidden kndy-error planned-shipment-date-required">Please select a date.</span>
+									</span>
+								</span>
+							</apex:pageBlockSectionItem>
+							<apex:pageBlockSectionItem >
+								<br/>
+                				<span style="display:inline-block; margin-left: 50px; margin-right: 10px;">
+									<input type="radio" id="existing-shipment-#=uid#" name="#=uid#" value="existing" class="existing-shipment-radio-btn" /> 
+									<label for="existing-shipment-#=uid#" style="font-weight:bold;"> Add to existing shipment </label>
+									<br /><br />
+									<span class="filterLabel" style="display:inline-block; margin-left: 50px; margin-right: 10px;">
+									<select name="availablePlans" class="available-plans" >
+										<option value="">Select shipment</option>
+									</select>
+									<br/>
+									<span class="kndy-hidden kndy-error available-plans-required">Please select a shipment.</span>
+								</span>
+							</span>
+						</apex:pageBlockSectionItem>
+						<br/>
+		           	</apex:pageBlockSection>
+					<div class="open-sales-order-lines-grid" ></div>
+               		</apex:pageBlock>
+        		</div>
+    		</script>
+    			
+			<apex:pageBlock mode="maindetail" id="thePageBlock">
+	    		
+    			<apex:actionFunction name="cancelAF" action="{!cancel}" />
+    			
+    			<apex:pageBlockButtons location="both" id="theButtons">
+	    			<input name="save" id="save" type="button" value=" Quick {!$Label.Save} " class="btn save-command" accesskey="s" />
+	    			<input name="saveReturn" id="saveReturn" type="button" value=" {!$Label.Save} & Return " class="btn save-return-command" />
+	    			<input name="return" id="return" type="button" value=" Return " class="btn return-command" />
+	    		</apex:pageBlockButtons>
+	    		
+	    		<div class="page-message"></div>
+	    		
+    			<apex:pageBlockSection title="{!$Label.Filters}" columns="1" collapsible="true">	
+		    		<apex:panelGrid columns="4" cellspacing="4" width="100%" styleClass="search-filters" >
+		    			
+		    			<!-- Row 1 -->
+		    		    <apex:outputLabel value="{!$Label.Facility}" styleClass="filterLabel" />
+		    			
+		    			<apex:outputLabel value="{!$Label.Sold_To_Customer}" styleClass="filterLabel" />
+		    			
+		    			<apex:outputLabel value="{!$ObjectType.Sales_Order__c.Label}" styleClass="filterLabel" />
+		    			
+		    			<apex:outputLabel value="{!$ObjectType.Sales_Order_Line__c.Fields.Estimated_Ship_Date__c.Label}" styleClass="filterLabel" />
+		    			
+		    			<apex:outputLabel value="Actions" styleClass="filterLabel" rendered="false" />
+		    			
+		    			<apex:outputPanel layout="block">
+		    				<input id="shipFromFilter" class="kendoWidgetSelector" />
+		    			</apex:outputPanel>
+		    			
+		    			<apex:outputPanel layout="block">
+		    				<input id="customerFilter" class="kendoWidgetSelector" />
+		    			</apex:outputPanel>
+		    			
+		    			<apex:outputPanel layout="block">
+		    				<input id="salesOrderFilter" class="kendoWidgetSelector" />
+		    			</apex:outputPanel>
+		    			
+		    			<apex:outputPanel layout="block" styleClass="dateRange"> 
+			                &nbsp;
+			                <input name="fromEstimatedShipDateFilter" id="fromEstimatedShipDateFilter" data-role="datepicker" class="kendoWidgetSelector filterDateInput" type="date" />
+			                &nbsp; {!$Label.to} &nbsp;
+			                <input name="toEstimatedShipDateFilter" id="toEstimatedShipDateFilter" data-role="datepicker" class="kendoWidgetSelector filterDateInput" type="date"/>
+			            </apex:outputPanel>
+			            
+		    	    </apex:panelGrid>
+		    	    <apex:outputPanel style="text-align:left;" layout="block" rendered="true">
+		    	        <br/>
+		                	<input name="applyFilters" style="margin-left: 33%;" id="applyFilters" type="button" value=" {!$Label.Apply_Filters} " onclick="SalesOrderLinesGridActions.init(this);" class="btn" />
+		                	<input name="clearFilters" id="clearFilters" type="button" value=" {!$Label.CSReset} " onclick="SalesOrderLinesGridActions.init(this);" class="btn" />
+		                <br/>
+		            </apex:outputPanel>	
+		    	</apex:pageBlockSection>  
+	    	
+	    		<apex:pageBlockSection columns="1" title="Open Sales Order Lines">
+		            <div class="grid-container">
+		                <div class="grid-message"></div>
+		                <div id="{!salesOrderLinesGridConfig.uniqueId}" ></div>
+	                </div>
+		        </apex:pageBlockSection>
+		        
+		        <script>
+		        	
+		        	$(document).ready(function() {
+		        		
+		        		// Bind button Events
+		                $('.save-command').on("click", $.proxy(SalesOrderLinesGridActions.save));
+		                $('.return-command').on("click", $.proxy(cancelAF));
+		                $('.save-return-command').on("click", $.proxy(SalesOrderLinesGridActions.save));
+		                $('.save-return-command').on("click", $.proxy(SalesOrderLinesGridActions.cancelAF));
+		                
+		                
+		                // Initialize Facility Lookup
+				       	$.fn.KendoComboBox($('#shipFromFilter'), { lookupSearchAction: '{!$RemoteAction.ShipmentPlanExt.lookupSearchFilter}', referenceTo: 'Facility__c', title: '{!$ObjectType.Location__c.Fields.Facility__c.Label}', value: '' });
+				       	
+			            // Initialize Customer Lookup
+				       	$.fn.KendoComboBox($('#customerFilter'), { lookupSearchAction: '{!$RemoteAction.ShipmentPlanExt.lookupSearchFilter}', referenceTo: 'Customer__c', title: '{!$ObjectType.Sales_Order__c.Fields.Customer__c.Label}', filterCriteria: 'RecordType.DeveloperName = \'Sold_To\''});
+				       	
+				       	// Initialize SO Lookup
+				       	$.fn.KendoComboBox($('#salesOrderFilter'), { lookupSearchAction: '{!$RemoteAction.ShipmentPlanExt.lookupSearchFilter}', referenceTo: 'Sales_Order__c', title: '{!$ObjectType.Sales_Order__c.Label}', value: '' });
+				       	
+				       	// Initialize Date Filters
+				       	$('#fromEstimatedShipDateFilter').kendoDatePicker();
+				       	$('#toEstimatedShipDateFilter').kendoDatePicker();
+				       	
+				       	// Initialize the main grid.
+				       	SalesOrderLinesGridActions.init();
+				       	
+                    });
+			           
+        		</script>
+		    </apex:pageBlock>
+	    </apex:form>
+	</div>
+</apex:page>

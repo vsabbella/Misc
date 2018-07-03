@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpWorkCenters</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Work Center used in Routing Operations</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableEnhancedLookup>true</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Company this Work Center belongs to</description>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Work Centers</relationshipLabel>
+        <relationshipName>Work_Centers</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Description__c</fullName>
+        <description>Work center</description>
+        <externalId>false</externalId>
+        <label>Description</label>
+        <length>50</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Facility__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Facility</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Lookup to Facility</inlineHelpText>
+        <label>Facility</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>Facility Company does not match Work Center Company</errorMessage>
+            <filterItems>
+                <field>Facility__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Company__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Facility__c</referenceTo>
+        <relationshipLabel>Work Centers</relationshipLabel>
+        <relationshipName>Work_Centers</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Manufacturing_Calendar__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Manufacturing Calendar</label>
+        <lookupFilter>
+            <active>true</active>
+            <booleanFilter>1 AND 2</booleanFilter>
+            <filterItems>
+                <field>Calendar__c.Type__c</field>
+                <operation>equals</operation>
+                <value>Manufacturing</value>
+            </filterItems>
+            <filterItems>
+                <field>Calendar__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Company__c</valueField>
+            </filterItems>
+            <isOptional>true</isOptional>
+        </lookupFilter>
+        <referenceTo>Calendar__c</referenceTo>
+        <relationshipLabel>Work Centers</relationshipLabel>
+        <relationshipName>Work_Centers</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Manufacturing_Overhead_Factor__c</fullName>
+        <externalId>false</externalId>
+        <label>Manufacturing Overhead Factor</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Work_Center_Unique__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>Work Center plus Company for uniqueness</description>
+        <externalId>false</externalId>
+        <label>Work Center Unique</label>
+        <length>160</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <label>Work Center</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Description__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Work Center</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Work Centers</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Company__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Facility__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Description__c</customTabListAdditionalFields>
+        <lookupDialogsAdditionalFields>Company__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Facility__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Description__c</lookupDialogsAdditionalFields>
+        <searchFilterFields>NAME</searchFilterFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>Company_must_not_change</fullName>
+        <active>true</active>
+        <description>after creating a Work Center for a given company, do not allow the Work Center to change to another company</description>
+        <errorConditionFormula>ISCHANGED(Company__c)</errorConditionFormula>
+        <errorMessage>Once created for a Company, the Work Center must not change Company field.</errorMessage>
+    </validationRules>
+    <webLinks>
+        <fullName>Production_Planning</fullName>
+        <availability>online</availability>
+        <displayType>massActionButton</displayType>
+        <encodingKey>UTF-8</encodingKey>
+        <height>600</height>
+        <linkType>url</linkType>
+        <masterLabel>Production Planning</masterLabel>
+        <requireRowSelection>false</requireRowSelection>
+        <openType>noSidebar</openType>
+        <protected>false</protected>
+        <url>/apex/{!$Setup.KNDY_Namespace__c.Namespace__c}ProductionPlanning</url>
+    </webLinks>
+</CustomObject>

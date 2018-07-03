@@ -1,0 +1,158 @@
+<apex:page standardController="Product__c" recordSetVar="prd" docType="html-5.0" extensions="ProductGroupManageExt,KendoExt,BaseController">
+<c:KendoResources />
+
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+    <apex:includeScript value="{!$Resource.kendoRemoteComboBox}" />
+    
+    <apex:sectionHeader subtitle="{!$Label.Manage_Products}" />
+    
+    <apex:pageBlock title="{!$Label.Filter}">				
+		<apex:panelGrid columns="4" cellspacing="20" width="100%">
+		    <apex:outputPanel >
+				<label for="nameFilter"> {!$ObjectType.Product__c.fields.Name.label} : </label>
+		        <input type="text" id="nameFilter" placeholder="Type product name..."/>
+	        </apex:outputPanel>
+	        
+		    <apex:outputPanel >
+				<label for="productGroupFilter"> {!$ObjectType.Product__c.fields.Product_Group__c.label} : </label>
+		        <input type="text" id="productGroupFilter" />
+	        </apex:outputPanel>
+
+		    <apex:outputPanel >
+				<label for="hierarchyFilter"> {!$ObjectType.Product__c.fields.Sales_Hierarchy__c.label} : </label>
+		        <input type="text" id="hierarchyFilter" />
+	        </apex:outputPanel>
+	        
+	        <apex:outputPanel >
+				<label for="itemFilter"> {!$ObjectType.Product__c.fields.Item__c.label} : </label>
+		        <input type="text" id="itemFilter" />
+	        </apex:outputPanel>
+
+
+	    </apex:panelGrid>    	
+		
+	</apex:pageBlock>
+    
+    
+    <apex:pageBlock title="{!$Label.Matching_Products}">    
+		<div class="grid-container">
+    		<div class="grid-message"></div>
+        	<div id="{!config.uniqueId}" > </div>
+        </div>    
+    </apex:pageBlock>
+    
+    
+    
+	<script type="text/javascript">
+		var vfPageData = {
+			currentCompanyId			 : '{!companyId}',
+			currentProductGroupId	     : '{!productGroup.Id}',
+			currentProductGroupName	     : '{!productGroup.Name}',
+			namespacePrefix				 : '{!namespacePrefix}',
+			remoteActionLoadRecords		 : '{!$RemoteAction.KendoExt.loadRecords}',
+			remoteActionLookupSearchFilter	
+										 : '{!$RemoteAction.BaseController.lookupSearchFilter}',
+			gridContainerSelector		 : '#matchingProductsDiv',
+		};
+	</script>
+    
+    <script type="text/javascript">
+    
+        function getKendoGridDomId() {
+            return $("#{!config.uniqueId}");
+        }  
+        
+        // Gives handle to the grid object
+        function getKendoGridObject() {
+        	return $(getKendoGridDomId()).data("kendoGrid");
+        }    
+        
+        // Called by all filter components, whenever value changes for them
+		function onSearchFiltersChanged(e) {			
+            getKendoGridObject().dataSource.read();    			
+		}
+        
+        function getComboValue(comboSelector) {
+            var combo = $(comboSelector).data('kendoComboBox');
+            var comboVal = combo.value();
+            return comboVal && combo.text() != comboVal && comboVal && comboVal.length > 0 ? comboVal : null;
+        }
+        
+        // Called by GridRelatedList component when transport requires a READ 
+ 		function loadRelatedData () {
+          	var deferred = $.Deferred();
+          	
+          	var companyId, hierarchyId, productGroupId, itemId, name, description;
+          	companyId = '{!companyId}';
+          	description = null;
+          	name = $('#nameFilter').val();
+            productGroupId = getComboValue('#productGroupFilter');
+            hierarchyId = getComboValue('#hierarchyFilter');
+            itemId = getComboValue('#itemFilter');
+            
+            			
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ProductGroupManageExt.loadProducts}',
+                companyId, hierarchyId, productGroupId, itemId, name, description,
+                function (result, event) {
+                    deferred.resolve(result, event);
+                });
+
+            return deferred.promise();
+        }
+        
+        // Initialise all Kendo related components
+        function onDOMReady() {
+            $('#nameFilter').blur(onSearchFiltersChanged);
+            
+            var productGroupComboBox = $('#productGroupFilter').kndyRemoteComboBox({
+                sobject : 'Product_Group__c', // will be sobject to query
+                value : '{!productGroup.Id}',
+                text : '{!productGroup.Name}',
+                criterias : function() {
+                    return [ 
+    	        		{'field' : 'Company__c', 'operator' : '=', 'value' : vfPageData.currentCompanyId, 'wrapValueInQuotes' : true }
+                    ];
+                }, // map structure with key value combinations
+                orderByField : 'Name',
+                sortOrder : 'asc',
+                remoteActionLoadRecords	: '{!$RemoteAction.KendoExt.loadRecords}'
+            }).data("kendoComboBox");
+            productGroupComboBox.bind("change", onSearchFiltersChanged);
+            
+            var hierarchyComboBox = $('#hierarchyFilter').kndyRemoteComboBox({
+                sobject : 'Hierarchy__c', // will be sobject to query
+                orderByField : 'Name',
+                sortOrder : 'asc',
+                remoteActionLoadRecords	: '{!$RemoteAction.KendoExt.loadRecords}'
+            }).data("kendoComboBox");
+            hierarchyComboBox.bind("change", onSearchFiltersChanged);
+            
+            var itemComboBox = $('#itemFilter').kndyRemoteComboBox({
+                sobject : 'Item__c', // will be sobject to query
+                criterias : function() {
+                    return [ 
+    	        		{'field' : 'Company__c', 'operator' : '=', 'value' : vfPageData.currentCompanyId, 'wrapValueInQuotes' : true }
+                    ];
+                }, // map structure with key value combinations
+                orderByField : 'Name',
+                sortOrder : 'asc',
+                remoteActionLoadRecords	: '{!$RemoteAction.KendoExt.loadRecords}'
+            }).data("kendoComboBox");
+            itemComboBox.bind("change", onSearchFiltersChanged);
+        
+            $.fn.GridRelatedList($('#{!config.uniqueId}'), 
+                    { 
+                        namespace: '{!NamespaceUU}', 
+                        config: '{!configJson}', 
+                        fieldList: '{!fieldList}', 
+                        lookupSearchAction: '{!$RemoteAction.ProductGroupManageExt.lookupSearchFilter}', 
+                        getRelatedListFunction: loadRelatedData, 
+                        saveRelatedListAction: '{!$RemoteAction.ProductGroupManageExt.saveList}' 
+                    }
+                );
+        }
+        
+        $(document).on('KenandyErpReady',onDOMReady);
+    </script>
+</apex:page>

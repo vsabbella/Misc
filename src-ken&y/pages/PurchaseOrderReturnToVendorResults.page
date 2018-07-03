@@ -1,0 +1,78 @@
+<apex:page standardController="Purchase_Order__c"  
+                tabStyle="Purchase_Order__c" 
+                sidebar="false"
+                recordSetVar="porder" 
+                extensions="PurchaseOrderReturnToVendorExt">
+                
+	<apex:sectionHeader title="{!$Label.Return_To_Vendor}"/>
+    <apex:form id="mainFormID">    <c:busyWait />                
+    
+    	<apex:outputPanel id="errorOutPanel">
+            <apex:pagemessages ></apex:pagemessages>        
+        </apex:outputPanel>
+       <apex:pageBlock > 
+       		
+       		<apex:pageBlockButtons >
+       			<apex:commandButton value="{!$Label.Go_Back}" action="{!cancel}" status="actionStatus" reRender="mainFormID" immediate="true"/>
+       		</apex:pageBlockButtons>
+        
+        <apex:pageBlock id="POLResultsPageBlock" title="{!$Label.Updated_Purchase_Order_Lines}"  > 
+        
+        	<apex:PageBlockTable title="{!$Label.Updated_Purchase_Order_Lines}" value="{!oldPOLines}" var="pol">
+        	
+        		<apex:column HeaderValue="{!$ObjectType.Purchase_Order_Line__c.Label}">
+        		
+        			<apex:outputLink value="/{!pol.id}"> {!pol.Name} </apex:outputLink>
+        		</apex:column>
+            
+            	<apex:repeat value="{!$ObjectType.Purchase_Order_Line__c.FieldSets.Return_To_Vendor}" var="f">
+            	
+            		<apex:column value="{!pol[f]}"/>
+            	
+            	</apex:repeat>
+            	
+            </apex:PageBlockTable>
+        </apex:pageBlock>    
+            
+         <apex:pageBlock id="POLNewResultsPageBlock" title="{!$Label.Newly_Created_Purchase_Order_Lines}"  >     
+            
+            <apex:PageBlockTable title="{!$Label.Newly_Created_Purchase_Order_Lines}" value="{!newPOLinesForDisplay}" var="newPol">
+            
+            	<apex:column HeaderValue="{!$ObjectType.Purchase_Order_Line__c.Label}">
+        		
+        			<apex:outputLink value="/{!newPol.id}"> {!newPol.Name} </apex:outputLink>
+        		</apex:column>
+            
+            	<apex:repeat value="{!$ObjectType.Purchase_Order_Line__c.FieldSets.Return_To_Vendor}" var="f">
+            	
+            		<apex:column value="{!newPol[f]}"/> 
+            	
+            	</apex:repeat>
+            	
+            </apex:PageBlockTable>
+        </apex:pageBlock>
+        
+        <apex:pageBlock id="POLCMResultsPageBlock" title="{!$Label.Credit_Memos}"  >     
+            
+            <apex:PageBlockTable title="{!$Label.Newly_Created_Credit_Memos}" value="{!creditMemos}" var="cm">
+            
+            	<apex:column HeaderValue="{!$ObjectType.Supplier_Payment_Line__c.Fields.Credit_Memo__c.Label}">
+        		
+        			<apex:outputLink value="/{!cm.id}"> {!cm.Name} </apex:outputLink>
+        		</apex:column>
+            	<apex:column HeaderValue="{!$ObjectType.Company__c.Label}" value="{!Company}"/>
+            	<apex:column HeaderValue="{!$ObjectType.Supplier__c.Label}" value="{!Supplier}"/>  
+            
+            	<apex:repeat value="{!$ObjectType.Supplier_Invoice__c.FieldSets.New_Supplier_CM_OnAccount}" var="f">
+            	
+            		<apex:column value="{!cm[f]}"/> 
+            	
+            	</apex:repeat>
+            	
+            </apex:PageBlockTable>
+        </apex:pageBlock>
+        
+        </apex:pageBlock>
+    </apex:form>
+    
+</apex:page>

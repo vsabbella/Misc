@@ -1,0 +1,12 @@
+<apex:page showheader="true" sidebar="true" standardController="Budget__c" extensions="BudgetDeleteExt" action="{!deletebudget}" >
+    <apex:sectionHeader title="Delete Budget" subtitle="{!Budget__c.Name}" />
+    <apex:form id="form">
+        <c:busyWait />
+        <apex:pageBlock >
+            <apex:pageMessages />
+            <apex:pageBlockButtons location="top"> 
+                <apex:commandButton action="{!cancel}"  value="{!$Label.Go_Back}" status="actionStatus" rerender="form" />
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

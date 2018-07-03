@@ -1,0 +1,70 @@
+<apex:component access="global" layout="none" controller="KendoResourcesController">
+	<!-- Begin: Attributes are deprecated and no longer used -->
+    <apex:attribute name="includeKenandyCommonStyles" access="global" type="Boolean" required="false" default="true" description="True to include KenandyCommonStyles CSS" />
+    <apex:attribute name="includeUnderscoreJS" access="global" type="Boolean" required="false" default="true" description="True to include UnderscoreJS" />
+    <apex:attribute name="includeKenandyCommon" access="global" type="Boolean" required="false" default="true" description="True to include KenandyCommon JavaScript" />
+    <apex:attribute name="includeKenandyWidgets" access="global" type="Boolean" required="false" default="true" description="True to include KenandyWidgets JavaScript" />
+    <apex:attribute name="includeKenandySelenium" access="global" type="Boolean" required="false" default="true" description="True to include KenandySelenium JavaScript" />
+    <apex:attribute name="kendoLibraryVersion" access="global" type="String" required="false" default="2013.3.1119" description="Which version of kendo library to use" />
+    <!-- End: Attributes are deprecated and no longer used -->
+
+    <!-- XSS sanitization filters FROM https://github.com/SalesforceEng/secure-filters -->
+    <apex:includeScript value="{!$Resource.SecureFilters}" />
+    <apex:includeScript value="{!$Resource.Sanitize}" />
+    <apex:includeScript value="{!$Resource.URI}" /> <!-- https://medialize.github.io/URI.js/ https://github.com/medialize/URI.js -->
+
+    <apex:attribute name="includejQuery" access="global" type="Boolean" required="false" default="true" description="True to include jQuery" />
+    <!-- Comments By LK On 9/2/2015: Do not set the default attribute for kendoUIVersion as we want to give the customer the ability to specify this value using Custom Settings  -->
+    <apex:attribute name="kendoVersion" access="global" type="String" required="false" assignTo="{!defaultKendoUIVersion}" description="Which version of kendo library to use" />
+    <!-- Comments By LK On 9/2/2015: Do not set the default attribute for kendoUIVersion as we want to give the customer the ability to specify this value using Custom Settings  -->
+    <apex:variable var="kendoUIScriptsResourceName" value="{!IF((kendoUIVersion == '2013.3.1119'), 'KendoUI', 'KendoUIScripts' + SUBSTITUTE(kendoUIVersion, '.', ''))}"/ >
+    <apex:variable var="kendoUIStylesResourceName" value="{!IF((kendoUIVersion == '2013.3.1119'), 'KendoUI', 'KendoUIStyles' + SUBSTITUTE(kendoUIVersion, '.', ''))}"/ >
+
+	<!-- kendo/common css references -->
+	<apex:stylesheet value="{!URLFOR($Resource[kendoUIStylesResourceName], '/styles/kendo.common.min.css')}" />
+	<apex:stylesheet value="{!URLFOR($Resource[kendoUIStylesResourceName], '/styles/kendo.bootstrap.min.css')}" />
+	<apex:stylesheet value="{!URLFOR($Resource.FontAwesome, '/css/font-awesome.min.css')}" />
+    <apex:stylesheet value="{!$Resource.KenandyCommonStyles}" />
+
+    <apex:outputPanel layout="none" rendered="{!includejQuery}">
+        <!-- jQuery reference for Kendo -->
+        <apex:includeScript value="{!URLFOR($Resource[kendoUIScriptsResourceName], '/js/jquery.min.js')}" />
+	</apex:outputPanel>
+
+	<apex:includeScript value="{!URLFOR($Resource[kendoUIScriptsResourceName], '/js/kendo.all.min.js')}" />
+
+    <!-- kendo/common js references -->
+	<apex:includeScript value="{!URLFOR($Resource[kendoUIScriptsResourceName], '/js/cultures/kendo.culture.' + localeKey + '.min.js')}" />
+
+    <!-- MomentJS references -->
+    <apex:includeScript value="{!URLFOR($Resource.MomentJS, 'moment.min.js')}" />
+  	<apex:includeScript value="{!URLFOR($Resource.MomentJS, 'moment-timezone.min.js')}" />
+  	<apex:includeScript value="{!URLFOR($Resource.MomentJS, 'moment-timezone-data.min.js')}" />
+
+  	<!-- UnderscoreJS reference -->
+       <apex:includeScript value="{!URLFOR($Resource.UnderscoreJS, 'underscore-min.js')}" />
+
+    <apex:includeScript value="{!$Resource.KenandyCommon}" />
+   	<apex:includeScript value="{!$Resource.KenandyWidgets}" />
+    <apex:includeScript value="{!$Resource.KenandySelenium}" />
+
+    <script type="text/javascript">
+    	Visualforce.remoting.timeout = {!defaultRemotingTimeout}; // Set remoting request timeout
+
+        $(document).ready(function(){
+            var dateFormat = UserContext.dateFormat === 'y/MM/dd' ? 'yyyy/MM/dd' : UserContext.dateFormat;
+            var dateTimeFormat = UserContext.dateTimeFormat === 'y/MM/dd HH:mm' ? 'yyyy/MM/dd HH:mm tt' : UserContext.dateTimeFormat;
+            KenandyErp.Init({
+                Culture: '{!localeKey}',
+                TimeZone: '{!timeZoneKey}',
+                DateFormat: dateFormat ? dateFormat : 'M/d/yyyy',
+	            DateTimeFormat: dateTimeFormat ? dateTimeFormat.replace('a', 'tt') : 'M/d/yyyy h:mm tt',
+	            ExportExcelUrl: '{!$Page.ExportExcel}',
+	            ExportPdfUrl: '{!$Page.ExportPdf}',
+                NamespacePrefix : '{!namespacePrefix}'
+            });
+
+            $(document).trigger('KenandyErpReady');
+        });
+    </script>
+</apex:component>

@@ -1,0 +1,1043 @@
+<apex:page showHeader="true" sidebar="true" extensions="PurchaseAgreementAddManageExt" standardController="Contract__c"  tabStyle="Contract__c" docType="html-5.0">
+     <style type="text/css">
+        .line-total {
+            border: 2px dashed !important; 
+            font-weight: bold;
+            width: 100px;
+            text-align: right;
+        }
+        
+        .text-red { border-color: red !important; }
+        .text-green { border-color: green !important; }
+        
+        .invoiced-amount {
+            padding: .3em .4em !important;
+        }
+
+        .column-label {
+            vertical-align: middle !important;
+            width: 15%;
+        }
+        
+        .column-field {
+            vertical-align: middle !important;
+            width: 85%;
+        }
+        /*Style to make sure the grid headers are top-aligned*/
+	    .k-grid-header th.k-header {
+	    vertical-align: top;
+	    }        
+        
+     </style>
+
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+
+    <apex:form id="PurchaseAgreementAddManageForm">
+        <div class="page-container">
+            <apex:sectionHeader title="{!pageTitle}" />
+            
+            <div class="page-message"></div>
+            <apex:pageMessages id="msgs"/>
+            
+            <apex:pageBlock id="PurchaseAgreementHeaderDetailBlock">  
+
+                <div id="PurchaseAgreementHeaderDetailList">
+                </div>
+                
+                <apex:pageBlockButtons location="top">
+                    <apex:outputPanel layout="none">
+                        <button id="saveButton" class ="k-button kndy-btn save-command" type="button" accesskey="s">Save</button>
+                        <a href="{!ReturnUrl}" style="text-decoration: none;"><input type="button" value="Cancel" class="k-button kndy-btn cancel-command" /></a>
+                        <button id="actionButton" class ="k-button kndy-btn" type="button">Actions</button>
+                    </apex:outputPanel>
+                </apex:pageBlockButtons>
+            </apex:pageBlock>
+            
+           
+            <apex:pageBlock title="Purchase Agreement Lines">    
+                <div class="grid-container">
+                    <div class="grid-message"></div>
+                    <div id="PurchaseAgreementLinesGrid"></div>
+                </div>
+            </apex:pageBlock>
+        </div>
+        <apex:inputHidden value="{!Contract__c.Name}" />
+        <apex:inputHidden value="{!Contract__c.Contract_Start__c}"/>
+        <apex:inputHidden value="{!Contract__c.Contract_End__c}"/>
+    </apex:form>
+
+    <script type="text/javascript">
+        var invoiceMatching_global; 
+        var purchaseAgreementHeaderData = function(readOptions) {
+            var deferred = $.Deferred();
+            var purchaseAgreementId = PurchaseAgreementManageUtil.PurchaseAgreementId;
+
+            if (!purchaseAgreementId) {
+                setTimeout(function() {
+                    var records = [];
+                    
+                    delete PurchaseAgreementManageUtil.PurchaseAgreementHeaderData['attributes'];
+                    records.push(PurchaseAgreementManageUtil.PurchaseAgreementHeaderData);
+               
+                    deferred.resolve({ records: records, success: true, total: records.total }, { statusCode: 200 });
+                }, 100);
+            }
+            else {
+                Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.PurchaseAgreementAddManageExt.getPurchaseAgreementDetails}',
+                        purchaseAgreementId,
+                        '{!$CurrentPage.parameters.clone}',
+                        function (result, event) {
+                            deferred.resolve(result, event);
+                        },
+                        {escape: false}
+                    );
+            }
+            return deferred.promise();
+        }; 
+
+
+        var purchaseAgreementLinesData = function(readOptions) {
+            var deferred = $.Deferred();
+            var config = PurchaseAgreementManageUtil.PurchaseAgreementLinesConfigJson;
+
+            if (!config.parentRecord.Id) {
+                setTimeout(function() {
+                    deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+                }, 100);
+            }
+            else {
+                var remoteArgs = config;
+                var allFields = {!AllFields};
+                // The stuff returned from Salesforce has extra properties like "attributes"
+                // which couldn't be deserialised back
+                remoteArgs.parentRecord = { Id: remoteArgs.parentRecord.Id };
+                
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.PurchaseAgreementAddManageExt.getPurchaseAgreementLines}',
+                    remoteArgs,
+                    '{!$CurrentPage.parameters.clone}',
+                    allFields,
+                    function (result, event) {
+                        deferred.resolve(result, event);
+                        // KNDY-10083 reset maxLineNumber
+                        // Assumption - The last record in list has the highest line number
+                        PurchaseAgreementManageUtil.maxLineNumber = 0;
+                        if (result.records.length > 0){
+                            var sobjList = result.records;
+                            PurchaseAgreementManageUtil.maxLineNumber = sobjList[sobjList.length-1].Line__c;
+                        }
+                    },
+                    {escape: false}
+                );
+            }
+            
+            return deferred.promise();
+        };
+
+        $(document).on('KenandyErpReady', function(e) {
+            KenandyErp.KendoGridOptions.DefaultPageSize = KenandyErp.KendoGridOptions.PageSizes[0];
+               
+            PurchaseAgreementManageUtil.Init({
+                purchaseAgreementId: '{!JSENCODE(purchaseAgreement.Id)}',
+                purchaseAgreementHeaderData: '{!JSENCODE(purchaseAgreementJSON)}',
+                purchaseAgreementHeaderFieldList: '{!JSENCODE(purchaseAgreementHeaderFieldList)}',
+                purchaseAgreementAddlHeaderFieldList: '{!JSENCODE(purchaseAgreementAddlHeaderFieldList)}',
+                purchaseAgreementLinesFieldList: '{!JSENCODE(purchaseAgreementLinesFieldList)}',
+                purchaseAgreementLinesConfigJson: '{!JSENCODE(purchaseAgreementLinesConfigJson)}',
+                customViews: '{!JSENCODE(CustomViews)}',
+                customViewFields: '{!JSENCODE(CustomViewFields)}',
+                purchaseAgreementHeaderActions: {
+                    'Approve': '{!$RemoteAction.PurchaseAgreementAddManageExt.approve}',
+                    'Cancel': '{!$RemoteAction.PurchaseAgreementAddManageExt.cancel}',
+                    'Close': '{!$RemoteAction.PurchaseAgreementAddManageExt.close}',
+                    'Delete': '{!$RemoteAction.PurchaseAgreementAddManageExt.deletepa}',
+                },
+                maxLineNumber: 0 
+            })
+        });
+
+        var PurchaseAgreementManageUtil = function() {
+            
+            return {
+                 
+                PurchaseAgreementId: null,
+                PurchaseAgreementHeaderDetailList: null,
+                PurchaseAgreementHeaderData: null,
+                PurchaseAgreementLinesGrid: null,
+                PurchaseAgreementHeaderFieldList: null,
+                PurchaseAgreementAddlHeaderFieldList: null,
+                PurchaseAgreementLinesFieldList: null,
+                PurchaseAgreementLinesFields: null,
+                PurchaseAgreementLinesConfigJson: null,
+                PurchaseAgreementHeaderActions: null,
+                CustomViews: null,
+                CustomViewFields: null,
+                maxLineNumber: null,
+                isDirtyPAHeaderData: false,
+
+                    Init: function(args) {
+                            // initialize defaults
+                            this.PurchaseAgreementId = args.purchaseAgreementId;
+                            this.PurchaseAgreementHeaderData = JSON.parse(args.purchaseAgreementHeaderData);
+                            this.PurchaseAgreementHeaderFieldList = JSON.parse(args.purchaseAgreementHeaderFieldList);
+                            this.PurchaseAgreementAddlHeaderFieldList = JSONUtils.Parse(args.purchaseAgreementAddlHeaderFieldList);
+                            this.PurchaseAgreementLinesFieldList = JSON.parse(args.purchaseAgreementLinesFieldList);   
+                            this.PurchaseAgreementLinesFields = _.pluck(PurchaseAgreementManageUtil.PurchaseAgreementLinesFieldList, 'field');
+                            this.PurchaseAgreementLinesConfigJson = JSON.parse(args.purchaseAgreementLinesConfigJson);
+                            this.PurchaseAgreementHeaderActions = args.purchaseAgreementHeaderActions;
+                            this.CustomViews = JSON.parse(args.customViews);
+                            this.CustomViewFields = JSON.parse(args.customViewFields);
+                            this.maxLineNumber = args.maxLineNumber;
+                            
+                            if (this.PurchaseAgreementLinesFields.length > 0) {
+                                this.PurchaseAgreementLinesFields.shift();
+                            }
+                            
+                            this.RenderSaveListDropdown();
+                            this.RenderActionListDropdown();
+                         
+                            this.RenderWidgets();
+                    },
+                    
+                    RenderSaveListDropdown: function() {
+                    $('#saveButton').kendoDropDownButton({
+                        type: 'splitButton',
+                        items: [
+                            {
+                                text: "Save and Return",
+                                cssClass: "save-return-command"
+                            },
+                            {
+                                text: "Save and New",
+                                cssClass: "save-new-command"
+                            }
+                         ]
+                       });
+                    },
+                    
+                    RenderActionListDropdown: function() {
+                        $('#actionButton').kendoDropDownButton({
+                            items: [
+                                {
+                                    text: "Approve ",                               
+                                    click: function(e) {
+                                       PurchaseAgreementManageUtil.ExecuteAction('Approve');
+                                    } 
+                                },
+                                {
+                                    text: "Cancel ",                               
+                                    click: function(e) {
+                                       PurchaseAgreementManageUtil.ExecuteAction('Cancel');
+                                    } 
+                                },
+                                {
+                                    text: "Close ",                               
+                                    click: function(e) {
+                                       PurchaseAgreementManageUtil.ExecuteAction('Close');
+                                    } 
+                                },
+                                {
+                                    text: "Clone",                                
+                                    click: function(e) {
+                                        PurchaseAgreementManageUtil.ExecuteAction('Clone');  // KNDY-10509
+                                    } 
+                                },
+                                {
+                                separator: true
+                                },
+                                {
+                                    text: "Delete ",                               
+                                    click: function(e) {
+                                       PurchaseAgreementManageUtil.ExecuteAction('Delete');
+                                    } 
+                                }
+                            ]
+                        });
+                    },
+
+                    RenderWidgets: function() {
+                        // Show Purchase Agreement header detail list
+                        this.RenderPAHeaderDetailList();
+                    },
+                    GetColumnIndexFromName: function (grid, fieldName) {
+                        var index = -1;
+                        var columns = grid.columns;
+                        if (columns.length > 0) {
+                            for (var i = 0; i < columns.length; i++) {
+                                if (columns[i].field == fieldName) { // columns[i].title -- You can also use title property here but for this you have to assign title for all columns
+                                    index = i;
+                                    break;
+                                }
+                            }
+                        }
+                        return index;
+                    },
+                    
+                    RenderPAHeaderDetailList: function(){
+                        var headerLookupSearchFilters = [];
+                            headerLookupSearchFilters.push({ field: "Supplier__c", filter: "Type__c = \'Purchasing\' and Hold_Purchasing__c = false and Status__c = \'Active\'" });
+                        
+                        // Destroy PurchaseAgreementHeaderDetailList
+                        if (this.PurchaseAgreementHeaderDetailList) {
+                            this.PurchaseAgreementHeaderDetailList.destroy();
+                            $('#PurchaseAgreementHeaderDetailList').empty();
+                        }
+                        
+                        this.PurchaseAgreementHeaderDetailList = $('#PurchaseAgreementHeaderDetailList').kendoDetailList({
+                            namespace: '{!NamespaceUU}',
+                            highlightFirst: true,                     
+                            sections: [
+                                {
+                                    fields: PurchaseAgreementManageUtil.PurchaseAgreementHeaderFieldList
+                                },
+                                {
+                                    name: 'purchaseAgreement-header-addl-info',
+                                    title: 'Additional Information',
+                                    fields: PurchaseAgreementManageUtil.PurchaseAgreementAddlHeaderFieldList
+                                }
+                            ],
+                            lookupSearchAction: '{!$RemoteAction.PurchaseAgreementAddManageExt.lookupSearchFilter}',
+                            lookupSearchFilters: headerLookupSearchFilters,
+                            getDetailListFunction: purchaseAgreementHeaderData                   
+                        }).data('kendoDetailList');
+                        
+                        this.PurchaseAgreementHeaderDetailList.element.bind('OnReadSuccess', this.OnPAHeaderDetailListReadSuccess);
+                   },
+                   
+                   OnPAHeaderDetailListReadSuccess: function(e) {
+                        // Bind header events
+                        PurchaseAgreementManageUtil.BindHeaderEvents();
+                        // Show Purchase Agreement lines grid
+                        PurchaseAgreementManageUtil.RenderPALinesGrid();
+                   },
+                   
+                   BindHeaderEvents: function() {
+                       $('input[name="Supplier__c"]').bind('change',
+                        PurchaseAgreementManageUtil.OnHeaderSupplierChange
+                        );
+                        
+                        this.PurchaseAgreementHeaderDetailList.data.bind('change', function() {
+                            PurchaseAgreementManageUtil.isDirtyPOHeaderData = true;
+                        });
+                   },
+                   
+                   RenderPALinesGrid: function(){
+                        var configOptions = PurchaseAgreementManageUtil.PurchaseAgreementLinesConfigJson;
+                        var linesLookupSearchFilters = [];
+                        var dateFields = KenandyErp.KendoGridOptions.GetDateFields(PurchaseAgreementManageUtil.PurchaseAgreementLinesFieldList);
+                        var cancelAction = '{!$RemoteAction.PurchaseAgreementAddManageExt.cancelLines}';
+                        var closeAction = '{!$RemoteAction.PurchaseAgreementAddManageExt.closeLines}';
+                        var getFieldList = function(){
+								var fl = PurchaseAgreementManageUtil.PurchaseAgreementLinesFieldList
+								$.each(fl, function(){
+								if(this.field === 'Contract_Quantity__c'){
+									 this.wrapHeader = true;
+								}
+        							this.width = this.width ? this.width : '100px'; 
+								});         
+								return fl;               
+                        };
+                        
+                        // Destroy PurchaseAgreementLinesGrid
+                        if (this.PurchaseAgreementLinesGrid) {
+                            this.PurchaseAgreementLinesGrid.destroy();
+                            $('#PurchaseAgreementLinesGrid').empty();
+                        }
+                        linesLookupSearchFilters.push({ field: "Item__c", filter: "Company__c = \'{!purchaseAgreement.Company__c}\'" });
+                        
+                        this.PurchaseAgreementLinesGrid = $('#PurchaseAgreementLinesGrid').width($('#PurchaseAgreementLinesGrid').width()).kendoGridActionList({
+                            namespace: '{!NamespaceUU}', 
+                            config: configOptions, 
+                            fieldList: getFieldList(),
+                            lookupSearchAction: '{!$RemoteAction.PurchaseAgreementAddManageExt.lookupSearchFilter}', 
+                            getActionListFunction: purchaseAgreementLinesData,
+                            showIconButtons: true,
+                            highlightFirst: true,
+                            toolbarButtons: [ 
+                                { template: "<input class='grid-view-options' />" },
+                                { name: "grid-cancel-custom-command", text:"", template: "<a class='k-button' title='Cancel'><span class='fa fa-ban fa-lg kndy-red grid-cancel-custom-command'></span></a>" },
+                                { name: "grid-close-custom-command", text:"", template: "<a class='k-button' title='Close'><span class='fa fa-times-circle fa-lg grid-close-custom-command'></span></a>" }
+                            ],
+                            beforeEdit: function(e) { //KNDY-10599
+                                // disable read only fields
+                                PurchaseAgreementManageUtil.PurchaseAgreementLinesGridBeforeEdit.call(this, e);
+                            },
+                            lookupSearchFilters: linesLookupSearchFilters
+
+                        }).data('kendoGridActionList');
+                        
+                        this.PurchaseAgreementLinesGrid.bind('edit', $.proxy(PurchaseAgreementManageUtil.PurchaseAgreementLinesGridEdit, { grid: this.PurchaseAgreementLinesGrid }));
+                        
+                        this.PurchaseAgreementLinesGrid.element.bind('OnReadSuccess', this.OnPALinesGridReadSuccess);
+
+                        // unbind and bind the save, save & new, save & return button click events
+                        $('.save-command, .save-new-command, .save-return-command').off("click",
+                            $.proxy(PurchaseAgreementManageUtil.Save, { detailList: this.PurchaseAgreementHeaderDetailList, grid: this.PurchaseAgreementLinesGrid, options: { config: configOptions, dateFields: dateFields } })
+                        );
+                        
+                        $('.save-command, .save-new-command, .save-return-command').on("click",
+                            $.proxy(PurchaseAgreementManageUtil.Save, { detailList: this.PurchaseAgreementHeaderDetailList, grid: this.PurchaseAgreementLinesGrid, options: { config: configOptions, dateFields: dateFields } })
+                        );
+                        
+                        // bind grid cancel & close agreement line events
+                        this.PurchaseAgreementLinesGrid.wrapper.on("click", ".grid-cancel-custom-command", $.proxy(PurchaseAgreementManageUtil.CloseCancelLines, { grid: this.PurchaseAgreementLinesGrid, options: { CloseCancelLinesAction: cancelAction } }));
+                        this.PurchaseAgreementLinesGrid.wrapper.on("click", ".grid-close-custom-command", $.proxy(PurchaseAgreementManageUtil.CloseCancelLines, { grid: this.PurchaseAgreementLinesGrid, options: { CloseCancelLinesAction: closeAction } }));
+    
+                        // unbind and bind the add line button click events
+                        this.PurchaseAgreementLinesGrid.wrapper.off("click", ".grid-create-command", $.proxy(PurchaseAgreementManageUtil.AddLine, { detailList: this.PurchaseAgreementHeaderDetailList, grid: this.PurchaseAgreementLinesGrid, options: { config: configOptions, dateFields: dateFields } }));
+                        this.PurchaseAgreementLinesGrid.wrapper.on("click", ".grid-create-command", $.proxy(PurchaseAgreementManageUtil.AddLine, { detailList: this.PurchaseAgreementHeaderDetailList, grid: this.PurchaseAgreementLinesGrid, options: { config: configOptions, dateFields: dateFields } }));
+    
+                        //var data = PurchaseAgreementManageUtil.CustomViews;
+                        $(".grid-view-options").kendoDropDownList({
+                            index: 0,
+                            dataTextField: "text",
+                            dataValueField: "value",
+                            dataSource: PurchaseAgreementManageUtil.CustomViews,
+                 
+                            change: function(e) {
+                                var fieldNames = PurchaseAgreementManageUtil.PurchaseAgreementLinesFields;
+                                for (var fld in fieldNames) {
+                                    if(fieldNames[fld] != ''){
+                                        PurchaseAgreementManageUtil.PurchaseAgreementLinesGrid.hideColumn(fieldNames[fld]);    
+                                    }
+                                }
+                                fieldNames = _.values(_.pick(PurchaseAgreementManageUtil.CustomViewFields, this.value()))[0];
+                                PurchaseAgreementManageUtil.DisplayViewFields(fieldNames);
+                            },
+                            dataBound: function(e) {
+                                var fieldNames = PurchaseAgreementManageUtil.PurchaseAgreementLinesFields;
+                                for (var fld in fieldNames) {
+                                    if(fieldNames[fld] != ''){
+                                        PurchaseAgreementManageUtil.PurchaseAgreementLinesGrid.hideColumn(fieldNames[fld]);
+                                    }
+                                }
+                                fieldNames = _.values(_.pick(PurchaseAgreementManageUtil.CustomViewFields, this.dataSource._data[0].value))[0];
+                                PurchaseAgreementManageUtil.DisplayViewFields(fieldNames);
+                            } 
+                          
+                        });
+                    },
+                    DisplayViewFields: function(fieldNames){
+                        var grid = this.PurchaseAgreementLinesGrid;
+                        var i = 1;//Starting index of View columns(After checkbox,  and id)
+                        for (fld = 0; fld < fieldNames.length; fld++) { 
+                            i = i + 1;
+                            //Get column index for field name
+                            var colIndex = PurchaseAgreementManageUtil.GetColumnIndexFromName(grid, fieldNames[fld]);
+
+                            //Show columns
+                            if(colIndex >= 1){
+                                if(fieldNames[fld] != ''){
+                                    //Re-order columns based on the field set order
+                                    grid.reorderColumn(i, grid.columns[colIndex]);
+                                    grid.showColumn(i);
+                                }
+                            }
+						    }
+                           
+                    },
+                    
+                    PurchaseAgreementLinesGridBeforeEdit: function(e) { //KNDY-10599
+                        var grid = this;
+                        var columnIndex = grid.cellIndex(e.container);
+                        var fieldName = grid.thead.find("th").eq(columnIndex).data("field");
+                        var isDefaultPrevented = false;
+                        
+                        // On Approved lines, certain fields cannot be edited
+                        if (e.model.Approved__c == true) {
+                            if (fieldName == 'Item__c' || 
+                                    fieldName == 'Minimum_Order_Quantity__c'|| 
+                                    fieldName == 'Purchase_UOM__c' ||
+                               		fieldName == 'Negotiated_Price__c' ||
+                                    fieldName == 'Contract_Quantity__c') {
+                                isDefaultPrevented = true;
+                            }
+                        }
+                        
+                        if (isDefaultPrevented) {
+                            e.preventDefault();
+                        }
+                    },
+                    
+                    PurchaseAgreementLinesGridEdit: function(e) {
+                        var self = this;
+                        var grid = self.grid;
+                        
+                        if (e.model.isNew() && !e.model.dirty) {
+                            // set defaults
+                            if (e.model.Line__c == 0){
+                                PurchaseAgreementManageUtil.maxLineNumber++;
+                                e.model.Line__c = PurchaseAgreementManageUtil.maxLineNumber;
+                                grid.refresh();
+                            }
+                        }
+                        
+	                        // Get Item Details
+		                    if ($(e.container).find('input[name="Item__c"]').length > 0) {
+		                        var item = $(e.container).find('input[name="Item__c"]');
+		                        item.on('focus', function() {
+		                             $(this).data('default_value', $(this).val());
+		                        });
+		                        item.focus();
+		                    
+		                        item.on('blur',
+		                            $.proxy(PurchaseAgreementManageUtil.OnItemChange, { grid: grid })
+		                        );
+		                    }
+		                    
+		                    // Override ASL
+		                    $(e.container).find('input[name="ASL_Override__c"]').bind('click', 
+		                        $.proxy(PurchaseAgreementManageUtil.OnASLOverrideChange, { grid: grid })
+		                    );
+		                    
+		                    // Validate CPC Code
+		                    $(e.container).find('input[name="CPC_Code__c"]').bind('blur', 
+		                        $.proxy(PurchaseAgreementManageUtil.ValidateCPCCode, { grid: grid })
+		                    );
+		                    
+		                    // KNDY-10599 Validate Qty against MOQ
+                            $(e.container).find('input[name="Contract_Quantity__c"]').bind('blur', 
+                                $.proxy(PurchaseAgreementManageUtil.ValidateQtyAgainstMOQ, { grid: grid })
+                            );
+                            
+                            // KNDY-10599 Validate MOQ against Qty
+                            $(e.container).find('input[name="Minimum_Order_Quantity__c"]').bind('blur', 
+                                $.proxy(PurchaseAgreementManageUtil.ValidateQtyAgainstMOQ, { grid: grid })
+                            );
+                        
+                            $(e.container).find('input[name="Negotiated_Price__c"]').bind('blur', 
+                                $.proxy(PurchaseAgreementManageUtil.ValidateNegativePrice, { grid: grid })
+                            );
+                        },
+                    OnHeaderSupplierChange: function(e) {
+                        var self = this;
+                        var supplierId = $(e.target).val();
+                        var detailList = PurchaseAgreementManageUtil.PurchaseAgreementHeaderDetailList;
+                        KenandyErp.BlockUI();
+                        Visualforce.remoting.Manager.invokeAction( 
+                            '{!$RemoteAction.PurchaseAgreementAddManageExt.getSupplierDetails}', supplierId, 
+                            function (result, event) {
+                                KenandyErp.UnBlockUI();
+                                if (event.type == 'exception') {
+                                    KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement); 
+                                } else {
+                                    KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                    if (result.success) {
+                                        if (result.records && result.records.length > 0){
+                                            var supplier = result.records[0];
+                                            var currency = (supplier.Currency__c) ? supplier.Currency__c : null;
+                                            var currencyRef = (supplier.Currency__r) ? supplier.Currency__r : null;
+                                                invoiceMatching_global = (supplier.Invoice_Matching__c) ? (supplier.Invoice_Matching__c) : null;
+                                                
+                                            detailList.data.set('Currency__c', supplier.Currency__c);
+                                            detailList.data.set('Currency__r', supplier.Currency__r);
+                                            
+                                            if(currency == '' || currency == null){
+                                            	PurchaseAgreementManageUtil.GetCompanyInfo();
+                                            }    
+                                                
+                                        }
+                                    }
+                                }
+                            },
+                            {escape: false}
+                        );
+                    },  
+                    
+                    GetCompanyInfo: function(){ 
+                    var detailList =  PurchaseAgreementManageUtil.PurchaseAgreementHeaderDetailList;
+                    var companyId = detailList.data.get('Company__c');
+                    if (!companyId) {
+                        companyRef_global = {Id : null, Name : null};
+                        detailList.data.set('Currency__c', null);
+                        detailList.data.set('Currency__r', { Id: null, Name: null });    
+                        return;
+                    }
+                    KenandyErp.BlockUI();
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.PurchaseAgreementAddManageExt.getCompanyInfo}',
+                        companyId,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                if (result.success) {
+                                    if (result.records && result.records.length > 0) {
+                                        var company = result.records[0];   
+                                        companyRef_global = company; // update current company variable
+                                        var currency = (company.Default_Transaction_Currency__c) ? company.Default_Transaction_Currency__c : null;
+                                        var currencyRef = (company.Default_Transaction_Currency__r) ? company.Default_Transaction_Currency__r : null;                                        
+                                        
+                                        detailList.data.set('Currency__c', currency);
+                                        detailList.data.set('Currency__r', currencyRef);                                        
+                                        
+                                    }
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                },   
+                    
+	                OnItemChange: function(e) {
+	                    var isSubmitClicked = $('.save-command, .save-new-command, .save-return-command').data('mouseDown');
+	                    
+	                    if ($(e.target).val() == $(e.target).data('default_value')) {
+	                        return;
+	                    }
+	                    
+	                    var self = this;
+	                    var grid = this.grid;
+	                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message");
+	                    var cell = grid.editable.element;
+	                    var row = $(e.target).closest("tr"); //get the row
+	                    var dataItem = grid.dataItem(row); // get the row data
+	                    var itemId = dataItem.get('Item__c');
+	                    
+	                    if (!itemId)
+	                    {
+	                        dataItem.set('UOM__c', null);
+	                        dataItem.set('Purchase_UOM__c', null);//KNDY-10599
+	                        return;
+	                    }
+	
+	                    if (isSubmitClicked) {
+	                        $('.grid-save-command').data("isOnBlurExecuting", true);
+	                    }
+	                    
+	                    KenandyErp.BlockUI(grid.element);
+	                                
+	                    Visualforce.remoting.Manager.invokeAction(
+	                        '{!$RemoteAction.PurchaseAgreementAddManageExt.getItemDetails}',
+	                        itemId,
+	                        function (result, event) {
+	                            KenandyErp.UnBlockUI(grid.element);
+	                            
+	                            if (event.type == 'exception') {
+	                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+	                            } else {
+	                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+	                                
+	                                if (result.success) {
+	                                    if (result.records && result.records.length > 0) {
+	                                        var item = result.records[0];   
+	                                        var itemRef = item;
+	                                        var uom = (item.Purchasing_UOM__c) ? item.Purchasing_UOM__c : null;
+	                                        var uomRef = (item.Purchasing_UOM__r) ? item.Purchasing_UOM__r : null;
+	                                        var uomName = (uomRef && uomRef.Name) ? uomRef.Name : null;
+	                                        
+	                                        dataItem.set('UOM__c', uomName);
+	                                        dataItem.set('Purchase_UOM__c', uom); //KNDY-10599
+	                                        dataItem.set('Purchase_UOM__r', uomRef);//KNDY-10599
+	                                        dataItem.set('Item__r', item); //KNDY-10599
+	                                    }
+	                                }
+	                            }
+	                            
+	                            if (isSubmitClicked) {
+	                                $('.grid-save-command').data("isOnBlurExecuting", false);
+	                                $('.grid-save-command').data("mouseDown", false);
+	                                $('.grid-save-command').trigger('click');
+	                            }
+	                        },
+	                        {escape: false}
+	                    );
+	                },
+	                
+	                ValidateQtyAgainstMOQ: function(e) { //KNDY-10599
+                        var self = this;
+                        var grid = this.grid;
+                        var messageElement = grid.element.closest("div.grid-container").find("div.grid-message");
+                        var cell = grid.editable.element;
+                        var row = $(e.target).closest("tr"); //get the row
+                        var dataItem = grid.dataItem(row); // get the row data
+                        if(dataItem.get('Minimum_Order_Quantity__c') &&
+                           dataItem.get('Contract_Quantity__c') &&
+                           dataItem.get('Contract_Quantity__c') < dataItem.get('Minimum_Order_Quantity__c')){
+                            setTimeout(function(){  
+                                grid.editCell(cell);
+                                KenandyErp.KendoGridOptions.ShowValidationError(cell, e.target.name, '{!$Label.Purchase_Agreement_Quantity_cannot_be_less_than_minimum_order_quantity}');
+                            }, 500);
+                        }
+                   },
+                   
+	                OnASLOverrideChange: function(e) {
+	                    var self = this;
+	                    var grid = this.grid;
+	                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message");
+	                    var cell = grid.editable.element;
+	                    var row = $(e.target).closest("tr"); //get the row
+	                    var dataItem = grid.dataItem(row); // get the row data
+	                    
+	                    if (dataItem.get('ASL_Override__c')) {
+	                        // Set focus to the next cell
+	                        grid.closeCell();
+	                        grid.editCell(cell.next());
+	                    }
+	                    else {
+	                        dataItem.set('CPC_Code__c', null);
+	                    }
+	               },
+	                
+	               ValidateCPCCode: function(e) {
+	                    var self = this;
+	                    var grid = this.grid;
+	                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message");
+	                    var cell = grid.editable.element;
+	                    var row = $(e.target).closest("tr"); //get the row
+	                    var dataItem = grid.dataItem(row); // get the row data
+	
+	                    if (dataItem.get('ASL_Override__c') && !dataItem.get('CPC_Code__c')) {
+	                        grid.closeCell();
+	                        grid.editCell(cell);
+	                                    
+	                        KenandyErp.KendoGridOptions.ShowValidationError(cell, e.target.name, '{!$Label.CPC_Code_is_required}');
+	                    }
+                    },
+                    
+                    ValidateNegativePrice: function(e) {
+	                    var self = this;
+	                    var grid = this.grid;
+	                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message");
+	                    var cell = grid.editable.element;
+	                    var row = $(e.target).closest("tr"); //get the row
+	                    var dataItem = grid.dataItem(row); // get the row data
+	
+	                    if (dataItem.get('Negotiated_Price__c') < 0) {
+	                        grid.closeCell();
+	                        grid.editCell(cell);
+	                                    
+	                        KenandyErp.KendoGridOptions.ShowValidationError(cell, e.target.name, 'Negotiated Price cannot be negative');
+	                    }
+                    },
+                    
+                    OnPALinesGridReadSuccess: function(e) {
+                        var hasPALines = (e.event && e.event.result && e.event.result.total > 0);
+                                            
+                        if (PurchaseAgreementManageUtil.PurchaseAgreementHeaderDetailList.data.get('Id')) {
+                            PurchaseAgreementManageUtil.DisableHeaderFields({
+                                hasPALines: true
+                            });
+                        }
+                    },
+                    
+                    DisableHeaderFields: function(options) {
+                        var hasPaLines = (options.hasPALines) ? options.hasPALines : false;
+                        var isEnabled = !hasPaLines;
+                        var enabledFields = [];
+                        var disabledFields = [];
+                        var disabledHeaderFields = [];
+                        
+                        if (hasPaLines && PurchaseAgreementManageUtil.PurchaseAgreementHeaderDetailList.data.get('Id')) {
+                            disabledFields = ['Company__c','Supplier__c'];
+                            
+                            var headerFields = PurchaseAgreementManageUtil.PurchaseAgreementHeaderDetailList.getFieldList();
+                            
+                            for (var i = 0; i < headerFields.length; i++) {
+                                var field = headerFields[i].field;
+                                
+                                if (_.contains(enabledFields, field) && _.contains(disabledFields, field)) {
+                                    disabledHeaderFields.push(field);
+                                }
+                            }                        
+                            disabledHeaderFields = _.union(disabledFields, disabledHeaderFields);
+                        }
+                        
+                        // Disable Header Fields
+                        if (this.PurchaseAgreementHeaderDetailList) {
+                            this.PurchaseAgreementHeaderDetailList.enable(isEnabled, { 
+                                disabledFields: disabledHeaderFields 
+                            });
+                        }
+                    },
+                    
+                    CloseCancelLines: function(e) {
+                        var self = this;
+                        var grid = self.grid;
+                        var options = self.options;
+                        var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                        
+                        var gridUtils = new KendoGridUtils(grid);
+                        var selectedRows = gridUtils.SelectedRows();
+                        var modelIdField = grid.dataSource.options.schema.model.idField;
+                          
+                        if (selectedRows.length == 0) {
+                            KenandyErp.Message("No records selected.", KenandyErp.MessageType.Info, messageElement);
+                            return;
+                        }
+    
+                        KenandyErp.BlockUI(grid.element);
+                             
+                        Visualforce.remoting.Manager.invokeAction(
+                            options.CloseCancelLinesAction,              
+                            selectedRows,
+                            function (result, event) {
+                                KenandyErp.UnBlockUI(grid.element);
+                                            
+                                if (event.type == 'exception') {
+                                    KenandyErp.Message(event.message);
+                                } 
+                                else {
+                                    KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                    if (result.success) {
+                                        PurchaseAgreementManageUtil.RenderWidgets();
+                                    }
+                                    else {
+                                        KenandyErp.Messages(result.messages);
+                                    }
+                                }
+                            },
+                            {escape: false}
+                        );
+                    },
+                    
+                    AddLine: function(e) {
+                        var self = this;
+                        var grid = self.grid; 
+                        var detailList = self.detailList;
+                        var row = $(e.target).closest("tr"); //get the row
+                        var dataItem = grid.dataItem(row); // get the row data
+                        var pa = detailList.data;
+                        var paSupplier = (pa.get('Supplier__c')) ? pa.get('Supplier__c'): null;
+                        var paSupplierRef = (pa.get('Supplier__r')) ? pa.get('Supplier__r') : null;
+                        var paInvoiceMatching = (pa.get('Supplier__r.Invoice_Matching__c')) ? pa.get('Supplier__r.Invoice_Matching__c') : invoiceMatching_global;
+                        dataItem.set('Contract_Start__c', pa.Contract_Start__c);
+                        dataItem.set('Contract_End__c', pa.Contract_End__c); 
+                        
+                        if(paInvoiceMatching && paSupplierRef){
+                            dataItem.set('Invoice_Matching__c', paInvoiceMatching);
+                        }
+                        
+                    },
+                    
+                    Save: function(e) {
+                        var self = this;
+                        var detailList = self.detailList;
+                        var grid = self.grid;
+                        var options = self.options;
+                        var modelIdField = grid.dataSource.options.schema.model.idField;
+                        
+                        var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                        var isNewPurchaseAgreement = (!detailList.data.Id) ? true : false;
+                        var returnUrl = '{!ReturnUrl}';
+                        
+                        KenandyErp.ClearMessage();
+                        
+                        if (!detailList.validate()) {
+                            KenandyErp.Message("Please fix the following errors.");
+                            e.preventDefault();
+                            return false;
+                        }
+
+                        var headerDateFields = detailList.getDateFields(); 
+                        var headerRowsList = [];
+                        var headerRows = [];
+                        
+                        headerRowsList.push(detailList.data);
+                        
+                        headerRows = $.map(headerRowsList, function(item, index) {
+                            item = item.toJSON();
+                            item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+                            
+                            return item;
+                        });
+                        
+                        if (headerRows.length > 0) {
+                            headerRows = Serializer.ParameterMap(headerRows);
+                        }
+                        
+                        var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields, isDml: false });
+                        var updatedRows = [];
+                        var newRows = [];
+                        var deletedRows = [];
+                        
+                        newRows = gridUtils.NewRows();
+                        updatedRows = gridUtils.UpdatedRows();
+                        deletedRows = gridUtils.DeletedRows();
+                        
+                        
+                        var lineNumbersWithoutUOM = ''; //KNDY-10599
+                        $.map(updatedRows, function(line, index) {
+                            if (!line.Purchase_UOM__c  && line.Item__c &&
+                                (line.Item__r.Source__c == 'Purchased' ||
+                                line.Item__r.Source__c == 'Miscellaneous' ||
+                                line.Item__r.Source__c == 'Expense' ||
+                                line.Item__r.Source__c == 'Outside Processing')){
+                                    lineNumbersWithoutUOM += line.Line__c +',';
+                            }
+                        });
+                        $.map(newRows, function(line, index) {
+                            if (!line.Purchase_UOM__c  && line.Item__c &&
+                                (line.Item__r.Source__c == 'Purchased' ||
+                                line.Item__r.Source__c == 'Miscellaneous' ||
+                                line.Item__r.Source__c == 'Expense' ||
+                                line.Item__r.Source__c == 'Outside Processing')){
+                                    lineNumbersWithoutUOM += line.Line__c +',';
+                            }
+                        });
+                        if (lineNumbersWithoutUOM){
+                            KenandyErp.Message("Purchase UOM is required. Lines - " + lineNumbersWithoutUOM);
+                            e.preventDefault();
+                            return false;
+                        }
+                        
+                        if (newRows.length > 0){
+                            newRows = Serializer.ParameterMap(newRows);
+                        }
+                        if (updatedRows.length > 0){
+                            updatedRows = Serializer.ParameterMap(updatedRows);
+                        }
+                        if (deletedRows.length > 0){
+                            deletedRows = Serializer.ParameterMap(deletedRows);
+                        }
+                        KenandyErp.BlockUI();
+                        
+                        headerDateFields = headerDateFields ? _.pluck(headerDateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+                        var dateFields = self.options.dateFields ? _.pluck(self.options.dateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;          
+                        console.log('Calling Save Action');
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.PurchaseAgreementAddManageExt.saveAction}', 
+                            headerRows[0], 
+                            headerDateFields,           
+                            updatedRows,
+                            newRows,
+                            deletedRows,
+                            dateFields,
+                            function (result, event) {
+                                KenandyErp.UnBlockUI();
+                                            
+                                if (event.type == 'exception') {
+                                    KenandyErp.Message(event.message);
+                                } else {
+                                    KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                    
+                                    if (result.success) {
+                                        
+                                        if ($(e.target.parentElement).hasClass('save-return-command')) {
+                                            KenandyErp.NavigateToURL(returnUrl, true);
+                                        }
+                                        else if ($(e.target.parentElement).hasClass('save-new-command')) {
+                                            KenandyErp.NavigateToURL('{!$Page.PurchaseAgreementAddManage}', true);
+                                        }
+                                        else if (isNewPurchaseAgreement && $(e.target).hasClass('save-command')) {
+                                            var uri = URI('{!$CurrentPage.URL}');
+                                            if (uri.hasQuery("clone", "1") === false){ // not creating a clone
+                                                KenandyErp.NavigateToURL('{!$Page.PurchaseAgreementAddManage}' + '?id=' + result.records[0].Id + '&',true);
+                                            }
+                                            else{ // created a clone
+                                                KenandyErp.NavigateToURL('{!$Page.PurchaseAgreementAddManage}' + '?id=' + result.records[0].Id,true);
+                                            }
+                                        }
+                                        else {
+                                            // refresh widgets
+                                            var id = (result.records && result.records[0].Id) ? result.records[0].Id : null;
+
+                                            PurchaseAgreementManageUtil.RenderWidgets();
+                                            
+                                            KenandyErp.Messages(result.messages);
+                                        }
+                                    }
+                                    else {
+                                        KenandyErp.Messages(result.messages);
+                                    }
+                                }
+                            },
+                            {escape: false}
+                        );
+                    },
+                    
+                    ResetDirtyFlags: function() {
+                        PurchaseAgreementManageUtil.isDirtyPAHeaderData = false;
+                    },
+                    
+                    IsPageDirty: function(){
+                        var gridUtils_PALines = new KendoGridUtils(PurchaseAgreementManageUtil.PurchaseAgreementLinesGrid);
+                        if (PurchaseAgreementManageUtil.isDirtyPAHeaderData || gridUtils_PALines.HasChanges() ){
+                            return true;
+                        }
+                        else{
+                            return false;
+                        }
+                    },
+                    
+                    //KNDY-10083 - Cloning a PA adds a url parameter clone=1
+                    //Controller looks for this parameter to display copies of records on page
+                    clonePA: function(){  
+                        if (window.location.href.indexOf('?') != -1 && window.location.href.indexOf('id') != -1) {
+                            KenandyErp.NavigateToURL('{!$Page.PurchaseAgreementAddManage}' + '?clone=1&id='+PurchaseAgreementManageUtil.PurchaseAgreementId,true);
+                        }
+                        else {
+                            KenandyErp.Messages([{message:'{!$Label.Cannot_clone_save_the_Purchase_Agreement_to_proceed}', severity:'ERROR'}]);
+                        }
+                    },
+                    
+                   ExecuteAction: function(actionType){
+                    var deferred = $.Deferred();
+                    var returnUrl = '{!DeleteUrl}';
+                    var uri = URI('{!$CurrentPage.URL}'); //KNDY-10083
+                    if(!PurchaseAgreementManageUtil.PurchaseAgreementId ||
+                        uri.hasQuery("clone", "1") === true){
+                        KenandyErp.Messages([{message:'{!$Label.Cannot_perform_any_action_save_the_purchase_agreement_to_proceed}', severity:'ERROR'}]);
+                        return;
+                    }
+                    if (!PurchaseAgreementManageUtil.PurchaseAgreementHeaderDetailList.validate()) {
+                        KenandyErp.Message("Please fix the following errors.");
+                        e.preventDefault();
+                        return false;
+                    }
+                    if (PurchaseAgreementManageUtil.IsPageDirty()) {
+                        KenandyErp.Messages([{message:'{!$Label.Cannot_perform_action_because_of_unsaved_changes_Please_save_the_PA_to_proceed}', severity:'ERROR'}]);
+                        return false;
+                    }
+                    if (actionType == 'Delete'){
+                        var r = confirm("Are you sure?");
+                        if (r == false){
+                            return;
+                        }
+                    }
+                    
+                    // KNDY-10083 Clone does not execute a controller method, but redirects to a new page
+                    if (actionType == 'Clone'){ 
+                        PurchaseAgreementManageUtil.clonePA();
+                        return;
+                    }
+                    
+                    console.log('Inside the invoke action');
+                    Visualforce.remoting.Manager.invokeAction(
+                        PurchaseAgreementManageUtil.PurchaseAgreementHeaderActions[actionType],
+                        '{!purchaseAgreement.Id}',
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();          
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message);
+                            } 
+                            else {
+                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                if (result.success) {
+
+                                    if (actionType == "Delete") {
+                                        KenandyErp.NavigateToURL(returnUrl, true);
+                                    }
+                                    else{
+                                        // refresh widgets
+                                        var id = (result.records && result.records[0].Id) ? result.records[0].Id : null;
+                                        PurchaseAgreementManageUtil.RenderWidgets();
+                                        KenandyErp.Messages(result.messages);
+                                    }
+                                }
+                                else {
+                                    KenandyErp.Messages(result.messages);
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                }   
+            };
+        }();
+    </script>    
+</apex:page>

@@ -1,0 +1,469 @@
+<apex:page showHeader="true" sidebar="true" standardController="Item__c" extensions="InventoryMasterViewExt" tabStyle="Item__c" readOnly="true" docType="html-5.0">
+    <style type="text/css">
+        .column-label {
+        vertical-align: middle !important;
+        width: 10%;
+        }
+        
+        .column-field {
+            vertical-align: middle !important;
+            width: 40%;
+        }
+        
+        .filter-operator {
+        
+        }
+        
+        .custom-filter-options {
+            width: 10%;
+        }
+        
+        .custom-filter-fields {
+            width: 85%;
+        }
+    </style>
+    
+    <c:KendoResources />
+
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+
+    <apex:sectionHeader subtitle="{!$Label.Inventory_Master}" help="{!$Page.HelpInventoryMaster}" />
+
+    <div class="page-message"></div>
+    <apex:form id="lotMasterViewForm">
+        
+        <apex:pageBlock title="{!$Label.Filters}">    
+            <table class="kndy-table">
+                <tr>
+                    <td class="column-label">
+                        <apex:outputLabel value="{!$ObjectType.Item__c.Label}" for="itemFilter" />:
+                    </td>
+                    <td class="column-field">
+                        <select id="itemFilter" class="kendoWidgetSelector"></select>
+                    </td>
+                <td class="column-label">
+                    <apex:outputLabel value="{!$ObjectType.Facility__c.Label}" for="facilityFilter" />:
+                </td>
+                <td class="column-field">
+                    <input id="facilityFilter" class="kendoWidgetSelector" />
+                </td>
+                    
+                </tr>
+                <tr>
+                    <td colspan="1">&nbsp;</td>
+                    <td>
+                        <input name="searchFilter" id="searchFilter" type="button" value="{!$Label.Search}" onclick="LotMasterViewActions.Search();" class="btn" />
+                        <input name="clearFilters" id="clearFilters" type="button" value="{!$Label.CSReset}" onclick="LotMasterViewActions.Reset();" class="btn" />
+                    </td>
+                </tr>
+            </table>
+        </apex:pageBlock>
+        
+    </apex:form>
+    
+    <apex:pageBlock id="itemInvViewGridContainer">    
+        
+        <div class="grid-container">
+            <div class="grid-message" />
+            <div id="InventorybyFacilityGrid" />
+        </div>
+        
+    </apex:pageBlock>
+
+    <script type="text/javascript">  
+    var defaultItemId = '{!defaultItemId}';
+    var defaultItemName = '{!defaultItemName}';
+    var defaultFacId = '{!defaultFacId}';
+    var attributestoDisplay='';
+    var InventorybyFacilityGrid;
+    var currentItemId;
+    var invLinesdata='';
+    var detailData = [];
+    var expandedRows = [];
+    var itemFilter;
+    var skidFields;
+    var detailFields = JSON.parse('{!JSENCODE(skiddetailFieldsJson)}');
+    var facilityIDs;
+    var locationIDs;
+    var facilityFilter;
+    var isHideResults = ('{!isHideResultsOnPageLoad}' == 'true');
+    var aggregates = [ { field: "Quantity_Available__c", aggregate: "sum" },
+    				   { field: "Quantity_Used__c", aggregate: "sum" },
+                       { field: "Quantity_Allocated__c", aggregate: "sum" },
+                       { field: "Input_Quantity__c", aggregate: "sum" },
+                       { field: "Quantity_to_Issue__c", aggregate: "sum" },
+                       { field: "Quantity_Scrapped__c", aggregate: "sum" } ];
+    
+    
+    var getInventoryDatabyFacility = function() { 
+    	
+	     var deferred = $.Deferred();  
+	          var messageElement = $(".page-message");
+	               
+	          Visualforce.remoting.Manager.invokeAction(
+	              '{!$RemoteAction.InventoryMasterViewExt.getSkidsbyFacility}',
+	               attributestoDisplay,
+	               LotMasterViewUtils.GetFilterCriteria(),
+	               function (result, event) {
+	               		if (event.type == 'exception') {
+	                        KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+	                    }
+	                    deferred.resolve(result, event);
+	                },
+	                {escape: false}
+	          
+	             );
+	            
+	            return deferred.promise();
+	};
+	
+	var getInventoryDatabyLoc = function(e,masterDataItem) {
+    
+    	var headerSkidRows = [];
+        var headerSkidRowsList = [];
+    	
+    	var detailList = $('#InventorybyFacilityGrid').data('kendoGridActionList');
+    	var detailDateFields = KenandyErp.KendoGridOptions.GetDateFields(JSONUtils.Parse(skidFields));
+    	
+    	headerSkidRowsList.push(masterDataItem);
+ 		
+        headerSkidRows = $.map(headerSkidRowsList, function(item, index) {
+            item = JSON.parse(JSON.stringify(item));
+                           
+          item = Serializer.ConvertToSFDCDate(item, { dateFields: detailDateFields });
+          delete item.uid;
+          delete item.dirty;
+          if(item._events){
+          	delete item._events;
+          }
+          
+          if(item.__kendo_devtools_id){
+          	delete item.__kendo_devtools_id;
+          }
+          
+          return item;
+        });
+        
+        if (headerSkidRows.length > 0) {
+            headerSkidRows = Serializer.ParameterMap(headerSkidRows);   
+        }
+        
+        detailDateFields = detailDateFields ? _.pluck(detailDateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+         
+	     var deferred = $.Deferred();  
+	             
+	          var messageElement = $(".page-message");
+	               
+	          Visualforce.remoting.Manager.invokeAction(
+	              '{!$RemoteAction.InventoryMasterViewExt.getSkidsbyLoc}',
+	               masterDataItem.Facility2__c,
+	               masterDataItem.Item__c,
+	               headerSkidRows[0],
+	               detailDateFields,
+	               function (result, event) {
+	               		if (event.type == 'exception') {
+	                        KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+	                    }
+	                    KenandyErp.CleanNamespace(result.records, '{!namespaceUU}');
+	                    deferred.resolve(result, event);
+	                    
+	                    invLinesdata = result.records;
+	                    LotMasterViewActions.RenderLocGrid(e);
+	                    
+	                },
+	                {escape: false}
+	          
+	             );
+	            
+	            return deferred.promise();
+	};
+    
+    $(document).on('KenandyErpReady', function(e) {
+        LotMasterViewActions.Init();
+        
+    });
+    
+    var LotMasterViewUtils = function() {
+        return {
+            GetFieldList: function(fieldList) {
+                fieldList = JSON.parse(fieldList);
+                
+                $.each(fieldList, function() {
+                    var aggregateField = _.where(aggregates, {field: this.field})[0];
+                    
+                    if (aggregateField && this.field == aggregateField.field) {
+                        this.aggregate = aggregateField.aggregate;
+                    }
+                });
+                
+                return JSON.stringify(fieldList);
+            },
+            
+            GetFilterCriteria: function() {
+                var filterCriteria = [];
+                
+                if (itemFilter.value().length > 0) {
+                    filterCriteria.push({ field: 'Item__c', value: JSON.stringify(itemFilter.value()), operator: KenandyErp.KendoGridOptions.FilterOperatorType.Contains });
+                }
+                
+                if (facilityFilter.value().trim() != '') {
+                        filterCriteria.push({ field: 'Facility__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: facilityFilter.value(), operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+                    }
+                    
+                return filterCriteria;
+            }
+        };
+    }();
+    
+    var LotMasterViewActions = function() {
+        
+        return { 
+            InventorybyFacilityGrid:null,
+            
+            Init: function() {
+                
+                // Initialize Item Lookup
+                itemFilter = $.fn.KendoMultiSelect($('#itemFilter'), { lookupSearchAction: '{!$RemoteAction.InventoryMasterViewExt.lookupSearchFilter}', referenceTo: 'Item__c', title: 'Item'});
+                
+               // Initialize Facility Lookup
+               facilityFilter = $.fn.KendoComboBox($('#facilityFilter'), { lookupSearchAction: '{!$RemoteAction.InventoryMasterViewExt.lookupSearchFilter}', referenceTo: 'Facility__c', title: '{!$ObjectType.Facility__c.Label}',value : '{!defaultFacId}'});
+               $('#itemFilter').data("kendoMultiSelect").dataSource.data([{text: defaultItemName, value: defaultItemId}]);
+                
+                var multiselect = $("#itemFilter").data("kendoMultiSelect");
+                multiselect.value(defaultItemId);
+                multiselect.trigger("change");
+            },
+            
+            Validate: function() {
+                 if (facilityFilter.value().trim() != '' && facilityFilter.select() == -1) {
+                        KenandyErp.Message('{!$Label.Select_a_valid_Facility}');
+                        return false;
+                    }
+                    
+                return true;
+            }, 
+            
+            RenderGrid:function(){
+            		
+            		var detailFieldList = detailFields;
+                    var skidDateFields = KenandyErp.KendoGridOptions.GetDateFields(JSONUtils.Parse(skidFields));
+                    var gridConfig = '{!JSENCODE(invGridConfigJson)}';
+                    
+                    if (! typeof $('#InventorybyFacilityGrid').data("kendoGridActionList") == 'undefined') {
+                		$('#InventorybyFacilityGrid').data("kendoGridActionList").destroy();
+                		$('#InventorybyFacilityGrid').off();
+                		$('#InventorybyFacilityGrid').empty();
+                		this.InventorybyFacilityGrid = null;
+                	}
+                    InventorybyFacilityGrid = $('#InventorybyFacilityGrid').kendoGridActionList({
+                        namespace: '{!NamespaceUU}', 
+                        config: gridConfig,
+                        fieldList: skidFields,
+                        getActionListFunction: getInventoryDatabyFacility,
+                        modelIdField: 'facility.Id',
+                        showIconButtons: false,
+                        aggregates: aggregates,
+                        detailTemplate: kendo.template($("#detailTemplate").html())
+                    }).data('kendoGridActionList');
+                    
+                    
+                    InventorybyFacilityGrid.hideColumn("IsSelected__custom");
+                    InventorybyFacilityGrid.wrapper.on("click",".grid-expand-all-custom-command",$.proxy(this.ExpandRows,{ grid: InventorybyFacilityGrid }));
+                    InventorybyFacilityGrid.wrapper.on("click",".grid-collapse-all-custom-command",$.proxy(this.CollapseRows,{ grid: InventorybyFacilityGrid }));
+                    
+                    InventorybyFacilityGrid.bind("detailExpand",$.proxy(this.DetailExpand,{ grid: InventorybyFacilityGrid }));
+                    InventorybyFacilityGrid.bind("detailCollapse",$.proxy(this.DetailCollapse,{ grid: InventorybyFacilityGrid }));
+                    
+                    InventorybyFacilityGrid.bind("detailInit",$.proxy(LotMasterViewActions.InventorybyLocationGrid,{ 
+                        grid: InventorybyFacilityGrid
+                    }));
+                    
+                    InventorybyFacilityGrid.refresh();
+            },
+            
+            ExpandCollapseRow: function() {
+                var grid = $('#InventorybyFacilityGrid').data('kendoGrid');
+                var invGridData = $('#InventorybyFacilityGrid').data('kendoGrid').dataSource.data();
+                
+                // Collapse and expand the row if the row is already expanded
+                $.each( invGridData, function(indx,valu) { 
+                    if (_.contains(expandedRows, valu.uid)) {
+                        var row = grid.tbody.find("tr[data-uid='" + valu.uid + "']");
+                        grid.collapseRow(row);
+                        grid.expandRow(row); 
+                    }
+                });
+            },
+            
+            ExpandRows: function() {
+                expandedRows = [ ];
+                var grid = this.grid;
+                grid.expandRow(grid.tbody.find("tr.k-master-row"));
+            },
+            
+            CollapseRows: function() {
+                expandedRows = [ ];
+                var grid = this.grid;
+                grid.collapseRow(grid.tbody.find("tr.k-master-row"));
+            },
+            
+            DetailExpand: function(e) {
+                var self = this;
+                var grid = self.grid;
+                var masterDataItem = grid.dataItem(e.masterRow);
+                
+                e.detailRow.find($('#InventorybyFacilityGrid')).show();
+                
+                    
+                // add row uid to the expandedRows list
+                expandedRows.push(masterDataItem.uid);
+            },
+            
+            DetailCollapse: function(e) {
+                var self = this;
+                var grid = self.grid;
+                var masterDataItem = grid.dataItem(e.masterRow);
+                
+                // remove row uid to the expandedRows list
+                expandedRows.pop(masterDataItem.uid);
+            },
+            
+            RenderLocGrid: function(e){
+            		var detailButtons =[];
+            		var lookupSearchFilters = [];  
+            		var detailReferenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(detailFields); // get the list of reference fields for the detail grid
+					var detailDateFields = KenandyErp.KendoGridOptions.GetDateFields(detailFields); // get the list of date fields for the detail grid
+                     
+                    var detailMessageElement = e.sender.element.closest("div.grid-container").find("div.grid-inventory-message");
+                    
+                    var getDetailModel = function() {
+                        var fields = KenandyErp.KendoGridOptions.GetFields(detailFields); 
+                        var model = kendo.data.Model.define({ id: "Id", fields: fields });
+                                
+                        return model;
+                    };
+                    
+                    var getDetailToolbarButtons = function() {
+                        return KenandyErp.KendoGridOptions.GetToolbarButtons(detailButtons);
+                    };
+                            
+                    var getDetailColumns = function() {
+                        return KenandyErp.KendoGridOptions.GetColumns(detailFields, { lookupSearchAction: this.lookupSearchAction, buttons: detailButtons, lookupSearchFilters: lookupSearchFilters });
+                    };
+                    
+                    var getDetailDataSource = function() {
+                        var dataSource = new kendo.data.DataSource({
+                            data: invLinesdata, 
+                            batch: true,
+                            schema: {
+                                model: getDetailModel()
+                            }
+                        });
+            			
+                        return dataSource;
+                    };
+                    var onDataBound = function(e){
+		                 if (e.sender.dataSource.total() == 0) {
+		                     var colCount = e.sender.columns.length;
+		                     
+		                     $(e.sender.wrapper)
+		                         .find('.k-grid-content tbody')
+		                         .append('<tr class="kndy-grid-empty"><td colspan="' + colCount + '" class="kndy-grid-empty-message">No records to display</td></tr>');
+		                 }
+		             };
+
+					
+                    detailGrid = e.detailRow.find(".grid-inventory-details").kendoGrid({
+                        dataSource: getDetailDataSource(), 
+                        navigatable: true,
+                        columns: getDetailColumns(),
+                        sortable: false,
+                        filterable: true,
+                        resizable: true,
+                        toolbar: getDetailToolbarButtons(),
+                        editable: true,
+                        lookupSearchAction: '{!$RemoteAction.InventoryMasterViewExt.lookupSearchFilter}',
+                        dataBound: onDataBound,
+                        edit: function(e){
+                            var input = e.container.find(".k-input");
+                            
+                            if (e.container.find('.k-numerictextbox').length > 0) {
+                                input.addClass("kndy-text-right");
+                                input.on('focus',function() {
+                                    var that = $(this);
+                                    setTimeout(function() {
+                                        if (!kendo.support.browser.safari) {
+                                            that.select();
+                                        }
+                                    });
+                                });
+                                input.focus();
+                            }
+                        
+                            $.proxy(KenandyErp.KendoGridActions.Edit,{ referenceFields: detailReferenceFields });
+                        }
+                    }).data('kendoGrid');
+            },
+            
+            InventorybyLocationGrid: function(e) {
+                    var grid = this.grid;
+                    var detaildata = e.data;
+                    var detailGrid = e.detailRow.find('div.grid-inventory-details').data('kendoGrid');
+                    var type = this.type;
+                    var detailRow = e.detailRow;
+                    var uid = e.data.uid;
+                    
+                    var parentGrid = $('#InventorybyFacilityGrid').data('kendoGridActionList');
+                    var masterDataItem = grid.dataItem(e.masterRow);
+                    var masterRowDataItem = parentGrid.dataItem(e.sender.element.closest('tr.k-detail-row').prev());
+    				getInventoryDatabyLoc(e,masterDataItem);
+                },
+            
+            
+        
+            
+            Search: function() {
+
+                if (this.Validate()) {
+                    isHideResults = false;
+                    
+                    if(itemFilter.value().length >0){
+                      //Get Fields
+                      KenandyErp.BlockUI();
+                      Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.InventoryMasterViewExt.getColumnList}',
+                            itemFilter.value(),
+                            function (result, event) {
+                             KenandyErp.UnBlockUI();
+                             attributestoDisplay = result.records;
+                             skidFields = LotMasterViewUtils.GetFieldList(result.additionalInfo);
+                             LotMasterViewActions.RenderGrid();
+                            },
+                            {escape: false}
+                        ); 
+                    	  
+	                     
+                    }
+                     return true;
+                }
+            },
+            
+            
+            
+            Reset: function() {
+                $("form[id$='lotMasterViewForm']")[0].reset();
+            },
+            
+            
+        };
+    }();
+    </script>
+    <script type="text/x-kendo-template" id="detailTemplate">
+        <div class="grid-container grid-detail-container k-block k-info-colored">
+            <div class="grid-inventory-message" />
+            <div class="grid-inventory-details" />
+        </div>
+    </script>
+    
+    
+</apex:page>

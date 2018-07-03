@@ -1,0 +1,55 @@
+<apex:page standardController="Customer__c"  extensions="CustomerNewExtension">
+     
+    <apex:form id="theForm">
+     	<c:busyWait />
+        <apex:outputPanel id="secHead" ><apex:sectionHeader title="{!$Label.New_Customer}"  />
+        </apex:outputPanel>
+     
+        <apex:pageBlock id="recordTypeBlock" mode="Edit" >  <apex:pageMessages />
+     
+            <apex:pageBlockSection id="recordType" title="{!$Label.Select_the_type_of_customer}">
+     
+                <apex:pageBlockSectionItem >
+                
+                    <apex:outputLabel value="{!$Label.Type_of_Customer}" for="rt"></apex:outputLabel>
+     
+                    <apex:selectList id="rt" value="{!customer.recordtypeid}" size="1" title="{!$Label.Customer_Type}">
+     
+                        <apex:actionSupport event="onchange" reRender="parentPageBlock" />
+                        <apex:selectOptions value="{!RecordTypes}"></apex:selectOptions>
+                        
+                    </apex:selectList>
+               
+                </apex:pageBlockSectionItem>
+                
+        
+            </apex:pageBlockSection>
+          
+            <apex:outputPanel id="parentPageBlock">
+            
+            <apex:pageBlockSection id="ParentBlock" title="{!$Label.Select_the_parent_for_the_customer}" rendered="{!(customer.recordtypeid !=corporate_recordtypeid)  && (!ISNULL(customer.recordtypeid))   }">
+            	
+            	
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel for="Parent" value="{!$Label.Parent_Customer}"></apex:outputLabel>
+                    <apex:inputField id="Parent" value="{!customer.Parent_Customer__c}"/>
+                </apex:pageBlockSectionItem>
+            
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel for="copyCheckbox" value="{!$Label.Do_you_want_to_copy_the_address_from_the_parent}"></apex:outputLabel>
+                    <apex:inputCheckbox id="copyCheckbox" value="{!CopyFromParent}"/>
+                </apex:pageBlockSectionItem>
+            
+            </apex:pageBlockSection>
+        
+        </apex:outputPanel>
+        
+        <apex:pageBlockButtons >
+                <apex:CommandButton value="{!$Label.Continue}"   action="{!doContinue}"/>
+                <apex:CommandButton value="{!$Label.Cancel}"   action="{!doCancel}" status="actionStatus" rerender="theForm"/>
+        
+        </apex:pageBlockButtons>
+        
+        </apex:pageBlock>
+    </apex:form> 
+</apex:page>

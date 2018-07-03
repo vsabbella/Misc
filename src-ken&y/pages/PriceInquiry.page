@@ -1,0 +1,94 @@
+<!--
+ - Created by jeromeisrael on 6/21/17.
+ -->
+
+<apex:page id="PriceInquiry" standardController="Sales_Order__c" extensions="PriceInquiryExt">
+
+    <style>
+        .rowWithBorder {
+            border-bottom: 1px;
+        }
+
+    </style>
+    <apex:pageBlock id="priceInquiryBlock" title="Price Inquiry">
+        <apex:form id="form">
+            <c:busyWait />
+            <apex:pageMessages ></apex:pageMessages>
+            <apex:pageBlockSection columns="2" title="Query Information" id="pIQueryBlockSection">
+                <apex:pageBlockSection columns="1" id="pageBlockSection1">
+                    <apex:pageBlockSectionItem id="pIQueryBlockSectionItem11">
+                        <span>{!$ObjectType.Sales_Order__c.Fields.Company__c.Label}</span>
+                        <apex:inputField id="soCompany" value="{!salesOrder.Company__c}"  onchange="" required="TRUE"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem id="pIQueryBlockSectionItem21">
+                        <span>{!$ObjectType.Sales_Order__c.Fields.Customer__c.Label}</span>
+                        <apex:inputField id="soCustomer" value="{!salesOrder.Customer__c}"  onchange=""/>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                <apex:pageBlockSection columns="1" id="pageBlockSection2">
+                    <apex:pageBlockSectionItem id="pIQueryBlockSectionItem12">
+                        <span>{!$ObjectType.Sales_Order__c.Fields.Pricing_Date__c.Label}</span>
+                        <apex:inputField id="soCompany" value="{!salesOrder.Pricing_Date__c}"  onchange="" required="TRUE"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem id="pIQueryBlockSectionItem22">
+                        <span>{!$ObjectType.Sales_Order__c.Fields.Currency__c.Label}</span>
+                        <apex:inputField id="soCurrency" value="{!salesOrder.Currency__c}"  onchange="" required="TRUE"/>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+            </apex:pageBlockSection>
+
+
+            <apex:pageBlockSection columns="1" title="Product Price" id="pIQueryResultSection">
+
+
+                <apex:pageBlockSectionItem id="pIQueryButtons">
+                        <apex:commandButton action="{!addNewSOLine}" status="actionStatus" value="Add new row" reRender="priceInquiryBlock"></apex:commandButton>
+                        <apex:commandButton action="{!getPrice}" status="actionStatus" value="Get Price" reRender="priceInquiryBlock"></apex:commandButton>
+                </apex:pageBlockSectionItem>
+               <apex:pageBlockTable value="{!soLines}" var="soLine" id="theTable" border="1px" align="left" cellpadding="8" rowClasses="rowWithBorder">
+                   <apex:column>
+                       <apex:facet name="header">{!$ObjectType.Sales_Order_Line__c.Fields.Line__c.Label}</apex:facet>
+                       <apex:outputField value="{!soLine.Line__c}"/>
+                   </apex:column>
+                   <apex:column>
+                       <div style="display:none">
+                           <apex:inputField  value="{!soLine.Company__c}"/>
+                       </div>
+                   </apex:column>
+                   <apex:column>
+                       <apex:facet name="header">{!$ObjectType.Sales_Order_Line__c.Fields.Product__c.Label}</apex:facet>
+                       <apex:inputField value="{!soLine.Product__c}"/>
+                   </apex:column>
+                   <apex:column>
+                       <apex:facet name="header">{!$ObjectType.Sales_Order_Line__c.Fields.Quantity_Ordered__c.Label}</apex:facet>
+                       <apex:inputField value="{!soLine.Quantity_Ordered__c}"/>
+                   </apex:column>
+                   <apex:column>
+                       <apex:facet name="header">Product Description</apex:facet>
+                       <apex:outputField value="{!soLine.Product__r.Description__c}"/>
+                   </apex:column>
+                   <apex:column>
+                       <apex:facet name="header">{!$ObjectType.Sales_Order_Line__c.Fields.Selling_UOM__c.Label}</apex:facet>
+                       <apex:outputField value="{!soLine.Selling_UOM__c}"/>
+                   </apex:column>
+                   <apex:column>
+                       <apex:facet name="header">{!$ObjectType.Sales_Order_Line__c.Fields.Pricebook__c.Label}</apex:facet>
+                       <apex:outputField value="{!soLine.Pricebook__c}"/>
+                   </apex:column>
+                   <apex:column>
+                       <apex:facet name="header">{!$ObjectType.Sales_Order_Line__c.Fields.List_Price__c.Label}</apex:facet>
+                       <apex:outputField value="{!soLine.List_Price__c}"/>
+                   </apex:column>
+                   <apex:column>
+                       <apex:facet name="header">{!$ObjectType.Sales_Order_Line__c.Fields.Unit_Price__c.Label}</apex:facet>
+                       <apex:outputField value="{!soLine.Unit_Price__c}"/>
+                   </apex:column>
+                   <apex:column>
+                       <apex:facet name="header">{!$ObjectType.Sales_Order_Line__c.Fields.New_Pricing_Rule__c.Label}</apex:facet>
+                       <apex:outputField value="{!soLine.New_Pricing_Rule__c}"/>
+                   </apex:column>
+               </apex:pageBlockTable>
+            </apex:pageBlockSection>
+        </apex:form>
+    </apex:pageBlock>
+</apex:page>

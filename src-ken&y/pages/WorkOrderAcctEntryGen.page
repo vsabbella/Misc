@@ -1,0 +1,34 @@
+<apex:page >
+<!--  standardController="Work_Order__c"  
+	 			sidebar="false" 
+				recordSetVar="record"         
+				extensions="WorkOrderAcctEntryGenExt"  >
+				
+<apex:form id="theForm" > <c:busyWait />
+
+	<apex:sectionHeader subtitle="{!$Label.Generate_Accounting_Entries}" title="{!$ObjectType.Work_Order__c.Label}"  />
+
+    <apex:PageMessages />
+    	
+    <apex:outputPanel rendered="{!workdone=true}" >
+    	<apex:commandButton value="{!$Label.Go_Back} " status="actionStatus" rerender="theForm" action="{!cancel}"/>
+    	</apex:outputPanel>
+    	 	
+    <apex:pageBlock id="pblock"  title="{!$Label.Selected_Transactions}"      rendered="{! NOT(workdone)}" >
+      <p>{!$Label.Finalized_records_will_be_considered}</p>
+		<apex:pageBlockButtons >    		 
+			<apex:commandButton action="{!gsave}" value="{!$Label.Generate}"  status="actionStatus" rendered="{!if(finalized.size == 0,false,true)}"  rerender="theForm" />
+			<apex:commandButton value="{!$Label.Cancel} " action="{!cancel}" status="actionStatus" rerender="theForm" /> 
+		</apex:pageBlockButtons>
+   		<apex:pageBlockTable value="{!finalized}"  var="it"  >
+<!--   		TODO use a field set here 
+    		<apex:column value="{!it.Name}" />
+<!--    		<apex:column value="{!it.Type__c}" />
+    		<apex:column value="{!it.Finalized__c}" />
+    	</apex:pageBlockTable>
+    		
+    	</apex:pageBlock>
+    	
+    	</apex:form>
+ -->
+ </apex:page>

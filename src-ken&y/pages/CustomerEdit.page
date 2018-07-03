@@ -1,0 +1,90 @@
+<apex:page standardController="Customer__c" extensions="CustomerEditExtension">
+  
+    <apex:form id="theForm">
+    	<c:busyWait />
+        <apex:outputPanel id="secHead" ><apex:sectionHeader title="{!$Label.Edit_Customer}" subtitle="{!customer.Name}" />
+        </apex:outputPanel>
+        <apex:pageBlock id="editBlock"  mode="edit">  <apex:outputPanel id="outerPageMessages">  <apex:pageMessages escape="false"/>  </apex:outputPanel>  
+           
+            <apex:pageBlockSection title="{!customer.RecordType.Name}" >
+                 <apex:repeat value="{!customerFields}" var="f">                
+                     <apex:inputField value="{!customer[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+                 </apex:repeat>
+            </apex:pageBlockSection>
+            
+            <apex:outputPanel id="Address_Panel">
+				<apex:pageBlockSection id="Address_Section" title="{!$ObjectType.Customer__c.Fields.Address__c.Label}" columns="1"  collapsible=" false" >
+					<apex:repeat value="{!$ObjectType.Customer__c.FieldSets.Customer_Address_Fields}" var="field">                
+	                    <apex:inputField value="{!customer[field]}" required="{!OR(field.required, field.dbrequired)}"/>
+	                </apex:repeat>
+			  	</apex:pageBlockSection>
+		  	</apex:outputPanel>
+
+            
+            <apex:pageBlockButtons >
+                <apex:CommandButton value="{!$Label.Save}"   action="{!doSave}" status="actionStatus" rerender="theForm" accessKey="s">
+                	<apex:actionSupport event="onclick"  rerender="popup"/>
+		    	</apex:CommandButton>
+                <apex:CommandButton value="{!$Label.Cancel}"   action="{!doCancel}" status="actionStatus" rerender="theForm"/>
+
+                <apex:CommandButton value="Approve"   action="{!approve}" status="actionStatus" rerender="theForm" rendered="{!showApproveButton && if(pageMode == 'edit', true, false)}"/>
+                <apex:CommandButton value="Deactivate"   action="{!deactivate}" status="actionStatus" rerender="theForm" rendered="{!!showApproveButton && if(pageMode == 'edit', true, false)}"/>
+
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </apex:form>
+    <style type="text/css">
+		.customPopup {
+		      background-color: #F8F8F8;
+            border-style: solid;
+            border-color: #1797c0;
+            border-width: 9px;
+            left: 50%;
+            padding:10px;
+            position: absolute;
+            z-index: 11000;
+            width: 1000px;
+           
+            margin-left: -500px;
+             max-height: 300px;
+            overflow:auto;
+            top:100px;
+		}
+		
+		.greySections {
+		
+		     background-color: grey;
+		}   
+		
+		.closeButton {
+		    
+		    float: right;
+		}
+		
+		.popupButton{
+			z-index:10000;
+		}
+		
+		.popupBackground{
+			background-color:black;
+			opacity: 0.70;
+			position:absolute;
+			width: 100%;
+			height: 100%;
+			top: 0;
+			left: 0;
+			z-index: 9998;
+		}
+		
+		table {
+		    border-collapse: collapse;
+		    margin-left:10%;
+		}
+		
+		td,th {
+		    padding-top: .5em;
+		    padding-bottom: .5em;
+		    padding-left: 2.0em;
+		}
+	</style>
+</apex:page>

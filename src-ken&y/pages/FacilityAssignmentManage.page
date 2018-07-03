@@ -1,0 +1,144 @@
+<apex:page standardController="Facility_Assignment__c" extensions="FacilityAssignmentManageExt">
+<apex:includeScript value="{!URLFOR($Resource.JQuery182)}" />
+<script>
+
+    function isAnyRecordSelected(){
+        return jQuery('td.selectCol input:checkbox:checked').size() > 0;
+    }
+    
+    function replaceLines(){
+            if(isAnyRecordSelected()){
+                 var selected_indexes = '';
+                 jQuery('td.selectCol input:checkbox').each( function( i ) {
+                     if ( jQuery(this).is(':checked') )
+                         selected_indexes += i+',';
+                 });
+                  
+                 replaceAF(selected_indexes);
+            }else{
+                alert('{!$Label.Check_atleast_one_record_to_replace}');
+            }
+            return false;
+        }
+        
+        function createLines(){
+            if(isAnyRecordSelected()){
+                 var selected_indexes = '';
+                  jQuery('td.selectCol input:checkbox').each( function( i ) {
+                     if ( jQuery(this).is(':checked') )
+                         selected_indexes += i+',';
+                  });
+
+                 createAF(selected_indexes);
+    
+            }else{
+                alert('{!$Label.Check_atleast_one_record_to_create}');
+            }
+            return false;
+        }
+        
+        function deleteLines(){
+            if(isAnyRecordSelected()){
+                result = window.confirm('{!$Label.ConfirmDelete}');
+                if(result == true) {
+                     var selected_indexes = '';
+                     jQuery('td.selectCol input:checkbox').each( function( i ) {
+                         if ( jQuery(this).is(':checked') )
+                             selected_indexes += i+',';
+                     });
+                     
+                     deleteAF(selected_indexes);
+                }
+            }else{
+                alert('{!$Label.Check_atleast_one_record_to_remove}');
+            }
+            return false;
+        }
+        
+        function checkAll(cb) {
+            var inputElem = $("table .list").find('input[name*=checkBoxId]');
+            for(var i=0; i<inputElem.length; i++) {
+                if(inputElem[i].id.indexOf("checkBoxId")!=-1)
+                inputElem[i].checked = cb.checked;
+            }
+        } 
+        
+        function recheck() {
+            var inputElem = $("table .list").find('input[name*=checkBoxId]');
+            for(var i=0; i<inputElem.length; i++) {
+                if(inputElem[i].id.indexOf("checkBoxId")!=-1)
+                inputElem[i].checked = $("table .list").find('input[name*=checHeader]').prop('checked');
+            }
+        }
+    
+</script>
+
+    <apex:form id="theForm" >
+    <c:busyWait />
+        <apex:actionFunction name="replaceAF" action="{!FAReplace}" 
+                                  status="actionStatus" oncomplete="recheck();" reRender="errPanel,FAPBTableId" >
+                <apex:param name="selected_indexes"  value="" />
+        </apex:actionFunction>
+        <apex:actionFunction name="createAF" action="{!FACreate}" 
+                                  status="actionStatus" oncomplete="recheck();" reRender="errPanel,FAPBTableId" >
+                <apex:param name="selected_indexes"  value="" />
+        </apex:actionFunction>
+        <apex:actionFunction name="deleteAF" action="{!FADelete}" 
+                                  status="actionStatus" oncomplete="recheck();" reRender="errPanel,FAPBTableId" >
+                <apex:param name="selected_indexes"  value="" />
+        </apex:actionFunction>
+        
+        <apex:sectionHeader subtitle="{!$Label.Manage_Facility_Assignments}" title="{!$Label.Manage_Facility_Assignments}"/>
+        <apex:outputPanel id="errPanel">
+            <apex:pagemessages />
+        </apex:outputPanel>
+        
+        <apex:pageBlock mode="edit"  >
+    
+        <apex:pageBlockButtons >
+        <apex:commandButton value="{!$Label.Search}" action="{!FASearch}" rerender="theForm"  status="actionStatus"/>
+        <apex:commandButton value="{!$Label.Create}" onclick="createLines();return false;" />
+        <apex:commandButton value="{!$Label.Delete}" onclick="deleteLines();return false;" />
+        <apex:commandButton value="{!$Label.Replace}" onclick="replaceLines();return false;" />
+        <apex:commandButton value="{!$Label.Cancel} " action="{!cancel}" immediate="true" reRender="theForm"   status="actionStatus"/>
+        </apex:pageBlockButtons>
+        
+        <apex:pageBlockSection title="{!$Label.Search_Information}" columns="2" collapsible="false" >
+            <apex:repeat value="{!$ObjectType.Facility_Assignment__c.FieldSets.SearchFA}" var="f" > 
+            <apex:inputField value="{!fa[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+            </apex:repeat>            
+        </apex:pageBlockSection>
+        
+        <apex:pageBlockSection title="{!$Label.Create_Replace_Information}" columns="2" collapsible="false">   
+            <apex:repeat value="{!$ObjectType.Facility_Assignment__c.FieldSets.ReplaceFA}" var="f" > 
+            <apex:inputField value="{!fa[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+            </apex:repeat> 
+        </apex:pageBlockSection> 
+        
+        <apex:pageBlockSection title="{!$Label.Search_Results}" collapsible="false" columns="1">            
+            <apex:pageBlockTable value="{!FAList}" var="line" id="FAPBTableId"  >
+                
+                <apex:column style="width:50px" styleClass="selectCol" >
+                        <apex:facet name="header"> 
+                            <apex:inputCheckbox id="checHeader" >
+                                <apex:actionSupport event="onclick" onsubmit="checkAll(this)" rerender=""  />
+                            </apex:inputCheckbox>
+                        </apex:facet>
+                        <apex:inputCheckbox id="checkBoxId" />
+                </apex:column>
+                
+               <apex:repeat value="{!$ObjectType.Facility_Assignment__c.FieldSets.ListFA}" var="f" >
+                    <apex:column headerValue="{!f.label}"  styleClass="{!f.Type}  {!f.FieldPath}"  rendered="{!f.FieldPath!='Line_Value__c'}">
+                        <apex:outputField value="{!line[f]}" />
+                    </apex:column>
+               </apex:repeat>      
+                   
+            </apex:pageBlockTable>
+        </apex:pageBlockSection>
+  
+    </apex:pageBlock>
+    </apex:form>  
+    <div id="ensurefield" style="display:none;">
+        <apex:outputText value="{!Facility_Assignment__c.Company__c}" />
+    </div>
+</apex:page>

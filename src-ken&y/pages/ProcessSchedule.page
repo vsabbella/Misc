@@ -1,0 +1,146 @@
+<apex:page standardController="Company__c" extensions="ProcessScheduleExt"  sidebar="false" >
+
+<apex:includeScript value="{!URLFOR($Resource.jquery_ui_110,'/jquery-ui-1.10.0.custom/js/jquery-1.9.0.js')}" />
+
+
+<script type="text/javascript">
+	$(document).ready(function() {
+		refreshTotalJobItemsCount();
+	});
+	
+	function refreshTotalJobItemsCount() { 
+		Visualforce.remoting.Manager.invokeAction(
+			'{!$RemoteAction.ProcessScheduleExt.getAsyncCount}',
+			function (result, event) {
+				var val = '';
+				if (event.status) {            
+					val = result;
+				} else if (event.type === 'exception') {
+					val = event.message + ' : ' + event.type;
+				} else {
+					val = event.message;
+				}				
+				$("span[id$='totalJobItemsCount']").text(val);
+			}
+		);			
+	}
+</script>
+
+
+
+
+<!-- show jobs, schedule jobs, abort jobs -->
+<apex:sectionHeader title="{!Company__c.Name}" subtitle="{!$Label.Scheduled_Jobs}" />
+
+<apex:form id="theForm" ><c:busyWait />
+	
+    <apex:pageMessages />
+    <!--  when we show a message about a running job, hide that after 25 seconds -->
+    <script>setTimeout(function() { $('.message').slideUp('slow'); }, 25*1000);</script>
+    
+	<apex:pageBlock mode="maindetail"  >
+	
+		<apex:pageBlockButtons location="top" >
+			<apex:commandButton value="{!$Label.Edit_Scheduled_Jobs}" action="{!newJob}" />
+			<apex:commandButton value="{!$Label.Run_Scheduler}" action="{!newScheduledJob}"   rerender="theForm" rendered="{!hasEditProcessJob}" oncomplete="refreshTotalJobItemsCount()"/>
+			<apex:commandButton value="{!$Label.Refresh}" action="{!reloadPage}" rerender="theForm" oncomplete="refreshTotalJobItemsCount()"/>
+			<apex:commandButton value="{!$Label.Close}" action="{!cancel}" />
+		</apex:pageBlockButtons>
+
+
+<p>{!$Label.Master_Schedule_Job}</p>
+
+	<apex:pageBlockTable value="{!scheduledJobs}" var="job"  id="theMCP" >
+		<apex:column headerValue="{!$Label.Action}" >
+		<apex:commandLink action="{!abortJob}" Value="{!$Label.Abort}" rerender="theForm" status="actionStatus" rendered="{!hasEditProcessJob}" oncomplete="refreshTotalJobItemsCount()">
+			<apex:param name="abortid" value="{!job.id}" /> 
+		</apex:commandLink>
+		</apex:column>
+		<apex:column value="{!job.CronJobDetail.name}" />
+		<apex:column value="{!job.State}" />
+		<apex:column value="{!job.StartTime}" />
+		<apex:column value="{!job.OwnerId}" />
+		<apex:column value="{!job.CronExpression}" />
+		<apex:column value="{!job.NextFireTime}" />
+		<apex:column value="{!job.Id}" />
+	</apex:pageBlockTable>
+<br />
+
+<p>{!$Label.Kenandy_Scheduled_Jobs_for} {!Company__c.Name}</p>
+	<apex:pageBlockTable value="{!jobs}" var="job"  id="theJobs" > 
+
+	<apex:column headervalue="{!$Label.Action}" >
+		<apex:commandLink action="{!runNow2}" value="{!$Label.Run}" styleClass="btn"  rerender="theForm"  status="actionStatus"  rendered="{!hasEditProcessJob}" oncomplete="refreshTotalJobItemsCount()">
+			<apex:param name="recordid" value="{!job.id}" />
+		</apex:commandLink>
+	</apex:column>
+	<apex:column headervalue="{!$Label.Process_Job_Name}"  >
+		<a target="_blank" href="/{!job.id}">{!job.name}</a>
+		<img src="/s.gif" alt="" class="helpOrb2" title="{!job.Name} : {!job.Description__c}" />
+	</apex:column>
+	<apex:column value="{!job.Active__c}" />
+	<apex:column value="{!job.Un_Scheduled__c}" />
+	<apex:column value="{!job.Last_Run__c}" />
+	<apex:column value="{!job.Preferred_Run_Hour__c}" />
+	<apex:column value="{!job.Interval__c}" />
+	<apex:column value="{!job.Frequency__c}" />
+	<apex:column headerValue="{!$Label.Next_Run_After}"  value="{!job.Next_Run__c}"  />
+	<apex:column value="{!job.Exception__c}"  />
+	
+	<apex:column value="{!job.Company__c}"  />
+
+    </apex:pageBlockTable>
+    <apex:pageMessages />
+<br />
+        
+        <apex:pageBlock >      
+            <apex:pageBlockSection columns="1">
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.AsyncApexJob.fields.TotalJobItems.label}" />
+                    <apex:outputText id="totalJobItemsCount" value="Calculating"></apex:outputText>   
+    			</apex:pageBlockSectionItem>         
+			</apex:pageBlockSection>
+            <apex:pageBlockSection >
+                <h1>
+                <a href="/apexpages/setup/listAsyncApexJobs.apexp">{!$Label.All_Force_com_Apex_Jobs}</a>
+                </h1>
+           </apex:pageBlockSection>   
+		</apex:pageBlock>
+
+</apex:pageBlock>
+ 
+</apex:form>
+
+<style>
+img.indicator { width: 12px; height: 12px; }
+img.indicator.Completed { 
+    background-image: url(/img/apex/test_queue_sprite.png);
+    background-position: 0 15px;
+}
+img.indicator.Processing { 
+    background-image: url(/img/apex/processing.gif);
+    background-position: 0 0px;     
+}
+img.indicator.Failed { 
+    background-image: url(/img/apex/test_queue_sprite.png);
+    background-position: 0 36px;        
+}
+img.indicator.Queued { 
+    background-image: url(/img/apex/test_queue_sprite.png);
+    background-position: 0 78px;        
+}
+.apexp div.pbBody > p { font-weight: bold; margin-bottom: 3px; } 
+
+.helpOrb2 {
+    background-image: url(/img/help/helpOrbs.gif);
+    background-position: 0 0;   width: 20px;    height: 15px;
+}
+.helpOrb2:hover { background-position: top right;} 
+        
+a.btn {
+    text-decoration:none;
+}
+.list .headerRow th {      white-space: normal;     }
+</style>
+
+</apex:page>

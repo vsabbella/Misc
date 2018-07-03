@@ -1,0 +1,104 @@
+<apex:component controller="ReportNameCon"  access="global"  layout="inline"  >
+
+<apex:includeScript value="{!URLFOR($Resource.jquery_ui_110,'/jquery-ui-1.10.0.custom/js/jquery-1.9.0.js')}" />
+<apex:includeScript value="{!URLFOR($Resource.treetable,'/javascripts/src/jquery.treetable.js')}" />
+<apex:includeScript value="{!URLFOR($Resource.ForceTK, 'forcetk.js')}" /> 
+
+<apex:includeScript value="{!URLFOR($Resource.analytics)}" />  
+
+<apex:stylesheet value="{!URLFOR($Resource.treetable, '/stylesheets/jquery.treetable.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.treetable, '/stylesheets/jquery.treetable.theme.default.css')}" />
+
+<apex:attribute name="devName"  
+                        description="Name of the report to run, from Report Table"  
+                        type="String"      required="true" access="global" 
+                        assignTo="{!developerName}" />
+ <apex:attribute name="id" description="The unique id" type="String" required="true" access="global" />
+ <apex:attribute name="showColumnHeader" description="show or hide the column headers" 
+    type="Boolean"  default="true" access="global" />
+ <apex:attribute name="showName" description="show or hide the report name" 
+    type="Boolean"  default="true" access="global" />
+<apex:attribute name="showTotal" description="show or hide the total column" 
+    type="Boolean"  default="false" access="global" />
+<apex:attribute name="showRowTotal" description="show or hide the ROW total column on matrix" 
+    type="Boolean"  default="true"  access="global" />
+ <apex:attribute name="dateField" description="field to apply date range" 
+    type="String"  default=""  access="global" />
+ <apex:attribute name="startDate" description="date to begin date range" 
+    type="Date"  default="" access="global"  />
+ <apex:attribute name="endDate" description="date to end date range" 
+    type="Date"  default="" access="global" />
+ <apex:attribute name="title" description="title to display if the showName is false" 
+    type="string"  default="" access="global" />
+  
+ 
+<apex:outputPanel rendered="{!reportId != null}" > 
+
+
+
+<script>
+    $( function() { 
+    
+        var sid =   '{!$Api.Session_ID}';
+
+        $('#table_{!id}').analytics({
+            reportid:'{!reportItem.id}' , 
+            showColumnLabels : '{!showColumnHeader}'=='true',
+            symbol: '$',
+            showtotal:  '{!showTotal}'=='true',
+            dateField: '{!dateField}', startDate: '{!startDate}', endDate: '{!endDate}',
+            showRowTotal: '{!showRowTotal}' == 'true',
+            /*totallabel: 
+            totalontop: 
+            
+            showsymbol: 
+            symbolfirstlast: 
+            numericScale: 
+            periodValue: 
+            async: 
+            companyValue: 
+            includeDetails:
+            */
+            sessionid:  sid
+            
+        }); 
+    });
+ </script>
+
+    <div class="reportView" > 
+    
+        <apex:outputPanel rendered="{!showName}" styleclass="reportName">
+            <h3><a target="_blank" href="/{!reportItem.Id}" >
+                <apex:outputText value="{!reportItem.Name}" /></a></h3>
+        </apex:outputPanel>
+        
+        <apex:outputPanel rendered="{!title != null}" styleclass="reportName">
+            <h3><a target="_blank" href="/{!reportItem.Id}" >
+                <apex:outputText value="{!title}" /></a></h3>
+        </apex:outputPanel>
+        
+        <table class="reportTable" id="table_{!id}" ></table>
+    </div>
+
+
+
+</apex:outputPanel>
+
+<apex:outputPanel rendered="{!reportId == null}" > 
+<apex:pageMessage summary="could not load Report Unique Name >{!devName}<" severity="error" strength="1"/>
+</apex:outputPanel>
+
+<style>
+/* TODO move to CSS file */
+.reportName a { text-decoration: none; }
+.labelCol { width: 50%; }
+.dataCol { width: 50%;  text-align: right; }
+.reportView { padding-left: 18px; padding-top: 6px; }
+td.dataCol span.sym { float: left; padding-left: 65%; 
+padding-top: 0px;
+padding-bottom: 0px;
+padding-right: 0px;}
+th.headCol { text-align: right; }
+
+</style>
+</apex:component>

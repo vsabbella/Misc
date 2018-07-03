@@ -1,0 +1,39 @@
+<apex:page standardController="Purchase_Order__c" extensions="CompanyDefaultExt,PurchaseOrderNewExt">
+    <apex:form id="theForm" >
+    <c:busyWait />
+        <apex:sectionHeader subtitle="{!$Label.New_Purchase_Order}" title="{!$Label.New_Purchase_Order}"/>
+        <apex:pagemessages />
+    <apex:pageBlock mode="edit"  >
+        <apex:pageBlockButtons >
+        <apex:commandButton value="{!$Label.Save}" action="{!SavePO}"  rerender="theForm" status="actionStatus" rendered="{!isVisible}" accessKey="s"/>
+        <apex:commandButton value="{!$Label.Cancel}" action="{!cancel}" status="actionStatus" rerender="theForm" immediate="true" />
+        </apex:pageBlockButtons>
+        
+        <apex:pageBlockSection title="{!$Label.Purchase_Order_Information}" id="pbsorderinfo" columns="2" collapsible="false" >
+            <apex:repeat value="{!$ObjectType.Purchase_Order__c.FieldSets.New_Purchase_Order}" var="f" > 
+            <apex:inputField value="{!Purchase_Order__c[f]}" required="{!OR(f.required, f.dbrequired)}">
+       <!--  <apex:actionSupport event="onchange" action="{!assigndefault}" rerender="pbsorderinfo"/> -->
+            </apex:inputField>
+            </apex:repeat>            
+        </apex:pageBlockSection>
+        
+        <apex:pageBlockSection title="{!$Label.Shipping_Instructions}" columns="2" collapsible="false">   
+            <apex:repeat value="{!$ObjectType.Purchase_Order__c.FieldSets.New_Shipping_Instructions}" var="f" > 
+            <apex:inputField value="{!Purchase_Order__c[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+            </apex:repeat> 
+        </apex:pageBlockSection>  
+  		<apex:pageBlockSection title="{!$Label.Invoice_Tolerances}" columns="2" collapsible="false">   
+            <apex:repeat value="{!$ObjectType.Purchase_Order__c.FieldSets.Tolerances}" var="f" > 
+            <apex:inputField value="{!Purchase_Order__c[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+            </apex:repeat> 
+        </apex:pageBlockSection>  
+  
+    </apex:pageBlock>
+    </apex:form>  
+    <div id="ensurefield" style="display:none;">
+        <apex:outputText value="{!Purchase_Order__c.Company__c}" />
+	 	<apex:outputText value="{!Purchase_Order__c.Unit_Price_Tolerance_Over__c}" />
+	 	<apex:outputText value="{!Purchase_Order__c.Quantity_Tolerance_Over__c}" />
+	 	<apex:outputText value="{!Purchase_Order__c.Amount_Tolerance__c}" />
+    </div>
+</apex:page>

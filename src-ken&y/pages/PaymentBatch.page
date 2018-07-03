@@ -1,0 +1,2155 @@
+<apex:page showHeader="true" controller="PaymentBatchExt" tabStyle="Payment_Batch__tab" docType="html-5.0" title="{!$Label.Payment_Batch}">
+	<style type="text/css">
+        <!-- KNDY-17671 - Can be used to show line total on header of column -->
+        .line-total {
+            border: 2px dashed !important;
+            font-weight: bold;
+            width: 100px;
+            text-align: right;
+        }
+        <!-- KNDY-17671 - Can be used to show disc total on header of column -->
+        .discount-total{
+        	border: 2px dashed !important;
+            font-weight: bold;
+            width: 100px;
+            text-align: right;
+        }
+         <!-- KNDY-17671 - Can be used to show colored amount. green for positive and red for negative-->
+        .text-red { border-color: red !important; }
+        .text-green { border-color: green !important; }
+        
+	    .filters-container .column-label {
+            vertical-align: middle !important;
+        	//width: 10%;
+        }               
+        
+        .filters-container .column-field {
+            vertical-align: middle !important;
+        	//width: 30%;
+        }
+        
+        .payment-header-container  {
+            width: 85%;
+        }
+        .payment-header-container .column-label {
+            vertical-align: middle !important;
+            padding-right:10px;
+        }
+        
+        .payment-header-container .column-field {
+            vertical-align: middle !important;
+            padding-right: 85px;
+        }
+        
+        #suppliers div.k-header, .k-multiselect-wrap .k-multiselect{
+            width: 200px;
+        }
+        
+        .disab {
+             opacity: 0.4;
+             cursor: default; 
+             pointer-events: none;
+        }
+        .k-window-title{
+        	font-weight:bold;
+        }
+        .button-text-bold {
+            font-weight: bold;
+        }
+
+		<!-- Validation message position-->
+		span.k-widget.k-tooltip-validation {
+                    display; inline-block;
+                    width: 110px;
+                    text-align: left;
+                    border: 0;
+                    padding: 4px 0px 4px 0px;
+                    margin: 0;
+                    background: none;
+                    box-shadow: none;
+                    position: absolute; 
+    				left: 0px; 
+    				top: 28px;
+    				background-color:#FFF4C9;
+    				border-color:#FFE79E;
+    				color:#263248;
+                }    
+    </style>
+	
+    <c:KendoResources />
+
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+    <apex:includeScript value="{!$Resource.async}" />
+	<apex:form id="form">
+        <div class="page-container">
+            <apex:sectionHeader subtitle="{!$Label.Payment_Batch}"  help="{!URLFOR($Page.HelpPaymentBatch)}"/>
+            <apex:outputText value="{!$Label.Select_Create_Zero_Amount_Payments_Message}"></apex:outputText>
+    		<div class="page-message"></div>
+    	 
+			<apex:pageBlock title="{!$Label.Payment_Rules}"> 
+			<table class="kndy-table filters-container">
+                    <tr>
+                        <td class="column-label" colspan="2">
+                        	<div style="float: left; margin-top: 20px; margin-right: 20px;">
+                            	<apex:outputLabel value="{!$Label.Create_Supplier_Payment_Batch}" styleClass="filterLabel" />
+                           </div>
+                        <div>
+		                    <apex:selectRadio value="{!selectedPaymentRuleMethod}" id="createPaymentRadio" layout="pageDirection" onclick="ChangeButtonNames(this);" style="margin-left:-20px">		                   		                    
+				            	<apex:selectOptions value="{!paymentRuleOptions}"/>
+				            </apex:selectRadio>
+                        </div>
+                        </td>
+			             <td class="column-label" >
+                           <input type="checkbox" id="totalCreditsExceedsDebits" style='margin-left:-1px'/>
+                           <apex:outputLabel value="{!$Label.Create_Zero_Amount_Payments}" styleClass="filterLabel" />
+                        </td>
+                        <td class="column-label">
+                            <apex:outputLabel value="{!$Label.Payment_Date}" styleClass="filterLabel" />
+                        </td>
+                        <td class="column-field">
+                            <div class="kndy-required-input">
+                                <div class="kndy-required-block"></div>
+                                <input name="paymentDateFilter" id="paymentDateFilter" />
+                            </div>
+                        </td>
+                    </tr>
+                    <tr >
+                        <td class="column-label">
+                            <apex:outputLabel value="{!$ObjectType.Bank_Account__c.Label}" styleClass="filterLabel" />
+                       </td>
+                        <td class="column-field">
+                            <div class="kndy-required-input">
+                                <div class="kndy-required-block"></div>
+                                <input name="bankAccountFilter" id="bankAccountFilter" />
+                            </div>
+                        </td>
+                       <td class="column-label" > <span style="margin-right:20px;"> {!$ObjectType.Bank_Account__c.Label} {!$ObjectType.Currency__c.Label}</span> <span id='bankAccountCurrency'></span> </td> 
+                       <!--  <td id='bankAccountCurrency' class="column-field"></td>-->                       
+                        
+                        <td class="column-label">{!$ObjectType.Company__c.Label}</td> 
+                        <td id='bankAccountCompany' class="column-field"></td>
+                       
+                    </tr>                      
+                </table>
+               
+			</apex:pageBlock>
+			
+			<apex:pageBlock title="{!$Label.Invoice_Selection_Options}">	
+			    <table class="kndy-table filters-container">
+                    <tr>
+                        <td class="column-label">
+                            <apex:outputLabel value="{!$ObjectType.Supplier_Payment__c.fields.Payment_Method_G__c.Label}" styleClass="filterLabel" />
+                        </td>
+                        <td class="column-field">
+                            <div class="kndy-required-input">
+                                <div class="kndy-required-block"></div>
+                                <input id="supplierPymtMethodFilter" class="kendoWidgetSelector"/>
+                            </div>
+                        </td>
+                        <td class="column-label">
+                            <apex:outputLabel value="Remit To {!$ObjectType.Supplier__c.Label}" styleClass="filterLabel" />
+                        </td>
+                        <td class="column-field">
+                            <div id='suppliers' class="kndy-required-input">
+                                <select id="supplierFilter" class="kendoWidgetSelector"> </select>
+                            </div>
+                        </td>
+
+                        <td class="column-label">
+                            <apex:outputLabel value="{!$ObjectType.Supplier_Invoice__c.fields.Discount_Date__c.Label}" styleClass="filterLabel" />
+                        </td>
+                        <td class="column-field">
+    	                       <input name="discountDateFilter" id="discountDateFilter" />
+                        </td>
+                        <td class="column-label">
+                            <apex:outputLabel value="{!$ObjectType.Supplier_Invoice__c.fields.Payment_Due_Date__c.Label}" styleClass="filterLabel" />
+                        </td>
+                        <td class="column-field">
+    	                        <input name="paymentDueDateFilter" id="paymentDueDateFilter" />
+                        </td>
+                    </tr>
+                    <!-- KNDY-18763 - add currency filter -->
+                    <tr>
+                    	<td class="column-label">                    		
+                           	<apex:outputLabel value="{!$ObjectType.Currency__c.Label}" styleClass="filterLabel" for="currencyFilter"/>
+                        </td>
+                        <td class="column-field">
+                            <div id='currency' class="kndy-required-input">
+                            	<div class="kndy-required-block"></div>
+                                 <input id="currencyFilter" class="kendoWidgetSelector" />
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                 <apex:pageBlockButtons location="bottom" >
+                    <apex:outputPanel layout="none">
+                    	<input name="goBack" id="goBack" type="button" value="{!$Label.Go_Back}" class="k-button kndy-btn button-text-bold" />         
+                    	<input name="resetFilter" id="resetFilter" type="button" value="{!$Label.CSReset}" onclick="onReset()" class="k-button kndy-btn button-text-bold" />
+                        <input name="searchFilter" id="searchFilter" type="button" value="{!$Label.Search}" onclick="SupplierInvoicePaymentBatchActions.Search();" class="k-button kndy-btn button-text-bold" />                       
+                    </apex:outputPanel>
+                </apex:pageBlockButtons>
+			</apex:pageBlock>
+
+            <apex:pageBlock title="{!$Label.Estimated_Payment_Summary}">  
+                <apex:pageBlockButtons location="top" >
+                    <apex:outputPanel layout="none">
+                        <input name="createSPaymentBatch" id="createSPaymentBatch" type="button" value="{!$Label.Create_Supplier_Payment_Batch}" class="k-button kndy-btn button-text-bold createSPaymentBatch-command" />
+                    </apex:outputPanel>
+                </apex:pageBlockButtons>
+                <apex:pageBlockSection columns="1" collapsible="false">
+                  <div id="EstimatedPaymentSummary">
+                    <table class="kndy-table filters-container">
+                       <tr>
+                       <!--  KNDY-17671 changed to labels  -->
+                        <td align="left"  style='padding:5px 10px 5px 5px'> {!$Label.Invoices_Less_Earned_Discounts}  </td> 
+                        <td id='SupplierInvoicesTotalAmount' align='right' style='padding:5px 130px 5px 5px'></td>
+                        <td  align="left" style='padding:5px 10px 5px 5px'> {!$Label.Available_Prepayments}  </td>
+                        <td id='TotalPrepaymentsAvailable' align='right' style='padding:5px 130px 5px 5px'></td>  
+                        <td  align="left" style='padding:5px 10px 5px 5px' >  {!$Label.Available_Credit_Memos} </td>
+                        <td id='TotalCreditMemosAvailable' align='right' style='padding:5px 130px 5px 5px'></td> 
+                        <td align="left" style='padding:5px 10px 5px 5px'>{!$Label.Payment_Total} </td>
+                        <td id='EstimatedSupplierPaymentTotal' align='right' style='padding:5px 130px 5px 5px'></td>
+                        </tr>
+                    </table>
+                  </div>  
+                </apex:pageBlockSection>
+                <apex:pageBlockSection columns="1" title="{!$Label.Invoices_to_Pay}" collapsible="false">
+                	<apex:outputText value="{!$Label.Invoices_for_suppliers_on_payment_hold_and_invoices_on_hold_are_not_displayed}"></apex:outputText>
+                  <div class="grid-container">
+                  
+                  <div class="grid-message"></div>
+                  <div id="{!supplierInvoicePreviewConfig.uniqueId}" ></div>
+                  </div>
+                </apex:pageBlockSection>
+           </apex:pageBlock>
+        </div> 
+        <!-- ----------------- start of preview payment window -->
+        
+	        <div id="previewPayment">  
+	        <!-- <apex:pageBlock >   -->
+				<div class="grid-container">
+	                      <div class="grid-message" ></div>
+	                      <div id="{!supplierPaymentMasterPreviewConfig.uniqueId}" ></div>
+	            </div>	
+	            <!-- <apex:pageBlockButtons location="bottom"> -->
+                <apex:outputPanel layout="none">
+                <div align="center" draggable="false" >
+                    <input type="button" id="goback-button" value="{!$Label.Go_Back}" class="k-button kndy-btn button-text-bold" style="display: none;" />
+                    <input type="button" id="createpayments-button" value="{!$Label.Create_Supplier_Payment_Batch}" class="k-button kndy-btn button-text-bold" style="display: none;" />
+                    </div>
+                </apex:outputPanel>
+             <!-- </apex:pageBlockButtons>
+   	 	</apex:pageBlock> -->					    
+	   	 	</div>
+	   	 	
+    	<!---------------- End of the preview payment modal window-->
+    </apex:form>
+    <script type="text/x-kendo-template" id="detailTemplate">
+        <div class="grid-container grid-detail-container k-block k-info-colored">
+            <apex:pageBlock title="{!$Label.Payment_Lines}" mode="mainDetail">
+                <apex:pageBlockSection collapsible="false" columns="1">
+                    <div class="grid-supplier-payment-details-message k-hidden">
+                        <table class="kndy-table">
+                            <tr>
+                                <td>{!$Label.No_payment_sources_added}</td>
+                            </tr>
+                        </table>
+                    </div>
+    
+                    <div class="grid-supplier-payment-details" ></div>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+        </div>
+    </script>
+    <script type="text/javascript"> 
+    	Visualforce.remoting.timeout = 120000;
+    	var isHideResults = true; 
+    	var supplierFilter = $("#supplierFilter").data("kendoMultiSelect");
+    	var creditsExceedsDebits = $('#totalCreditsExceedsDebits').is(':checked');
+    	var discountDate = $('#discountDateFilter').val().trim();
+    	var pymtDueDate =  $('#paymentDueDateFilter').val().trim();
+    	var remoteArgs = JSON.parse('{!JSENCODE(supplierInvoicePreviewConfigJson)}');
+    	var supplierPaymentGridConfig = JSON.parse('{!JSENCODE(SupplierPaymentMasterPreviewConfigJson)}');
+    	var supplierPaymentChildGridConfig = JSON.parse('{!JSENCODE(SupplierPaymentChildPreviewConfigJson)}');
+    	var supplierInvoiceFieldList = '{!JSENCODE(supplierInvoicesFieldList)}';
+    	var hdnFilterCriteria;
+    	var pymtMethod = $('#supplierPymtMethodFilter').val(); 
+    	var bankAccount = $('#bankAccountFilter').val().trim(); //updated when bank account changes in UI
+    	var bankAccountName = $('#bankAccountFilter').val().trim(); //updated when bank account changes in UI
+    	var pymtDate = $('#paymentDateFilter').val().trim();
+    	var createPaymentType = '{!selectedPaymentRuleMethod}';
+    	var companyId;
+        //KNDY-12545
+	    var SupplierInvoicesTotalAmount =0;//bottom left
+	    var TotalPrepaymentsAvailable=0; //(top right)
+	    var TotalCreditMemosAvailable=0;  //(top left) 
+	    var EstimatedSupplierPaymentTotal=0;  //(balance = SI-PPMT- CM) - bottom right
+	    var initialScopeofSIs = null;
+	    var detailData = [];
+        var expandedRows = [];
+        var args = {};
+        var invpaywrapper ={};
+        var invpaywrapperfinal ={};
+        var paymentMap = new Map();
+        var hideColumns = true;
+        var makegridreadonly = false;
+        //KNDY-17714 - Created default var for supplier and supplier invoice id
+        var supplierInvoiceId = '{!supplierInvoiceId}';        
+	    console.log('supplierInvoiceId-->'+supplierInvoiceId)
+	    var supplierId = '{!supplierId}';
+	    console.log('supplierId-->'+supplierId);
+        var searchFilterClickedAgain = false;
+        var currencyDropdown; //KNDY-18763
+        var currencyId = $('#currencyFilter').val(); //KNDY-18763
+        var previewPaymentMessage; //KNDY-17712 (point #16) while preview if inv are already paid out show msg
+	     //KNDY-17712 - set button labels run time  on change of  payment method selected
+		function ChangeButtonNames(radioValue) {
+         	console.log('{!selectedPaymentRuleMethod}',createPaymentType,radioValue.value);      
+         	createPaymentType =  radioValue.value;  
+			if (radioValue.value == 'Batch Job'){
+				$("#createSPaymentBatch").prop('value', '{!$Label.Create_Supplier_Payment_Batch}');
+			}else if (radioValue.value == 'Immediately'){
+				$("#createSPaymentBatch").prop('value', '{!$Label.Preview_Supplier_Payments}');
+			}
+      	}   
+	    var onReset = function(){ //KNDY-13561
+	        //$('#supplierPymtMethodFilter').data("kendoDropDownList").value('');
+	        $("#supplierFilter").data("kendoMultiSelect").value('');
+	        $("#discountDateFilter").data("kendoDatePicker").value( '');
+	        $("#paymentDueDateFilter").data("kendoDatePicker").value( KenandyErp.Today());
+	        $("#bankAccountFilter").data("kendoComboBox").value('');
+	        var bankAccountDropdown = $.fn.KendoComboBox($('#bankAccountFilter'), { lookupSearchAction: '{!$RemoteAction.PaymentBatchExt.lookupSearchFilter}', referenceTo: 'Bank_Account__c', title: '{!JSENCODE($ObjectType.Bank_Account__c.Label)}', filterCriteria: 'Active__c = true' , value:null}); 
+	        currencyDropdown = $.fn.KendoComboBox($('#currencyFilter'), { lookupSearchAction: '{!$RemoteAction.PaymentBatchExt.lookupSearchFilter}', referenceTo: 'Currency__c', title: '{!JSENCODE($ObjectType.Currency__c.Label)}', value: null }); 
+	        $('.createSPaymentBatch-command').addClass("disab"); //KNDY-17732-disable button
+	        supplierInvoiceId = null;
+	        SupplierInvoicePaymentBatchUtils.ClearPageMessages(); //KNDY-17732 - clearn messages from screen
+	    }
+	    var onBankAccountChange=function(){ //KNDY-13561
+            console.log('onBankAccountChange');
+            var bankAccountId = $('#bankAccountFilter').val();
+            Visualforce.remoting.Manager.invokeAction(
+               '{!$RemoteAction.PaymentBatchExt.getBankAccount}',
+               bankAccountId,
+               function (result, event) {
+               	   
+               	   if (event.type == 'exception') {
+                        //combo validator would throw error in case of invalid bank entered
+                        //KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+		           }
+                   else if(result != null && result.success){
+                       KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                       console.log('result  :' + result);
+                       bankAccount = result.records[0];
+                       $('#bankAccountCurrency').html(bankAccount.Currency__r.Name);
+                       $('#bankAccountCompany').html(bankAccount.Company__r.Name);
+                       companyId = bankAccount.Company__c;
+                       bankAccountName = $('#bankAccountFilter').val().trim();                   
+                       //KNDY-18029 - fetch default disbursment bank acc payment method
+                       if (!supplierInvoiceId) {
+                       		//$('#supplierPymtMethodFilter').data("kendoDropDownList").value('');
+                       		pymtMethod = bankAccount.Primary_Disbursement_Payment_Method__c ? bankAccount.Primary_Disbursement_Payment_Method__c : '{!defaultStandardPaymentMethod}';			        		
+			        		$('#supplierPymtMethodFilter').data("kendoDropDownList").value(pymtMethod);
+			        		$("#supplierPymtMethodDropdown").kendoComboBox({text: pymtMethod, value: pymtMethod});
+			        				        		   
+			        		currencyDropdown.value(bankAccount.Currency__c);  
+			        		currencyDropdown.text(bankAccount.Currency__r.Name);   		 
+			        		currencyId = bankAccount.Currency__c;				
+                   		}
+                   }
+               },
+               {escape: false}
+            );
+        } 
+
+	    //KNDY-17732 - disable 
+	    var onInvoiceRuleComponentChange = function(){
+	    	$('.createSPaymentBatch-command').addClass("disab");
+	    	var grid = $('#{!supplierInvoicePreviewConfig.uniqueId}').data('kendoGridActionList'); 	    	
+	    	var currentData = grid.dataSource.data();	
+            var messageElement = grid.element.closest("div.grid-container").find("div.grid-message").first();
+            var errorMessages = [];
+            if (grid && currentData.length > 0 ){
+            	var errorMsg = '{!$Label.The_search_criteria_has_been_updated_Click_Search_to_continue}';
+	        	errorMessages.push({ message: errorMsg, severity: KenandyErp.MessageType.Error });
+	        	KenandyErp.Messages(errorMessages);	        
+	        } 
+	        supplierInvoiceId = null;     
+    }
+    
+        
+        var onPaymentDateChange = function(){//KNDY-19496
+            $('.createSPaymentBatch-command').addClass("disab");
+            var grid = $('#{!supplierInvoicePreviewConfig.uniqueId}').data('kendoGridActionList');          
+            var currentData = grid.dataSource.data();   
+            var messageElement = grid.element.closest("div.grid-container").find("div.grid-message").first();
+            var errorMessages = [];
+            var errorMsg = '';
+            if ( !pymtDate){ //payment date is blank
+                errorMsg = '{!$Label.Payment_Date_is_required}';
+            }
+            else if (grid && currentData.length > 0 ){
+                errorMsg = '{!JSENCODE($Label.You_must_search_again_after_changing_the_payment_date)}';
+            }
+            errorMessages.push({ message: errorMsg, severity: KenandyErp.MessageType.Error });
+            KenandyErp.Messages(errorMessages);         
+            supplierInvoiceId = null;     
+        }
+        
+	    var formatNumbersToCommas =function(tmp){
+            if(tmp && !isNaN(tmp)){
+                tmp = tmp.round(2); //KNDY-13705 KNDY-13561
+                tmp = tmp +"";
+                tmp = tmp.split(".");
+                tmp[0] = Number(tmp[0]).toLocaleString();
+                if(tmp[1] && tmp[1].length === 1) tmp[1] = tmp[1]+"0";
+                return tmp.length>1 ? tmp.join(".") : tmp[0] + ".00";
+            }
+            //console.log("Encountered an error in addCommas: "+tmp);
+            return "0.00";
+    	}
+
+   		var getSupplierInvoiceData = function() {
+	        SupplierInvoicePaymentBatchUtils.ClearPageMessages();
+	        var grid = $('#{!supplierInvoicePreviewConfig.uniqueId}');
+	        var messageElement = grid.closest("div.grid-container").find("div.grid-message").first();
+	        var deferred = $.Deferred();
+	        if (isHideResults){
+		       setTimeout(function() {
+	  				deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+	 			}, 100);
+	        	
+	        }else{
+	            var filterCriteria = SupplierInvoicePaymentBatchUtils.GetFilterCriteria();
+		            KenandyErp.BlockUI();
+		            Visualforce.remoting.Manager.invokeAction(
+		                '{!$RemoteAction.PaymentBatchExt.getSupplierInvoices}',
+		                filterCriteria,
+		                remoteArgs,
+		                function (result, event) {
+		                    KenandyErp.UnBlockUI();
+                            if(result != null && result.total > 0) 
+		                       deferred.resolve(result, event);
+                            else
+                               deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 }); 
+		                    if (event.type == 'exception') {
+		                        KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            }else if (result != null ){
+                                if (result.total == 0 && result.success){
+		                            KenandyErp.Message('{!$Label.There_are_no_supplier_invoices_matching_the_filter_criteria_entered}', KenandyErp.MessageType.Info, messageElement);
+                                }else if (result.total == 0 && !result.success){ 
+                                    KenandyErp.Message('{!$Label.The_selected_supplier_has_payment_hold_set_to_true}', KenandyErp.MessageType.Info, messageElement);
+		                        }
+		                   }
+		                },
+		                {escape: false}
+		            );
+				}
+	            return deferred.promise();
+       	 	}
+       	 	 $(document).on('KenandyErpReady', function(e) {       	 	 
+       			SupplierPaymentPreviewActions.initWindow();
+       			//KNDY-14332 Validate dates
+	        	$('#discountDateFilter,#paymentDueDateFilter,#paymentDateFilter').kendoValidator({
+	                rules: {
+	                    correctDateFormat: function (e) {
+	                        var dateVal = $(e).val();
+	                        // either a valid date or fail 
+	                        return dateVal == '' || Date.parse(dateVal) || false;                        
+	                    }
+	                },
+	                messages: {
+	                    correctDateFormat:  "{!$Label.Invalid_Entry}"
+	                }
+	            });
+	            var found = false;
+	            //KNDY-14332 validate combo box	            
+	            $('#bankAccountFilter').kendoValidator({
+	                rules: {	                	
+	                    correctComboBoxValue: function (e) {
+	                        var comboVal = $(e).val();
+	                        $.each($('#bankAccountFilter').data('kendoComboBox')._data(), function(idx, item) {
+					            if (item.value === comboVal) {
+					            	found = true;					               
+					                return;
+					            }
+					        });  
+					        if (found) {
+					        	found = false;     
+					        	return true;
+					        }
+					        else return false;   
+					           
+	                    }
+	                },
+	                messages: {
+	                    correctComboBoxValue: "{!$Label.Invalid_Entry}"
+	                }
+	            });
+	            //KNDY-18763- validation currency combo
+	            found = false;
+	            $('#currencyFilter').kendoValidator({
+	                rules: {	                	
+	                    correctComboBoxValue: function (e) {
+	                        var comboVal = $(e).val();
+	                        $.each($('#currencyFilter').data('kendoComboBox')._data(), function(idx, item) {
+					            if (item.value === comboVal) {
+					            	found = true;					               
+					                return;
+					            }
+					        });  
+					        if (found) {
+					        	found = false;     
+					        	return true;
+					        }
+					        else return false;   
+					           
+	                    }
+	                },
+	                messages: {
+	                    correctComboBoxValue: "{!$Label.Invalid_Entry}"
+	                }
+	            });
+	            
+        	});
+        	$(document).ready(function() {
+           		console.log('>>> ready entered');
+           		args = {slicedArr:null, 
+        			grid:null   		        
+        		};		
+	        	// Initialize Supplier Multiselect
+	        	var supplierFilterCriteria = 'Type__c = \'Remit-To\' and Hold_Payment__c = false'; //KNDY-13561
+	        	var supplierDropdown = $.fn.KendoMultiSelect($('#supplierFilter'), { lookupSearchAction: '{!$RemoteAction.PaymentBatchExt.lookupSearchFilter}', referenceTo: 'Supplier__c', title: '{!JSENCODE($ObjectType.Supplier__c.Label)}', value: '{!defaultSupplier}', filterCriteria: supplierFilterCriteria });
+				console.log('createPaymentType',createPaymentType);
+				//KNDY-17732 - set button labels run time depending on the payment method selected
+				if (createPaymentType == 'Batch Job'){
+					$("#createSPaymentBatch").prop('value', '{!$Label.Create_Supplier_Payment_Batch}');
+				}else if (createPaymentType == 'Immediately'){
+					$("#createSPaymentBatch").prop('value', '{!$Label.Preview_Supplier_Payments}');
+				}
+					        	
+                //KNDY-18763 Initialize Currency filter
+                currencyDropdown = $.fn.KendoComboBox($('#currencyFilter'), { lookupSearchAction: '{!$RemoteAction.PaymentBatchExt.lookupSearchFilter}',  referenceTo: 'Currency__c', title: 'Currency',value: '{!defaultSICurrencyId}' });	        	
+	        	updateBankAccountFilters();
+	        	
+				pymtMethod = '{!defaultPaymentMethod}';
+	        	var supplierPymtMethodDropdown = $.fn.KendoDropDownList($("#supplierPymtMethodFilter"), { getPicklistValuesAction: '{!$RemoteAction.PaymentBatchExt.getRemitMethodPicklistValues}', objectName: 'Supplier__c', fieldName: 'Payment_Method_G__c', title: '{!JSENCODE($ObjectType.Supplier__c.fields.Payment_Method_G__c.Label)}', valiue: '{!defaultPaymentMethod}' });
+	        	supplierPymtMethodDropdown.value(pymtMethod);
+	        	
+	        	var discountDateInit = $('#discountDateFilter').kendoDatePicker();
+	        	discountDateVal = discountDateInit.data("kendoDatePicker");
+	        	pymtDueDate = KenandyErp.Today();
+	        	if (supplierInvoiceId){
+	        		pymtDueDate = KenandyErp.ParseSFDCDate('{!defaultPaymentDueDate}');
+	        	}
+	        	var paymentDueDate = $.fn.KendoDatePicker($('#paymentDueDateFilter'), {
+	        	    value: pymtDueDate
+	        	});
+	        	
+	        	var paymentDate = $.fn.KendoDateTimePicker($('#paymentDateFilter'), {
+	        	    value: KenandyErp.Now()
+	        	});
+	        	pymtDate = paymentDate;//KNDY-19496 set the global variable also
+	        	//KNDY-17732 - on change of value show message and disable create/preview payment button
+		        $('#bankAccountFilter').bind('change', function() {
+		           onBankAccountChange();//KNDY-13561
+		           if (!supplierInvoiceId && bankAccountName != $('#bankAccountFilter').val().trim())
+		           		onInvoiceRuleComponentChange();
+		           bankAccountName = $('#bankAccountFilter').val().trim(); 
+		        });		        
+		       
+                $('#paymentDateFilter').data("kendoDateTimePicker").bind('change', function() {//KNDY-19496
+                    var value = this.value(); //selected date time in dateTimePicker
+                    console.log(':::: payment Date change :' + value);
+                    pymtDate = value;
+                    onPaymentDateChange();
+                });
+		 		 
+		        $('#supplierPymtMethodFilter').bind('change', function() {
+		        	if (pymtMethod !=  $('#supplierPymtMethodFilter').val())
+		           		onInvoiceRuleComponentChange();
+		            pymtMethod = $('#supplierPymtMethodFilter').val(); 
+		        });
+		        $('#supplierFilter').bind('change', function() {
+		        	supplierFilter = $("#supplierFilter").data("kendoMultiSelect");
+		        	if (supplierFilter && supplierFilter.value() != $("#supplierFilter").data("kendoMultiSelect").value())
+		           		onInvoiceRuleComponentChange();
+		        });
+		        $('#discountDateFilter').bind('change', function() {
+		        	if (discountDate != $('#discountDateFilter').val().trim() )
+		           		onInvoiceRuleComponentChange();
+		           	discountDate = $('#discountDateFilter').val().trim();
+		        });
+		        $('#paymentDueDateFilter').bind('change', function() {
+		        	if (pymtDueDate != $('#paymentDueDateFilter').val().trim())
+		           		onInvoiceRuleComponentChange();
+		           	pymtDueDate =  $('#paymentDueDateFilter').val().trim();
+		        });
+		        $('#currencyFilter').bind('change', function() {
+		        	if (currencyId !=  $('#currencyFilter').val())
+		           		onInvoiceRuleComponentChange();
+		            currencyId = $('#currencyFilter').val(); 
+		        });
+		        //KNDY-17732 -end of change
+		        $(SupplierInvoicesPreviewGrid).bind('change' ,function(e){
+		            console.log('change event of grid');                 
+		            enableDisableButtons();
+		           
+		             //KNDY-17671 - set lines total above amount to apply and disc earned
+		            SetLineTotal();
+		            updateEstimatedPaymentSummary();
+		        });
+		        
+		        $(SupplierInvoicesPreviewGrid).bind('OnReadSuccess', function(e){ //KNDY-13561
+		            OnSupplierInvoicesPreviewGridReadSuccess(e); 
+		        });
+		        //KNDY-14332 added for scrolling
+		        var SILinesFieldListGrid =   GetFieldList(supplierInvoiceFieldList);
+		        var SILinesConfigGridWidth = $('#{!supplierInvoicePreviewConfig.uniqueId}').width()+'px';    
+		                        
+		                    
+		       	// Initialize Supplier Invoices Preview Grid
+		        var supplierInvoicesPreviewGrid = $('#{!supplierInvoicePreviewConfig.uniqueId}').width(SILinesConfigGridWidth).kendoGridActionList({
+		                	namespace: '{!NamespaceUU}', 
+		                    config: '{!JSENCODE(supplierInvoicePreviewConfigJson)}', 
+		                    fieldList: SILinesFieldListGrid,//GetFieldList (supplierInvoiceFieldList),
+		                    lookupSearchAction: '{!$RemoteAction.PaymentBatchExt.lookupSearch}', 
+		                    getActionListFunction: getSupplierInvoiceData,
+		                    modelIdField: 'invoiceRecord.Id',
+		                    showIconButtons: true,
+		                    reorderable: true,//KNDY-18070 reoder columns
+		                    //KNDY-17671 - set template to sum up totals on header    
+		                    //aggregates: [{ field: "Amount_To_Apply", aggregate: "sum" },{ field: "Discount_Earned", aggregate: "sum" }],
+		                    beforeEdit: function(e) {
+		                   		gridBeforeEdit.call(this, e);
+		                     },
+		                }).data('kendoGridActionList');
+		                
+		        $('.createSPaymentBatch-command').on("click", $.proxy(SupplierInvoicePaymentBatchActions.CreatePaymentBatch, { dateFields: KenandyErp.KendoGridOptions.GetDateFields(JSON.parse(supplierInvoiceFieldList))  }));		        
+		        supplierInvoicesPreviewGrid.thead.off().on("click", ".grid-select-all", $.proxy(SupplierInvoicePaymentBatchUtils.SelectAll, { grid: supplierInvoicesPreviewGrid }));
+		        supplierInvoicesPreviewGrid.table.on("click", ".grid-select-one" , SupplierInvoicePaymentBatchUtils.SelectDeselectOne);
+		        supplierInvoicesPreviewGrid.bind('edit', $.proxy(EditOverride, { grid: supplierInvoicesPreviewGrid }));    
+		        //KNDY-17276 - calculate discount amount
+		        supplierInvoicesPreviewGrid.tbody.on("change", "tr", $.proxy(SetDiscountTakenAmount, { grid: supplierInvoicesPreviewGrid }));
+		        
+		        //KNDY-17712 - goback button binding
+		        $('#goback-button').on("click", $.proxy(SupplierPaymentPreviewActions.Goback));     
+		        $('#createpayments-button').on("click", $.proxy(SupplierPaymentPreviewActions.createFinalizePayments));         
+		        // KNDY-17714 Go back to Supplier Invoice Detail Page
+                $('#goBack').on("click", $.proxy(SupplierInvoicePaymentBatchActions.GoBack));
+                
+               if(supplierInvoiceId == ""){
+                   $('[id$=goBack]').hide();     
+                }else{
+                	$('[id$=goBack]').show(); 
+                	
+                	isHideResults = false;
+                	$('#{!supplierInvoicePreviewConfig.uniqueId}').data('kendoGridActionList').dataSource.read();
+               	}
+                      
+	        });
+	        //KNDY-17714- Default company bank account
+	        var updateBankAccountFilters = function(e){
+	        	// Initialize Bank Account Lookup
+	        	//KNDY-17714 - If no bank account assinged at company level fetch company and filter that company's bank account
+	        	var defaultbankaccount = '{!defaultDisbursementBankAcct.id}';
+	        	var bankAcctFilterCriteria;
+	        	var defaultSICurrency = '{!defaultSICurrencyId}';
+	        	var bankAccountCurrencyId = '{!JSENCODE(defaultDisbursementBankAcct.Currency__c)}';
+	        	var defaultCompanyObj = '{!defaultCompany}';
+	        	var filterText= [];	
+	        	var callFilter = true;
+	        	if (defaultbankaccount){
+		        	$('#bankAccountCurrency').html('{!JSENCODE(defaultDisbursementBankAcct.Currency__r.Name)}');		        	
+		        	$('#bankAccountCompany').html('{!JSENCODE(defaultDisbursementBankAcct.Company__r.Name)}');			
+		        	companyId = '{!defaultDisbursementBankAcct.Company__c}';
+		        	if (!supplierInvoiceId) currencyDropdown.value('{!defaultDisbursementBankAcct.Currency__c}');
+	        	}else{
+	        		$('#bankAccountCompany').html('{!JSENCODE(defaultCompany.Name)}');		        	
+	        		companyId = '{!defaultCompany.Id}';		
+	        		 if (!supplierInvoiceId ) 
+	        		 	currencyDropdown.value('{!defaultCompany.Default_Transaction_Currency__c}');
+	        	}
+	        	if (defaultbankaccount && !supplierInvoiceId){	   
+		        	bankAcctFilterCriteria = 'Active__c = true'; // KNDY-13561		        	
+		        	callFilter = false;      	        	
+		        }else if (supplierInvoiceId ){		  
+		        	callFilter = true;   
+	        	     if (defaultSICurrency !=bankAccountCurrencyId ){ 		        		
+		        		defaultbankaccount = null;
+		        		bankAccountCurrencyId = null;
+		        		$('#bankAccountCurrency').html('');	
+		        	}	 	
+		        }else{		        		        		        		        			        	
+		        	defaultbankaccount = null;
+		        	callFilter = false;      
+		        }
+		        if (defaultCompanyObj != null && callFilter){
+	        		filterText.push("Active__c = true");
+	        		filterText.push("Company__c = '{!JSENCODE(defaultCompany.Id)}'");
+	        		
+	        		bankAcctFilterCriteria = filterText.join(' and '); 		        				        		
+	        	}
+	        	bankAccountName = $('#bankAccountFilter').val().trim(); 	
+	        	var bankAccountDropdown = $.fn.KendoComboBox($('#bankAccountFilter'), { lookupSearchAction: '{!$RemoteAction.PaymentBatchExt.lookupSearchFilter}', referenceTo: 'Bank_Account__c', title: '{!JSENCODE($ObjectType.Bank_Account__c.Label)}', filterCriteria: bankAcctFilterCriteria , value:defaultbankaccount});
+	        	  
+	        }
+	        //KNDY-17276 - made discount taken as editable field to calculate runtime and preventing updation on beforeedit
+	        var gridBeforeEdit = function(e) {
+	  			var isDefaultPrevented = false;
+	       		var grid = this;
+				var columnIndex = grid.cellIndex(e.container);
+	   			var fieldName = grid.thead.find("th").eq(columnIndex).data("field");
+	         	 
+	       		if (fieldName == 'Discount_Earned') {
+	        		isDefaultPrevented = true;
+	       		}
+	       		//KNDY-19448 - prevent editing approved prepayment amount to apply Issue#2
+	       		if(e.model.get('invoiceRecord.Invoice_Type__c') == 'Prepayment' && e.model.get('invoiceRecord.Status__c') == 'Approved' && fieldName == 'Amount_To_Apply'){
+	       			isDefaultPrevented = true;
+	       		}
+		            		
+	           	if (isDefaultPrevented) {
+	           		e.preventDefault();
+	           	}
+	        }
+	       //KNDY-16751 - set min max for amount to apply column accordingly balance due/credit memo balance due fields
+		   var EditOverride= function(e) {                  
+			   	var self = this;
+	            var grid = self.grid;
+	            var columnIndex = grid.cellIndex(e.container);
+	            var fieldName = grid.thead.find("th").eq(columnIndex).data("field");
+				var row = e.container.closest('tr');
+	            var dataItem = this.grid.dataItem(row);
+	            var invType = dataItem.invoiceRecord.Invoice_Type__c;
+	           	var balancedue = 0;
+	           	var calcDisc = 0;
+	           	if (invType == 'Credit Memo' || (invType == 'Prepayment' && dataItem.invoiceRecord.Status__c == 'Closed')){
+	           		 balancedue = dataItem.invoiceRecord.Credit_Memo_Balance__c;
+	           	}else if (invType == 'Invoice' || (invType == 'Prepayment' && dataItem.invoiceRecord.Status__c == 'Approved')){
+	           		if (dataItem.EligibleForDiscount) {
+	           			calcDisc = (dataItem.invoiceRecord.Invoice_Amount__c - (dataItem.invoiceRecord.Amount_Paid__c + dataItem.invoiceRecord.Discount_Taken__c)) * 0.01 * dataItem.invoiceRecord.Early_Payment_Rate__c;
+	           		}else
+	           			calcDisc = 0;
+	           	 	balancedue = (dataItem.invoiceRecord.Invoice_Amount__c - (dataItem.invoiceRecord.Amount_Paid__c + dataItem.invoiceRecord.Discount_Taken__c)) ;
+	           	}           	
+	            if (e.model.Amount_To_Apply && $(e.container).find('input[name="Amount_To_Apply"]').data('kendoNumericTextBox')) {
+	                 $(e.container).find('input[name="Amount_To_Apply"]').data('kendoNumericTextBox').min(balancedue > 0 ? 0.01 : balancedue );
+	                 $(e.container).find('input[name="Amount_To_Apply"]').data('kendoNumericTextBox').max(balancedue > 0 ?  balancedue : -0.01);
+	             }
+	             //KNDY-17276 - on blur calculate discount taken from amount user entered for eligible invoices
+	             $(e.container).find('input[name="Amount_To_Apply"]').bind('blur',$.proxy(CalculateDiscountAmount, { e: e}));  
+	           
+		    } 
+		  
+	        function enableDisableButtons(){
+	            var grid = $('#{!supplierInvoicePreviewConfig.uniqueId}').data('kendoGridActionList'); //self.supplierInvoicesPreviewGrid;
+	            var gridUtils = new KendoGridUtils(grid, {dateFields: self.dateFields});
+	            var selectedRows = gridUtils.SelectedRows();
+	            var selectedRowCount = selectedRows.length;
+	            var totalRowCount= grid.dataSource.data().length;
+	            if(totalRowCount== 0 || selectedRowCount == 0){
+	                $('.createSPaymentBatch-command').addClass("disab");
+	            }
+	            else{
+	                $('.createSPaymentBatch-command').removeClass("disab");
+	            }
+	        };
+	        //KNDY-17276 - associate template to calculate discount from amount to apply field
+	        var GetFieldList=  function(fieldList) {
+	            fieldList = JSON.parse(fieldList);
+	            var supplierInvoicesPreviewGrid = supplierInvoicesPreviewGrid = $('#SupplierInvoicesPreviewGrid').data('kendoGridActionList');
+	            $.each(fieldList, function() { 
+	                 if (this.field == 'Discount_Earned') {	
+	                 	//KNDY-17671 - set template to sum up totals on header                
+	                    this.template = '#= SetDiscountAmount(data) #';    
+	                    this.editable = true;
+	                   	this.headerTemplate = this.title + '<br/><input type="textbox" class="k-textbox discount-total text-green" value="0.000000" readonly />';
+	                   	this.editor = function(container, options) {
+	                          supplierInvoicesPreviewGrid.closeCell(container);
+	                     }              
+	                }
+	                else if (this.field == 'Amount_To_Apply') {
+	                	//KNDY-17671 - set template to sum up totals on header    
+						this.editable = true;
+	                   	this.headerTemplate = this.title + '<br/><input type="textbox" class="k-textbox line-total text-green" value="0.000000" readonly />';
+	                   	this.editor = function(container, options) {
+	                          supplierInvoicesPreviewGrid.closeCell(container);
+	                     }
+	                }
+	                this.width = this.width == null ? getWidth(this.title.length) : this.width; //KNDY-14332 -To add a scroll bar, set the width of each column in pixels
+	            });
+	
+	            
+	            return JSON.stringify(fieldList);
+	        };
+	        var GetPaymentFieldList=  function(fieldList) {
+	            fieldList = JSON.parse(fieldList);	
+	            pymtMethod = $('#supplierPymtMethodFilter').val(); 	            
+	            $.each(fieldList, function() { 
+	            	//KNDY-17923 - deperecated 'payment_number__c' 	
+	                if (this.field == 'supplierPayment.Reference__c' || this.field == 'Memo__c') {	
+	                	this.editable = true;
+	                	if (pymtMethod == 'Check' && this.field == 'supplierPayment.Reference__c')
+	                		this.editable = false;
+	                }  
+	                if(this.field == "supplierPayment.Date_Paid__c"){
+						this.fieldtype = 'datetime';
+					}
+	                this.width = this.width == null ? getWidth(this.title.length) : this.width; //KNDY-14332 -To add a scroll bar, set the width of each column in pixels
+            	});
+            
+            	return fieldList;
+	        };
+	        //KNDY-14332 - get each column title width and calculate accordingly
+	        var  getWidth = function (len){
+				if(len < 12){return '120px';}
+				else{ return (len*10)+'px';}
+			};   
+	        //KNDY-17276 -set discount amount from amount applied by user while template assignment
+	        var SetDiscountAmount= function(data) {
+	        
+	            var rowUid = '';
+	            var discountTaken  = 0;
+	            
+	            if (data && data.invoiceRecord.Invoice_Type__c === 'Invoice' && data.EligibleForDiscount === true) {
+	                rowUid = data.uid;
+	                var  amountToApply = data.Amount_To_Apply; //data.dirty === true && data.calculateDiscount === true ? data.Amount_To_Apply : (data.invoiceRecord.Invoice_Amount__c - (data.invoiceRecord.Amount_Paid__c + data.invoiceRecord.Discount_Taken__c));
+	                var discountRate = data.invoiceRecord.Early_Payment_Rate__c;                
+	                discountTaken = amountToApply * discountRate * 0.01;   
+	                //if (data.calculateDiscount === false)
+	                //discountTaken = data.Discount_Earned == 0 && (data.calculateDiscount === true || data.Amount_To_Apply > 0.01) ? discountTaken :data.Discount_Earned;                  
+	                console.log('in SetDiscountAmount called by template',discountTaken,amountToApply)                  
+	            }  
+	           	return '<span id="' + rowUid + 'DiscountAmount">' + KenandyErp.FormatNumbersToCommas(discountTaken.round(2)) + '</span>';
+	            
+	         };
+	         //KNDY-17276 -set discount amount from amount applied by user on change event
+	         var SetDiscountTakenAmount= function(e){
+	        	console.log('in set discount amount- change event start');
+				var grid = $('#{!supplierInvoicePreviewConfig.uniqueId}').data('kendoGridActionList');
+				var row = $(e.target).closest("tr");
+				var item = grid.dataItem(grid.tbody.find("tr[data-uid='" + row.attr('data-uid') + "']"));  
+				var isSelected = $(row).find('input[type="checkbox"]').prop('checked'); //$(e.target).is(":checked");
+				var dataItem = grid != undefined ?  grid.dataItem(row) : null; // get the row data 
+		       	var ru = dataItem != undefined ?  dataItem.uid : null;
+		       	var discountAmount = 0;
+		       	var balancedue = 0;
+		       	var calcDisc = 0;
+		       	var invType;
+		     	if (grid) {
+					  invType = item.get('invoiceRecord.Invoice_Type__c');
+		              discountAmount = ru != undefined ?  $('#' + ru + 'DiscountAmount').text() : "0.00";
+		              if (invType == 'Credit Memo' || (invType == 'Prepayment' && item.get('invoiceRecord.Status__c') == 'Closed')){
+	         		  		balancedue = item.get('invoiceRecord.Credit_Memo_Balance__c');
+	         		  }else if (invType == 'Invoice' || (invType == 'Prepayment' && item.get('invoiceRecord.Status__c') == 'Approved')){
+	           	 	   		balancedue = item.get('invoiceRecord.Invoice_Amount__c') - (item.get('invoiceRecord.Amount_Paid__c') +  item.get('invoiceRecord.Discount_Taken__c'));
+	           	 	   		if (invType == 'Invoice' && item.get('invoiceRecord.Early_Payment_Rate__c')  && item.get('EligibleForDiscount') == true){
+	           	 	   			calcDisc = item.get('invoiceRecord.Early_Payment_Rate__c') * balancedue *0.01;
+	           	 	   		}
+	          		  }  
+	          		  console.log('on change event discountAmount and calcdisc ',discountAmount,calcDisc);
+		              if (isSelected){
+		              	//KNDY-16751 - Ability to select the amount to pay out or apply per invoice   
+	                    if (item.get("Amount_To_Apply") == 0)                          	
+	                     	item.set("Amount_To_Apply",balancedue );
+		               	if (item.get('Amount_To_Apply') > 0.01 && invType == 'Invoice' && item.get('EligibleForDiscount') == true){
+		               		if (item.get('Amount_To_Apply') == balancedue)
+		               			discountAmount = calcDisc;	                     	
+	                     }
+	                     item.set("Discount_Earned",discountAmount);   
+		              }else{//KNDY-16751 - Ability to select the amount to pay out or apply per invoice
+		              	item.set("Discount_Earned",0.00);  
+		              	item.set("Amount_To_Apply",0.00);  
+		              }
+		              console.log('discount earned on change event end',item.get("Discount_Earned"));	              
+		    	}
+		    	//KNDY-17671 - set lines total above amount to apply and disc earned
+		    	SetLineTotal();
+		    	updateEstimatedPaymentSummary()
+			    return true;
+			 };
+			 //KNDY-17276 -calculate discount amount from amount applied by user on blur event
+	         var CalculateDiscountAmount= function(e) {
+				console.log('in calculate discount amount - blur event start');
+				
+				var discountAmount = 0.00; 
+				var grid = $('#{!supplierInvoicePreviewConfig.uniqueId}').data('kendoGridActionList');
+				var row = $(e.target).closest("tr");
+				var dataItem = grid != undefined ?  grid.dataItem(row) : null; // get the row data 
+				var ru = dataItem.uid
+				var dataModel = grid.dataSource.get(dataItem.id);            		
+				 if (grid) {
+				    var gridData = grid.dataSource.data();
+				    $.each( gridData, function(indx,valu) {
+				    	if (valu.invoiceRecord && valu.invoiceRecord.Invoice_Type__c == 'Invoice' && valu.EligibleForDiscount === true && valu.IsSelected__custom) {
+				              var rowUid =  valu.uid ;
+				              discountAmount = (valu.invoiceRecord.Early_Payment_Rate__c * valu.Amount_To_Apply * 0.01).round(2);
+				              if(rowUid === ru){
+				                 $('#' + rowUid + 'DiscountAmount').text(formatNumbersToCommas(discountAmount.round(2)));                                              
+				              }
+				              //KNDY-16751 - Ability to select the amount to pay out or apply per invoice
+				              if (valu.Amount_To_Apply  == 0)
+				              	valu.Amount_To_Apply = valu.invoiceRecord.Invoice_Amount__c - (valu.invoiceRecord.Amount_Paid__c +  valu.invoiceRecord.Discount_Taken__c);
+			              }
+			          });	
+			          console.log('in calc disc amount/ balance - blur end',$('#' + ru + 'DiscountAmount').text() ,discountAmount);
+			          SetDiscountTakenAmount(e);	               
+				      return true;
+			  	  }
+	          }
+	        //KNDY-13561: From the selected invoices in grid, calculate payment summary
+	        //Closed Prepayments (paid and available to use) are used for prepayments available total
+	        //Approved Prepayments (to be paid) are used for supplier invoice total
+	        function updateEstimatedPaymentSummary(){
+	            console.log('>>>>updateEstimatedPaymentSummary entered');
+	            TotalPrepaymentsAvailable=0;
+	            TotalCreditMemosAvailable=0;
+	            SupplierInvoicesTotalAmount =0;
+	            EstimatedSupplierPaymentTotal=0;
+	            TotalDiscountApplied =0;
+	            var grid = $('#{!supplierInvoicePreviewConfig.uniqueId}').data('kendoGridActionList'); //self.supplierInvoicesPreviewGrid;
+	            var gridUtils = new KendoGridUtils(grid, {dateFields: self.dateFields});
+	            var selectedRows = gridUtils.SelectedRows();
+	            var selectedRowCount = selectedRows.length;
+	            if (selectedRowCount > 0){
+	                $.each(selectedRows,function() {
+	                	//KNDY-17671 updated to take amount to apply to calculate which is used to be really paid out/utilized
+	                     if (this.invoiceRecord['Invoice_Type__c'] == 'Invoice'){
+	                        SupplierInvoicesTotalAmount += this['Amount_To_Apply'];//this.invoiceRecord['Balance_Due__c'];
+	                     }
+	                     else if (this.invoiceRecord['Invoice_Type__c'] == 'Prepayment'){
+	                        if(this.invoiceRecord['Status__c'] == 'Closed'){
+	                            // unapplied prepayment
+	                            TotalPrepaymentsAvailable += this['Amount_To_Apply'];
+	                        }
+	                        else if(this.invoiceRecord['Status__c'] == 'Approved'){
+	                            SupplierInvoicesTotalAmount += (this['Amount_To_Apply']);
+	                        }
+	                     }
+	                     else if (this.invoiceRecord['Invoice_Type__c'] == 'Credit Memo'){
+	                            TotalCreditMemosAvailable += this['Amount_To_Apply'];
+	                     }
+	                     TotalDiscountApplied += this['Discount_Earned'];
+	                });
+	            }
+	            $('#TotalPrepaymentsAvailable').html(formatNumbersToCommas(TotalPrepaymentsAvailable));
+	            $('#TotalCreditMemosAvailable').html(formatNumbersToCommas(TotalCreditMemosAvailable));
+	            $('#SupplierInvoicesTotalAmount').html(formatNumbersToCommas(SupplierInvoicesTotalAmount - TotalDiscountApplied));
+	            //KNDY-19448 - round with 2 digits/scale
+	            var totalPayment = ((SupplierInvoicesTotalAmount + TotalCreditMemosAvailable  + TotalPrepaymentsAvailable).round(2))-TotalDiscountApplied.round(2);
+	            if (totalPayment >=0){
+	            	$('#EstimatedSupplierPaymentTotal').css("color", "green");
+	            }else{
+	            	$('#EstimatedSupplierPaymentTotal').css("color", "red");
+	            }
+	            $('#EstimatedSupplierPaymentTotal').html(formatNumbersToCommas( totalPayment ));
+	        };
+	        //KNDY-17671 updated to take amount to apply to calculate which is used to be really paid out/utilized
+	        function GetLineTotal() {
+	        	var supplierInvoicesPreviewGrid = $('#{!supplierInvoicePreviewConfig.uniqueId}').data('kendoGridActionList');
+	        	var gridUtils = new KendoGridUtils(supplierInvoicesPreviewGrid, {dateFields: self.dateFields});
+	        	var selectedRows = gridUtils.SelectedRows();
+	            var selectedRowCount = selectedRows.length;
+	            var lineTotal = 0;
+	            $.each(selectedRows,function(index,element) {
+	            	lineTotal += element.Amount_To_Apply;
+	            });
+	        	return lineTotal;//(supplierInvoicesPreviewGrid && supplierInvoicesPreviewGrid.dataSource.total() > 0 && selectedRowCount > 0) ? supplierInvoicesPreviewGrid.dataSource.aggregates().Amount_To_Apply.sum : 0;
+	        };
+	        function GetLineDiscountTotal() {
+	        	var supplierInvoicesPreviewGrid = $('#{!supplierInvoicePreviewConfig.uniqueId}').data('kendoGridActionList');
+	        	var gridUtils = new KendoGridUtils(supplierInvoicesPreviewGrid, {dateFields: self.dateFields});
+	        	var selectedRows = gridUtils.SelectedRows();
+	            var selectedRowCount = selectedRows.length;
+	            var discTotal = 0;
+	            
+	            $.each(selectedRows,function(index,element) {
+	            	discTotal += element.Discount_Earned;
+	            });
+	            console.log('total discTotal',discTotal);
+	        	return discTotal;//(supplierInvoicesPreviewGrid && supplierInvoicesPreviewGrid.dataSource.total() > 0  && selectedRowCount > 0) ? supplierInvoicesPreviewGrid.dataSource.aggregates().Discount_Earned.sum : 0;
+	        };
+	         //KNDY-17671 set color style for totals which is used to be really paid out/utilized
+	        function SetLineTotal() { 
+	        	           
+	            var linesAmount = GetLineTotal();                    
+	            var linesDiscountAmount = GetLineDiscountTotal();      
+	            if (linesAmount.round(2) >= 0) {
+	                $('.line-total').removeClass('text-red');
+	                $('.line-total').addClass('text-green');
+	            }
+	            else {
+	                $('.line-total').removeClass('text-green');
+	                $('.line-total').addClass('text-red');               
+	            }
+	            if (linesDiscountAmount.round(2) >= 0) {
+	                $('.discount-total').removeClass('text-red');
+	                $('.discount-total').addClass('text-green');
+	            }
+	            else {
+	                $('.discount-total').addClass('text-red');
+	                $('.discount-total').removeClass('text-green');
+	            }
+	            $('.line-total').val(kendo.toString(linesAmount, 'n2'));
+	            $('.discount-total').val(kendo.toString(linesDiscountAmount, 'n2'));
+	        };
+	                
+	        // KNDY-13561 Select all invoices and update estimated payment
+	        function OnSupplierInvoicesPreviewGridReadSuccess(e) { 
+	            console.log('>>>OnsupplierInvoicesPreviewGridReadSuccess');
+	            
+	            var hasInvoices = (e.event && e.event.result && e.event.result.total > 0);
+	            if (hasInvoices){
+	               var dataSource = $('#{!supplierInvoicePreviewConfig.uniqueId}').data('kendoGridActionList').dataSource;
+	               var supplierInvoices = dataSource.data();
+	               $.each(supplierInvoices,function() {
+	                  this['IsSelected__custom'] = true;
+	               });
+	               $('#{!supplierInvoicePreviewConfig.uniqueId}').data('kendoGridActionList').refresh();
+	               $(".grid-select-all").prop('checked', true);
+	            }
+	            
+	            // create payment batch button may be disabled
+	            enableDisableButtons();
+	            //KNDY-17671 - set lines total above amount to apply and disc earned
+	            SetLineTotal();
+	            updateEstimatedPaymentSummary();
+	        };
+	        (function ($) {
+	            $.fn.GridPreviewSupplierPayments = function(selector, options) {
+	                var config = JSON.parse(options.config);
+	                var masterFieldList = options.masterFieldList;
+	                var detailFieldList = options.detailFieldList;
+	                var buttons = $.map(config.buttons.split(','), $.trim);             
+	                var namespace = options.namespace;
+	                var lookupSearchAction = options.lookupSearchAction;
+	                var getSupplierPaymentAction = options.getSupplierPaymentAction;
+	                var masterReferenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(masterFieldList); // get the list of reference fields for the master grid
+	                var dateFields = KenandyErp.KendoGridOptions.GetDateFields(masterFieldList); // get the list of date fields for the master grid
+	                var lookupSearchFilters = (options.lookupSearchFilters) ? options.lookupSearchFilters : [];
+	                
+	                var getMasterModel = function() {
+	                    var fields = KenandyErp.KendoGridOptions.GetFields(masterFieldList);    
+	                    var model = kendo.data.Model.define({ id: "Id", fields: fields });
+	                    return model;
+	                };
+	                        
+	                var getMasterColumns = function() {
+		                $.each(masterFieldList, function() { 
+			                if (this.field == 'supplierPayment.Name' || this.field == 'supplierPayment.Status__c' || this.field == 'supplierPayment.Status_Reason__c') {				                	
+			                		this.hidden = hideColumns;
+			                }  			               
+		            	});
+	                    var columns = KenandyErp.KendoGridOptions.GetColumns(masterFieldList, { lookupSearchAction: lookupSearchAction, buttons: buttons, lookupSearchFilters: lookupSearchFilters });
+	                    
+	                    return columns;
+	                };
+	                
+	                var getMasterToolbarButtons = function() {
+	                    return KenandyErp.KendoGridOptions.GetToolbarButtons(buttons, { showIconButtons: true });
+	                };
+                    
+               		var getMasterDataSource = function() {
+                    	var dataSource = new kendo.data.DataSource({
+	                        transport: {
+	                            read: function (options) {	                         
+	                                    options.success(invpaywrapper.paymentWrapperList);
+	                                  }
+	                        },
+	                        batch: true,
+	                        pageSize: config.pageSize ? config.pageSize : KenandyErp.KendoGridOptions.DefaultPageSize,
+	                        schema: {
+	                            model: getMasterModel(),
+	                            parse: function (response) {
+	                                       $.each(response, function (idx, item) {
+	                                            item = Serializer.ConvertFromSFDCDate(item, { dateFields: dateFields });
+	                                            //KNDY-17923 - deperecated 'payment_number__c' 	
+	                                            if (pymtMethod == 'Check' && item.supplierPayment.Reference__c == null && makegridreadonly == false){
+	                                            	item.supplierPayment.Reference__c = '{!$Label.Number_Provided}';
+	                                            }
+	                                       });
+	                                        
+	                                       return response;
+	                                   }
+	                        		}           
+	                    		});
+        
+                    	return dataSource;
+                	};
+                
+                	var masterGrid = $(selector).kendoGrid({
+                                    dataSource: getMasterDataSource(), 
+                                    navigatable: true,
+                                    pageable: { 
+                                        input: true,
+                                        numeric: false,
+                                        pageSizes: KenandyErp.KendoGridOptions.PageSizes 
+                                    },  
+                                    toolbar: getMasterToolbarButtons(), 
+                                    columns: getMasterColumns(),
+                                    sortable: true,
+                                    //filterable: true,
+                                    resizable: true,
+                                    reorderable: true,//KNDY-18070 reoder columns
+                                    detailTemplate: kendo.template($("#detailTemplate").html()),
+                                    detailInit: $.proxy(SupplierPaymentPreviewActions.DetailInit, { detailFieldList: detailFieldList, lookupSearchAction: lookupSearchAction }),
+                                    editable: true,
+                                    modelIdField: 'supplierPayment.Id',
+                                    beforeEdit: function(e) {
+                                       SupplierPaymentPreviewActions.BeforeEditOverride.call(this, e);
+                                    },
+                                    edit: $.proxy(KenandyErp.KendoGridActions.Edit, { referenceFields: masterReferenceFields })
+                                }).data('kendoGrid');
+                
+                
+	               	 			// bind click events to the custom buttons
+	               				 KenandyErp.KendoGridOptions.BindEvents(masterGrid, buttons, 
+                                        { 
+                                            referenceFields: masterReferenceFields, 
+                                            config: config, 
+                                            dateFields: dateFields 
+                                        }
+                                    );
+                
+			                // bind grid detailExpand/detailCollapse events
+			                masterGrid.bind("detailExpand", $.proxy(SupplierPaymentPreviewActions.DetailExpand, { grid: masterGrid }));
+			                masterGrid.bind("detailCollapse", $.proxy(SupplierPaymentPreviewActions.DetailCollapse, { grid: masterGrid }));
+			                
+			                masterGrid.dataSource.bind("change", $.proxy(SupplierPaymentPreviewActions.refresh, { masterGrid: masterGrid, isMasterGrid: true }));
+			                $('#goback-button').show();
+			                $('#createpayments-button').show();
+			                return masterGrid;
+            	};
+        	})(jQuery);            
+	       	var SupplierInvoicePaymentBatchUtils = function() {
+	        	return {           		
+	                //KNDY-17276,KNDY-17276 added method to for select/deselect one rows and set discount flag	
+	        		SelectDeselectOne: function() {
+	        			var checked = this.checked,
+				        row = $(this).closest("tr"),
+				        grid = $('#{!supplierInvoicePreviewConfig.uniqueId}').data("kendoGridActionList"),
+				        dataItem = grid.dataItem(row);
+						dataItem.calculateDiscount = false; 
+				        if (checked) {
+				            //-select the row
+				            row.addClass("k-state-selected");			            
+				            } else {
+				            //-remove selection
+				            row.removeClass("k-state-selected");			           
+				        }        			
+	        		},
+	        		//KNDY-17276,KNDY-17276 added method to for select/deselect all rows and set discount flag and amount to apply and discount run time
+	                SelectAll: function(e) {
+	                    var self = this;
+	                    var grid = this.grid;
+	                    var state = $(e.target).is(":checked");
+	        			console.log('in selectall');
+	        			var calcDisc = 0;
+	        			var balancedue = 0;        			
+	                    $.each(grid.dataSource.data(), function() {
+	                        var isDirty = this['dirty'];
+	        				calcDisc = 0;
+	        				balancedue = 0;  
+	                        this['IsSelected__custom'] = state;
+	                        if (!isDirty) {
+	                            this['dirty'] = true;
+	                        }
+	                        //KNDY-16751 - Ability to select the amount to pay out or apply per invoice
+	        				if (state == false){        					
+	        					this['Amount_To_Apply']  = 0.00;
+	        					this['Discount_Earned']  = 0.00;
+	       					}else{
+	      						var invType = this.invoiceRecord['Invoice_Type__c'];				             
+							    if (invType == 'Credit Memo' || (invType == 'Prepayment' && this.invoiceRecord['Status__c'] == 'Closed')){
+									balancedue = this.invoiceRecord['Credit_Memo_Balance__c'];
+								}else if (invType == 'Invoice' || (invType == 'Prepayment' && this.invoiceRecord['Status__c'] == 'Approved')){
+									var amtPaid = this.invoiceRecord['Amount_Paid__c'] ? this.invoiceRecord['Amount_Paid__c'] : 0;
+									var discTaken = this.invoiceRecord['Discount_Taken__c'] ? this.invoiceRecord['Discount_Taken__c'] : 0
+							   		balancedue = this.invoiceRecord['Invoice_Amount__c'] - (amtPaid + discTaken);
+							   		if (invType == 'Invoice' && this.invoiceRecord['Early_Payment_Rate__c']  && this['EligibleForDiscount'] == true){
+							   			calcDisc = this.invoiceRecord['Early_Payment_Rate__c'] * balancedue *0.01;
+							   		}
+							   		balancedue = balancedue;
+							 	} 						 	
+	       						this['Amount_To_Apply'] = balancedue;
+	       						this['Discount_Earned'] = calcDisc;
+	       						this['calculateDiscount'] = false;
+	       						console.log('select all ',this['Discount_Earned']);
+	       					}
+	        				
+	                        
+	                    });
+	        			
+	                    grid.refresh();
+	                },
+	        		GetFilterCriteria: function(){
+	        			var filterCriteria = [];
+						var bankAccountChosen = $("#bankAccountFilter").val().trim();
+						var currencyId = $('#currencyFilter').val()
+						var compId = bankAccount ? bankAccount.Company__c : companyId;//KNDY-13561
+						var supplierIds = $("#supplierFilter").data("kendoMultiSelect").value();//KNDY-13561
+						var totalCreditsExceedsDebits = $('#totalCreditsExceedsDebits').is(':checked');
+						var discountDate = $('#discountDateFilter').val().trim();
+						var pymtDueDate = $('#paymentDueDateFilter').val().trim();
+						var pymtMethodChosen = pymtMethod ? pymtMethod : $('#supplierPymtMethodFilter').val(); 
+						var pymtDate = $('#paymentDateFilter').val().trim(); 
+						
+						if (supplierInvoiceId && !searchFilterClickedAgain)
+							filterCriteria.push({ field: 'Id', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: supplierInvoiceId, operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+						if(supplierIds != null && supplierIds.length > 0){
+							filterCriteria.push({ field: 'Supplier__c', value: JSON.stringify(supplierIds), operator: KenandyErp.KendoGridOptions.FilterOperatorType.Contains });
+						}
+						if(pymtMethodChosen && pymtMethodChosen != ' ')
+							filterCriteria.push({ field: 'Payment_Method_G__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: pymtMethodChosen, operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+						
+						filterCriteria.push({ field: 'totalCreditsExceedsDebits', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: totalCreditsExceedsDebits, operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+						
+						if (discountDate)
+							filterCriteria.push({ field: 'Discount_Date__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.Date, value: discountDate, operator: KenandyErp.KendoGridOptions.FilterOperatorType.LessThanOrEquals });
+						if (pymtDueDate)
+							filterCriteria.push({ field: 'Payment_Due_Date__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.Date, value: pymtDueDate, operator: KenandyErp.KendoGridOptions.FilterOperatorType.LessThanOrEquals });
+						if (pymtDate)
+							filterCriteria.push({ field: 'PaymentDate', fieldType: KenandyErp.KendoGridOptions.ColumnType.DateTime, value: pymtDate, operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+						if(bankAccountChosen)
+							filterCriteria.push({ field: 'Bank_Account__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: bankAccountChosen, operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+						if (currencyId){//KNDY-13561
+							 filterCriteria.push({ field: 'Currency__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: currencyId, operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+						}if(compId){//KNDY-13561
+							filterCriteria.push({ field: 'Company__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: compId, operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+						}
+						return filterCriteria;
+				},
+				
+				ClearPageMessages: function(){
+					var grid = $('#{!supplierInvoicePreviewConfig.uniqueId}');
+					var messageElement = grid.closest("div.grid-container").find("div.grid-message").first();
+					KenandyErp.ClearMessage(messageElement);
+					KenandyErp.ClearMessage();
+				}
+	        	};
+			}();
+			//KNDY-17712 - supplier payment preview grid
+       		var SupplierPaymentPreviewActions = function() {
+       			return{
+       				//Initialize the hierarchical grid on the page
+            		GridInit: function(){
+            			var lookupSearchFilters = [];
+                        
+			            
+			            var previewPaymentGrid = $.fn.GridPreviewSupplierPayments($('#{!supplierPaymentMasterPreviewConfig.uniqueId}'), {
+			                                             namespace: '{!NamespaceUU}', 
+			                                             config: '{!supplierPaymentMasterPreviewConfigJson}', 
+			                                             masterFieldList: GetPaymentFieldList('{!SupplierPaymentMasterFieldList}'), 
+			                                             detailFieldList: GetPaymentFieldList('{!SupplierPaymentChildFieldList}'), 			                                             			                                             
+			                                             lookupSearchFilters: [],
+			                                             lookupSearchAction: '{!$RemoteAction.PaymentBatchExt.lookupSearchFilter}', 
+			                                             editable: true
+			                                        });
+			            
+			            //previewPaymentGrid.dataSource.bind("change", SupplierPaymentPreviewActions.refresh);
+			            
+			            previewPaymentGrid.one("dataBound", function() {
+			                $.each(this.dataSource.data(), function() {
+			                    if (this.get('lstPaymentLines') && this.get('lstPaymentLines').length > 0) {
+			                        //expandedRows.push(this.uid);
+			                    }
+			                });
+			                
+			                if (expandedRows.length > 0) {
+			                    SupplierPaymentPreviewActions.ExpandCollapseRow();
+			                }
+			            });
+			            
+			            previewPaymentGrid.tbody.on("change", ".grid-select-one", function (e) {
+						    var row = $(e.target).closest("tr");
+						    var item = previewPaymentGrid.dataItem(row);
+						    item.set("selected", $(e.target).is(":checked") ? 1 : 0);
+						});
+					                
+            		},
+            		BeforeEditOverride: function(e) { //we use this function to ensure that supplier payment grid is read only.                     
+	                    var grid = this;
+	                   
+	                    if (makegridreadonly) {
+	                        e.preventDefault();
+	                    }
+	                    
+	                },
+            		ExpandCollapseRow: function() {
+	                    var grid = $({!supplierPaymentMasterPreviewConfig.uniqueId}).data('kendoGrid');
+	                    var paymentPreviewGridData = $({!supplierPaymentMasterPreviewConfig.uniqueId}).data('kendoGrid').dataSource.data();
+	                    
+	                    // Collapse and expand the row if the row is already expanded
+	                    $.each( paymentPreviewGridData, function(indx,valu) { 
+	                        if (_.contains(expandedRows, valu.uid)) {
+	                            var row = grid.tbody.find("tr[data-uid='" + valu.uid + "']");
+	                            grid.collapseRow(row);
+	                            grid.expandRow(row); 
+	                        }
+	                    });
+	                },
+                
+	                DetailExpand: function(e) {
+	                    var self = this;
+	                    var grid = self.grid;
+	                    var masterDataItem = grid.dataItem(e.masterRow);
+	                    
+	                    e.detailRow.find("#{!supplierPaymentMasterPreviewConfig.uniqueId}").show();
+	                    e.detailRow.find(".grid-payment-sources-message").hide();
+	                        
+	                    // add row uid to the expandedRows list
+	                    expandedRows.push(masterDataItem.uid);
+	                },
+	                
+	                DetailCollapse: function(e) {
+	                    var self = this;
+	                    var grid = self.grid;
+	                    var masterDataItem = grid.dataItem(e.masterRow);
+	                    
+	                    // remove row uid to the expandedRows list
+	                    expandedRows.pop(masterDataItem.uid);
+	                },	
+            		initWindow: function(){
+            			 //Initialize the find and match modal pop-up
+						var paymentWindow = $("#previewPayment");
+		                if (!paymentWindow.data("kendoWindow")) {
+		                            paymentWindow.kendoWindow({
+		                                height: "750px",
+		                                width: "1000px",
+		                                title: "", 
+		                                visible: false, //ENSURES POPUP DOESNT LOAD ON PAGELOAD
+		                                modal: true,
+		                                position: {
+		                                    top: 100,
+		                                    left: 100
+		                                },close: function() {  //KNDY-19494
+		                                    invpaywrapper = {invWrapperList:null, 
+		                                        paymentWrapperList:null,
+		                                        dateTimeNow:null                
+		                                    };  
+		                                    invpaywrapperfinal = {invWrapperList:null, 
+		                                        paymentWrapperList:null,
+		                                        dateTimeNow:null                
+		                                    };    
+		                                    paymentMap = new Map();
+		                                    hideColumns = true;   
+		                                    makegridreadonly = false;
+		                                    var grid = $('#{!supplierPaymentMasterPreviewConfig.uniqueId}');
+		                                    var messageElement = grid.closest("div.grid-container").find("div.grid-message").first();
+		                                    KenandyErp.ClearMessage(messageElement);
+		                                    KenandyErp.ClearMessage();
+		                                    
+		                                    $('#{!supplierPaymentMasterPreviewConfig.uniqueId}').kendoGrid('destroy').empty();
+                                      }
+		                    });
+		                }
+            		},
+            		//open payment preview window
+            		OpenPaymentWindow: function(atitle){
+						$('#createpayments-button').removeClass("disab");
+		            	//Set the window 
+		            	this.PaymentWindow = $('#previewPayment');		                
+		                //Open the window
+		                this.PaymentWindow.data('kendoWindow').title(atitle).center().open();
+		            },
+		            //KNDY-17712 - goback button method
+		            Goback: function(e){
+		                var PaymentWindow = $('#previewPayment').data("kendoWindow");
+		                PaymentWindow.close();  
+                    },            		
+		   			DetailInit: function(e) {
+	                    var self = this;
+	                    var detailRow = e.detailRow;
+	                    var detailFieldList = self.detailFieldList;
+	                    var lookupSearchAction = self.lookupSearchAction;
+	                    var uid = e.data.uid;
+	                    var detailReferenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(detailFieldList); // get the list of reference fields for the detail grid
+	                    var paymentLinesData = SupplierPaymentPreviewActions.GetPaymentLinesById(uid);
+	                    var detailButtons = [];//isRenderGrid ? [ KenandyErp.KendoGridOptions.CommandType.Create, KenandyErp.KendoGridOptions.CommandType.Delete, KenandyErp.KendoGridOptions.CommandType.Cancel, KenandyErp.KendoGridOptions.CommandType.Search ] : [];
+	                    
+	                    var lookupSearchFilters = [];
+	                    
+	                    if (paymentLinesData.length == 0 && (!_.contains(_.pluck(detailData, 'Id'), uid))) {
+	                        if (e.data.get('lstPaymentLines')) {
+	                            paymentLinesData = JSON.parse(JSON.stringify(e.data.get('lstPaymentLines')));
+	                        }
+	                    }
+	                    
+	                    var getDetailModel = function() {
+	                        var fields = KenandyErp.KendoGridOptions.GetFields(detailFieldList); 
+	                        var model = kendo.data.Model.define({ id: "Id", fields: fields });
+	                                
+	                        return model;
+	                    };
+	                    
+	                    var getDetailToolbarButtons = function() {
+	                        return KenandyErp.KendoGridOptions.GetToolbarButtons(detailButtons);
+	                    };
+	                            
+	                    var getDetailColumns = function() {	                    	
+	                        return KenandyErp.KendoGridOptions.GetColumns(detailFieldList, { lookupSearchAction: lookupSearchAction, buttons: detailButtons, lookupSearchFilters: lookupSearchFilters });
+	                    };
+	                    
+	                    var getDetailDataSource = function() {
+	                        var dataSource = new kendo.data.DataSource({
+	                            data: paymentLinesData, 
+	                            batch: true,
+	                            schema: {
+	                                model: getDetailModel()
+	                            }
+	                        });
+	            
+	                        return dataSource;
+	                    };
+	                    
+	                    var detailsGrid = detailRow.find(".grid-supplier-payment-details").kendoGrid({
+	                                        dataSource: getDetailDataSource(), 
+	                                        navigatable: true,
+	                                        toolbar: getDetailToolbarButtons(),
+	                                        columns: getDetailColumns(),
+	                                        sortable: false,	                                        
+	                                        resizable: true,
+	                                        editable: true,
+	                                        edit: $.proxy(KenandyErp.KendoGridActions.Edit, { referenceFields: detailReferenceFields }),
+	                                        dataBound: function(e) {
+	                                          this.footer.hide();
+	                                        },
+	                                        beforeEdit: function(e) {
+		                                       SupplierPaymentPreviewActions.BeforeEditOverride.call(this, e);
+		                                    }
+	                                      }).data('kendoGrid');
+	                    
+	                    // bind click events to the custom buttons
+	                    KenandyErp.KendoGridOptions.BindEvents(detailsGrid, detailButtons, 
+	                        { 
+	                            referenceFields: detailReferenceFields
+	                        }
+	                    );	   
+	                    //detailsGrid.dataSource.bind("change", SupplierPaymentPreviewActions.refresh);
+                    	detailsGrid.dataSource.bind("change", $.proxy(SupplierPaymentPreviewActions.refresh, { masterGrid: e.sender, detailGrid: detailsGrid, rowUid: uid, isMasterGrid: false }));                 	                   
+	                },
+	                GetPaymentLinesById: function(id) {
+	                    var data = _.where(detailData, {Id: id});
+	                    var paymentLinesData = [];
+	                    
+	                    if (data.length > 0) {
+	                        paymentLinesData = data[0].lstPaymentLines;
+	                    }
+	                    
+	                    return paymentLinesData;
+	                },
+	                SetPaymentLinesById: function(id, paymentLinesData) {
+                
+	                    var found = false;
+	                    
+	                    $.each(detailData, function() {
+	                        if (this.Id == id) {
+	                            this.lstPaymentLines = paymentLinesData;
+	                            found = true;
+	                            return false;
+	                        }
+	                    });
+	                    
+	                    if (!found) {
+	                        detailData.push({ Id: id, lstPaymentLines: paymentLinesData });
+	                        found = false; // Reset found for next round
+	                    }
+	                },
+	                refresh: function(e){
+                
+	                    var that = this;
+	                    var masterGrid = that.masterGrid;
+	                    var rowUid = (that.isMasterGrid && e.items.length > 0) ? e.items[0].uid : that.rowUid;
+	                    var masterRow = masterGrid.table.find("tr[data-uid='" + rowUid + "']");
+	                    var detailGrid = (that.isMasterGrid) ? masterRow.next('tr.k-detail-row').find(".grid-supplier-payment-details").data('kendoGrid') : that.detailGrid;
+	                    	                    	                        	                  
+	                    
+	                    if (!that.isMasterGrid) {
+	                        
+	                        SupplierPaymentPreviewActions.SetPaymentLinesById(rowUid,detailGrid.dataSource.data());
+	                    }
+	                    else {
+	                        SupplierPaymentPreviewActions.ExpandCollapseRow();
+	                    }
+	                   
+	                },
+			   		CreatePaymentRealTime : function(e) {
+						var self = this;
+						var grid = $('#{!supplierInvoicePreviewConfig.uniqueId}').data('kendoGridActionList');
+			   			var messageElement = grid.element.closest("div.grid-container").find("div.grid-message").first();
+			   			
+			   			if (grid.editable && !grid.editable.validatable.validate()) {
+			                e.preventDefault();
+			                return false;
+			            }
+			        	
+			   			var gridUtils = new KendoGridUtils(grid, {dateFields: self.dateFields});
+	                	var selectedRows = gridUtils.SelectedRows();
+	                	var selectedRowCount = selectedRows.length;
+	                	var totalRowCount= grid.dataSource.data().length;
+	                    var dateFields = KenandyErp.KendoGridOptions.GetDateFields(JSON.parse(supplierInvoiceFieldList)); // get the list of date fields  
+	                   	KenandyErp.BlockUI();
+	                   	var invoicePrepayRows = [];
+	                   	var currentData = grid.dataSource.data();
+	                   	if (selectedRowCount > 0 ){
+	                        $.each(selectedRows,function(index,element) {
+	                        	//KNDY-19448 - Moved for loop outside if condition to remove null datefields for all records regardless of invoice type
+	                        	//KNDY-17276 if there is any date field which is null removing it since it is throwing error in remoting method call
+                        		for (indexdt = 0; indexdt < dateFields.length; ++indexdt) {
+                        			var fld = dateFields[indexdt].field.replace('invoiceRecord.','');	                        			
+                        			if (element.invoiceRecord[fld] == null)
+                               			delete element.invoiceRecord[fld];
+                        		}   
+	                        	if ( element.invoiceRecord.Invoice_Type__c != 'Credit Memo' && element.invoiceRecord.Status__c == 'Approved'){//element.IsSelected__custom ==  true &&
+	                        		//KNDY-17276 Update amount to apply after deducting discount for further processing.                             	
+	                        		if (element.Discount_Earned)
+	                        			element.Amount_To_Apply = element.Amount_To_Apply -   element.Discount_Earned;                             	
+	                        		invoicePrepayRows.push(element);
+	                        	}
+	                        });
+	                    }
+	                    console.log('invoice/prepayment records',invoicePrepayRows);
+	                    //KNDY-18789 fetch scope from MDT
+	                    var scope = '{!defaultImmediateModeScope}';
+	                    if (scope != null) scope = parseInt(scope);	                    
+	                    console.log('current scope of immediate mode process',scope);
+	                   	var slicedInvoiceArray = SupplierPaymentPreviewActions.sliceIntoChunks(invoicePrepayRows,scope);
+	                   	if (slicedInvoiceArray.length == 0){
+	                   		KenandyErp.Message('{!$Label.Only_invoices_with_credit_balances_selected_negative_payment_cannot_be_issued}', KenandyErp.MessageType.Error, messageElement);
+	                   		KenandyErp.UnBlockUI();
+	                   		return;
+	                   	}
+	                   	console.log('slicedInvoiceArray',slicedInvoiceArray);
+	                   
+					    initialScopeofSIs = selectedRows;
+					   
+					   	invpaywrapper = {invWrapperList:null, 
+			        			paymentWrapperList:null,
+			        			dateTimeNow:null   		        
+			        	};	
+			        	invpaywrapperfinal = {invWrapperList:null, 
+	        				paymentWrapperList:[],
+	        				dateTimeNow:null   		        
+			        	};		
+			        	invpaywrapper.invWrapperList = 	initialScopeofSIs;		
+			        	invpaywrapper.paymentWrapperList =[];   
+			        	var currentdate = new Date();
+						var datetime = currentdate.getDate() + "/"+ (currentdate.getMonth() + 1) + "/" + currentdate.getFullYear() + "@" + currentdate.getHours() + ":" + currentdate.getMinutes() + ":" + currentdate.getSeconds();
+			        	invpaywrapper.dateTimeNow = datetime;
+					    
+					    if (!SupplierInvoicePaymentBatchActions.ValidateCreatePaymentBatch()){//KNDY-13561
+	                        e.preventDefault();
+	                        KenandyErp.UnBlockUI();
+	                        return false;
+	                    }
+	                    //KNDY-17712 verify all SIs weather they are still valid or not
+	                    var promise = SupplierPaymentPreviewActions.verifySelectedSupplierInvoices(invpaywrapper);
+	                    //once validation successful then call process supplier invocies
+					    promise.done(function(){
+		                    //async call to process payments
+							async.eachSeries(slicedInvoiceArray, SupplierPaymentPreviewActions.processSupplierInvoicesImmediately,function(err)
+							{
+								if (err){
+									KenandyErp.UnBlockUI();
+									console.log(err);
+								}else{	
+									
+									SupplierPaymentPreviewActions.formulatePaymentWrapper();
+									SupplierPaymentPreviewActions.GridInit();	    	
+									KenandyErp.UnBlockUI();	  	    	
+									SupplierPaymentPreviewActions.OpenPaymentWindow("{!$Label.Payment_Preview}"); 
+									//KNDY-17712 - show info msg if any of SI record is skipped while processing payments				
+									if (previewPaymentMessage != null && previewPaymentMessage.length > 0){
+										var grid = $('#{!supplierPaymentMasterPreviewConfig.uniqueId}').data('kendoGrid');
+	                					var messageElement = grid.element.closest("div.grid-container").find("div.grid-message").first();
+	                					KenandyErp.Messages(previewPaymentMessage, messageElement);
+									}
+									console.log('Promise resolving after saving !!!!!!!!!!!!!!',invpaywrapper.paymentWrapperList); 							                                                        
+								}							
+								
+							});
+							
+						});
+	                   	return;
+							                    
+			   		},
+			   		formulatePaymentWrapper :function(){
+			   			//combine payments
+			   			var SIIdNameMap = new Map();
+			   			var SupplierIdNameMap = new Map();
+			   			invpaywrapper.paymentWrapperList = [];
+						invpaywrapper.paymentWrapperList.push(...invpaywrapperfinal.paymentWrapperList);
+						invpaywrapperfinal = {invWrapperList:null, 
+	        				paymentWrapperList:[],
+	        				dateTimeNow:null   		        
+			        	};	
+						var paymentArr = invpaywrapper.paymentWrapperList;
+						var paymentwrapperArr = [];		
+						if (invpaywrapper.invWrapperList != null){
+							for (index = 0; index < invpaywrapper.invWrapperList.length ; ++index) {
+								if (!SIIdNameMap.has(invpaywrapper.invWrapperList[index].invoiceRecord.Id) )
+							    	SIIdNameMap.set(invpaywrapper.invWrapperList[index].invoiceRecord.Id, invpaywrapper.invWrapperList[index].invoiceRecord.Name);
+							    if (!SupplierIdNameMap.has(invpaywrapper.invWrapperList[index].SupplierId) )
+							    	SupplierIdNameMap.set(invpaywrapper.invWrapperList[index].SupplierId, invpaywrapper.invWrapperList[index].SupplierName);
+							}
+						}
+						console.log('SIIdNameMap && SupplierIdNameMap',SIIdNameMap,SupplierIdNameMap);   
+						for (index = 0; index < paymentArr.length; ++index) {
+							KenandyErp.CleanNamespace(paymentArr[index].supplierPayment, '{!NamespaceUU}');    
+							if (paymentMap.has(paymentArr[index].supplierPayment.Source_Key__c) ){
+						    	paymentwrapperArr = paymentMap.get(paymentArr[index].supplierPayment.Source_Key__c);
+						    	paymentwrapperArr.lstPaymentLines.push(...paymentArr[index].lstPaymentLines);
+						    }else
+						    	paymentMap.set(paymentArr[index].supplierPayment.Source_Key__c, paymentArr[index]);
+						    	
+						    console.log('paymentMap',paymentMap);
+						}
+						invpaywrapper.paymentWrapperList = [];
+						var paymentsum = 0;
+						var supplierId = [];
+						var remittanceadd;
+						paymentMap.forEach(function(value, key, paymentMap) {	
+							paymentsum = 0;
+							KenandyErp.CleanNamespace(value.lstPaymentLines, '{!NamespaceUU}');   
+							remittanceadd = '';
+							for (index = 0; index < value.lstPaymentLines.length; ++index) {
+								if (SIIdNameMap.has(value.lstPaymentLines[index].Supplier_Invoice__c) )
+								{
+									value.lstPaymentLines[index].Supplier_Invoice__r = {Id :value.lstPaymentLines[index].Supplier_Invoice__c, Name:SIIdNameMap.get(value.lstPaymentLines[index].Supplier_Invoice__c)  };									
+								}
+								
+								//KNDY-19448 round amount
+								if (value.lstPaymentLines[index].Type__c != 'Earned Terms Discount')
+									paymentsum = (paymentsum + value.lstPaymentLines[index].Amount__c).round(2);
+							}	
+							if (SupplierIdNameMap.has(value.supplierPayment.Supplier__c) )
+							{
+								value.supplierPayment.Supplier__r = {Id :value.supplierPayment.Supplier__c, Name:SupplierIdNameMap.get(value.supplierPayment.Supplier__c)  };									
+							}	
+							if (value.supplierPayment.Currency__c)
+							{
+								value.supplierPayment.Currency__r = {Id :value.supplierPayment.Currency__c, Name:currencyDropdown.text() };									
+							}
+							//KNDY-19448 round amount
+							value.supplierPayment.Payment_Amount__c = paymentsum.round(2);
+							//build address
+							remittanceadd = value.supplierPayment.Supplier_Street__c;
+							if (value.supplierPayment.Supplier_Street_1__c )
+								remittanceadd += value.supplierPayment.Supplier_Street_1__c;
+							if (value.supplierPayment.Supplier_Street_2__c )
+								remittanceadd += ','+ value.supplierPayment.Supplier_Street_2__c;
+							if (value.supplierPayment.Supplier_City__c )
+								remittanceadd += ','+ value.supplierPayment.Supplier_City__c;
+							if (value.supplierPayment.Supplier_State__c )
+								remittanceadd += ','+ value.supplierPayment.Supplier_State__c;
+							if (value.supplierPayment.Supplier_Postal_Code__c )
+								remittanceadd += ','+  value.supplierPayment.Supplier_Postal_Code__c;
+							if (value.supplierPayment.Supplier_Country__c )
+								remittanceadd += ','+ value.supplierPayment.Supplier_Country__c;	
+							value.supplierPayment.Remittance_Address__c	= remittanceadd;					
+					  		invpaywrapper.paymentWrapperList.push(value);	
+					  		console.log('payment value',value);							  	
+						});
+			   		},
+			   		sliceIntoChunks : function(selectedRowsArr,chunkSize) {
+	                    // initialize vars
+					    var i,
+					    j = selectedRowsArr.length,
+					    tempArray = [];
+					    // loop through and jump based on size
+					    for (i=0; i<j; i+=chunkSize) {
+					        // slice chunk of arr and push to tempArray
+					        tempArray.push(selectedRowsArr.slice(i,i+chunkSize));
+					    }
+					    // return temp array (chunck)
+					    return tempArray
+	                }, 
+	                //KNDY-17712  verify invoices once user hits preview 
+                	verifySelectedSupplierInvoices: function(allselectedinvoices){
+                		var grid =  $('#SupplierInvoicesPreviewGrid').data('kendoGridActionList');
+                		var messageElement = grid.element.closest("div.grid-container").find("div.grid-message").first();	                		
+					    KenandyErp.ClearMessage(messageElement);
+					    var deferred = $.Deferred();
+					    Visualforce.remoting.Manager.invokeAction(
+							'{!$RemoteAction.PaymentBatchExt.verifySelectedSupplierInvoices}',
+		                	allselectedinvoices,
+							function (result, event) {
+							    if (event.type == 'exception') {
+									KenandyErp.Message(event.message);										
+								}else {	    
+									if(result.success == true){	 										
+										deferred.resolve(result, event);
+										previewPaymentMessage = result.messages.length > 0 ? result.messages : null;										
+									}else{		
+										KenandyErp.Messages(result.messages, messageElement);											
+									}
+								}
+							}
+						);  
+						return deferred.promise(); 
+                	},
+	                processSupplierInvoicesImmediately: function(mySlicedArray,inCb){
+	                	var grid =  $('#SupplierInvoicesPreviewGrid').data('kendoGridActionList');
+	                	var messageElement = grid.element.closest("div.grid-container").find("div.grid-message").first();
+	                		
+						Visualforce.remoting.Manager.invokeAction(
+					    	'{!$RemoteAction.PaymentBatchExt.createSPaymentRealTime}',
+					    	SupplierInvoicePaymentBatchUtils.GetFilterCriteria(),
+		                	mySlicedArray,
+		                	invpaywrapper,
+							function (result, event) {
+								
+								if (event.type == 'exception') {
+									KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+									inCb(event.message)	;								
+								} else {
+									if (result != null && result.success) {
+										//refresh the grid
+		                				invpaywrapper.invWrapperList = 	result.records[0].invWrapperList;
+		                					
+		                				var paymentArr = result.records[0].paymentWrapperList;		   
+		                				if (paymentArr != null){           
+			                				for (index = 0; index < paymentArr.length; ++index) {
+											    invpaywrapper.paymentWrapperList.push(paymentArr[index]);
+											}
+										}
+		                				invpaywrapperfinal.paymentWrapperList.push(...invpaywrapper.paymentWrapperList);  
+		                				invpaywrapper.paymentWrapperList = [];         						   
+		                				console.log('invpaywrapper==',invpaywrapper);			                           		                				
+		                				inCb(null)	;	
+									}
+									else {
+										KenandyErp.Messages(result.messages, messageElement);
+										inCb(result.messages)	;			
+									}
+								}
+							},
+							{escape: false}
+						);
+                	},    
+       		      	getGridChanges: function(gridUniqueId, fieldList){
+                        var grid = $('#' + gridUniqueId).data('kendoGrid');
+                        var options = grid.options;
+                        
+                        var gridData = grid.dataSource.data();
+                        var updatedRows = [];
+                        var newRows = [];
+                        var columns = grid.columns;
+                        var dateFields = KenandyErp.KendoGridOptions.GetDateFields(JSONUtils.Parse(fieldList)); // get the list of date fields
+                                        
+                        $.each(gridData, function(index, item) {
+                           
+                            var wrapperName = columns[2].field.split('.')[0];
+                            
+                            if(wrapperName == 'supplierPayment'){
+                                var paymentLines = SupplierPaymentPreviewActions.GetPaymentLinesById(item.uid);
+                                var masterRow = grid.table.find("tr[data-uid='" + item.uid + "']");
+                                var detailGrid = masterRow.next('tr.k-detail-row').find(".grid-supplier-payment-details").data('kendoGrid');
+                                
+                                if(detailGrid){
+                                                                        
+                                    if(paymentLines.length == 0 && detailGrid && item.selected == false) // push back all the invoice deductions to the controller when user deselects the CI box
+                                    {
+                                        paymentLines = detailGrid.dataSource._data;
+                                    }
+                                    
+                                    if ((paymentLines.length > 0 && _.contains(_.pluck(detailData, 'Id'), item.uid))  ) {
+                                        item.lstPaymentLines = paymentLines; 
+                                        item.dirty = true;
+                                    }
+                                }
+                                
+                                
+                            }
+                            
+                            if (! item[wrapperName]['Id'] || item.dirty) {
+                                var isNewRow = (!item[wrapperName]['Id']);
+                                item = item.toJSON();
+                                item = Serializer.ConvertToSFDCDate(item, { dateFields: dateFields });
+                                
+                                for (var i = 0; i < columns.length; i++) {
+                                    var name = columns[i].field;
+                                    
+                                    if(name != 'selected'){
+                                        delete item[name];
+                                    }
+                                    
+                                }
+                                
+                                if (isNewRow) {
+                                    delete item[wrapperName]['Id'];
+                                    //KNDY-17923 - deperecated 'payment_number__c' 	
+                                   	if (item[wrapperName]['Reference__c'] == '{!$Label.Number_Provided}')
+                                   		item[wrapperName]['Reference__c'] = null;
+                                    
+                                    newRows.push(item);
+                                }                                
+                            }
+                        });
+                        
+                        
+                        
+                        if (newRows.length > 0) {
+                            newRows = Serializer.ParameterMap(newRows);
+                        }
+                                               
+                        var dataWrapper = new Object();
+                        dataWrapper.newRows = newRows;                      
+                        return dataWrapper;
+                    },
+                    
+                	//KNDY-17712 Create payment and finalize
+                	createFinalizePayments: function(){
+                		var supplierInvoiceIds = [];
+                		var supplierPaymentIds = [];
+	                	var grid = $('#{!supplierPaymentMasterPreviewConfig.uniqueId}').data('kendoGrid');
+	                	var options = grid.options;
+	                	KenandyErp.BlockUI();
+	                	var masterfldList = GetPaymentFieldList('{!SupplierPaymentMasterFieldList}');
+	                	var messageElement = grid.element.closest("div.grid-container").find("div.grid-message").first();
+						var supplierPaymentChanges =  SupplierPaymentPreviewActions.getGridChanges('{!supplierPaymentMasterPreviewConfig.uniqueId}', GetPaymentFieldList('{!SupplierPaymentMasterFieldList}'));						
+						console.log('supplierPaymentChanges new rows size',supplierPaymentChanges.newRows.length);						
+						Visualforce.remoting.Manager.invokeAction(
+					    	'{!$RemoteAction.PaymentBatchExt.CreateFinalizePaymentsForImmediate}',
+					    	SupplierInvoicePaymentBatchUtils.GetFilterCriteria(),		
+					    	supplierPaymentGridConfig,
+					    	supplierPaymentChanges.newRows,                	
+							function (result, event) {
+								
+								if (event.type == 'exception') {
+									KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);								
+									KenandyErp.UnBlockUI();							
+								} else {
+									//$('#createpayments-button').addClass("disab");
+									if (result.success) {	
+										var paymentArr = result.records;
+		                				invpaywrapper.paymentWrapperList = [];		              
+		                				for (index = 0; index < paymentArr.length; ++index) {
+										    console.log(paymentArr[index]);		
+										    KenandyErp.CleanNamespace(paymentArr[index].supplierPayment, '{!NamespaceUU}');  
+										    KenandyErp.CleanNamespace(paymentArr[index].lstPaymentLines, '{!NamespaceUU}');   									    								    
+										    invpaywrapper.paymentWrapperList.push(paymentArr[index]);
+										    supplierPaymentIds.push(invpaywrapper.paymentWrapperList[index].supplierPayment.Id);
+										    if (invpaywrapper.paymentWrapperList[index] != undefined && invpaywrapper.paymentWrapperList[index].lstPaymentLines != undefined){
+											    for (indexLine = 0; indexLine < invpaywrapper.paymentWrapperList[index].lstPaymentLines.length; indexLine++){
+											    	supplierInvoiceIds.push(invpaywrapper.paymentWrapperList[index].lstPaymentLines[indexLine].Supplier_Invoice__c);
+											    }
+										    }
+										}	
+										console.log('supplierInvoiceIds==',supplierInvoiceIds);
+										console.log('supplierPaymentIds==',supplierPaymentIds);
+										/*hideColumns = false;  	
+		                				//change kendo window title
+		                				var dialog = $("#previewPayment").data("kendoWindow");
+										dialog.title('{!$Label.Payment_Confirmation}');
+		                				var paymentArr = result.records;
+		                				invpaywrapper.paymentWrapperList = [];		              
+		                				for (index = 0; index < paymentArr.length; ++index) {
+										    console.log(paymentArr[index]);		
+										    KenandyErp.CleanNamespace(paymentArr[index].supplierPayment, '{!NamespaceUU}');  
+										    KenandyErp.CleanNamespace(paymentArr[index].lstPaymentLines, '{!NamespaceUU}');   									    								    
+										    invpaywrapper.paymentWrapperList.push(paymentArr[index]);
+										}			   
+		                				console.log('invpaywrapper==',invpaywrapper);		
+		                				$.each(masterfldList, function() { 
+							                if (this.field == 'supplierPayment.Name' || this.field == 'supplierPayment.Status__c' || this.field == 'supplierPayment.Status_Reason__c') {				                	
+						                		this.hidden = hideColumns;
+						                		grid.showColumn(this.field);
+							                }  			               
+						            	});
+						            	//refresh the grid	
+						            	grid.editable = false;
+						            	makegridreadonly = true;
+						            	
+		                				grid.dataSource._destroyed = [];	 
+		                				grid.dataSource.read();              
+		                				
+		                				//supplier invoice grid reload		                				     
+	           							$('#{!supplierInvoicePreviewConfig.uniqueId}').data('kendoGridActionList').dataSource.read();
+										*/									                				
+        		             			$.each(result.messages,function(index,element) {
+        		             				if (element.severity != 'ERROR')
+				                           		KenandyErp.Message(element.message, KenandyErp.MessageType.Success, messageElement);
+				                           	else
+				                           		KenandyErp.Message(element.message, KenandyErp.MessageType.Error, messageElement);			                               
+				                        });   
+				                        SupplierPaymentPreviewActions.updateSupplierInoiceForFinalizedPayments(supplierInvoiceIds,supplierPaymentIds);
+		                				
+									}
+									else {
+										KenandyErp.Messages(result.messages, messageElement);	
+										KenandyErp.UnBlockUI();	
+									}
+								}
+								
+							},
+							{escape: false}
+						);
+						
+                	},
+                	//to avoid apex time out exception update of SIs moving to seperate remote call
+                	updateSupplierInoiceForFinalizedPayments: function(supplierInvoiceIds,supplierPaymentIds){
+	                	var grid = $('#{!supplierPaymentMasterPreviewConfig.uniqueId}').data('kendoGrid');
+	                	var options = grid.options;
+	                	KenandyErp.BlockUI();
+	                	var masterfldList = GetPaymentFieldList('{!SupplierPaymentMasterFieldList}');
+	                	var messageElement = grid.element.closest("div.grid-container").find("div.grid-message").first();
+						var supplierPaymentChanges =  SupplierPaymentPreviewActions.getGridChanges('{!supplierPaymentMasterPreviewConfig.uniqueId}', GetPaymentFieldList('{!SupplierPaymentMasterFieldList}'));						
+						console.log('supplierPaymentChanges',supplierPaymentChanges);						
+						Visualforce.remoting.Manager.invokeAction(
+					    	'{!$RemoteAction.PaymentBatchExt.updateSupplierInoiceForFinalizedPayments}',					    	
+					    	supplierInvoiceIds,    
+					    	supplierPaymentIds,            	
+							function (result, event) {
+								
+								if (event.type == 'exception') {
+									KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);	
+									//in case apex cpu time out call cancel sp method
+									SupplierPaymentPreviewActions.cancelSPS(supplierPaymentIds);					
+								} else {
+									$('#createpayments-button').addClass("disab");
+									if (result.success) {										
+										hideColumns = false;  	
+		                				//change kendo window title
+		                				var dialog = $("#previewPayment").data("kendoWindow");
+										dialog.title('{!$Label.Payment_Confirmation}');
+		                				/*var paymentArr = result.records;
+		                				invpaywrapper.paymentWrapperList = [];		              
+		                				for (index = 0; index < paymentArr.length; ++index) {
+										    console.log(paymentArr[index]);		
+										    KenandyErp.CleanNamespace(paymentArr[index].supplierPayment, '{!NamespaceUU}');  
+										    KenandyErp.CleanNamespace(paymentArr[index].lstPaymentLines, '{!NamespaceUU}');   									    								    
+										    invpaywrapper.paymentWrapperList.push(paymentArr[index]);
+										}*/			   
+		                				//console.log('invpaywrapper.paymentWrapperList==',invpaywrapper.paymentWrapperList);		
+		                				$.each(masterfldList, function() { 
+							                if (this.field == 'supplierPayment.Name' || this.field == 'supplierPayment.Status__c' || this.field == 'supplierPayment.Status_Reason__c') {				                	
+						                		this.hidden = hideColumns;
+						                		grid.showColumn(this.field);
+							                }  			               
+						            	});
+						            	//refresh the grid	
+						            	grid.editable = false;
+						            	makegridreadonly = true;
+						            	
+		                				grid.dataSource._destroyed = [];	 
+		                				grid.dataSource.read();              
+		                				
+		                				//supplier invoice grid reload		                				     
+	           							$('#{!supplierInvoicePreviewConfig.uniqueId}').data('kendoGridActionList').dataSource.read();
+										console.log('end of update SIs',result);									                				
+        		             			$.each(result.messages,function(index,element) {
+        		             				if (element.severity != 'ERROR')
+				                           		KenandyErp.Message(element.message, KenandyErp.MessageType.Success, messageElement);
+				                           	else
+				                           		KenandyErp.Message(element.message, KenandyErp.MessageType.Error, messageElement);			                               
+				                        });    
+		                				
+									}
+									else {
+										KenandyErp.Messages(result.messages, messageElement);		
+									}
+									KenandyErp.UnBlockUI();
+								}
+								
+							},
+							{escape: false}
+						);
+						
+                	},
+                	//in case of apex time out exception update of SIs to cancelled state
+                	cancelSPS: function(supplierPaymentIds){
+	                	var grid = $('#{!supplierPaymentMasterPreviewConfig.uniqueId}').data('kendoGrid');
+	                	var options = grid.options;
+	                	KenandyErp.BlockUI();
+	                	var masterfldList = GetPaymentFieldList('{!SupplierPaymentMasterFieldList}');
+	                	var messageElement = grid.element.closest("div.grid-container").find("div.grid-message").first();
+						var supplierPaymentChanges =  SupplierPaymentPreviewActions.getGridChanges('{!supplierPaymentMasterPreviewConfig.uniqueId}', GetPaymentFieldList('{!SupplierPaymentMasterFieldList}'));						
+						console.log('supplierPaymentChanges',supplierPaymentChanges);						
+						Visualforce.remoting.Manager.invokeAction(
+					    	'{!$RemoteAction.PaymentBatchExt.cancelSPs}',					    	   
+					    	supplierPaymentIds,            	
+							function (result, event) {								
+								if (event.type == 'exception') {
+									KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);													
+								} else {
+									$('#createpayments-button').addClass("disab");
+									if (!result.success) {										
+										KenandyErp.Messages(result.messages, messageElement);		
+									}
+								}
+								KenandyErp.UnBlockUI();
+							},
+							{escape: false}
+						);
+						
+                	}  
+                	  
+       			};
+      		}();
+      		       		
+       		var SupplierInvoicePaymentBatchActions = function() {
+			
+				return { 
+        		   Validate: function(byPassValidate) {
+                    SupplierInvoicePaymentBatchUtils.ClearPageMessages();
+                    
+                    var errorMessages = [];
+                    if (!byPassValidate){
+	                    var paymentMethod = pymtMethod ? pymtMethod : $("#supplierPymtMethodFilter").val().trim();
+	                    var bankAccount = $('#bankAccountFilter').val().trim();
+	                    var paymentDate = $("#paymentDateFilter").val().trim();
+	                    var currency = $("#currencyFilter").val().trim();
+	                    if (!bankAccount) {
+	                        errorMessages.push({ message: '{!$Label.Bank_Account_is_required}', severity: KenandyErp.MessageType.Error });
+	                    }
+	                    if (!KenandyErp.IsValidDate(paymentDate)) {
+	                        errorMessages.push({ message: '{!$Label.Payment_Date_is_required}', severity: KenandyErp.MessageType.Error });
+	                    }
+	                    if (!paymentMethod) {
+	                        errorMessages.push({ message: '{!$Label.Payment_Method_is_required}', severity: KenandyErp.MessageType.Error });
+	                    }
+	                    //KNDY-18763 check if currency blank then throw error
+	                    if (!currency) {
+	                        errorMessages.push({ message: '{!$Label.Currency_is_required}', severity: KenandyErp.MessageType.Error });
+	                    }
+	                    if (errorMessages.length > 0) {
+	                        KenandyErp.Messages(errorMessages);
+	                        return false
+	                    }
+                    }
+                    return true;
+                },
+                GoBack: function(e){
+	                e.stopPropagation();	           
+	                console.log('supplierInvoiceId,goBackSIID--->'+supplierInvoiceId ,'{!supplierInvoiceId}'); 
+	                var retunUrl;
+	                var goBackSIID = '{!supplierInvoiceId}';
+	                if(!('{!supplierInvoiceId}' === null)){
+	                    retunUrl =  '/'+ goBackSIID +'/e';  
+                    }
+	                KenandyErp.BlockUI();
+	                window.location.href = retunUrl;
+                },
+                
+                ValidateCreatePaymentBatch: function(){//KNDY-13561
+                    console.log('>>> ValidateCreatePaymentBatch entered');
+                    var grid = $('#{!supplierInvoicePreviewConfig.uniqueId}').data('kendoGridActionList'); //self.supplierInvoicesPreviewGrid;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message").first();
+                    var gridUtils = new KendoGridUtils(grid, {dateFields: self.dateFields});
+                    var selectedRows = gridUtils.SelectedRows();
+                    var selectedRowCount = selectedRows.length;
+                    var currencyId = $('#currencyFilter').val().trim(); //KNDY-18763 fetch currency selected
+                    var companyId = bankAccount?bankAccount.Company__c:'';
+                    var invalidSIs = [];
+                    var errorMessages = [];
+                    
+                    if (!this.Validate(false)) return false;
+                    if (selectedRowCount > 0 ){
+                        $.each(selectedRows,function(index,element) {
+                           if (currencyId && companyId){
+                               if (element.invoiceRecord["Currency__c"] != currencyId || element.invoiceRecord['Company__c'] != companyId){
+                                  invalidSIs.push(this['Supplier_Invoice__c']);
+                               }
+                           }
+                        });
+                        if (invalidSIs.length > 0){
+                            var errorMsg = '{!$Label.The_search_criteria_has_been_updated_Click_Search_to_continue}';
+                            errorMessages.push({ message: errorMsg, severity: KenandyErp.MessageType.Error });
+                            KenandyErp.Messages(errorMessages);
+                            return false
+                        }
+                    }
+                    return true;
+               },
+               
+        		Search: function() {
+        			if (supplierInvoiceId){         				
+        				searchFilterClickedAgain = true;       				
+       				}
+        		    if (this.Validate(false)) {
+        			isHideResults = false;
+        			        			
+        			$('#{!supplierInvoicePreviewConfig.uniqueId}').data('kendoGridActionList').dataSource.read();
+        		    }
+
+        			return true;
+        		},
+        		
+		   		CreatePaymentBatch: function(e) {
+					var self = this;
+					var grid = $('#{!supplierInvoicePreviewConfig.uniqueId}').data('kendoGridActionList');
+		   			var messageElement = grid.element.closest("div.grid-container").find("div.grid-message").first();
+		   			
+		   			if (grid.editable && !grid.editable.validatable.validate()) {
+		                e.preventDefault();
+		                return false;
+		            }
+		        	
+		   			var gridUtils = new KendoGridUtils(grid, {dateFields: self.dateFields});
+                	var selectedRows = gridUtils.SelectedRows();
+                	var selectedRowCount = selectedRows.length;
+                	var totalRowCount= grid.dataSource.data().length;
+                    console.log('selectedRows',selectedRows);
+
+                    if (createPaymentType == 'Immediately'){
+                    	SupplierPaymentPreviewActions.CreatePaymentRealTime(e);
+                    }else{		
+                    	var yesCallback = function(){	
+                    		KenandyErp.BlockUI(grid.element);				                  								
+							Visualforce.remoting.Manager.invokeAction(
+						    	'{!$RemoteAction.PaymentBatchExt.createSPaymentBatch}',
+						    	SupplierInvoicePaymentBatchUtils.GetFilterCriteria(),
+			                	selectedRows,
+								function (result, event) {
+									KenandyErp.UnBlockUI(grid.element);
+									if (event.type == 'exception') {
+										KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+									} else {
+										if (result.success) {
+											//refresh the grid
+											isHideResults = true;
+			                				grid.dataSource._destroyed = [];
+			                				grid.dataSource.read();
+			                				$.each(result.messages,function(index,element) {
+	        		             				if (element.severity != 'ERROR')
+					                           		KenandyErp.Message(element.message, KenandyErp.MessageType.Success, messageElement);
+					                           	else
+					                           		KenandyErp.Message(element.message, KenandyErp.MessageType.Error, messageElement);			                               
+					                        });    
+										}
+										else {
+											KenandyErp.Messages(result.messages, messageElement);
+										}
+									}
+								},
+								{escape: false}
+							);
+	                    };
+	                    if (!SupplierInvoicePaymentBatchActions.ValidateCreatePaymentBatch()){//KNDY-13561
+	                        e.preventDefault();
+	                        return false;
+	                    }
+	                    //KNDY-17206 -add zero payment warning msg for check method
+	                    var totalCreditsExceedsDebits = $('#totalCreditsExceedsDebits').is(':checked');						
+						var pymtMethodChosen = $('#supplierPymtMethodFilter').val(); 
+						var message = '';
+						message = '{!$Label.Confirmation_Message1} ' + selectedRowCount + ' {!$Label.Confirmation_Message2} ' + totalRowCount + ' {!$Label.Confirmation_Message3}';
+						if (totalCreditsExceedsDebits  == true && pymtMethodChosen == 'Check'){
+							message += '\n{!$Label.Create_Zero_Payment_Confirmation_Message}';
+						}
+						message += '\n{!$Label.Do_you_want_to_continue}';
+						console.log('batch confirmation message=' , message);
+						KenandyErp.Confirmation(message, yesCallback);
+						$('.kendo-confirmation').parent().css('height', 'auto');
+	                    $('.kendo-confirmation').parents('.k-window').css('width', 'auto');
+	                    $('.kendo-confirmation').parent().css('white-space', 'pre');
+					}
+                    
+                    
+		   		}
+			
+			};
+		}();
+   	</script>
+</apex:page>

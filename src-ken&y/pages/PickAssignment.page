@@ -1,0 +1,271 @@
+<!--
+ - Assign picker for the Plan Pick stage
+ -->
+
+<apex:page id="PickAssignment" controller="PickAssignmentExt" title="Pick Assignment" docType="html-5.0">
+    <style>
+        label.labelClass {
+            display: inline-block;
+            font-weight: bold;
+        }
+        .required {
+            border-left:3px solid red;
+        }
+    </style>
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+    <apex:form >
+        <apex:sectionHeader title="Assign Picker"/>
+        <apex:pageBlock >
+            <apex:pageBlockButtons location="top">
+                <button id="search">Search</button>
+            </apex:pageBlockButtons>
+            <div id="filter">
+                <table class="kndy-table">
+                    <tr>
+                        <td class="column-label"><label class="labelClass" for="facility">{!$ObjectType.Facility__c.Label}</label></td>
+                        <td class="column-field"><input class="required" id="facility" /></td>
+
+                        <td class="column-label"><label class="labelClass" for="location">{!$ObjectType.Location__c.Label}</label></td>
+                        <td class="column-field"><input class="required" id="location" /></td>
+                    </tr>
+                    <tr>
+
+                        <td class="column-label"><label class="labelClass" for="salesOrder">{!$ObjectType.Sales_Order__c.Label}</label></td>
+                        <td class="column-field"><input id="salesOrder" /></td>
+
+                        <td class="column-label"><label class="labelClass" for="customer">{!$ObjectType.Customer__c.Label}</label></td>
+                        <td class="column-field"><input id="customer" /></td>
+                    </tr>
+                    <tr>
+                        <td class="column-label"><label class="labelClass" for="transferOrder">Transfer Order</label></td>
+                        <td class="column-field"><input id="transferOrder" /></td>
+
+                        <td class="column-label"><label class="labelClass" for="user">Default Picker</label></td>
+                        <td class="column-field"><input id="user" /></td>
+                    </tr>
+                </table>
+            </div>
+        </apex:pageBlock>
+        <apex:pageBlock >
+            <apex:pageBlockButtons location="top">
+                <button id="save" accesskey="s">Save</button>
+                <button id="assignDefaultPicker">Assign Default Picker</button>
+            </apex:pageBlockButtons>
+            <div id="workspace">
+                <div class="page-message" style="white-space: pre" />
+                <div id="grid" />
+            </div>
+        </apex:pageBlock>
+    </apex:form>
+    <script>
+        $(document).on('KenandyErpReady', function () {
+            new PickAssignmentView()
+                .renderView()
+                .bindEvents();
+        });
+
+
+        function PickAssignmentView() {
+            this.gridConfigJson = '{!JSENCODE(gridConfigJson)}';
+            this.gridConfig = JSON.parse( this.gridConfigJson);
+
+            this.gridFieldsJson = '{!JSENCODE(gridFieldsJson)}';
+            this.gridFields = JSON.parse( this.gridFieldsJson);
+            this.defaultFacility= '{!JSENCODE(defaultFacility)}';
+
+            this.ACTIONS = {
+                GET_DATA : '{!$RemoteAction.PickAssignmentExt.getPickAssignmentData}',
+                SAVE_DATA: '{!$RemoteAction.PickAssignmentExt.saveAssignment}',
+                LOOKUP_FILTER: "{!$RemoteAction.PickAssignmentExt.lookupSearchFilter}"
+            };
+        }
+
+        PickAssignmentView.prototype.renderView = function () {
+            var self = this;
+            $.fn.KendoComboBox($("#facility"), {
+                lookupSearchAction: self.ACTIONS.LOOKUP_FILTER,
+                referenceTo: "Facility__c",
+                value:self.defaultFacility,
+                title: "{!$ObjectType.Facility__c.Label}"
+            });
+
+
+            $.fn.KendoComboBox($("#location"), {
+                lookupSearchAction: self.ACTIONS.LOOKUP_FILTER,
+                referenceTo: "Location__c",
+                title: "{!$ObjectType.Location__c.Label}",
+                cascadeFrom: "facility" ,
+                filterCriteria: ' facility__c = \'#=Id#\''
+            });
+
+            $.fn.KendoComboBox($("#salesOrder"), {
+                lookupSearchAction: self.ACTIONS.LOOKUP_FILTER,
+                referenceTo: "Sales_Order__c",
+                title: "{!$ObjectType.Sales_Order__c.Label}"
+            });
+
+            $.fn.KendoComboBox($("#customer"), {
+                lookupSearchAction: self.ACTIONS.LOOKUP_FILTER,
+                referenceTo: "Customer__c",
+                title: "{!$ObjectType.Customer__c.Label}"
+            });
+
+            $.fn.KendoComboBox($("#transferOrder"), {
+                    lookupSearchAction: self.ACTIONS.LOOKUP_FILTER,
+                    referenceTo: "Order__c",
+                    title: "{!$ObjectType.Order__c.Label}"
+            });
+
+            $.fn.KendoComboBox($('#user'), {
+                lookupSearchAction: self.ACTIONS.LOOKUP_FILTER,
+                referenceTo: 'User',
+                cascadeFrom: "facility" ,
+                title: "Default Picker",
+                filterCriteria: ' Id IN '.concat('( select user__c from User_Preference__c where Default_Facility__c = ','\'#=Id#\')')
+            });
+            
+            self.grid = $('#grid').kendoGridActionList({
+                namespace: '{!namespaceUU}',
+                config: self.gridConfig,
+                fieldList: self.gridFields,
+                lookupSearchAction: self.ACTIONS.LOOKUP_FILTER,
+                getActionListFunction: $.proxy(self.GetData, self),
+                showIconButtons: true
+            }).data('kendoGridActionList');
+            
+            return self;
+        }
+
+        PickAssignmentView.prototype.bindEvents = function () {
+            var self = this;
+            $('#search').on('click', $.proxy(self.Search, self ));
+            
+            self.grid.wrapper.off( 'click', '.grid-save-command');
+            $('#save').on('click', $.proxy(self.SaveAssignment, self));
+            $('#assignDefaultPicker').on('click', $.proxy(self.AssignUser, self));
+            
+            self.grid.bind('save', function (e) {
+                e.model.set('IsSelected__custom',true);
+            });
+
+            var facilityFilter = $("#facility").data("kendoComboBox");
+            facilityFilter.bind('filtering', $.proxy(self.resetGrid,self));
+
+            var locationFilter = $("#location").data("kendoComboBox");
+            locationFilter.bind('filtering', $.proxy(self.resetGrid,self));
+            
+            return self;
+        }
+
+        PickAssignmentView.prototype.resetGrid= function(e){
+            var self=this;
+            if(!e.filter && !e.filter.value)
+            self.grid.dataSource.data([]);
+        }
+        
+        PickAssignmentView.prototype.Search = function (e) {
+            e.preventDefault();
+            var messageElement = $(".page-message");
+            KenandyErp.ClearMessage(messageElement);
+            if ($('#facility').val() &&  $('#location').val() ) {
+                var self = this;
+                self.grid.dataSource.read();
+            } else {
+                KenandyErp.Alert('You must specify a facility and location.');
+            }
+        }
+        
+        PickAssignmentView.prototype.SaveAssignment = function (e) {
+            e.preventDefault();
+            var self = this;
+
+            var messageElement = $(".page-message");
+            KenandyErp.ClearMessage(messageElement);
+            var data = self.grid.dataSource.data();
+            if ( data && data.length ) {
+                var location = data[0].get('Location__c') || null;
+                var pickAssignmentRows = {}, hasChanges = false;
+                _.each( data, function (row, index, list) {
+                    if ( row.get('IsSelected__custom') ) {
+                        hasChanges = true;
+                        pickAssignmentRows[row.Shipment_Line__r.Shipment__c] = row.get('Picker__c');
+                    }
+                });
+
+                if (!hasChanges) {
+                    KenandyErp.Alert('You have no changes to save.');
+                    return;
+                }
+                var blockEl = $('#workspace');
+                KenandyErp.BlockUI(blockEl);
+                Visualforce.remoting.Manager.invokeAction(
+                    self.ACTIONS.SAVE_DATA,
+                    JSON.stringify(pickAssignmentRows),
+                    location,
+                    function (result, event ) {
+                        KenandyErp.UnBlockUI(blockEl);
+                        if ( event.type == 'exception') {
+                            KenandyErp.Message(event.message,KenandyErp.MessageType.Error,messageElement);
+                        } else if (result.success){
+                            KenandyErp.Messages([{message:'Your changes were saved.', severity: KenandyErp.MessageType.Success}],messageElement);
+                        } else {
+                            KenandyErp.Messages(result.messages,messageElement);
+                        }
+                    },
+                    {escape: false});
+            }
+        }
+        
+        PickAssignmentView.prototype.AssignUser = function (e){
+            e.preventDefault();
+            var self = this;
+
+            var messageElement = $(".page-message");
+            KenandyErp.ClearMessage(messageElement);
+            var data = self.grid.dataSource.data();
+            var user = $('#user').data('kendoComboBox').dataItem();
+            
+            if ( !user ) {
+                KenandyErp.Messages([{message:'You must specify a Default Picker.', severity: KenandyErp.MessageType.Error}],messageElement);
+                return;
+            }
+            if ( data && data.length ) {
+                _.each( data, function (row, index, list) {
+                    if ( row.get('IsSelected__custom') ) {
+                        row.set('Picker__c', user.value);
+                        row.set('Picker__r', { Id:user.value, Name: user.text});
+                    }
+                });
+            }
+        }
+
+        PickAssignmentView.prototype.GetData = function () {
+            //console.log(e);
+            var deferred = $.Deferred();
+            var self = this;
+            var filter = {
+                facility: $('#facility').val() || null,
+                location:$('#location').val() || null,
+                salesOrder: $('#salesOrder').val() || null,
+                customer:$('#customer').val() || null,
+                transferOrder: $('#transferOrder').val()||null
+            };
+
+            if(filter.facility==null || filter.location==null){
+                deferred.resolve({ records: [ ], success: true }, { statusCode: 200 });
+            }
+
+            Visualforce.remoting.Manager.invokeAction(
+                self.ACTIONS.GET_DATA,
+                JSON.stringify(filter),
+                function (result, event ) {
+                    deferred.resolve(result, event);
+                },
+                {escape: false});
+
+            return deferred.promise();
+
+        }
+    </script>
+</apex:page>

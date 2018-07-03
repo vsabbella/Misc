@@ -1,0 +1,9 @@
+<apex:page standardController="Operation_Transaction__c" extensions="NewEditCloneDeleteExt" action="{!errMsg}">
+    <apex:sectionHeader title="{!$ObjectType.Operation_Transaction__c.Label}" />
+    <apex:form >
+        <apex:pageMessages />
+        <apex:outputpanel style="padding:20px;">
+            <apex:outputLink value="{!$CurrentPage.parameters.retURL}">{!$Label.Click_to_go_back}</apex:outputLink>
+        </apex:outputpanel>
+    </apex:form>
+</apex:page>

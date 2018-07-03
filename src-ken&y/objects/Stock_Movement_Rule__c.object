@@ -1,0 +1,450 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <content>StockMovementRuleManage</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <content>StockMovementRuleManage</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <content>StockMovementRuleManage</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpStockpoints</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Defines the rules to use to decide the picking and the putaway location throughout the system.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>false</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>Criteria_Information</fullName>
+        <availableFields>
+            <field>Container_Package_Class__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Packaging_UOM__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <description>Used in the Stock Movement Rule Manage Page.</description>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Facility__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Class__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Customer__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Source_Location__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Criteria Information</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Rule_Information</fullName>
+        <description>Used in the Stock Movement rule manage visualforce page</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Priority__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Rule_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Source_Document__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Active__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Rule Information</label>
+    </fieldSets>
+    <fields>
+        <fullName>Active__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Indicates whether this stock movement rule is active or not.</description>
+        <externalId>false</externalId>
+        <label>Active</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Class__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Class for the rule.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>In addition to specifying the company and facility, you can further specify the criteria by selecting an item class. If blank, the rule applies to all classes.</inlineHelpText>
+        <label>Class</label>
+        <referenceTo>Class__c</referenceTo>
+        <relationshipLabel>Stock Movement Rules</relationshipLabel>
+        <relationshipName>Stock_Movement_Rules</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Company for the rule.</description>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Stock Movement Rules</relationshipLabel>
+        <relationshipName>Stock_Movement_Rules</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Container_Package_Class__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Container Package Class</label>
+        <referenceTo>Package_Class__c</referenceTo>
+        <relationshipLabel>Stock Movement Rules</relationshipLabel>
+        <relationshipName>Stock_Movement_Rules</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Customer__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Customer for the rule.</description>
+        <externalId>false</externalId>
+        <label>Customer</label>
+        <referenceTo>Customer__c</referenceTo>
+        <relationshipLabel>Stock Movement Rules</relationshipLabel>
+        <relationshipName>Stock_Movement_Rules</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Facility__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Facility for the rule.</description>
+        <externalId>false</externalId>
+        <label>Facility</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>Facility must belong to the company specified !</errorMessage>
+            <filterItems>
+                <field>Facility__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Company__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Facility__c</referenceTo>
+        <relationshipLabel>Stock Movement Rules</relationshipLabel>
+        <relationshipName>Stock_Movement_Rules</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Item__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Item for the rule.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>In addition to specifying the company and facility, you can further specify the criteria by selecting an item. If blank, the rule applies to all items.</inlineHelpText>
+        <label>Item</label>
+        <referenceTo>Item__c</referenceTo>
+        <relationshipLabel>Stock Movement Rules</relationshipLabel>
+        <relationshipName>Stock_Movement_Rules</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Location_List__c</fullName>
+        <description>This field is used to store the json string of the list of location ids.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Used to store json of list of location ids. Do not add to the layout.</inlineHelpText>
+        <label>Location List</label>
+        <length>32768</length>
+        <trackTrending>false</trackTrending>
+        <type>LongTextArea</type>
+        <visibleLines>3</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Location__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Location to be used in pick/putaway.</description>
+        <externalId>false</externalId>
+        <label>Location</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>Location must belong to the company and facility specified !</errorMessage>
+            <filterItems>
+                <field>Location__c.Facility__r.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Company__c</valueField>
+            </filterItems>
+            <filterItems>
+                <field>Location__c.Facility__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Facility__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Location__c</referenceTo>
+        <relationshipLabel>Stock Movement Rules</relationshipLabel>
+        <relationshipName>Stock_Movement_Rules</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Packaging_UOM__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Packaging UOM</label>
+        <referenceTo>UOM__c</referenceTo>
+        <relationshipLabel>Stock Movement Rules</relationshipLabel>
+        <relationshipName>Stock_Movement_Rules</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Priority__c</fullName>
+        <description>Priority order for the rules.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Indicates the sequence in which Kenandy processes a set of rules.</inlineHelpText>
+        <label>Priority</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Rule_Type__c</fullName>
+        <description>the type of rule.</description>
+        <externalId>false</externalId>
+        <label>Rule Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Pick</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Putaway</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Sequence__c</fullName>
+        <description>Temporary use field for the location list visualforce section. Please do not add to layout!</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Temporary use field for the location list visualforce section. Please do not add to layout!</inlineHelpText>
+        <label>Sequence</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Source_Document__c</fullName>
+        <description>Source document for the rule.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Options include Purchase Orders, Transfer Orders.</inlineHelpText>
+        <label>Source Document</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Sales Order</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Purchase Order</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Work Order</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Transfer Order</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Transfer</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Receiving Document</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Directed Putaway</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Source_Location__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Source Location</label>
+        <referenceTo>Location__c</referenceTo>
+        <relationshipLabel>Stock Movement Rules (Source Location)</relationshipLabel>
+        <relationshipName>Stock_Movement_Rules1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Unique_Key__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>Priority-Rule Type-Source Document combination</description>
+        <externalId>false</externalId>
+        <label>Unique Key</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <label>Stock Movement Rule</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Company__c</columns>
+        <columns>Facility__c</columns>
+        <columns>Class__c</columns>
+        <columns>Item__c</columns>
+        <columns>Customer__c</columns>
+        <columns>Location__c</columns>
+        <columns>Priority__c</columns>
+        <columns>Rule_Type__c</columns>
+        <columns>Source_Document__c</columns>
+        <columns>Active__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Stock Movement Rule Name</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Stock Movement Rules</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>Customer_Only_For_Sales_Order_type</fullName>
+        <active>true</active>
+        <description>Customer can be specified only for source document of type Sales Order</description>
+        <errorConditionFormula>AND( NOT(ISPICKVAL(Source_Document__c,&apos;Sales Order&apos;)), NOT(OR(ISNULL( Customer__c ), ISBLANK(Customer__c))))</errorConditionFormula>
+        <errorMessage>Customer can be specified only for rules with Source Document as &apos;Sales Order&apos;</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Priority_Cannot_Be_Empty</fullName>
+        <active>true</active>
+        <description>Validate and do not allow anything less than 0</description>
+        <errorConditionFormula>Priority__c &lt; 0</errorConditionFormula>
+        <errorMessage>Please enter a valid Priority. Priority cannot be less than 0</errorMessage>
+    </validationRules>
+</CustomObject>

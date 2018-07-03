@@ -1,0 +1,77 @@
+<apex:page controller="FixedAssetUndoSplitCon" id="page" tabStyle="Fixed_Asset__c">
+	
+	<script>
+		function checkAll(cb)
+		{
+			var inputElem = document.getElementsByTagName("input");
+			for(var i=0; i<inputElem.length; i++)
+			{
+				if(inputElem[i].id.indexOf("checkedone")!=-1)
+				inputElem[i].checked = cb.checked;
+			}
+		}   
+		 function checkUndoType(){ 
+        
+            var undoMsg = {!manualAdjustment} == true ? "Are you sure you want to undo the manual adjustment?":
+                                                   "Are you sure you want to undo the adjustment that is associated with the supplier invoice lines?";
+               
+            return confirm(undoMsg ) ;
+            
+        }
+	</script>
+	
+	<apex:sectionHeader title="{!$ObjectType.Fixed_Asset__c.Label}" subtitle="{!$Label.Undo_Adjustment}"/>
+	
+	<apex:form id="form">
+	<c:busyWait />
+		<apex:pageMessages id="msgs"/>
+		<apex:pageBlock >
+		
+			<apex:pageBlockButtons location="top">
+				<apex:commandButton value="{!$Label.Go_Back}" action="{!workbench}" status="actionStatus" 
+				                    rerender="form" />
+				<apex:commandButton value="{!$Label.Undo_Adjustment}" action="{!undosplit}" status="actionStatus" 
+				                    onclick="return checkUndoType();" 
+				                    disabled="{!RILWrappers.size == 0 &&  manualAdjustment == false || performUndo==false}"
+				                    />
+			</apex:pageBlockButtons>
+			<apex:pageBlockTable value="{!RILWrappers}" var="rw" rendered="{!RILWrappers.size > 0 && manualAdjustment == false}">
+			
+				<apex:column >
+					<apex:facet name="header"> 
+						<apex:inputCheckbox >
+							<apex:actionSupport event="onclick" onsubmit="checkAll(this)" rerender="form" />
+						</apex:inputCheckbox>
+					</apex:facet>
+					<apex:inputCheckBox id="checkedone" value="{!rw.selected}"/>
+				</apex:column>
+				<apex:column value="{!rw.ril.name}"/>
+                <apex:column value="{!rw.ril.Item__c}"/>
+                <apex:column value="{!rw.ril.Track_as_Asset__c}" />
+                <apex:column value="{!rw.ril.Unit_Price__c}" />
+                <apex:column value="{!rw.ril.Quantity_Received__c}" />
+                <apex:column value="{!rw.ril.Extended_Cost__c}" />
+                <apex:column value="{!rw.ril.Total_Fixed_Asset_Adjustments__c}" />
+                <apex:column value="{!rw.ril.Supplier_Invoice__c}" />
+                
+                
+			</apex:pageBlockTable>
+			<apex:pageBlockSection columns="1">
+				<apex:outputText value="{!$Label.No_Supplier_Invoice_Lines_available_to_restore}" style="font-weight:bold;" 
+				                 rendered="{!RILWrappers.size == 0 && manualAdjustment == false}"/>
+			</apex:pageBlockSection>
+			<apex:pageBlockTable value="{!manualAdjustments}" var="manualAdj" rendered="{!manualAdjustment==true && performUndo ==true}">
+				<apex:column value="{!manualAdj.name}"/>
+				<apex:column value="{!manualAdj.Amount__c}"/>
+				<apex:column value="{!manualAdj.Transaction_Date__c}"/> 
+				<apex:column value="{!manualAdj.Adjustment_Date__c}"/>
+				<apex:column value="{!manualAdj.Finalized__c}"/> 
+				<apex:column value="{!manualAdj.Type__c}"/> 
+			</apex:pageBlockTable>
+		</apex:pageBlock>
+	
+	</apex:form>
+	
+
+
+</apex:page>

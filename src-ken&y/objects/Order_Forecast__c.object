@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <content>OrderForecastNew</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpOrderForecasts</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Order Forecast for MRP</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableEnhancedLookup>true</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>New_Order_Forecast</fullName>
+        <description>New_Order_Forecast</description>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Customer__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Facility__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Forecast_Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Plan_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Consumption_Start_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Consumption_End_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <label>New_Order_Forecast</label>
+    </fieldSets>
+    <fields>
+        <fullName>Autonumber__c</fullName>
+        <displayFormat>{0000000000}</displayFormat>
+        <externalId>false</externalId>
+        <label>Autonumber</label>
+        <trackTrending>false</trackTrending>
+        <type>AutoNumber</type>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Company</description>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Order Forecasts</relationshipLabel>
+        <relationshipName>Order_Forecasts</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Consumed_Quantity__c</fullName>
+        <description>Quantity of forecast consumed by actual orders</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Forecast quantity consumed by actual orders.</inlineHelpText>
+        <label>Consumed Quantity</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Consumption_End_Date__c</fullName>
+        <externalId>false</externalId>
+        <label>Consumption End Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Consumption_Start_Date__c</fullName>
+        <externalId>false</externalId>
+        <label>Consumption Start Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Customer__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Customer</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Customer__c.RecordTypeId</field>
+                <operation>equals</operation>
+                <value>Sold To</value>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Customer__c</referenceTo>
+        <relationshipLabel>Order Forecasts</relationshipLabel>
+        <relationshipName>Order_Forecasts</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Facility__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Facility that Order Forecast is for.</description>
+        <externalId>false</externalId>
+        <label>Facility</label>
+        <referenceTo>Facility__c</referenceTo>
+        <relationshipLabel>Order Forecasts</relationshipLabel>
+        <relationshipName>Order_Forecasts</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Forecast_Quantity__c</fullName>
+        <description>Forecasted quantity</description>
+        <externalId>false</externalId>
+        <label>Forecast Quantity</label>
+        <precision>18</precision>
+        <required>true</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Item__c</fullName>
+        <description>Item being forecasted</description>
+        <externalId>false</externalId>
+        <label>Item</label>
+        <lookupFilter>
+            <active>true</active>
+            <booleanFilter>1 OR 2</booleanFilter>
+            <filterItems>
+                <field>Item__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Company__c</valueField>
+            </filterItems>
+            <filterItems>
+                <field>Item__c.Company__c</field>
+                <operation>equals</operation>
+                <value></value>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Item__c</referenceTo>
+        <relationshipLabel>Order Forecasts</relationshipLabel>
+        <relationshipName>Order_Forecasts</relationshipName>
+        <relationshipOrder>0</relationshipOrder>
+        <reparentableMasterDetail>false</reparentableMasterDetail>
+        <trackTrending>false</trackTrending>
+        <type>MasterDetail</type>
+        <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    </fields>
+    <fields>
+        <fullName>Plan_Date__c</fullName>
+        <description>Date MRP to plan forecast</description>
+        <externalId>false</externalId>
+        <label>Plan Date</label>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Remaining_Quantity__c</fullName>
+        <description>Foreccast Quantity minus Consumed Quantity</description>
+        <externalId>false</externalId>
+        <formula>Forecast_Quantity__c  -  Consumed_Quantity__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <inlineHelpText>Remaining Quantity = Forecast Quantity - Consumed Quantity.</inlineHelpText>
+        <label>Remaining Quantity</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <label>Order Forecast</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Company__c</columns>
+        <columns>Facility__c</columns>
+        <columns>Item__c</columns>
+        <columns>Plan_Date__c</columns>
+        <columns>Forecast_Quantity__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Order Forecast</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Order Forecasts</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Company__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Facility__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Item__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Plan_Date__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Forecast_Quantity__c</customTabListAdditionalFields>
+        <excludedStandardButtons>ChangeOwner</excludedStandardButtons>
+        <excludedStandardButtons>Accept</excludedStandardButtons>
+        <lookupDialogsAdditionalFields>Item__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Forecast_Quantity__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Plan_Date__c</lookupDialogsAdditionalFields>
+        <searchFilterFields>NAME</searchFilterFields>
+    </searchLayouts>
+    <sharingModel>ControlledByParent</sharingModel>
+    <validationRules>
+        <fullName>Company_must_not_change</fullName>
+        <active>true</active>
+        <description>Company cannot change once the record has been created</description>
+        <errorConditionFormula>ISCHANGED(Company__c)</errorConditionFormula>
+        <errorMessage>Once created for a Company,  Order Forecast cannot change Company.</errorMessage>
+    </validationRules>
+</CustomObject>

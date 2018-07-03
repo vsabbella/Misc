@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <columns>
+        <field>CUST_NAME</field>
+    </columns>
+    <columns>
+        <field>Item__c.Source__c</field>
+    </columns>
+    <columns>
+        <field>Item__c.Non_Inventory__c</field>
+    </columns>
+    <description>Items with a source of miscellaneous and are tracked in inventory</description>
+    <filter>
+        <criteriaItems>
+            <column>Item__c.Source__c</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>equals</operator>
+            <value>Miscellaneous</value>
+        </criteriaItems>
+    </filter>
+    <format>Summary</format>
+    <groupingsDown>
+        <dateGranularity>Day</dateGranularity>
+        <field>Item__c.Company__c</field>
+        <sortOrder>Asc</sortOrder>
+    </groupingsDown>
+    <name>Miscellaneous Items that are Inventoried</name>
+    <params>
+        <name>co</name>
+        <value>1</value>
+    </params>
+    <reportType>CustomEntity$Item__c</reportType>
+    <scope>organization</scope>
+    <showDetails>true</showDetails>
+    <timeFrameFilter>
+        <dateColumn>Item__c.Last_Cycle_Count__c</dateColumn>
+        <interval>INTERVAL_CUSTOM</interval>
+    </timeFrameFilter>
+</Report>

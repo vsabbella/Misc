@@ -1,0 +1,13 @@
+<apex:component >
+<apex:attribute name="currencyCode" description="picklist field for display of the currency"
+        type="String" required="true" />
+<apex:attribute name="amount" description="number field for display of the currency"
+        type="Decimal" required="true" />
+
+<!-- <apex:outputPanel >                 -->
+    <apex:outputText value="{!currencyCode}" />
+        <apex:outputText value="{0, number, 00.00}" > 
+            <apex:param value="{!amount}" />
+        </apex:outputText>
+<!-- </apex:outputPanel> -->
+</apex:component>

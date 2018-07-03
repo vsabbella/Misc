@@ -1,0 +1,14 @@
+<apex:page standardController="Claim__c" extensions="RefundCreditClaimLaunchExt" action="{!navigateToRefundCredit}" title="{!$Label.Settlement}">
+
+   <apex:sectionHeader subtitle="{!JSENCODE(claimName)}" 
+                                        title="{!$Label.Settlement}"
+                                        help="{!URLFOR($Page.HelpCustomerRefunds)}"/>
+   <apex:form id="form" > <c:busyWait />
+        <apex:pagemessages />
+        <apex:pageBlock >
+          <div align="center">
+            <apex:commandButton value="{!JSENCODE(claimName)}" style="text-align:right" action="{!returnToClaim}"/>
+          </div>
+        </apex:pageBlock>
+   </apex:form>  
+</apex:page>

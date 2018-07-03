@@ -1,0 +1,45 @@
+<apex:page standardController="Purchase_Order__c"  sidebar="false"  extensions="PurchaseOrderSplitExt"  >
+
+<apex:sectionHeader title="{!$Label.Create_Shipment_Purchase_Order}" subtitle="{!Purchase_Order__c.Name}" /> 
+
+<apex:form id="theForm" >   	<apex:pageMessages />  
+<c:busyWait />  
+
+<apex:PageBlock mode="maindetail"  id="pageBlockID"  >
+
+	<apex:pageBlockButtons id="btnoutpanel" >
+		<apex:commandButton action="{!saveChild}" value="{!$Label.Save_to_New_Order}" reRender="theForm" 
+                           status="actionStatus"  rendered="{! !setuperror}" accessKey="s"  />
+       	<apex:commandButton action="{!cancel}"  value="{!$Label.Cancel}" status="actionStatus" reRender="theForm" immediate="true" />
+	</apex:pageBlockButtons>
+
+	<apex:pageBlockSection >
+ 		<apex:repeat value="{!$ObjectType.Purchase_Order__c.FieldSets.New_Purchase_Order}"   var="f">
+               <apex:outputField value="{!Purchase_Order__c[f]}" />
+        </apex:repeat>
+     <apex:outputField value="{!Purchase_Order__c.Status__c}" />
+	<apex:inputField value="{!Purchase_Order__c.Delivery_Location__c}"  required="true"  rendered="{! !setuperror}" />
+	</apex:pageBlockSection>
+	<br />
+  	<apex:pageBlockTable value="{!OrderLines}" 	 var="object"   rendered="{! !setuperror}" >
+    	        
+          <apex:column value="{!object.poLine.Item__c}"  />
+          <apex:column value="{!object.poLine.Description__c}"  />
+          <apex:column value="{!object.poLine.Order_Quantity__c}"  />
+          <apex:column value="{!object.poLine.Quantity_Received__c}"  />
+          <apex:column value="{!object.poLine.Quantity_Still_Due__c}"  />
+          
+          <apex:column headerValue="{!$Label.Quantity_To_Shipment}" >
+          	<apex:inputText value="{!object.Quantity_to_split}" ></apex:inputText>
+          </apex:column>
+       	 
+ 	</apex:pageBlockTable>
+
+</apex:PageBlock>
+</apex:form>
+<div style="display: none; " > 
+ 	<apex:outputText value="{!Purchase_Order__c.Company__c}" />
+ 	<apex:outputText value="{!Purchase_Order__c.Status__c}" />
+ 	<apex:outputText value="{!Purchase_Order__c.Type__c}" />
+</div>
+</apex:page>

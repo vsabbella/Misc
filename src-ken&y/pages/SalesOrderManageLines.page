@@ -1,0 +1,3515 @@
+<apex:page standardController="Sales_Order__c" 
+    extensions="SalesOrderManageLinesExt,SalesOrderLineExt,KSE"  
+    sidebar="false"     docType="html-5.0">
+
+    <style type="text/css">
+        .line-errors {
+            cursor: pointer;
+        }
+
+        ul.error-messages {
+            padding-left: 20px;
+            text-align: left;
+        }
+
+        ul.error-messages li {
+            color: #fff;
+        }
+
+        ul.error-messages li a:link {
+            color: #fff;
+        }
+
+        ul.error-messages li a:visited {
+            color: #fff;
+        }
+
+        ul.error-messages li a:hover {
+            color: #fff;
+        }
+
+        ul.error-messages li a:active {
+            color: #fff;
+        }
+
+        .manage-allowance-icon {
+            vertical-align: middle;
+        }
+        
+        .manage-allowance-button {
+            min-width: 20px !important;
+        }
+
+        .disab {
+            opacity: 0.4;
+            cursor: default;
+            pointer-events: none;
+        }
+    </style>
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+
+    <apex:form id="MainForm"> 
+        <div class="page-container">
+            <apex:sectionHeader title="{!pageTitle}" />
+
+            <div class="page-message"></div>
+            <apex:pageMessages id="msgs"/>
+
+            <apex:pageBlock id="SalesOrderHeaderBlock">
+                <div id="SalesOrderHeaderDetailList">
+                </div>
+                <apex:pageBlockButtons location="top">
+                    <apex:outputPanel layout="none">
+                        <button id="saveButton" class ="k-button kndy-btn save-command" type="button" accesskey="s">Save</button>
+                        <button id="cancelButton" class ="k-button kndy-btn cancel-command" onclick="SalesOrderManageLinesUtils.GoBack();" type="button">Go Back</button>
+                        <button id="actionButton" class ="k-button kndy-btn header-action-command" type="button">Actions</button>
+                    </apex:outputPanel>
+                </apex:pageBlockButtons>
+            </apex:pageBlock>
+
+            <apex:pageBlock title="Sales Order Lines">
+                <div class="grid-container">
+                    <div class="grid-success-message"></div>
+                    <div class="grid-error-message"></div>
+                    <div class="grid-warning-message"></div>
+                    <div class="grid-info-message"></div>
+                    <div id="GridAddManageSalesOrderLines"></div>
+                </div>    
+            </apex:pageBlock>
+
+            <div id="InventoryWindow" class="kndy-hidden">
+                <apex:pageBlock >
+                    <apex:pageBlockSection columns="1" collapsible="false">
+                        <div class="grid-container">
+                            <div class="grid-message"></div>
+                            <div id="InventoryGrid"></div>
+                        </div>
+                    </apex:pageBlockSection>
+                </apex:pageBlock>
+            </div>
+
+        </div>
+    </apex:form>            
+
+    <div id='AllowancesWindow' class="kndy-hidden">
+        <apex:pageBlock mode="detail">    
+            <apex:pageBlockSection id="SoLineAllowancesHeader" columns="1" title="">
+                <div id="SOLineHeaderDetailList">
+                </div>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection columns="1" title="Allowances">
+                <div class="grid-container">
+                    <div class="grid-message"></div>
+                    <div id="GridSOLineAllowances"></div>
+                </div>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </div>
+
+    <script type="text/javascript">
+
+        var activeHoverTooltip = null;
+        var showWarningHeader = false;
+        var editGrid = {!isSOLineModificationAllowed};
+        var hasTax = {!hasTax};
+        var globalSO = [];
+        var soId;
+        var isImplicitSave = false;
+        var InventoryWindow = null;
+        var itemID = null;
+
+        var salesorderHeaderData = function(readOptions) {
+			var deferred = $.Deferred();
+            var salesorderId = SalesOrderManageLinesUtils.SalesOrderId;
+
+            if (!salesorderId){
+                salesorderId = soId;
+            }
+            if (!salesorderId) {
+                setTimeout(function() {
+                	var records = [];
+
+                	delete SalesOrderManageLinesUtils.SalesOrderHeaderData['attributes'];
+					records.push(SalesOrderManageLinesUtils.SalesOrderHeaderData);
+
+                    deferred.resolve({ records: records, success: true, total: records.total }, { statusCode: 200 });
+                }, 100);
+            }
+            else {
+	            Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.SalesOrderManageLinesExt.getSalesOrderDetails}',
+                    salesorderId,
+                    '{!$CurrentPage.parameters.clone}',
+                    function (result, event) {
+                        deferred.resolve(result, event);
+                        if(event.status){
+                            //if SO is closed or cancelled disable the add/cancel/delete buttons
+                            //Page load will remove these buttons however from actions drop down when page refresh doesnt happen, lets disable until next page refresh happens
+                            $('span').attr('data-bind','text: Status__c').each(function(){
+                                if($(this).text() == 'Cancelled' || $(this).text() == 'Closed'){
+                                    $('.grid-create-command').css({ "opacity": "0.4", "cursor": "default" , "pointer-events":"none"});
+                                    $('.grid-cancel-command').css({ "opacity": "0.4", "cursor": "default" , "pointer-events":"none"});
+                                    $('.grid-mass-delete-command').css({ "opacity": "0.4", "cursor": "default" , "pointer-events":"none"});
+                                }
+                            })
+
+                        }
+                    },
+                    {escape: false}
+                );
+			}
+
+            return deferred.promise();
+		};
+
+        var salesOrderLinesData = function() {
+            var deferred = $.Deferred();
+            var remoteArgs = JSON.parse(JSON.stringify(SalesOrderManageLinesUtils.SalesOrderLinesConfigJson));
+            // The stuff returned from Salesforce has extra properties like "attributes"
+            // which couldn't be deserialised back
+            remoteArgs.parentRecord = { Id: remoteArgs.parentRecord.Id };
+
+            var salesorderId = SalesOrderManageLinesUtils.SalesOrderId;
+
+            var allFields = {!AllFields};
+
+            if (!salesorderId && soId){
+                salesorderId = soId;
+                remoteArgs.parentRecord = { Id: soId };
+            }
+
+            if (!salesorderId) {
+
+                setTimeout(function() {
+                    deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+                }, 100);
+
+                var grid = SalesOrderManageLinesUtils.SalesOrderLinesGrid;
+                hasTax = {!hasTax};
+                if(!hasTax){
+                    $('.grid-get-tax-custom-command').hide();
+                }
+                return deferred.promise();
+            }
+
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.SalesOrderManageLinesExt.getSalesOrderLines}',
+                remoteArgs,
+                salesorderId,
+                allFields,
+                '{!$CurrentPage.parameters.clone}',
+                function (result, event) {
+                    if (!isImplicitSave){
+                        deferred.resolve(result, event);
+
+                        $.each(result.records, function(index, item) {
+                            if(typeof item['exceptions'] != 'undefined'){
+                                showWarningHeader = true;
+                                return false;
+                            }
+                        });
+                    }
+                    isImplicitSave = false;
+                    if(showWarningHeader){
+                        var grid = SalesOrderManageLinesUtils.SalesOrderLinesGrid;
+                        var messageElement = grid.element.closest("div.grid-container").find("div.grid-warning-message");
+
+                        KenandyErp.ClearMessage();
+                        KenandyErp.Message('{!KNDO_PAGE_HEADER_EXCEPTION_MSG}', KenandyErp.MessageType.Warning, messageElement);
+                    }
+
+                    editGrid = {!isSOLineModificationAllowed};
+                    hasTax = {!hasTax};
+
+                    //Check the status of the Sales Order and enable/disable features on the SO lines
+                    if(!editGrid){
+                        var grid = SalesOrderManageLinesUtils.SalesOrderLinesGrid;
+                        var messageElement = grid.element.closest("div.grid-container").find("div.grid-warning-message");
+
+                        $('.grid-cancel-lines-custom-command').hide();
+                        $('.grid-available-inventory-custom-command').hide();
+                        $('.grid-get-tax-custom-command').hide();
+                        KenandyErp.Message('{!KNDO_PAGE_HEADER_SO_STATUS_WARNING_MSG}', KenandyErp.MessageType.Warning, messageElement);
+                    }
+
+                    if(!hasTax){
+                        $('.grid-get-tax-custom-command').hide();
+                    }
+                },
+            {escape: false}
+            );
+            return deferred.promise();
+        }
+
+
+        $(document).on('KenandyErpReady', function(e) {
+                    
+            SalesOrderManageLinesUtils.Init({
+                salesorderId: '{!JSENCODE(theSalesOrder.Id)}',
+                salesorderHeaderData: '{!JSENCODE(salesorderheaderJson)}',
+                salesorderHeaderFieldList: '{!JSENCODE(salesorderHeaderFieldList)}',
+                salesorderAddlHeaderFieldList: '{!JSENCODE(salesorderAddlHeaderFieldList)}',
+                salesOrderLinesConfigJson: '{!JSENCODE(salesOrderLinesConfigJson)}',
+                salesorderHeaderActions: {
+                    'Cancel': '{!$RemoteAction.SalesOrderManageLinesExt.cancelsalesorder}',
+                },
+                salesOrderLinesFieldList: '{!salesOrderLinesFieldList}',
+                salesOrderLinesGridViews: '{!JSENCODE(GridViews)}',
+                salesOrderLinesGridViewFields: '{!JSENCODE(GridViewFields)}'
+            }); 
+            
+            // This was a quick way to show all lines in the grid. 
+            // Setting the size dynamically runs into a loop for some reason.
+            //TODO : check why this was written
+            //var grid = SalesOrderManageLinesUtils.SalesOrderLinesGrid;
+            //grid.dataSource.pageSize(1000);
+			//grid.pager.element.hide();
+			//grid.refresh();
+			           
+        });
+        
+        $(document).keydown(function(e) {
+
+            if(editGrid){
+
+                if (e.shiftKey && e.altKey) {
+                    switch(e.keyCode) {
+                        case 78: // alt + shift + N
+                            $('.grid-create-command').trigger('click');
+                            break;
+                        case 83: // alt + shift + S
+                            $('.grid-save-command').trigger('click');
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            
+        });
+                    
+        var SalesOrderManageLinesUtils = function() {
+
+            return {
+                SalesOrderId: null,
+                SalesOrderHeaderDetailList: null,
+                SalesOrderAddlHeaderFieldList: null,
+                SalesOrderHeaderData: null,
+                isSalesOrderHeaderDataDirty: false,
+                SalesOrderLinesConfigJson: null,
+                SalesOrderLinesFieldList: null,  
+                SalesOrderLinesGridFields: null,
+                SalesOrderLinesGrid: null,
+                SalesOrderHeaderActions: null,
+                salesOrderLinesGridViews: null,
+                salesOrderLinesGridViewFields: null,
+                AllowancesWindow: null,
+
+                Init: function(args) {
+                   // initialize defaults
+                   this.SalesOrderId = args.salesorderId;
+                   this.SalesOrderHeaderData = JSON.parse(args.salesorderHeaderData);
+                   this.SalesOrderHeaderFieldList = JSON.parse(args.salesorderHeaderFieldList);
+                   this.SalesOrderAddlHeaderFieldList = JSONUtils.Parse(args.salesorderAddlHeaderFieldList);
+                   this.SalesOrderLinesConfigJson = JSON.parse(args.salesOrderLinesConfigJson);
+                   this.SalesOrderLinesFieldList = JSON.parse(args.salesOrderLinesFieldList);
+                   this.SalesOrderLinesGridFields = _.pluck(SalesOrderManageLinesUtils.SalesOrderLinesFieldList, 'field');
+                   this.salesOrderLinesGridViews = JSON.parse(args.salesOrderLinesGridViews);
+                   this.salesOrderLinesGridViewFields = JSON.parse(args.salesOrderLinesGridViewFields);
+                   this.SalesOrderHeaderActions = args.salesorderHeaderActions;
+                   // render grid
+                   this.RenderActionListDropdown();
+                   this.RenderSaveListDropdown();
+                   this.RenderWidgets();
+                },
+                GetColumnIndexFromName: function (grid, fieldName) {
+                    var index = -1;
+                    var columns = grid.columns;
+                    if (columns.length > 0) {
+                        for (var i = 0; i < columns.length; i++) {
+                            if (columns[i].field == fieldName) { // columns[i].title -- You can also use title property here but for this you have to assign title for all columns
+                                index = i;
+                            }
+                        }
+                    }
+                    return index;
+                },
+                GetSalesOrderLinesFieldList: function() {
+
+                    var fieldList = SalesOrderManageLinesUtils.SalesOrderLinesFieldList;
+
+                    $.each(fieldList, function() { 
+                        if (this.field == 'errors') {
+                            this.headerTemplate = '';
+                            this.template =  '#= SalesOrderManageLinesUtils.RenderErrors(data)# ';
+                            this.width = '40px';
+                        } else if (this.field == 'soLine.Line__c'){
+
+                            this.width = '45px';
+                        } else if (this.field == 'soLine.Product__r.Description__c'){
+                            this.editable = true;
+                        } else if (this.field == 'soLine.Allowances__c'){
+                            this.template = "<a class='manage-allowance-command' title='Manage Allowances' href='javascript:void(0);'>#=SalesOrderManageLinesUtils.DisplayAllowanceAmount(data, " + this.scale + ")#</a>"; 
+                        } else if(this.field === 'soLine.Memo__c'){
+                        	this.unwrapBody = true; //compress the cell
+                        } else if(this.field == 'soLine.Available_Inventory__c'){
+                            this.template = "<a class='show-inventory-command' title='Available Inventory' href='javascript:void(0);'>#=SalesOrderManageLinesUtils.DisplayAvailableQty(data, " + this.scale + ")#</a>";
+                        }
+                        
+                        this.width = this.width ? this.width : '100px'; 
+                    });
+
+                    return fieldList;
+                },
+                DisplayViewFields: function(fieldNames){
+                    var segmentPrefix = 'soLine.Accounting_Segment__r.';
+                    var i = 3;//Starting index of View columns(After checkbox, errors and id)
+                    for (fld = 0; fld < fieldNames.length; fld++) { 
+                        i = i + 1;
+                        //Get column index for field name
+                        var colIndex = SalesOrderManageLinesUtils.GetColumnIndexFromName(SalesOrderManageLinesUtils.SalesOrderLinesGrid, fieldNames[fld]);
+                        
+                        if(fieldNames[fld].length >= segmentPrefix.length && fieldNames[fld].indexOf(segmentPrefix) > -1){
+
+                            //Change the SOL fields to segments fields
+                            var segmentFieldName = 'segments.' + fieldNames[fld].substring(fieldNames[fld].indexOf(segmentPrefix) + segmentPrefix.length);
+
+                            //Get the column index for segment fields
+                            colIndex = SalesOrderManageLinesUtils.GetColumnIndexFromName(SalesOrderManageLinesUtils.SalesOrderLinesGrid, segmentFieldName);
+                        } 
+
+                        //Show columns
+                        if(fieldNames[fld] != 'soLine.Id'){
+                            //Re-order columns based on the field set order
+                            SalesOrderManageLinesUtils.SalesOrderLinesGrid.reorderColumn(i, SalesOrderManageLinesUtils.SalesOrderLinesGrid.columns[colIndex]);
+                            SalesOrderManageLinesUtils.SalesOrderLinesGrid.showColumn(i);
+                        }
+                    }
+
+                    // hide available inventory column
+                    SalesOrderManageLinesUtils.SalesOrderLinesGrid.hideColumn('soLine.Available_Inventory__c');
+                    SalesOrderManageLinesUtils.SalesOrderLinesGrid.hideColumn('soLine.Id');
+
+                    //Show or hide Quantity Factor column based on the Customer__r.Order_Quantity_Factor_At__c field
+                    if('{!theSalesOrder.Customer__r.Order_Quantity_Factor_At__c}'){
+                        SalesOrderManageLinesUtils.SalesOrderLinesGrid.showColumn('quantityFactor');
+
+                    } else {
+                        SalesOrderManageLinesUtils.SalesOrderLinesGrid.hideColumn('quantityFactor');
+                    }
+                },
+                DisplayAllowanceAmount: function(data, scale) {
+                    if(data.soLine.Id != null){
+                        var allowanceAmout = (data.soLine && data.soLine.Allowances__c) ? data.soLine.Allowances__c: 0;    
+                        return kendo.toString(allowanceAmout, 'n' + scale);
+                    }
+                    return '';
+                },
+
+                DisplayAvailableQty: function(data, scale) {
+                    if(data.soLine.Id != null){
+                        var allowanceAmout = (data.soLine) ? data.soLine.Available_Inventory__c: 0;
+                        return kendo.toString(allowanceAmout, 'n' + scale);
+                    }
+                    return 0;
+                },
+
+                RenderErrors: function(data) {
+                    var errors = data.get('errors') ? data.get('errors') : [];
+                    var exceptions = data.get('exceptions') ? data.get('exceptions') : [];
+                    var template = (errors.length > 0 || exceptions.length > 0) ? '<div class="errors k-hidden">' : '';
+                    var iconClass = (errors.length > 0) ? ' kndy-red' : ' kndy-orange';
+
+                    if (errors.length > 0) {
+                        template = template + '<table cellspacing="3"><tr><td class="kndy-white kndy-text-left"><h3>Errors</h3></td></tr><tr><td>';
+                        template = template + '<ul class="error-messages">';
+
+                        for (var i = 0; i < errors.length; i++) {
+                            template = template + '<li>' + sanitize(errors[i]) + '</li>';
+                        }
+
+                        template =  template + '</ul>';
+                        template = template + '</td></tr></table>'
+                    }
+
+                    if (exceptions.length > 0) {
+                        template = template + '<table cellspacing="3"><tr><td class="kndy-white kndy-text-left"><h3>Exceptions</h3></td></tr><tr><td>';
+                        template = template + '<ul class="error-messages">';
+
+                        for (var i = 0; i < exceptions.length; i++) {
+                            template = template + '<li><a href="/' + sanitize(exceptions[i].Id) + '" target="_blank"><nobr>' + sanitize(exceptions[i].Subject) + '</nobr></a></li>';
+                        }
+
+                        template =  template + '</ul>';
+                        template = template + '</td></tr></table>'
+                    }
+
+                    if (errors.length > 0 || exceptions.length > 0) {
+                        showWarningHeader = true;
+                        template =  template + '</div>';
+                    }
+
+                    return (errors.length > 0 || exceptions.length > 0) ? '<i class="fa fa-exclamation-triangle fa-lg line-errors' + iconClass + '">' + template + '</i>' : '';
+                },
+
+                RenderSaveListDropdown: function() {
+                    $('#saveButton').kendoDropDownButton({
+                        type: 'splitButton',
+                        items: [
+                            {
+                                text: "Save and Review",
+                                cssClass: "save-review-command"
+                            },
+                            {
+                                text: "Save and Return",
+                                cssClass: "save-return-command"
+                            },
+                            {
+                                text: "Save and New",
+                                cssClass: "save-new-command"
+                            }
+                        ]
+                    });
+                },
+
+                RenderActionListDropdown: function() {
+                    $('#actionButton').kendoDropDownButton({
+                        items: [
+                            {
+                                text: "Cancel",
+                                cssClass: "action-cancel-command",
+                                click: function(e) {
+                                    if(SalesOrderManageLinesUtils.IsPageDirty()){
+                                        KenandyErp.Message('{!$Label.Cannot_perform_any_action_save_the_salesorder_to_proceed}');
+                                    }else{
+                                        SalesOrderManageLinesUtils.ExecuteAction('Cancel');
+                                    }
+                                }
+                            },
+                            {
+                                text: "Clone",
+                                cssClass: "action-clone-command",
+                                click: function(e) {
+                                    if(SalesOrderManageLinesUtils.IsPageDirty()){
+                                        KenandyErp.Message('{!$Label.Cannot_perform_any_action_save_the_salesorder_to_proceed}');
+                                    }else{
+                                        SalesOrderManageLinesUtils.ExecuteAction('Clone');
+                                    }
+                                }
+                            },
+                            {
+                                 text: "Get Tax",
+                                 cssClass: "get-tax-command",
+                                 click: function(e) {
+                                    SalesOrderManageLinesUtils.FetchTaxes(e);
+                                 }
+                            },
+                            {
+                                text: "Release",
+                                cssClass: "action-release-command",
+                                click: function(e) {
+                                    if(SalesOrderManageLinesUtils.IsPageDirty()){
+                                        KenandyErp.Message('{!$Label.Cannot_perform_any_action_save_the_salesorder_to_proceed}');
+                                    }else{
+                                        SalesOrderManageLinesUtils.ExecuteAction('Release');
+                                    }
+                                }
+                            },
+                            {
+                                text: "Undo Release ",
+                                cssClass: "action-undo-release-command",
+                                click: function(e) {
+                                    if(SalesOrderManageLinesUtils.IsPageDirty()){
+                                        KenandyErp.Message('{!$Label.Cannot_perform_any_action_save_the_salesorder_to_proceed}');
+                                    }else{
+                                        SalesOrderManageLinesUtils.ExecuteAction('Undo_Release');
+                                    }
+                                }
+                            },
+                            {
+                                text: "Create Adhoc Invoice ",
+                                cssClass: "action-adhoc-invoice-command",
+                                click: function(e) {
+                                    if(SalesOrderManageLinesUtils.IsPageDirty()){
+                                        KenandyErp.Message('{!$Label.Cannot_perform_any_action_save_the_salesorder_to_proceed}');
+                                    }else{
+                                        SalesOrderManageLinesUtils.ExecuteAction('Invoice');
+                                    }
+                                }
+                            },
+                            {
+                                text: "Allowances ",
+                                cssClass: "action-allowances-command",
+                                click: function(e) {
+                                    if(SalesOrderManageLinesUtils.IsPageDirty()){
+                                        KenandyErp.Message('{!$Label.Cannot_perform_any_action_save_the_salesorder_to_proceed}');
+                                    }else{
+                                        SalesOrderManageLinesUtils.ExecuteAction('Allowances');
+                                    }
+                                }
+                            },
+                            {
+                                text: "Create RMA ",
+                                cssClass: "action-create-rma-command",
+                                click: function(e) {
+                                    if(SalesOrderManageLinesUtils.IsPageDirty()){
+                                        KenandyErp.Message('{!$Label.Cannot_perform_any_action_save_the_salesorder_to_proceed}');
+                                    }else{
+                                        SalesOrderManageLinesUtils.ExecuteAction('Create_RMA');
+                                    }
+                                }
+                            },
+                            {
+                                text: "Receive RMA ",
+                                cssClass: "action-receive-rma-command",
+                                click: function(e) {
+                                    if(SalesOrderManageLinesUtils.IsPageDirty()){
+                                        KenandyErp.Message('{!$Label.Cannot_perform_any_action_save_the_salesorder_to_proceed}');
+                                    }else{
+                                        SalesOrderManageLinesUtils.ExecuteAction('Receive_RMA');
+                                    }
+                                }
+                            },
+                            {
+                                text: "Fulfill ",
+                                cssClass: "action-fulfill-command",
+                                click: function(e) {
+                                    if(SalesOrderManageLinesUtils.IsPageDirty()){
+                                        KenandyErp.Message('{!$Label.Cannot_perform_any_action_save_the_salesorder_to_proceed}');
+                                    }else{
+                                        SalesOrderManageLinesUtils.ExecuteAction('Fulfill');
+                                    }
+                                }
+                            },
+                            {
+                                text: "Close ",
+                                cssClass: "action-close-command",
+                                click: function(e) {
+                                    if(SalesOrderManageLinesUtils.IsPageDirty()){
+                                        KenandyErp.Message('{!$Label.Cannot_perform_any_action_save_the_salesorder_to_proceed}');
+                                    }else{
+                                        SalesOrderManageLinesUtils.ExecuteAction('Close');
+                                    }
+                                }
+                            },
+                        ]
+                    });
+                },
+
+                RenderWidgets: function() {
+                    var headerLookupSearchFilters = [];
+                    headerLookupSearchFilters.push({ field: "Customer__c", filter: "Status__c != \'Inactive\' AND RecordTypeId = \'{!JSENCODE(soldToCustRecordType)}\'" });
+                    headerLookupSearchFilters.push({ field: "Bill_to__c", filter: "Status__c != \'Inactive\' AND RecordTypeId = \'{!JSENCODE(billToCustRecordType)}\'" });
+
+                    if (this.SalesOrderId){
+                        headerLookupSearchFilters.push({ field: "Ship_to__c", filter: "Status__c != \'Inactive\' AND RecordTypeId = \'{!JSENCODE(shipToCustRecordType)}\' AND Parent_Customer__c = \'#=Customer__c#\'" });
+                    } else {
+                        headerLookupSearchFilters.push({ field: "Ship_to__c", filter: "Status__c != \'Inactive\' AND RecordTypeId = \'{!JSENCODE(shipToCustRecordType)}\'" });
+                    }
+
+                    // Destroy SalesOrderHeaderDetailList
+                    if (this.SalesOrderHeaderDetailList) {
+                        this.SalesOrderHeaderDetailList.destroy();
+                        $('#SalesOrderHeaderDetailList').empty();
+                    }
+
+                    this.SalesOrderHeaderDetailList = $('#SalesOrderHeaderDetailList').kendoDetailList({
+						namespace: '{!NamespaceUU}',
+						highlightFirst: true,
+                        sections: [
+                            {
+                                fields: SalesOrderManageLinesUtils.SalesOrderHeaderFieldList
+                            },
+                            {
+                                name: 'sales-order-header-addl-info',
+                                title: 'Additional Information',
+                                fields: SalesOrderManageLinesUtils.SalesOrderAddlHeaderFieldList
+                            }
+                        ],
+                        lookupSearchAction: '{!$RemoteAction.SalesOrderManageLinesExt.lookupSearchFilter}',
+                        lookupSearchFilters: headerLookupSearchFilters,
+                        getDetailListFunction: salesorderHeaderData,
+                    }).data('kendoDetailList');
+
+                    this.SalesOrderHeaderDetailList.element.bind('OnReadSuccess', SalesOrderManageLinesUtils.OnSalesOrderHeaderDetailListReadSuccess);
+
+                    var isSalesOrderSaved;
+
+                    if (SalesOrderManageLinesUtils.SalesOrderHeaderData.Id){
+                        isSalesOrderSaved = SalesOrderManageLinesUtils.SalesOrderHeaderData.Id;
+                        globalSO = SalesOrderManageLinesUtils.SalesOrderHeaderData;
+                        KenandyErp.CleanNamespace(globalSO, '{!NamespaceUU}');
+                    }else{
+                        isSalesOrderSaved = soId;
+                    }
+
+                    var lookupSearchFilters = [];
+
+                    //Set the filters only if the SO has been saved
+                    if (isSalesOrderSaved){
+                        lookupSearchFilters.push({ field: "soLine.Product_Reference__c", filter: "(Customer__c = \'" + globalSO.Customer__r.Top_Parent_Customer__r.Id+ "\' or Customer__c = null )AND Active__c = true "},
+                                                 // only match Item specs Items that are the same as the product' Item
+                                                 { field: "soLine.Item_Specification__c", filter: "Item__c = \'#=soLine.Product__r.Item__r.Id#\' AND Active__c = true " },
+                                                 { field: "soLine.Product__c", filter: "Company__c = \'" + globalSO.Company__c+ "\'" },
+                                                 // KNDY-11290: Filter out the locations that doesn't belong to the same company
+                                                 { field: "soLine.Ship_From_Location__c", filter: "Facility__r.Company__c = \'" + globalSO.Company__c+ "\'" },
+                                                 // KNDY-10699: Filter pricebook based on Sales Order currency
+                                                 { field: "soLine.Pricebook__c", filter: "Company__c = \'" + globalSO.Company__c+ "\' AND Currency__c = \'" + globalSO.Currency__c+ "\'" },
+                                                 // KNDY-14910: Filter End customer based on Record Type
+                                                 { field: "soLine.End_Customer__c", filter: "Company__c = \'" + globalSO.Company__c+ "\' AND RecordTypeId = \'{!JSENCODE(billToCustRecordType)}\'" },
+                                                 // KNDY-17340: Filter customer Site
+                                                 { field: "soLine.Customer_Site__c", filter: "Company__c = \'" + globalSO.Company__c+ "\' AND RecordTypeId = \'{!JSENCODE(siteCustRecordType)}\' AND Parent_Customer__c = \'" + globalSO.Ship_to__c+ "\'" }
+                        );
+                    }
+
+                    var lookupSearchAction = '{!$RemoteAction.SalesOrderManageLinesExt.lookupSearchFilter}';
+                    var cancelChangesAction = null;
+                    var saveSalesOrderLinesAction = '{!$RemoteAction.SalesOrderManageLinesExt.saveSalesOrderLines}';
+                    var salesOrderLineDateFields = KenandyErp.KendoGridOptions.GetDateFields(SalesOrderManageLinesUtils.SalesOrderLinesFieldList);
+                    var deleteSalesOrderLinesAction = '{!$RemoteAction.SalesOrderManageLinesExt.deleteSalesOrderLines}';
+                    var cancelSalesOrderLinesAction = '{!$RemoteAction.SalesOrderManageLinesExt.cancelSalesOrderLines}';
+                    var closeSalesOrderLinesAction = '{!$RemoteAction.SalesOrderManageLinesExt.closeSalesOrderLines}';
+                    var availableInventoryAction = '{!$RemoteAction.SalesOrderManageLinesExt.fetchAvailableInventory}';
+                    var fetchTaxesAction = '{!$RemoteAction.SalesOrderManageLinesExt.fetchTaxes}';
+
+                    // Destroy SalesOrderHeaderDetailList
+                    if (this.SalesOrderLinesGrid) {
+                        this.SalesOrderLinesGrid.destroy();
+                        $('#GridAddManageSalesOrderLines').empty();
+                    }
+
+                    this.SalesOrderLinesGrid = $('#GridAddManageSalesOrderLines').width($('#GridAddManageSalesOrderLines').width()).kendoGridActionList({
+                                namespace: '{!NamespaceUU}', 
+                                config: SalesOrderManageLinesUtils.SalesOrderLinesConfigJson, 
+                                fieldList: SalesOrderManageLinesUtils.GetSalesOrderLinesFieldList(),
+                                lookupSearchAction: lookupSearchAction, 
+                                getActionListFunction: salesOrderLinesData,
+                                saveAction: saveSalesOrderLinesAction,
+                                lookupSearchFilters: lookupSearchFilters,
+                                validateLookupOnBlur: "Promise",
+                                modelIdField: 'soLine.Id',
+                                showIconButtons: true,
+                                editable: editGrid,
+                                showLocked: false,
+                                highlightFirst: false,
+                                toolbarButtons: [
+                                    { name: "grid-cancel-lines-custom-command", text:"", template: "<input type='button' value='Cancel Lines' class='k-button kndy-btn grid-cancel-lines-custom-command' />" },
+                                    { name: "grid-close-lines-custom-command", text:"", template: "<input type='button' value='Close Lines' class='k-button kndy-btn grid-close-lines-custom-command' />" },
+                                    { name: "grid-available-inventory-custom-command", text:"", template: "<input type='button' value='Check Availability' class='k-button kndy-btn grid-available-inventory-custom-command' />" },
+                                    { name: "view-dropdown-label", template: "<label style='padding-left: 50px; padding-right: 5px;'>Views:</label>"},
+                                    { template: "<input class='grid-view-options' />" }
+                                ],
+                                beforeEdit: function(e) {
+                                    SalesOrderManageLinesUtils.SalesOrderLinesGridBeforeEdit.call(this, e);
+                                },
+                            }).data('kendoGridActionList');
+                            
+                    // bind grid edit event
+                    this.SalesOrderLinesGrid.bind('edit', $.proxy(SalesOrderManageLinesUtils.SalesOrderLinesGridEdit, { grid: SalesOrderManageLinesUtils.SalesOrderLinesGrid , options: { dateFields: salesOrderLineDateFields}}));
+
+                    //Override the grid create command to perform an implicit save of SO
+                    if (!isSalesOrderSaved){
+                        // unbind grid create command
+                        this.SalesOrderLinesGrid.wrapper.off("click", ".grid-create-command");
+
+                        // bind grid save command
+                        this.SalesOrderLinesGrid.wrapper.on("click", ".grid-create-command", $.proxy(SalesOrderManageLinesUtils.SaveHeader, { detailList: SalesOrderManageLinesUtils.SalesOrderHeaderDetailList, grid: SalesOrderManageLinesUtils.SalesOrderLinesGrid, options: { saveAction: '{!$RemoteAction.SalesOrderManageLinesExt.saveHeader}' , config: SalesOrderManageLinesUtils.SalesOrderLinesConfigJson, dateFields: salesOrderLineDateFields } }));
+                    }
+
+                    if (isImplicitSave){
+                        this.SalesOrderLinesGrid.addRow();
+                    }
+
+                    // unbind and bind the save, save & new, save & return button click events
+	                $('.save-command, .save-new-command, .save-return-command, .save-review-command').off("click",
+	                    $.proxy(SalesOrderManageLinesUtils.Save, { detailList: SalesOrderManageLinesUtils.SalesOrderHeaderDetailList, grid: SalesOrderManageLinesUtils.SalesOrderLinesGrid, options: { saveAction: saveSalesOrderLinesAction, config: SalesOrderManageLinesUtils.SalesOrderLinesConfigJson, dateFields: salesOrderLineDateFields } })
+	                );
+                    // unbind and bind the save, save & new, save & return button click events
+	                $('.save-command, .save-new-command, .save-return-command, .save-review-command').on("click",
+	                    $.proxy(SalesOrderManageLinesUtils.Save, { detailList: SalesOrderManageLinesUtils.SalesOrderHeaderDetailList, grid: SalesOrderManageLinesUtils.SalesOrderLinesGrid, options: { saveAction: saveSalesOrderLinesAction, config: SalesOrderManageLinesUtils.SalesOrderLinesConfigJson, dateFields: salesOrderLineDateFields } })
+	                );
+
+	                // unbind and bind the save, save & new, save & return button click events
+	                $('.save-command, .save-new-command, .save-return-command, .save-review-command').on("mousedown", function(e) {
+	                    $('#saveButton').data("mouseDown", true)
+                    });
+
+                    // unbind grid delete command 
+                    this.SalesOrderLinesGrid.wrapper.off("click", ".grid-mass-delete-command");
+                    
+                    // bind grid delete command
+                    this.SalesOrderLinesGrid.wrapper.on("click", ".grid-mass-delete-command", $.proxy(SalesOrderManageLinesUtils.Delete, { grid: SalesOrderManageLinesUtils.SalesOrderLinesGrid, options: { deleteAction: deleteSalesOrderLinesAction, config: SalesOrderManageLinesUtils.SalesOrderLinesConfigJson, dateFields: salesOrderLineDateFields } }));
+                    
+                    // bind grid cancel & close agreement line events
+                    this.SalesOrderLinesGrid.wrapper.on("click", ".grid-cancel-lines-custom-command", $.proxy(SalesOrderManageLinesUtils.CancelLines, { grid: SalesOrderManageLinesUtils.SalesOrderLinesGrid, options: { cancelSalesOrderLinesAction: cancelSalesOrderLinesAction, config: SalesOrderManageLinesUtils.SalesOrderLinesConfigJson, dateFields: salesOrderLineDateFields } }));
+                    this.SalesOrderLinesGrid.wrapper.on("click", ".grid-close-lines-custom-command", $.proxy(SalesOrderManageLinesUtils.CloseLines, { grid: SalesOrderManageLinesUtils.SalesOrderLinesGrid, options: { closeSalesOrderLinesAction: closeSalesOrderLinesAction, config: SalesOrderManageLinesUtils.SalesOrderLinesConfigJson, dateFields: salesOrderLineDateFields } }));
+
+                    // unbind grid cancel changes command 
+                    this.SalesOrderLinesGrid.wrapper.off("click", ".grid-cancel-command");
+                       
+                    // bind grid cancel changes command
+                    this.SalesOrderLinesGrid.wrapper.on("click", ".grid-cancel-command", $.proxy(SalesOrderManageLinesUtils.CancelChanges, { grid: SalesOrderManageLinesUtils.SalesOrderLinesGrid, options: { dateFields: salesOrderLineDateFields } }));
+
+                    // bind grid cancel & close agreement line events
+                    this.SalesOrderLinesGrid.wrapper.on("click", ".grid-available-inventory-custom-command", $.proxy(SalesOrderManageLinesUtils.FetchAvailableInventory, { grid: SalesOrderManageLinesUtils.SalesOrderLinesGrid, options: { availableInventoryAction: availableInventoryAction, dateFields: salesOrderLineDateFields } }));
+
+                    this.SalesOrderLinesGrid.table.on("click", ".manage-allowance-command", $.proxy(SalesOrderManageLinesUtils.ShowAllowancesWindow, { grid: SalesOrderManageLinesUtils.SalesOrderLinesGrid }));
+
+                    this.SalesOrderLinesGrid.table.on("click", ".show-inventory-command", $.proxy(SalesOrderManageLinesUtils.ShowInventoryWindow, { grid: SalesOrderManageLinesUtils.SalesOrderLinesGrid }));
+
+                    // show tooltip on click of errors column
+                    this.SalesOrderLinesGrid.table.kendoTooltip({
+                        autoHide: false,
+                        showOn: "click",
+                        filter: ".line-errors",
+                        position: "right",
+                        content: function(e) {
+                            return e.target.find('.errors').html();
+                        },
+                        show:function(e){
+                            this.target().addClass("has-clicked");
+                            
+                            if(activeHoverTooltip.target() && activeHoverTooltip.target()[0] == this.target()[0]){
+                                activeHoverTooltip.hide();
+                            }
+                        },
+                        hide:function (e){
+                            this.target().removeClass("has-clicked");
+                        }
+                    });
+                    
+                    // show tooltip on mouseenter of errors column
+                    activeHoverTooltip = this.SalesOrderLinesGrid.table.kendoTooltip({
+                        autoHide: true,
+                        showOn: "mouseenter",
+                        filter: ".line-errors:not(.has-clicked)",
+                        position: "right",
+                        content: function(e) {
+                            return e.target.find('.errors').html();
+                        }
+                    }).data("kendoTooltip");
+
+                    //Kendo Grid views
+                    $(".grid-view-options").kendoDropDownList({
+                        index: 0,
+                        dataTextField: "text",
+                        dataValueField: "value",
+                        dataSource: SalesOrderManageLinesUtils.salesOrderLinesGridViews,
+                        dataBound: function(e){
+                            var fieldNames = SalesOrderManageLinesUtils.SalesOrderLinesGridFields;
+                            for (var fld in fieldNames) {
+                                if(fieldNames[fld] != 'errors')
+                                    SalesOrderManageLinesUtils.SalesOrderLinesGrid.hideColumn(fieldNames[fld]);
+                            }
+                            //Show default grid view
+                            fieldNames = _.values(_.pick(SalesOrderManageLinesUtils.salesOrderLinesGridViewFields, this.dataSource._data[0].value))[0];
+                            SalesOrderManageLinesUtils.DisplayViewFields(fieldNames);
+                        },
+                        change: function(e) {  
+                            var fieldNames = SalesOrderManageLinesUtils.SalesOrderLinesGridFields;
+                            for (var fld in fieldNames) {
+                                if(fieldNames[fld] != 'errors')
+                                    SalesOrderManageLinesUtils.SalesOrderLinesGrid.hideColumn(fieldNames[fld]);
+                            }
+                            fieldNames = _.values(_.pick(SalesOrderManageLinesUtils.salesOrderLinesGridViewFields, this.value()))[0];
+                            SalesOrderManageLinesUtils.DisplayViewFields(fieldNames);
+                        }
+                    });
+                    this.SalesOrderLinesGrid.refresh();
+
+                    this.SalesOrderLinesGrid.element.bind('OnReadSuccess', SalesOrderManageLinesUtils.OnSalesOrderLinesGridReadSuccess);
+                },
+
+                IsPageDirty: function(){
+                    var grid = SalesOrderManageLinesUtils.SalesOrderLinesGrid;
+                    var gridUtils = new KendoGridUtils(grid);
+
+                    if (SalesOrderManageLinesUtils.isSalesOrderHeaderDataDirty || gridUtils.NewRows().length > 0 || gridUtils.UpdatedRows().length > 0) {
+                        return true;
+                    }
+                    return false;
+                },
+
+                OnSalesOrderLinesGridReadSuccess: function(e){
+
+                },
+
+                 UpdateSoLineLookupTemplate: function(e, fieldLookupDetails ){
+
+                    var soLineField = 'soLine.' + fieldLookupDetails.sobjectFieldAPI;
+                    var el = $('#GridAddManageSalesOrderLines').data('kendoGridActionList').element.find('[name="' + soLineField + '"]').data('kendoLookup');
+
+                    if (el === null){
+                        return;
+                    }
+
+                    var options = el.options;
+
+                    var additionalQueryFields = [];
+                    options.template = '<span>#=data.text#</span><br />';
+
+                    fieldLookupDetails.additionalFieldTemplate.forEach( function(fldTmplate) {
+                        additionalQueryFields.push(fldTmplate.api);
+                        options.template += ''
+                            + '<span style="font-size: .9em; color: CornflowerBlue ;">' + fldTmplate.label + ': </span>'
+                            + '<span style="font-size: .9em; color: grey;">#=data.sobjectMap.' + fldTmplate.templateReference +'#</span><br />';
+                    });
+
+                    fieldLookupDetails.additionalFieldsQuery.forEach( function(field) {
+                        additionalQueryFields.push(field);
+                    });
+
+                    var filterCrieria = '';
+                    // fetches all search filters for SOL fields
+                    var lookupSearchFilters = el.options.criteria;
+
+                    // get criteria specific to this field
+                    if (lookupSearchFilters) {
+                        filterCriteria = _.where(lookupSearchFilters, { field: soLineField });
+                        filterCriteria = (filterCriteria.length > 0) ? filterCriteria[0].filter : '';
+                    }
+
+                    // impose additional filterCriteria if value exists
+                    if (fieldLookupDetails.sobjectFieldAPI == 'Item_Specification__c' && e.model.soLine.Ship_From_Location__c){
+                        if (e.model.soLine.Ship_From_Location__r.Facility__c){
+                            filterCriteria  += "AND (Facility__c = \'#=soLine.Ship_From_Location__r.Facility__c#\'"
+                                             + " OR Facility__c = null)";
+                        }
+                    }
+
+                    // kendo evaluate field template's expression using e.model
+                    if (filterCriteria) {
+                        var filterCriteriaTemplate = kendo.template(filterCriteria);
+                        filterCriteria = filterCriteriaTemplate(e.model);
+                    }
+
+                    var dataSource = new kendo.data.DataSource({
+                        transport: {
+                            read: function(readOptions) {
+                                var searchTerm = '';
+
+                                if (readOptions.data.filter && readOptions.data.filter.filters.length > 0) {
+                                    var filter = _.where(readOptions.data.filter.filters, { field: 'text' });
+
+                                    if (filter && filter.length > 0) {
+                                        searchTerm = (filter[0] && filter[0].value) ? filter[0].value : '';
+                                    }
+                                }
+
+                                Visualforce.remoting.Manager.invokeAction(
+                                        '{!$RemoteAction.SalesOrderManageLinesExt.lookupSearchFilter2}',
+                                        searchTerm,
+                                        fieldLookupDetails.lookupReferenceAPI,
+                                        filterCriteria, //criteria,
+                                        additionalQueryFields.join(','),
+                                        function (result, event) {
+                                            if (event.type == 'exception') {
+                                                KenandyErp.Alert(event.message);
+                                            } else {
+
+                                                KenandyErp.CleanNamespace(result, '{!NamespaceUU}');
+
+                                                result.forEach( function(lookupReferenceObj){
+
+                                                    // if the item spec facility is empty, return none instead of undefined. Looks better
+                                                    if (!lookupReferenceObj.sobjectMap.Facility__r){
+                                                        var obj = {'Name': 'None'};
+                                                        lookupReferenceObj.sobjectMap.Facility__r = obj;
+                                                    }
+                                                });
+
+                                                readOptions.success(result);
+                                            }
+                                        },
+                                        {escape: false}
+                                );
+                            }
+                        },
+                        serverFiltering: true
+                    });
+
+                    el.setOptions(options);
+                    el.setDataSource(dataSource);
+
+                },
+
+                OnSalesOrderHeaderDetailListReadSuccess: function(e) {
+
+                    // Bind header events
+                    SalesOrderManageLinesUtils.BindHeaderEvents();
+
+                    //Disable Header Actions if this is a new record
+                    SalesOrderManageLinesUtils.EnableOrDisableActions();
+
+                    //Disable fields after save
+                    SalesOrderManageLinesUtils.DisableSalesOrderFields();
+                },
+
+                BindHeaderEvents: function() {
+                    //When something is changed on the header, set the dirty flag
+                    this.SalesOrderHeaderDetailList.data.bind('change', function() {
+                        SalesOrderManageLinesUtils.isSalesOrderHeaderDataDirty = true;
+                    });
+
+                    //On change of customer invoke the remote action to get bill to/ship to and payment terms
+                    $('input[name="Customer__c"]').bind('change', SalesOrderManageLinesUtils.OnCustomerChange);
+                },
+
+                EnableOrDisableActions: function(){
+                    if (SalesOrderManageLinesUtils.SalesOrderId || soId){
+                        $('.header-action-command').removeClass("disab");
+
+                        //Show the tax service call only if tax service call is enabled
+                        if(hasTax == false){
+                            $('.get-tax-command').hide();
+                        }
+                    }else{
+                        $('.header-action-command').addClass("disab");
+                    }
+                },
+
+                DisableSalesOrderFields: function(){
+                    var enabledFields = [];
+                    var disabledFields = [];
+                    var disabledHeaderFields = [];
+
+                    if (SalesOrderManageLinesUtils.SalesOrderId || soId){
+                        disabledFields = ['Company__c', 'Customer__c', 'Bill_to__c'];
+
+                        var headerFields = SalesOrderManageLinesUtils.SalesOrderHeaderFieldList; //PurchaseOrderManageUtil.POHeaderDetailList.getFieldList();
+
+                        for (var i = 0; i < headerFields.length; i++) {
+                            var field = headerFields[i].field;
+
+                            if (_.contains(enabledFields, field) && _.contains(disabledFields, field)) {
+                                disabledHeaderFields.push(field);
+                            }
+                        }
+                        disabledHeaderFields = _.union(disabledFields, disabledHeaderFields);
+                    }
+
+                    // Disable Header Fields if there are any fields to be disabled
+                    if (disabledHeaderFields.length > 0 && this.SalesOrderHeaderDetailList) {
+                        this.SalesOrderHeaderDetailList.enable(false, { disabledFields: disabledHeaderFields });
+                    }
+                },
+
+                OnCustomerChange: function(e){
+                    var self = this;
+                    var customerId = $(e.target).val();
+                    var detailList = SalesOrderManageLinesUtils.SalesOrderHeaderDetailList;
+
+                    //if customer has been reset, reset the bill to customer, ship to customer and payment terms
+                    if (!customerId){
+                        detailList.data.set('Bill_to__c', null);
+                        detailList.data.set('Bill_to__r', { Id: null, Name: null });
+                        detailList.data.set('Payment_Term__c', null);
+                        detailList.data.set('Payment_Term__r', { Id: null, Name: null });
+                        detailList.data.set('Ship_to__c', null);
+                        detailList.data.set('Ship_to__r', { Id: null, Name: null });
+                        return;
+                    }
+
+
+                    // update ship-to criteria to match new Sold-to customer Id
+                    if (customerId != null){
+                        var lookupSearchFilters = [];
+                        var shipToFilter = "Status__c != \'Inactive\' AND RecordTypeId = \'{!JSENCODE(shipToCustRecordType)}\' AND Parent_Customer__c = \'" + customerId + "\'";
+                        lookupSearchFilters.push({ field: "Ship_to__c", filter: shipToFilter });
+                        $('input[name="Ship_to__r.Name"]').data('kendoLookup').options.criteria = shipToFilter;
+                    }
+
+
+                    //If customer has been changed, call the remote action to get the bill to, ship to and payment terms
+                    KenandyErp.BlockUI();
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.SalesOrderManageLinesExt.getCustomerDefaults}',
+                        customerId,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                if (result.success) {
+                                    if (result.records && result.records.length > 0) {
+                                        var soldToInfo = result.records[0];
+                                        var paymentTermRef = (soldToInfo.Parent_Customer__r.Payment_Term__r) ? soldToInfo.Parent_Customer__r.Payment_Term__r : { Id: null, Name: null };
+                                        var paymentTerm = (soldToInfo.Parent_Customer__r.Payment_Term__c) ? soldToInfo.Parent_Customer__r.Payment_Term__c : null;
+                                        var billToRef = (soldToInfo.Parent_Customer__r) ? soldToInfo.Parent_Customer__r : { Id: null, Name: null };
+                                        var billTo = (soldToInfo.Parent_Customer__c) ? soldToInfo.Parent_Customer__c : null;
+
+                                        detailList.data.set('Payment_Term__c', paymentTerm);
+                                        detailList.data.set('Payment_Term__r', paymentTermRef);
+                                        detailList.data.set('Bill_to__c', billTo);
+                                        detailList.data.set('Bill_to__r', billToRef);
+                                        detailList.data.set('Price_Determination_Date__c',soldToInfo.Price_Determination_Date__c);
+
+                                        //setting currency, set only if the sold to customer or top parent customer has value
+                                        if (soldToInfo.Currency__c){
+                                            detailList.data.set('Currency__c', soldToInfo.Currency__c);
+                                            detailList.data.set('Currency__r', soldToInfo.Currency__r);
+                                        }else if (soldToInfo.Top_Parent_Customer__c && soldToInfo.Top_Parent_Customer__r.Currency__c){
+                                            detailList.data.set('Currency__c', soldToInfo.Top_Parent_Customer__r.Currency__c);
+                                            detailList.data.set('Currency__r', soldToInfo.Top_Parent_Customer__r.Currency__r);
+                                        }
+
+                                        if (result.records[1]){
+                                            var shipToInfo = result.records[1];
+                                            var shipToRef = (shipToInfo) ? shipToInfo : { Id: null, Name: null };
+                                            var shipTo = (shipToInfo.Id) ? shipToInfo.Id : null;
+
+                                            detailList.data.set('Ship_to__c', shipTo);
+                                            detailList.data.set('Ship_to__r', shipToRef);
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                },
+
+                SalesOrderLinesGridEdit: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    var options = self.options;
+
+                    // turn off validations on elements
+                    e.sender.editable.validatable.validate = function () { 
+                        return true; 
+                    };
+        
+                    e.sender.editable.validatable.validateInput = function (input) { 
+                        return true; 
+                    };
+                    
+                    //For new lines setting default value
+                    if (!e.model.get('soLine.Id') && !e.model.dirty) {
+
+                        var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields, isDml: false });
+                        var totalRows = gridUtils.AllRows();
+
+                        // set defaults
+                        delete e.model.errors;
+
+                        //Initialize Boolean variables to false
+                        $.each(grid.options.fieldList, function(index, item) {
+
+                            if(item.fieldtype == 'boolean'){
+                                e.model.set(item.field, false);
+                            }
+                        });
+
+                        if (globalSO.Ship_From_Location__c){
+                            delete globalSO.Ship_From_Location__r['attributes'];
+                            e.model.set('soLine.Ship_From_Location__r', globalSO.Ship_From_Location__r); //{ Id: globalSO.Ship_From_Location__c, Name: globalSO.Ship_From_Location__r.Name });
+                            e.model.set('soLine.Ship_From_Location__c', globalSO.Ship_From_Location__c);
+                        }
+                        
+                        e.model.set('soLine.Ordered_Date_Time__c', new Date());
+                        if(globalSO.Required_Date__c != ''){
+                            e.model.set('soLine.Required_Date__c', new Date(moment(globalSO.Required_Date__c).tz(KenandyErp.TimeZone).utc().format('YYYY-MM-DDThh:mm:ss')));
+                        }
+
+                        e.model.set('quantityFactor', null);
+
+                        if(totalRows.length > 1){
+
+                            var maxLineNumber = 0;
+                            //Assign new Line number
+                            $.map(totalRows, function(item, index) {
+                                if(item.soLine.Line__c != null && maxLineNumber < item.soLine.Line__c){
+
+                                    maxLineNumber = item.soLine.Line__c;
+                                }
+                            });
+
+                            if(maxLineNumber != 0 && !e.model.soLine.Line__c){
+                                e.model.set('soLine.Line__c', maxLineNumber + 1);
+
+                            }
+
+                        }
+                        else {
+
+                            e.model.set('soLine.Line__c', 1);
+                        }
+                        
+                    }
+
+                    var fieldName = grid.element.find("th").eq(grid.cellIndex(e.container)).data("field");
+                    if (fieldName == 'soLine.Item_Specification__c'){
+
+                        var fieldLookupDetails = {
+                            sobjectFieldAPI: 'Item_Specification__c',
+                            lookupReferenceAPI: 'Item_Specification__c',
+                            additionalFieldTemplate : [
+                                {api:'Revision__c', label:'Revision', templateReference:'Revision__c'},
+                                {api: 'Facility__c', label: 'Facility', templateReference:'Facility__r.Name'}
+                            ],
+                            additionalFieldsQuery : [],
+                        };
+
+                        SalesOrderManageLinesUtils.UpdateSoLineLookupTemplate(e, fieldLookupDetails);
+
+                    }
+                    // using custom
+                    if (fieldName == 'soLine.Ship_From_Location__c'){
+                        var fieldLookupDetails = {
+                            sobjectFieldAPI: 'Ship_From_Location__c',
+                            lookupReferenceAPI: 'Location__c',
+                            additionalFieldTemplate : [],
+                            additionalFieldsQuery : ['Facility__c'],
+                        };
+
+                        SalesOrderManageLinesUtils.UpdateSoLineLookupTemplate(e, fieldLookupDetails);
+                    }
+
+                    // To fetch sales order line details from Product
+                    $(e.container).find('input[name="soLine.Product__c"]').bind('blur',
+                        $.proxy(SalesOrderManageLinesUtils.GetSalesOrderLineDetailsFromProduct, {
+                            grid: grid,
+                            options: {
+                                config: SalesOrderManageLinesUtils.SalesOrderLinesConfigJson,
+                                dateFields: options.dateFields
+                            },
+                            trigger: 'blur',
+                            isQuantityUpdate: false})
+                    );
+
+                     // To fetch sales order line details from Cross Reference
+                    $(e.container).find('input[name="soLine.Product_Reference__c"]').bind('blur',
+                        $.proxy(SalesOrderManageLinesUtils.getSalesOrderLineDetailsFromProductCrossRef, {
+                            grid: grid,
+                            options: {
+                                config: SalesOrderManageLinesUtils.SalesOrderLinesConfigJson,
+                                dateFields: options.dateFields
+                            },
+                            trigger: 'blur',
+                            isQuantityUpdate: false})
+                    );
+
+                    // To fetch sales order line details from UPC Code
+                    $(e.container).find('input[name="soLine.UPC_Code__c"]').bind('blur',
+                        $.proxy(SalesOrderManageLinesUtils.GetSalesOrderLineDetailsFromUPC, {
+                            grid: grid,
+                            options: {
+                                config: SalesOrderManageLinesUtils.SalesOrderLinesConfigJson,
+                                dateFields: options.dateFields
+                            },
+                            isQuantityUpdate: false
+                        })
+                   );
+
+
+                    // To update the unit price after the user entered the quantity
+                    if (e.model.get('soLine.Pricebook_Line__r.Use_Fixed_Pricing__c') == false){
+                        $(e.container).find('input[name="soLine.Quantity_Ordered__c"]').bind('blur',
+                            $.proxy(SalesOrderManageLinesUtils.GetUnitPriceForTieredQuantity, {
+                                grid: grid,
+                                options: {
+                                    config: SalesOrderManageLinesUtils.SalesOrderLinesConfigJson,
+                                    dateFields: options.dateFields
+                                } ,
+                                isQuantityUpdate: true
+                            })
+                       );
+                   }
+
+                    if (e.model.get('soLine.Sales_Order__r.Price_Determination_Date__c') == 'Order Date'){
+                        // To update the unit price after the user has change the date time entered
+                        $(e.container).find('input[name="soLine.Ordered_Date_Time__c"]').bind('blur',
+                            $.proxy(SalesOrderManageLinesUtils.GetUnitPriceForTieredQuantity, {
+                                grid: grid,
+                                options: {
+                                    config: SalesOrderManageLinesUtils.SalesOrderLinesConfigJson,
+                                    dateFields: options.dateFields
+                                },
+                                isQuantityUpdate: false
+                            })
+                       );
+                   }
+
+                    // To update the unit price after the user changed the pricebook
+                    $(e.container).find('input[name="soLine.Pricebook__c"]').bind('blur',
+                        $.proxy(SalesOrderManageLinesUtils.GetUnitPriceForTieredQuantity, {
+                            grid: grid,
+                            options: {
+                                config: SalesOrderManageLinesUtils.SalesOrderLinesConfigJson,
+                                dateFields: options.dateFields
+                            } ,
+                            isQuantityUpdate: false
+                        })
+                   );
+                },
+                GetUnitPriceForTieredQuantity: function(e) {
+                    var self = this;
+                    var grid = this.grid;
+                    var options = self.options;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-error-message");
+                    var cell = grid.editable.element;
+                    var row = $(e.target).closest("tr"); //get the row
+                    var dataItem = grid.dataItem(row); // get the row data
+                    var soLinePricebookId = dataItem.get('soLine.Pricebook__r.Id') ? dataItem.get('soLine.Pricebook__r.Id') : null;
+                    var productName = dataItem.get('soLine.Product__r.Name') ? dataItem.get('soLine.Product__r.Name') : null;
+
+                    var upcCode = (productName == null) ? (dataItem.get('soLine.UPC_Code__c') ? dataItem.get('soLine.UPC_Code__c') : null) : null;
+
+                    if(upcCode == null && productName == null){
+                    	return;
+                    }
+
+                    // construct boolean for skipping price-recalc
+                    var tieredPBL = dataItem.get('soLine.Pricebook_Line__r') && !dataItem.get('soLine.Pricebook_Line__r.Use_Fixed_Pricing__c');
+                    var newPriceBook = soLinePricebookId != dataItem.get('soLine.Pricebook_Line__r.Pricebook__c');
+                    var orderedQty = dataItem.get('soLine.Quantity_Ordered__c');
+                    var minQty = dataItem.get('soLine.Pricebook_Line__r.Min__c');
+                    var maxQty = dataItem.get('soLine.Pricebook_Line__r.Max__c');
+                    var quantityInsidePblRange = (minQty <= orderedQty || minQty == null) && (orderedQty <= maxQty || maxQty == null);
+
+                     // if tiered pricebook line, if the sol qty fits the range, do not reprice
+                    if (!newPriceBook && tieredPBL && quantityInsidePblRange){
+                        return;
+                    }
+
+
+                    //Return if the quantity hasn't changed
+                    if(!cell.hasClass('k-dirty-cell')){
+                        return;
+                    }
+
+                    var upc = (upcCode ==  null) ? false : true;
+
+                    if(upc){
+                    
+                        SalesOrderManageLinesUtils.GetSalesOrderLineDetailsFromUPC.call(this, e);
+                    } 
+                    else{
+                        
+                        SalesOrderManageLinesUtils.GetSalesOrderLineDetailsFromProduct.call(this, e);
+                    }
+                    
+                    
+                },
+                GetSalesOrderLineDetailsFromProduct: function(e) {
+                    var self = this;
+                    var grid = this.grid;
+                    var options = self.options;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-error-message");
+                    var cell = grid.editable.element;
+                    var isQuantityUpdate = this.isQuantityUpdate;
+                    var origRow = $(e.target).closest("tr"); //get the row
+                    var origDataItem = grid.dataItem(origRow); // get the row data
+                    if(!origDataItem.dirty) {
+                        return;
+                    }
+
+                    function getProductDetails() {
+                        var row = _.filter(grid.items(), function(gridRow) {
+                            var d = grid.dataItem(gridRow);
+                            return (d.uid == origDataItem.uid);
+                        });
+
+                        var dataItem = grid.dataItem(row[0]); // get the row data
+                        var soLinePricebookId = dataItem.get('soLine.Pricebook__r.Id') ? dataItem.get('soLine.Pricebook__r.Id') : null;
+                        var productId = dataItem.get('soLine.Product__r.Id') ? dataItem.get('soLine.Product__r.Id') : null;
+                        var productRefId = dataItem.get('soLine.Product_Reference__c') ? dataItem.get('soLine.Product_Reference__c') : null;
+                        var isSubmitClicked = $('#saveButton').data('mouseDown');
+
+                        // clone dateFields to remove the 'soLine.' which is necessary for the save function
+                        var dateFields = $.extend(true, [], options.dateFields);
+                        dateFields = $.map(dateFields, function(item, index) {
+                            if (item.field.indexOf('.') != -1) {
+                                item.field = item.field.split('.')[1];
+                            }
+                            return item;
+                        });
+
+                        var salesOrder = options.config.parentRecord;
+                        if (!salesOrder.Id){
+                            salesOrder = globalSO;
+                        }
+                        var salesOrderLines = [];
+                        var salesOrderLineList = [];
+                        salesOrderLineList.push(dataItem.get('soLine'));
+                        salesOrderLines = $.map(salesOrderLineList, function(item, index) {
+                            item = item.toJSON();
+                            item = Serializer.ConvertToSFDCDate(item, { dateFields: dateFields });
+                            return item;
+                        });
+
+                        if (salesOrderLines.length > 0) {
+                            salesOrderLines = Serializer.ParameterMap(salesOrderLines);
+                        }
+
+                        if(productId != null){
+
+                            if (isSubmitClicked) {
+                                grid.element.find(".grid-save-command").data("isOnBlurExecuting", true);
+                            }
+
+                            KenandyErp.BlockUI();
+
+                            Visualforce.remoting.Manager.invokeAction(
+                                    '{!$RemoteAction.SalesOrderManageLinesExt.getSalesOrderLineDetailsFromProduct}',
+                                    productId,
+                                    salesOrderLines[0],
+                                    dateFields,
+                                    //JSON.stringify(salesOrder),
+                                    salesOrder.Id,
+                                    e.target.name,
+                                    function (result, event) {
+                                        KenandyErp.UnBlockUI();
+
+                                        if (event.type == 'exception') {
+                                            KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                                        } else {
+                                            KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+
+                                            if (result.success) {
+                                                if (result.records && result.records.length > 0) {
+                                                    var salesOrderLine = result.records[0].soLine;
+                                                    var productReference = (salesOrderLine.Product_Reference__c) ? salesOrderLine.Product_Reference__c : null;
+                                                    var productReferenceRef = (salesOrderLine.Product_Reference__r) ? salesOrderLine.Product_Reference__r : { Id: null, Name: null };
+                                                    var sellingUOM = (salesOrderLine.Selling_UOM__c) ? salesOrderLine.Selling_UOM__c : null;
+                                                    var sellingUOMRef = (salesOrderLine.Selling_UOM__r) ? salesOrderLine.Selling_UOM__r : { Id: null, Name: null };
+                                                    var product = (salesOrderLine.Product__c) ? salesOrderLine.Product__c : null;
+
+                                                    var productRef = (salesOrderLine.Product__r) ? salesOrderLine.Product__r :  { Id: null, Name: null };
+                                                    var itemRef = (productRef.Item__r) ? productRef.Item__r
+                                                            : { Id: null, Name: null, Fulfillment_Source__c: null};
+                                                    var itemSpecRef = (productRef.Item_Specification__r) ? productRef.Item_Specification__r : {id: null, name: null};
+                                                    var prodItemSpec = (productRef.Item_Specification__c) ? productRef.Item_Specification__c : null;
+
+                                                    var description = (salesOrderLine.Description__c) ? salesOrderLine.Description__c : null;
+
+                                                    var UPCCode = (salesOrderLine.UPC_Code__c) ? salesOrderLine.UPC_Code__c : null;
+
+                                                    /* KNDY-17915 */
+                                                    var oldPriceRuleId = (dataItem.soLine.New_Pricing_Rule__r != null ) ? dataItem.soLine.New_Pricing_Rule__r.Id : null;
+                                                    var newPriceRuleId = (salesOrderLine.New_Pricing_Rule__c) ? salesOrderLine.New_Pricing_Rule__c : null;
+                                                    var newPriceRuleRef = (salesOrderLine.New_Pricing_Rule__r) ? salesOrderLine.New_Pricing_Rule__r : { Id: null, Name: null };
+
+                                                    if ( oldPriceRuleId != newPriceRuleId || newPriceRuleRef.Id != null ){
+                                                        // Note* "soLine.New_Pricing_Rule__r" is the column name but the actual soLine getting passed to the remoteAction is "soLine"
+                                                        // set to empty object or to new pricing rule
+                                                        dataItem.set('soLine.New_Pricing_Rule__r', newPriceRuleRef);
+                                                        dataItem.soLine.New_Pricing_Rule__r = newPriceRuleRef;
+                                                        dataItem.soLine.New_Pricing_Rule__c = newPriceRuleId;
+                                                    }
+
+                                                    if (salesOrderLine.List_Price__c != null){
+                                                        dataItem.set('soLine.List_Price__c', salesOrderLine.List_Price__c)
+                                                    }
+
+                                                    var soType = '{!theSalesOrder.Type__c}';
+
+                                                    var fulfillmentSource = (soType == 'Resale') ? 'Resale' : (salesOrderLine.Fulfillment_Source__c) ? salesOrderLine.Fulfillment_Source__c : null;
+
+                                                    var unitPrice = (typeof salesOrderLine.Unit_Price__c != 'undefined') ? salesOrderLine.Unit_Price__c : null;
+                                                    var quantityFactor = (result.records[0].quantityFactor) ? result.records[0].quantityFactor : null;
+
+                                                    dataItem.set('soLine.Product__r.Description__c', productRef.Description__c);
+                                                    dataItem.set('soLine.Product__r.Item__r', itemRef);
+
+                                                    var RepairType = '{!SalesOrderTypeRepair}';
+
+                                                    if (e.target.name == 'soLine.Product__c'){
+                                                        if (productReference != null){
+                                                            dataItem.set('soLine.Product_Reference__r', productReferenceRef);
+                                                            dataItem.set('soLine.Product_Reference__c', productReference);
+                                                        }else {
+                                                            dataItem.set('soLine.Product_Reference__r', { Id: null, Name: null });
+                                                            dataItem.set('soLine.Product_Reference__c',  null);
+                                                        }
+                                                    }
+
+                                                    dataItem.set('soLine.Selling_UOM__r', sellingUOMRef);
+                                                    dataItem.set('soLine.Selling_UOM__c', sellingUOM);
+                                                    dataItem.set('soLine.UPC_Code__c', UPCCode);
+
+                                                    var priceBookRef = (salesOrderLine.Pricebook__r) ? salesOrderLine.Pricebook__r :  { Id: null, Name: null };
+                                                    var priceBook = (salesOrderLine.Pricebook__c) ? salesOrderLine.Pricebook__c : null;
+                                                    var oldPriceBookId = (dataItem.soLine.Pricebook__r != null) ? dataItem.soLine.Pricebook__r.Id : null;
+
+                                                    var pricebookLineRef = (salesOrderLine.Pricebook_Line__r) ? salesOrderLine.Pricebook_Line__r : {Id: null, Name: null};
+                                                    var pricebookLine = (salesOrderLine.Pricebook__c) ? salesOrderLine.Pricebook_Line__c : null;
+
+                                                    if (pricebookLine != null){
+                                                        dataItem.set('soLine.Pricebook_Line__c', pricebookLine);
+                                                        dataItem.set('soLine.Pricebook_Line__r', pricebookLineRef);
+                                                    }
+
+                                                    if(isQuantityUpdate && priceBook == null) {
+                                                        dataItem.set('soLine.Pricebook__c', priceBook);
+                                                    } else{
+                                                        dataItem.set('soLine.Unit_Price__c', unitPrice);
+                                                        dataItem.set('soLine.Pricebook__c', priceBook);
+                                                    }
+
+                                                    if (priceBookRef.Id != null || oldPriceBookId != priceBook){
+                                                        dataItem.set('soLine.Pricebook__r', priceBookRef);
+                                                    }
+
+                                                    if(!isQuantityUpdate){
+                                                        //Do not update Fulfillment source if its just a quantity update
+                                                        dataItem.set('soLine.Fulfillment_Source__c', fulfillmentSource);
+                                                        dataItem.set('soLine.Description__c', description);
+                                                        dataItem.set('quantityFactor', quantityFactor);
+
+                                                        if(soType != RepairType){
+                                                            dataItem.set('soLine.Item_Specification__r', itemSpecRef);
+                                                            dataItem.set('soLine.Item_Specification__c', prodItemSpec);
+                                                        }
+                                                    }
+
+                                                    if (isSubmitClicked) {
+                                                        $('#saveButton').data("mouseDown", false);
+                                                        $('.save-command').trigger('click');
+                                                    }
+                                                }
+                                            } else {
+                                                KenandyErp.Messages(result.messages, messageElement);
+                                            }
+                                        }
+                                    },
+                                    {escape: false}
+                            );
+                        }
+                    }
+
+                    if(KenandyErp.lookupPromise) {
+                        KenandyErp.lookupPromise.then(getProductDetails);
+                    } else {
+                        getProductDetails();
+                    }
+
+                    //Return if the product hasn't changed
+                    if(!isQuantityUpdate){
+                        return;
+                    }
+                },
+                
+                getSalesOrderLineDetailsFromProductCrossRef: function(e) {
+                    var self = this;
+                    var grid = this.grid;
+                    var options = self.options;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-error-message");
+                    var cell = grid.editable.element;
+                    var isQuantityUpdate = this.isQuantityUpdate;
+                    //Return if the product hasn't changed
+                    if(!cell.hasClass('k-dirty-cell') && !isQuantityUpdate){
+                        return;
+                    }
+                    var row = $(e.target).closest("tr"); //get the row
+                    var dataItem = grid.dataItem(row); // get the row data
+                    var soLinePricebookId = dataItem.get('soLine.Pricebook__r.Id') ? dataItem.get('soLine.Pricebook__r.Id') : null;
+                    var productReferenceId = dataItem.get('soLine.Product_Reference__r.Id') ? dataItem.get('soLine.Product_Reference__r.Id') : null;
+                    console.log('productReferenceId');
+                    console.log(productReferenceId);
+
+                    var isSubmitClicked = $('#saveButton').data('mouseDown');
+
+                    // clone dateFields to remove the 'soLine.' which is necessary for the save function
+                    var dateFields = $.extend(true, [], options.dateFields);
+                    dateFields = $.map(dateFields, function(item, index) {
+                        if (item.field.indexOf('.') != -1) {
+                            item.field = item.field.split('.')[1];
+                        }
+                        
+                        return item; 
+                    });
+
+                    var salesOrder = options.config.parentRecord;
+                    if (!salesOrder.Id){
+                        salesOrder = globalSO;
+                    }
+                    var salesOrderLines = [];
+                    var salesOrderLineList = [];
+                    salesOrderLineList.push(dataItem.get('soLine'));                    
+                    salesOrderLines = $.map(salesOrderLineList, function(item, index) {
+                        item = item.toJSON();
+                        item = Serializer.ConvertToSFDCDate(item, { dateFields: dateFields });
+                        return item;
+                    }); 
+
+                    if (salesOrderLines.length > 0) {
+                        salesOrderLines = Serializer.ParameterMap(salesOrderLines);
+                    }
+
+                    if(productReferenceId != null){
+
+                        KenandyErp.BlockUI();
+                   
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.SalesOrderManageLinesExt.getSalesOrderLineDetailsFromProductCrossRef}',
+                            productReferenceId, 
+                            salesOrderLines[0],
+                            dateFields,
+                            //JSON.stringify(salesOrder),
+                            salesOrder.Id,
+                            e.target.name,
+                            function (result, event) {
+                                KenandyErp.UnBlockUI();
+                                
+                                if (event.type == 'exception') {
+                                    KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                                } else {
+                                    KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+
+                                    if (result.success) {
+                                        if (result.records && result.records.length > 0) {
+                                            var salesOrderLine = result.records[0].soLine;   
+                                            var sellingUOM = (salesOrderLine.Selling_UOM__c) ? salesOrderLine.Selling_UOM__c : null;
+                                            var sellingUOMRef = (salesOrderLine.Selling_UOM__r) ? salesOrderLine.Selling_UOM__r : { Id: null, Name: null };
+                                            var productReference = (salesOrderLine.Product_Reference__c) ? salesOrderLine.Product_Reference__c : null;
+                                            var productReferenceRef = (salesOrderLine.Product_Reference__r) ? salesOrderLine.Product_Reference__r :  { Id: null, Name: null };
+                                            var product = (salesOrderLine.Product__c) ? salesOrderLine.Product__c : null;
+
+                                            var productRef = (salesOrderLine.Product__r) ? salesOrderLine.Product__r :  { Id: null, Name: null };
+                                            var itemRef = (productRef.Item__r) ? productRef.Item__r 
+                                                : { Id: null, Name: null, Fulfillment_Source__c: null};
+                                            var itemSpecRef = (productRef.Item_Specification__r) ? productRef.Item_Specification__r : {id: null, name: null};
+                                            var prodItemSpec = (productRef.Item_Specification__c) ? productRef.Item_Specification__c : null;
+
+                                            var description = (salesOrderLine.Description__c) ? salesOrderLine.Description__c : null;  
+
+                                            var UPCCode = (salesOrderLine.UPC_Code__c) ? salesOrderLine.UPC_Code__c : null;  
+                                            var priceBook = (salesOrderLine.Pricebook__c) ? salesOrderLine.Pricebook__c : null;
+
+                                            var soType = globalSO.Type__c;
+
+                                            var priceBookRef = (salesOrderLine.Pricebook__r) ? salesOrderLine.Pricebook__r :  { Id: null, Name: null };
+                                            var fulfillmentSource = (soType == 'Resale') ? 'Resale' : (salesOrderLine.Fulfillment_Source__c) ? salesOrderLine.Fulfillment_Source__c : null;
+
+                                            var unitPrice = (typeof salesOrderLine.Unit_Price__c != 'undefined') ? salesOrderLine.Unit_Price__c : null;
+                                            var quantityFactor = (result.records[0].quantityFactor) ? result.records[0].quantityFactor : null;
+                                            
+                                            if (dataItem.soLine.Product__c != product){
+                                                dataItem.set('soLine.Product__r', productRef);
+                                                dataItem.set('soLine.Product__c', product);
+                                                dataItem.set('soLine.Product__r.Description__c', productRef.Description__c);
+                                                dataItem.set('soLine.Product__r.Item__r', itemRef);
+                                                var RepairType = '{!SalesOrderTypeRepair}';
+												
+												dataItem.set('soLine.Product_Reference__r.Active__c', productReferenceRef.Active__c);
+                                                dataItem.set('soLine.Selling_UOM__r', sellingUOMRef);
+                                                dataItem.set('soLine.Selling_UOM__c', sellingUOM);
+                                                dataItem.set('soLine.UPC_Code__c', UPCCode);
+
+                                                if(isQuantityUpdate && priceBook == null) {
+                                                    dataItem.set('soLine.Pricebook__r', priceBookRef);
+                                                    dataItem.set('soLine.Pricebook__c', priceBook);
+                                                } else{
+                                                    dataItem.set('soLine.Unit_Price__c', unitPrice);
+                                                    dataItem.set('soLine.Pricebook__r', priceBookRef);
+                                                    dataItem.set('soLine.Pricebook__c', priceBook);
+                                                }   
+
+                                                if(!isQuantityUpdate){
+                                                    //Do not update Fulfillment source if its just a quantity update
+                                                    dataItem.set('soLine.Fulfillment_Source__c', fulfillmentSource);
+                                                    dataItem.set('soLine.Description__c', description);
+                                                    dataItem.set('quantityFactor', quantityFactor);
+
+                                                    if(soType != RepairType){
+                                                        dataItem.set('soLine.Item_Specification__r', itemSpecRef);
+                                                        dataItem.set('soLine.Item_Specification__c', prodItemSpec);
+                                                    } 
+                                                }
+                                            }
+
+                                            if (isSubmitClicked) {
+                                                $('#saveButton').data("mouseDown", false);
+                                                $('.save-command').trigger('click');
+                                            }
+                                        }
+                                    } 
+                                }
+                            },
+                            {escape: false}
+                        );
+                    }
+                    
+                },
+                
+                GetSalesOrderLineDetailsFromUPC: function(e) {
+                    var self = this;
+                    var grid = this.grid;
+                    var options = self.options;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-error-message");
+                    var cell = grid.editable.element;
+                    var isQuantityUpdate = this.isQuantityUpdate;
+                    //Return if the UPC hasn't changed
+                    if(!cell.hasClass('k-dirty-cell') && !isQuantityUpdate){
+                        return;
+                    }
+
+                    var row = $(e.target).closest("tr"); //get the row
+                    var dataItem = grid.dataItem(row); // get the row data
+
+                    var productName = dataItem.get('soLine.Product__r.Name') ? dataItem.get('soLine.Product__r.Name') : null;
+                    var upcCode = dataItem.get('soLine.UPC_Code__c') ? dataItem.get('soLine.UPC_Code__c') : null;
+                    var soLinePricebookId = dataItem.get('soLine.Pricebook__r.Id') ? dataItem.get('soLine.Pricebook__r.Id') : null;
+                    
+                    // clone dateFields to remove the 'soLine.' which is necessary for the save function
+                    var dateFields = $.extend(true, [], options.dateFields);
+                    dateFields = $.map(dateFields, function(item, index) {
+                        if (item.field.indexOf('.') != -1) {
+                            item.field = item.field.split('.')[1];
+                        }
+                        
+                        return item;
+                    });
+
+                    var salesOrder = options.config.parentRecord;
+                    if (!salesOrder.Id){
+                        salesOrder = globalSO;
+                    }
+                    var salesOrderLines = [];
+                    var salesOrderLineList = [];
+                    salesOrderLineList.push(dataItem.get('soLine'));                    
+                    salesOrderLines = $.map(salesOrderLineList, function(item, index) {
+                        item = item.toJSON();
+                        item = Serializer.ConvertToSFDCDate(item, { dateFields: dateFields });
+                        return item;
+                    });
+
+                    if (salesOrderLines.length > 0) {
+                        salesOrderLines = Serializer.ParameterMap(salesOrderLines);
+                    }
+
+                    if(upcCode != null && productName == null){
+                        
+                        KenandyErp.BlockUI();
+                        
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.SalesOrderManageLinesExt.getSalesOrderLineDetailsFromUPC}',
+                            upcCode, 
+                            salesOrderLines[0], 
+                            dateFields,
+                            //JSON.stringify(salesOrder),
+                            salesOrder.Id,
+                            e.target.name,
+                            function (result, event) {
+                                KenandyErp.UnBlockUI();
+                                
+                                if (event.type == 'exception') {
+                                    KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                                } else {
+                                    KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                    
+                                    if (result.success) {
+                                        if (result.records && result.records.length > 0) {
+
+                                            var salesOrderLine = result.records[0].soLine;
+                                            var sellingUOM = (salesOrderLine.Selling_UOM__c) ? salesOrderLine.Selling_UOM__c : null;
+                                            var sellingUOMRef = (salesOrderLine.Selling_UOM__r) ? salesOrderLine.Selling_UOM__r :  { Id: null, Name: null };
+                                            var product = (salesOrderLine.Product__c) ? salesOrderLine.Product__c : null;
+                                            var productRef = (salesOrderLine.Product__r) ? salesOrderLine.Product__r :  { Id: null, Name: null };
+                                            var itemRef = (productRef.Item__r) ? productRef.Item__r 
+                                                : { Id: null, Name: null, Fulfillment_Source__c: null}
+                                            var itemSpecRef = (productRef.Item_Specification__r) ? productRef.Item_Specification__r : {id: null, name: null};
+                                            var prodItemSpec = (productRef.Item_Specification__c) ? productRef.Item_Specification__c : null;
+
+                                            var description = (salesOrderLine.Description__c) ? salesOrderLine.Description__c : null;  
+
+                                            var UPCCode = (salesOrderLine.UPC_Code__c) ? salesOrderLine.UPC_Code__c : null;  
+                                            var priceBook = (salesOrderLine.Pricebook__c) ? salesOrderLine.Pricebook__c : null;
+                                            var priceBookRef = (salesOrderLine.Pricebook__r) ? salesOrderLine.Pricebook__r :  { Id: null, Name: null };
+                                            var soType = globalSO.Type__c;
+                                            var fulfillmentSource = (soType == 'Resale') ? 'Resale' : (salesOrderLine.Fulfillment_Source__c) ? salesOrderLine.Fulfillment_Source__c : null;
+
+                                            var unitPrice = (typeof salesOrderLine.Unit_Price__c != 'undefined') ? salesOrderLine.Unit_Price__c : null;
+                                            var quantityFactor = (result.records[0].quantityFactor) ? result.records[0].quantityFactor : null;
+
+                                            dataItem.set('soLine.Product__r.Name', productRef.Name);
+                                            dataItem.set('soLine.Product__r.Description__c', productRef.Description__c);
+                                            dataItem.set('soLine.Product__r.Item__r', itemRef);
+
+                                            var RepairType = '{!SalesOrderTypeRepair}';
+                                            
+                                            dataItem.set('soLine.Selling_UOM__r', sellingUOMRef);
+                                            dataItem.set('soLine.Selling_UOM__c', sellingUOM);
+                                            dataItem.set('soLine.UPC_Code__c', UPCCode);
+
+                                            if(isQuantityUpdate && priceBook == null) {
+                                                dataItem.set('soLine.Pricebook__r', priceBookRef);
+                                                dataItem.set('soLine.Pricebook__c', priceBook);
+                                            } else{
+                                                dataItem.set('soLine.Unit_Price__c', unitPrice);
+                                                dataItem.set('soLine.Pricebook__r', priceBookRef);
+                                                dataItem.set('soLine.Pricebook__c', priceBook);
+                                            } 
+
+                                            if(!isQuantityUpdate){
+                                                //Do not update Fulfillment source if its just a quantity update
+                                                dataItem.set('soLine.Fulfillment_Source__c', fulfillmentSource);
+                                                dataItem.set('soLine.Description__c', description);
+                                                dataItem.set('quantityFactor', quantityFactor);
+
+                                                if(soType != RepairType){
+                                                    dataItem.set('soLine.Item_Specification__r', itemSpecRef);
+                                                    dataItem.set('soLine.Item_Specification__c', prodItemSpec);
+                                                } 
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {escape: false}
+                        );
+                    }
+                },
+
+                SalesOrderLinesGridBeforeEdit: function(e) {
+                    var grid = this;
+                    var columnIndex = grid.cellIndex(e.container);
+                    var fieldName = grid.element.find("th").eq(columnIndex).data("field");
+                    var isDefaultPrevented = false;
+        
+                    if (fieldName == 'quantityFactor') {
+                        isDefaultPrevented = true;
+                    }
+
+                    //Make Line column as Read only from the UI
+                    if({!uiReadOnly}){
+                        if(fieldName == 'soLine.Line__c'){
+
+                            isDefaultPrevented = true;
+                        }
+                    }
+
+                    //If field is from a related object then prevent any modification on the UI
+                    if(fieldName.indexOf('__r') > 0){
+
+                        isDefaultPrevented = true;
+                    }
+
+                    if (isDefaultPrevented) {
+                        e.preventDefault();
+                    }
+                },
+                GoBack: function(e) {
+
+                    var grid = this.SalesOrderLinesGrid;
+                    var gridUtils = new KendoGridUtils(grid, { isDml: false });
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-error-message:first");
+
+                    KenandyErp.BlockUI(grid.element);
+
+                    var yesCallback = function() {
+
+                        KenandyErp.UnBlockUI(grid.element);
+                        KenandyErp.back(true, '/' +  globalSO.Id);
+                        console.log('Yes!');
+                    };
+
+                    var noCallback = function(){
+
+                        KenandyErp.UnBlockUI(grid.element);
+                        console.log('No!');
+                    };
+
+
+                    if (SalesOrderManageLinesUtils.isSalesOrderHeaderDataDirty || gridUtils.NewRows().length > 0 || gridUtils.UpdatedRows().length > 0) {
+                        KenandyErp.Confirmation('Changes you have made will be lost if not saved first. Do you wish to proceed?', yesCallback, noCallback, noCallback);
+                    } else{
+                        KenandyErp.UnBlockUI(grid.element);
+                        if (globalSO.Id){
+                            KenandyErp.back(true, '/' + globalSO.Id);
+                        }
+                        else{
+                            KenandyErp.back(true, '{!returnUrl}');
+                        }
+                    }
+                },
+
+                ExecuteAction: function(actionType){
+                    var deferred = $.Deferred();
+                    var returnUrl = '';
+
+                    KenandyErp.BlockUI();
+                    if (actionType == 'Release'){
+                        KenandyErp.NavigateToURL('{!$Page.SOPlan}'+'?id=' + globalSO.Id,true);
+                        return;
+                    }
+                    else if (actionType == 'Undo_Release'){
+                        KenandyErp.NavigateToURL('{!$Page.SalesOrderUndoRelease}'+'?id=' + globalSO.Id,true);
+                        return;
+                    }
+                    else if (actionType == 'Close'){
+                        KenandyErp.NavigateToURL('{!$Page.SalesOrderClose}'+'?id=' + globalSO.Id,true);
+                        return;
+                    }
+                    else if (actionType == 'Allowances'){
+                        KenandyErp.NavigateToURL('{!$Page.SalesOrderAllowances}'+'?id=' + globalSO.Id,true);
+                        return;
+                    }
+                    else if (actionType == 'Create_RMA'){
+                        KenandyErp.NavigateToURL('{!$Page.SalesOrderRMA}'+'?id=' + globalSO.Id,true);
+                        return;
+                    }
+                    else if (actionType == 'Receive_RMA'){
+                        KenandyErp.NavigateToURL('{!$Page.ReceivingWorkbench}'+'?soId=' + globalSO.Id,true);
+                        return;
+                    }
+                    else if (actionType == 'Fulfill'){
+                        KenandyErp.NavigateToURL('{!$Page.SalesOrderFulfillment}'+'?id=' + globalSO.Id,true);
+                        return;
+                    }
+                    else if (actionType == 'Invoice'){
+                        KenandyErp.NavigateToURL('{!$Page.SalesOrderGenerateInvoice}'+'?id=' + globalSO.Id,true);
+                        return;
+                    }
+                    else if (actionType == 'Clone'){
+                        KenandyErp.NavigateToURL('{!$Page.SalesOrderManageLines}'+'?clone=1&id=' + globalSO.Id,true);
+                        return;
+                    }
+
+                    Visualforce.remoting.Manager.invokeAction(
+                        SalesOrderManageLinesUtils.SalesOrderHeaderActions[actionType],
+                        globalSO.Id,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message);
+                            }
+                            else {
+                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                if (result.success) {
+
+                                    if (actionType == "Delete") {
+                                        KenandyErp.NavigateToURL(returnUrl, true);
+                                    }
+                                    else if (actionType == "Clone"){
+                                        KenandyErp.NavigateToURL('{!$Page.SalesOrderManageLines}'+'?id=' + result.records[0].Id,true);
+                                    }
+                                    else{
+                                        // refresh widgets
+                                        var id = (result.records && result.records[0].Id) ? result.records[0].Id : null;
+                                        SalesOrderManageLinesUtils.RenderWidgets();
+                                        KenandyErp.Messages(result.messages);
+                                    }
+                                }
+                                else {
+                                    KenandyErp.Messages(result.messages);
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                },
+
+                SaveHeader: function(e){
+                    var self = this;
+                    var grid = self.grid;
+                    var detailList = self.detailList;
+                    var options = self.options;
+                    var modelIdField = grid.dataSource.options.schema.model.idField;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-error-message:first");
+                    var isNewSalesOrder = (!detailList.data.Id) ? true : false;
+
+                    if (isNewSalesOrder){
+                        if (!detailList.validate()) {
+                            KenandyErp.Message("Please fix the following errors.");
+                            e.preventDefault();
+                            return false;
+                        }
+
+                        var headerDateFields = detailList.getDateFields();
+                        var headerRowsList = [];
+                        var headerRows = [];
+
+                        headerRowsList.push(detailList.data);
+
+                        var isPricingDateRequired = SalesOrderManageLinesUtils.ValidatePricingDate(headerRowsList[0]);
+                        if (isPricingDateRequired){
+                            KenandyErp.Message("{!$Label.Pricing_date_is_required}");
+                            return false;
+                        }
+
+                        headerRows = $.map(headerRowsList, function(item, index) {
+                            item = item.toJSON();
+                            item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+
+                            return item;
+                        });
+
+                        if (headerRows.length > 0) {
+                            headerRows = Serializer.ParameterMap(headerRows);
+                        }
+
+                        KenandyErp.ClearMessage();
+                        KenandyErp.BlockUI(grid.element);
+
+                        Visualforce.remoting.Manager.invokeAction(
+                            options.saveAction,
+                            headerRows[0],
+                            headerDateFields,
+                            function (result, event) {
+                                KenandyErp.UnBlockUI(grid.element);
+
+                                if (event.type == 'exception') {
+                                    KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                                } else {
+                                    KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                    if (result.success) {
+                                        soId = result.records[0].Id;
+                                        globalSO = result.records[0];
+                                        KenandyErp.CleanNamespace(globalSO, '{!NamespaceUU}');
+                                        isImplicitSave = true;
+                                        SalesOrderManageLinesUtils.RenderWidgets();
+                                        KenandyErp.Messages(result.messages);
+                                    }
+                                    else {
+                                        KenandyErp.Messages(result.messages);
+                                    }
+                                }
+                            },
+                            {escape: false}
+                        );
+                    }
+                },
+
+                ValidatePricingDate: function(salesOrder){
+                    var sOrder = salesOrder;
+                    if (sOrder.Price_Determination_Date__c == 'Manual' && sOrder.Pricing_Date__c == null){
+                        return true;
+                    }
+                    return false;
+                },
+
+                Save: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    var detailList = self.detailList;
+                    var options = self.options;
+                    var modelIdField = grid.dataSource.options.schema.model.idField;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-error-message:first");
+                    var isNewSalesOrder = (!detailList.data.Id) ? true : false;
+                    var returnUrl = '{!returnUrl}';
+                    var isClone = URI('{!$CurrentPage.URL}').hasQuery("clone", "1");
+
+                    //Reset the warning header
+                    showWarningHeader = false;
+
+                    KenandyErp.ClearMessage(messageElement);
+                    
+                    if (grid.editable && !grid.editable.validatable.validate()) {
+                        e.preventDefault();
+                        return false;
+                    }
+
+                    if (!detailList.validate()) {
+                        KenandyErp.Message("Please fix the following errors.");
+                        e.preventDefault();
+                        return false;
+                    }
+
+                    var headerDateFields = detailList.getDateFields();
+					var headerRowsList = [];
+                    var headerRows = [];
+
+                    headerRowsList.push(detailList.data);
+
+                    var isPricingDateRequired = SalesOrderManageLinesUtils.ValidatePricingDate(headerRowsList[0]);
+                    if (isPricingDateRequired){
+                        KenandyErp.Message("{!$Label.Pricing_date_is_required}");
+                        return false;
+                    }
+
+                    headerRows = $.map(headerRowsList, function(item, index) {
+                    	item = item.toJSON();
+                        item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+
+                        return item;
+                    });
+
+                    if (headerRows.length > 0) {
+                        headerRows = Serializer.ParameterMap(headerRows);
+                    }
+
+                    $.each(grid.dataSource.data(), function (index, dataItem){
+                        // TODO: recursively delete attribute in kenandyCommons > KendoGridUtils initial
+
+                        if (dataItem.soLine.Ship_From_Location__r != null){
+
+                            if (dataItem.soLine.Ship_From_Location__r.hasOwnProperty('attributes')){
+                                delete dataItem.soLine.Ship_From_Location__r['attributes'];
+                            }
+
+                            if (dataItem.soLine.Ship_From_Location__r.Facility__r != null
+                                && dataItem.soLine.Ship_From_Location__r.Facility__r.hasOwnProperty('attributes'))
+                            {
+                                delete dataItem.soLine.Ship_From_Location__r.Facility__r['attributes'];
+                            }
+                        }
+
+                        if (dataItem.soLine.Item_Specification__r){
+
+                            if (dataItem.soLine.Item_Specification__r.hasOwnProperty('attributes')){
+                                delete dataItem.soLine.Item_Specification__r['attributes'];
+                            }
+
+                            if (dataItem.soLine.Item_Specification__r.Facility__r != null
+                                && dataItem.soLine.Item_Specification__r.Facility__r.hasOwnProperty('attributes'))
+                            {
+                                delete dataItem.soLine.Item_Specification__r.Facility__r['attributes'];
+                            }
+                        }
+                    });
+
+                    //var currentData = grid.dataSource.data();
+                    var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields, isDml: false });
+                    var updatedRows = [];
+                    var newRows = [];
+                    
+                    newRows = gridUtils.NewRows();
+                    updatedRows = gridUtils.UpdatedRows();
+
+                    KenandyErp.ClearMessage();
+                    KenandyErp.BlockUI();
+                    
+                    var dateFields = self.options.dateFields ? _.pluck(self.options.dateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;  
+                    // Remove the prefix for the date fields
+                    dateFields = $.map(dateFields, function(item, index) {
+                        if (item.indexOf('.') != -1) {
+                            item = item.split('.')[1];
+                        }
+                        
+                        return item;
+                    });
+                            
+                    Visualforce.remoting.Manager.invokeAction(
+                        options.saveAction,
+                        headerRows[0],
+                        headerDateFields,
+                        updatedRows,
+                        newRows,
+                        dateFields,
+                        JSON.stringify(options.config.parentRecord), 
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();
+                                        
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                if (result.success) {
+                                    SalesOrderManageLinesUtils.isSalesOrderHeaderDataDirty = false; //reset the dirty flag on save
+                                    if ($(e.target.parentElement).hasClass('save-return-command')) {
+                                        KenandyErp.NavigateToURL(returnUrl, true);
+                                    }
+                                    else if ($(e.target.parentElement).hasClass('save-new-command')) {
+                                        KenandyErp.NavigateToURL('{!$Page.SalesOrderManageLines}', true);
+                                    }
+                                    else if ($(e.target.parentElement).hasClass('save-review-command')) {
+                                        KenandyErp.NavigateToURL('/' + result.records[0].Id, true);
+                                    }
+                                    else if ($(e.target).hasClass('save-command') && !isClone) {
+                                        if (isNewSalesOrder || window.location.href.indexOf('id=') == -1){ // on save, if this is a new sales order then refresh the page
+                                            KenandyErp.NavigateToURL('{!$Page.SalesOrderManageLines}' + '?id=' + result.records[0].Id,true);
+                                        }else {
+                                            var id = (result.records && result.records[0].Id) ? result.records[0].Id : null;
+                                            SalesOrderManageLinesUtils.RenderWidgets();
+                                            KenandyErp.Messages(result.messages);
+                                        }
+                                    }else if (isClone) { //this is a clone so remove the clone attribute from the URL
+                                        KenandyErp.NavigateToURL('{!$Page.SalesOrderManageLines}' + '?id=' + result.records[0].Id,true);
+                                    }
+                                }
+                                else {
+                                    if (result.additionalInfo != 'header'){ //if exception is from header, then skip looping through records to determine the errors
+                                        $.each(result.records, function(index, item) {
+                                            var rowGUID = item['rowGUID'];
+                                            var row = grid.tbody.find("tr[data-uid='" + rowGUID + "']");
+                                            var dataItem = grid.dataItem(row);
+
+                                            dataItem.errors = item['errors'];
+                                        });
+                                    }
+                                    grid.refresh();
+                                    KenandyErp.Messages(result.messages);
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                },
+
+                Delete: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    var options = self.options;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-error-message:first");
+                    
+                    var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields });
+                    var selectedRows = gridUtils.SelectedRows();
+                    var allRows = gridUtils.AllRows();
+
+                    var modelIdField = grid.dataSource.options.schema.model.idField;
+                    var columns = grid.columns;
+                    var minDeletedUnSavedLine = Number.MAX_VALUE;
+                    var maxSavedLineNumberSelected = 0;
+                    var maxSavedLineNumber = 0;
+                    var rowsToBeDeleted = [];
+
+                    //All rows to be deleted
+                    rowsToBeDeleted = $.map(grid.dataSource.data(), function(item, index) {
+
+                        if (item.IsSelected__custom) {
+
+                            //Update maxSavedLineNumberSelected
+                            if(item.soLine && item.soLine.Id && maxSavedLineNumberSelected < item.soLine.Line__c){
+
+                                maxSavedLineNumberSelected = item.soLine.Line__c;
+                            }
+
+                            return item;
+
+                        }
+
+                        //Update maxSavedLineNumber
+                        if(item.soLine && item.soLine.Id && maxSavedLineNumber < item.soLine.Line__c){
+
+                            maxSavedLineNumber = item.soLine.Line__c;
+                        }
+                    });
+                    
+                    //Separate all the rows that are already in DB, to be deleted through remote action
+                    var savedRows = $.map(selectedRows, function(item, index) {
+
+                        if (item.soLine && item.soLine.Id) {
+
+                            return item;
+
+                         } else {
+
+                            if(minDeletedUnSavedLine > item.soLine.Line__c){
+
+                                minDeletedUnSavedLine = item.soLine.Line__c;
+                            }
+
+                        }
+                    });
+                    
+                    if(maxSavedLineNumber < maxSavedLineNumberSelected){
+
+                        minDeletedUnSavedLine = maxSavedLineNumber + 1;
+                    }
+
+                    //Reset the warning header
+                    showWarningHeader = false;
+
+                    KenandyErp.ClearMessage(messageElement);
+
+                    if (savedRows.length == 0 && rowsToBeDeleted.length == 0) {
+                        KenandyErp.Message("No records selected.", KenandyErp.MessageType.Info, messageElement);
+                        return;
+                    } 
+                    
+                    KenandyErp.ClearMessage();
+
+                    savedRows = Serializer.ParameterMap(savedRows);
+                    
+                    var dateFields = self.options.dateFields ? _.pluck(self.options.dateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;  
+             
+                    // Remove the prefix for the date fields
+                    dateFields = $.map(dateFields, function(item, index) {
+                        if (item.indexOf('.') != -1) {
+                            item = item.split('.')[1];
+                        }
+                        
+                        return item;
+                    });
+                    
+                    KenandyErp.BlockUI(grid.element);
+                    
+                    var yesCallback = function() {
+
+                            //Delete all rows from the UI grid
+                            var destroyRows = function() {
+
+                                $.each(rowsToBeDeleted, function (idx, elem) {
+
+                                    grid.dataSource.remove(elem);
+                                });
+                                
+                                grid.dataSource._destroyed = [];
+
+                                var updateRowStartLine = minDeletedUnSavedLine;
+
+                                //Iterate through the grid in reverse order to update the Line numbers correctly
+                                for(var i = grid.dataSource.data().length - 1; i >= 0; i--){
+
+                                    if(minDeletedUnSavedLine < grid.dataSource.data()[i].soLine.Line__c){
+
+                                        grid.dataSource.data()[i].soLine.Line__c = updateRowStartLine;
+
+                                        updateRowStartLine = updateRowStartLine + 1;
+                                    }
+
+                                }
+
+                                KenandyErp.UnBlockUI(grid.element);
+                                grid.refresh();
+
+                            };
+
+                            //None of the rows to be deleted are yet in the DB so we can just delete it from the grid
+                            if (rowsToBeDeleted.length > 0 && savedRows.length == 0) {
+
+                                destroyRows();
+
+                            } else if(savedRows.length > 0){ //Rows that are saved in the DB to be deleted using remote action
+
+                                Visualforce.remoting.Manager.invokeAction(
+                                    options.deleteAction,              
+                                    savedRows,
+                                    dateFields,
+                                    JSON.stringify(options.config.parentRecord), 
+                                    function (result, event) {
+                                        KenandyErp.UnBlockUI(grid.element);     
+                                        if (event.type == 'exception') {
+
+                                            KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+
+                                        } else {
+
+                                            if (result.success) {
+
+                                                destroyRows();
+                                                
+                                                KenandyErp.Messages(result.messages, messageElement);
+                                            } else {
+                                                
+                                                $.each(result.records, function(index, item) {
+
+                                                    var rowGUID = item['rowGUID'];
+                                                    var row = grid.tbody.find("tr[data-uid='" + rowGUID + "']");
+                                                    var dataItem = grid.dataItem(row);
+
+                                                    dataItem.errors = item['errors'];
+                                                });
+                                                
+                                                grid.refresh();
+
+                                                KenandyErp.Messages(result.messages, messageElement);
+                                            }
+                                        }
+                                    },
+                                    {escape: false}
+                                );
+                            }
+                        };
+                    
+                    var noCallback = function(){
+
+                            KenandyErp.UnBlockUI(grid.element);
+                        };
+
+                    KenandyErp.Confirmation('Are you sure you want to delete ' + rowsToBeDeleted.length + ' rows?', yesCallback, noCallback, noCallback);
+                },
+                
+                ShowColumn: function(showColumn, columnName) {
+
+                    if (showColumn) {
+
+                        SalesOrderManageLinesUtils.SalesOrderLinesGrid.showColumn(columnName);
+                    }
+                    else {
+                        SalesOrderManageLinesUtils.SalesOrderLinesGrid.hideColumn(columnName);
+                    }
+                },
+
+                CancelChanges: function(e){
+                    var self = this;
+                    var grid = self.grid;
+                    var options = self.options;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-error-message:first");
+                    
+                    //Reset the warning header
+                    showWarningHeader = false;
+
+                    KenandyErp.ClearMessage(messageElement);
+                    
+                    if (grid.editable && !grid.editable.validatable.validate()) {
+                        e.preventDefault();
+                        return false;
+                    }
+                    
+                    //var currentData = grid.dataSource.data();
+                    var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields });
+                    var updatedRows = [];
+                    var newRows = [];
+                    
+                    newRows = gridUtils.NewRows();
+                    updatedRows = gridUtils.UpdatedRows();
+                      
+                    if (newRows.length == 0 && updatedRows.length == 0) {
+                        KenandyErp.Message("{!$Label.No_records_changed}", KenandyErp.MessageType.Info, messageElement);
+                        return;
+                    }
+                    
+                    KenandyErp.ClearMessage();
+
+                    var yesCallback = function(){
+                        // refresh the grid
+                        grid.dataSource._destroyed = [];
+                        grid.dataSource.read();
+                        e.stopPropagation();
+                    };
+                    
+                    KenandyErp.Confirmation('All the unsaved changes will be lost. Do you still want to proceed?', yesCallback);
+                },
+                
+                CancelLines: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    var options = self.options;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-error-message:first");
+                    
+                    var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields });
+                    var selectedRows = gridUtils.SelectedRows();
+                    var modelIdField = grid.dataSource.options.schema.model.idField;
+                    var columns = grid.columns;
+                    
+                    KenandyErp.ClearMessage(messageElement);
+                    
+                    if (selectedRows.length == 0) {
+                        KenandyErp.Message("No records selected.", KenandyErp.MessageType.Info, messageElement);
+                        return;
+                    }
+                    
+                    KenandyErp.ClearMessage();
+
+                    var yesCallback = function(){
+                    
+                        KenandyErp.BlockUI(grid.element);
+                              
+                        var dateFields = self.options.dateFields ? _.pluck(self.options.dateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;  
+                    
+                        // Remove the prefix for the date fields
+                        dateFields = $.map(dateFields, function(item, index) {
+                            if (item.indexOf('.') != -1) {
+                                item = item.split('.')[1];
+                            }
+                            
+                            return item;
+                        });
+
+                        Visualforce.remoting.Manager.invokeAction(
+                            options.cancelSalesOrderLinesAction,              
+                            selectedRows,
+                            dateFields,
+                            JSON.stringify(options.config.parentRecord), 
+                            function (result, event) {
+                                KenandyErp.UnBlockUI(grid.element);
+                                            
+                                if (event.type == 'exception') {
+                                    KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                                } else {
+                                    if (result.success) {
+                                        SalesOrderManageLinesUtils.RenderWidgets();
+                                        KenandyErp.Messages(result.messages, messageElement);
+                                    }
+                                    else {
+
+                                        $.each(result.records, function(index, item) {
+                                            var rowGUID = item['rowGUID'];
+                                            var row = grid.tbody.find("tr[data-uid='" + rowGUID + "']");
+                                            var dataItem = grid.dataItem(row);
+
+                                            dataItem.errors = item['errors'];
+                                        });
+                                        
+                                        grid.refresh();
+
+                                        KenandyErp.Messages(result.messages, messageElement);
+                                    }
+                                }
+                            },
+                            {escape: false}
+                        );
+                    
+                    }
+                    
+                    KenandyErp.Confirmation('Do you wish to cancel the ' + selectedRows.length + ' selected Sales Order Lines?', yesCallback);
+                },
+
+                CloseLines: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    var options = self.options;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-error-message:first");
+
+                    var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields });
+                    var selectedRows = gridUtils.SelectedRows();
+                    var modelIdField = grid.dataSource.options.schema.model.idField;
+                    var columns = grid.columns;
+
+                    KenandyErp.ClearMessage(messageElement);
+
+                    if (selectedRows.length == 0) {
+                        KenandyErp.Message("No records selected.", KenandyErp.MessageType.Info, messageElement);
+                        return;
+                    }
+
+                    KenandyErp.ClearMessage();
+
+                    var yesCallback = function(){
+
+                        KenandyErp.BlockUI(grid.element);
+
+                        var dateFields = self.options.dateFields ? _.pluck(self.options.dateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+
+                        // Remove the prefix for the date fields
+                        dateFields = $.map(dateFields, function(item, index) {
+                            if (item.indexOf('.') != -1) {
+                                item = item.split('.')[1];
+                            }
+
+                            return item;
+                        });
+
+                        Visualforce.remoting.Manager.invokeAction(
+                            options.closeSalesOrderLinesAction,
+                            selectedRows,
+                            dateFields,
+                            JSON.stringify(options.config.parentRecord),
+                            function (result, event) {
+                                KenandyErp.UnBlockUI(grid.element);
+
+                                if (event.type == 'exception') {
+                                    KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                                } else {
+                                    if (result.success) {
+                                        SalesOrderManageLinesUtils.RenderWidgets();
+                                        KenandyErp.Messages(result.messages, messageElement);
+                                    }
+                                    else {
+
+                                        $.each(result.records, function(index, item) {
+                                            var rowGUID = item['rowGUID'];
+                                            var row = grid.tbody.find("tr[data-uid='" + rowGUID + "']");
+                                            var dataItem = grid.dataItem(row);
+
+                                            dataItem.errors = item['errors'];
+                                        });
+
+                                        grid.refresh();
+
+                                        KenandyErp.Messages(result.messages, messageElement);
+                                    }
+                                }
+                            },
+                            {escape: false}
+                        );
+
+                    }
+
+                    KenandyErp.Confirmation('Do you wish to close the ' + selectedRows.length + ' selected Sales Order Lines?', yesCallback);
+                },
+
+                FetchTaxes:function(e){
+                    var self = this;
+                    var grid = SalesOrderManageLinesUtils.SalesOrderLinesGrid;
+                    var salesOrderLineDateFields = KenandyErp.KendoGridOptions.GetDateFields(SalesOrderManageLinesUtils.SalesOrderLinesFieldList);
+                    var config = SalesOrderManageLinesUtils.SalesOrderLinesConfigJson;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-info-message:first");
+
+                    var gridUtils = new KendoGridUtils(grid, { dateFields: salesOrderLineDateFields, isDml: false });
+                    var selectedRows = gridUtils.AllRows();
+                    var modelIdField = grid.dataSource.options.schema.model.idField;
+                    var columns = grid.columns;
+
+                    KenandyErp.ClearMessage(messageElement);
+
+                    if (selectedRows.length == 0) {
+                        KenandyErp.Message("No records available.", KenandyErp.MessageType.Info, messageElement);
+                        return;
+                    }else if(gridUtils.HasChanges() == true){
+                        KenandyErp.Message("Please save records before getting tax.", KenandyErp.MessageType.Info, messageElement);
+                        return;
+                    }
+
+                    KenandyErp.ClearMessage();
+
+                    KenandyErp.BlockUI(grid.element);
+
+                    Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.SalesOrderManageLinesExt.fetchTaxes}',
+                            JSON.stringify(config.parentRecord),
+                            selectedRows,
+                            function (result, event) {
+
+                                if (event.type == 'exception') {
+
+                                    KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+
+                                } else {
+
+                                    if (result.success) {
+
+                                        KenandyErp.CleanNamespace(result.records, KenandyErp.NamespacePrefix);
+
+                                        $.each(result.records, function(index, item) {
+
+                                            var rowGUID = item['rowGUID'];
+                                            var row = grid.tbody.find("tr[data-uid='" + rowGUID + "']");
+                                            var dataItem = grid.dataItem(row);
+
+                                            if(dataItem.soLine.Sales_Tax__c != item.soLine.Sales_Tax__c){
+                                                dataItem.soLine.Sales_Tax__c = item.soLine.Sales_Tax__c;
+                                            }
+
+                                            if(dataItem.soLine.Sales_Tax_Rate__c != item.soLine.Sales_Tax_Rate__c){
+                                                dataItem.soLine.Sales_Tax_Rate__c = item.soLine.Sales_Tax_Rate__c;
+                                            }
+
+                                            if(dataItem.soLine.Value_Added_Tax_Rate__c != item.soLine.Value_Added_Tax_Rate__c){
+                                                dataItem.soLine.Value_Added_Tax_Rate__c = item.soLine.Value_Added_Tax_Rate__c;
+                                            }
+
+                                            if(dataItem.soLine.VAT__c != item.soLine.VAT__c){
+                                                dataItem.soLine.VAT__c = item.soLine.VAT__c;
+                                            }
+                                        });
+                                        
+                                        grid.refresh();
+
+                                        // show available inventory column
+                                        SalesOrderManageLinesUtils.ShowColumn(true, 'soLine.Sales_Tax__c');
+                                        KenandyErp.Messages(result.messages, messageElement);
+                                    }
+                                    else {
+                                        KenandyErp.Messages(result.messages, messageElement);
+                                    }
+                                }
+                                KenandyErp.UnBlockUI();
+                            },
+                            {escape: false}
+                        );
+                },
+
+                FetchAvailableInventory: function(e){
+                    var self = this;
+                    var grid = self.grid;
+                    var options = self.options;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-info-message:first");
+                    
+                    var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields, isDml: false });
+                    var selectedRows = gridUtils.AllRows();
+                    var modelIdField = grid.dataSource.options.schema.model.idField;
+                    var columns = grid.columns;
+                    
+                    KenandyErp.ClearMessage(messageElement);
+                    
+                    if (selectedRows.length == 0) {
+                        KenandyErp.Message("No records available.", KenandyErp.MessageType.Info, messageElement);
+                        return;
+                    }
+
+                    KenandyErp.ClearMessage();
+
+                    var dateFields = self.options.dateFields ? _.pluck(self.options.dateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;  
+
+                    // Remove the prefix for the date fields
+                    dateFields = $.map(dateFields, function(item, index) {
+                        if (item.indexOf('.') != -1) {
+                            item = item.split('.')[1];
+                        }
+                        
+                        return item;
+                    });
+                           
+                    Visualforce.remoting.Manager.invokeAction(
+                            options.availableInventoryAction,              
+                            selectedRows,
+                            dateFields,
+                            function (result, event) {
+
+                                if (event.type == 'exception') {
+
+                                    KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+
+                                } else {
+
+                                    if (result.success) {
+
+                                        KenandyErp.CleanNamespace(result.records, KenandyErp.NamespacePrefix);
+
+                                        $.each(result.records, function(index, item) {
+
+                                            $.each(grid.dataSource.data(), function(rowIndex, dataItem) {
+
+                                                if (dataItem.soLine.Id != null && dataItem.soLine.Id == item.soLine.Id) {
+
+                                                    dataItem.soLine.Available_Inventory__c = item.soLine.Available_Inventory__c;
+
+                                                }
+                                            });
+                                        });
+                                        
+                                        grid.refresh();
+
+                                        // show available inventory column
+                                        SalesOrderManageLinesUtils.ShowColumn(true, 'soLine.Available_Inventory__c');
+                                        KenandyErp.Messages(result.messages, messageElement);
+                                    }
+                                    else {
+                                        KenandyErp.Messages(result.messages, messageElement);
+                                    }
+                                }
+                            },
+                            {escape: false}
+                        );
+                },
+
+                ShowInventoryWindow: function(e){
+                    var self = this;
+                    var row = $(e.target).closest('tr');
+                    var grid = self.grid;
+                    var dataItem = grid.dataItem(row);
+
+                    KenandyErp.ClearMessage();
+
+                    itemID = dataItem.soLine.Product__r.Item__r.Id;
+                    InventoryWindow = $('#InventoryWindow');
+
+                    if (!InventoryWindow.data('kendoWindow')){
+                        InventoryWindow.kendoWindow({
+                            title: "Available Inventory",
+                            modal: true,
+                            height: "350px",
+                            width: "80%"
+                        });
+                    }
+
+                    InventoryUtils.inventoryGridInit({dataItem: dataItem, grid: grid});
+                    InventoryWindow.data('kendoWindow').center().open();
+
+                },
+
+                ShowAllowancesWindow: function(e) {
+                    var self = this;
+                    var row = $(e.target).closest('tr');
+                    var grid = self.grid;
+                    var dataItem = grid.dataItem(row);
+                    var gridUtils = new KendoGridUtils(grid);
+                    var hasChanges = gridUtils.HasChanges();
+
+                    if (hasChanges) {
+                        KenandyErp.Alert('Please save your changes before you continue.');
+                        return;
+                    }
+
+                    var soLine = dataItem.soLine;
+                    var allowanceAmount = dataItem.soLine.Allowances__c;
+
+                    // Initialize Allowances Kendo Window
+                    this.AllowancesWindow = $('#AllowancesWindow').kendoWindow({
+                        //visible: false,
+                        title: "Manage Line Allowances",
+                        modal: true,
+                        height: "450px",
+                        width: "80%",
+                    }).data('kendoWindow');
+
+                    //Set the Page block title for the pop up window
+                    $("*[id$=SoLineAllowancesHeader]").find('h3').html(dataItem.soLine.Name);
+
+                    AllowanceLinesManageUtils.RenderWidgets(soLine, allowanceAmount);
+                    this.AllowancesWindow.center().open();
+                    this.AllowancesWindow.unbind("close");
+
+                    this.AllowancesWindow.bind("close", (function(allowanceAmount) {
+                        return function() {
+                            var lineTotal = AllowanceLinesManageUtils.GetLineTotal();
+
+                            if (AllowanceLinesManageUtils.IsSaved && allowanceAmount != lineTotal) {
+                                SalesOrderManageLinesUtils.SalesOrderLinesGrid.dataSource.read();
+                                AllowanceLinesManageUtils.IsSaved = false;
+                            } 
+                        };
+                    })(allowanceAmount));
+                }
+            };
+        }();
+
+        var inventoryData = function() {
+            var deferred = $.Deferred();
+            var inventoryGrid = $('#{!InventoryConfig.uniqueId}').data('kendoGridActionList');
+            var messageElement = inventoryGrid.element.closest("div.grid-container").find("div.grid-message:first");
+
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.SalesOrderManageLinesExt.getInventory}',
+                itemID,
+
+                function( result, event ) {
+                    KenandyErp.UnBlockUI( inventoryGrid.element );
+                    if ( event.type == "exception" ) {
+                        KenandyErp.Message( event.message, KenandyErp.MessageType.Error, messageElement );
+                    } else {
+                        if ( result.success ) {
+                            KenandyErp.Messages(result.messages, messageElement);
+                            deferred.resolve(result, event);
+                        } else {
+                            KenandyErp.Messages( result.messages, messageElement );
+                        }
+                    }
+                },
+                {escape: false}
+            );
+
+            return deferred.promise();
+        };
+
+        var InventoryUtils = function() {
+            return {
+                inventoryGrid: null,
+
+                GetFieldList: function(fieldList) {
+                    fieldList = JSON.parse(fieldList);
+                    return JSON.stringify(fieldList);
+                },
+
+                inventoryGridInit: function(e){
+                    if (this.inventoryGrid) {
+                        $('#{!InventoryConfig.uniqueId}').off();
+                        this.inventoryGrid.destroy();
+                        $('#{!InventoryConfig.uniqueId}').empty();
+                    }
+
+                    var inventoryFieldList = '{!JSENCODE(InventoryFieldList)}';
+
+                    this.inventoryGrid = $('#{!InventoryConfig.uniqueId}').kendoGridActionList({
+                        namespace: '{!JSENCODE(NamespaceUU)}',
+                        config: '{!JSENCODE(InventoryConfigJson)}',
+                        fieldList: InventoryUtils.GetFieldList(inventoryFieldList),
+                        lookupSearchAction: '{!$RemoteAction.SalesOrderManageLinesExt.lookupSearch}',
+                        getActionListFunction: inventoryData,
+                    }).data('kendoGridActionList');
+
+                }
+
+            };
+        }();
+
+        var AllowanceLinesManageUtils = function() {
+            return {
+                IsSaved: false,
+                SOLineHeaderDetailList: null,
+                allowanceLinesGrid: null,
+                SOLine: null,
+                allowanceTypes: [],
+                allowanceCodes: [],
+                typeToRulesMap: {},
+                codeToRuleMap: {},
+                AllowanceLinesGridAggregates: [{ field: "Allowance_Amount__c", aggregate: "sum" },{ field: "BillBack_Commitment__c", aggregate: "sum" }],
+                SoLineHeaderFieldList: JSON.parse('{!JSENCODE(soLineHeaderFieldList)}'),
+                soLineAllowancesFieldList: JSON.parse('{!JSENCODE(soLineAllowancesFieldList)}'),
+                AllowanceLinesConfigJson: '{!JSENCODE(soLineAllowancesConfigJSON)}',
+
+                ClearStoredData: function() {
+                    this.allowanceTypes = [];
+                    this.allowanceCodes = [];
+                    this.allowanceRule = [];
+                    this.typeToRulesMap = {};
+                    this.codeToRuleMap = {};
+                },
+
+                PopulateAllowanceTypes: function(soLineId) {
+
+                    this.ClearStoredData();
+
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.SalesOrderManageLinesExt.fetchAllowanceRuleTypes}',
+                        soLineId,
+                        function (result, event) {
+                            if (event.type == 'exception') {
+                                KenandyErp.Alert(event.message);
+                            } else {
+
+                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+
+                                // used to prevent duplicate Allowance Types in drop-down when multiple allowance rules associated to the same Allowance Type
+                                var allowanceTypeUnique = {};
+                                $.each(result.records, function(index, item) {
+
+                                    var allowanceRule = item;// = this;
+                                    var allowanceType = allowanceRule.Allowance_Type__r;
+
+                                    // Populate type-ahead data values: allowanceTypes, allowanceCodes. * Only Manual *
+                                    if (allowanceType.Manual__c){
+
+                                        if (!(allowanceType.Id in allowanceTypeUnique)){
+                                            AllowanceLinesManageUtils.allowanceTypes.push({selected: false, text: allowanceType.Name, value: allowanceType.Id});
+                                            allowanceTypeUnique[allowanceType.Id] = allowanceType;
+                                        }
+
+                                        if (allowanceRule.Allowance_Code__c != null){
+                                            AllowanceLinesManageUtils.allowanceCodes.push({selected: false, text: allowanceRule.Allowance_Code__c, value: allowanceRule.Allowance_Code__c});
+                                            AllowanceLinesManageUtils.codeToRuleMap[allowanceRule.Allowance_Code__c] = allowanceRule;
+                                        }
+                                    }
+
+                                    // to support 1 to M relationship, create a key to value map. (1 Type to Many Rules)
+                                    if (!(allowanceType.Id in AllowanceLinesManageUtils.typeToRulesMap)) {
+                                        AllowanceLinesManageUtils.typeToRulesMap[allowanceType.Id] = [];
+                                    }
+                                    AllowanceLinesManageUtils.typeToRulesMap[allowanceType.Id].push(allowanceRule);
+
+                                });
+                            }
+                        },
+                        {escape: false}
+                    );
+                },
+
+                RenderWidgets: function(soLine, allowanceAmount) {
+                    this.SOLine = soLine;
+                    this.RenderSOLineHeaderDetailList(this.SOLine.Id);
+                    this.RenderSOLineAllowancesGrid(this.SOLine.Id, allowanceAmount);
+                },
+
+                RenderSOLineHeaderDetailList: function(soLineId) {
+
+                    // Destroy SOLineHeaderDetailList
+                    if (this.SOLineHeaderDetailList) {
+                        this.SOLineHeaderDetailList.destroy();
+                        $('#SOLineHeaderDetailList').empty();
+                    }
+
+                    this.SOLineHeaderDetailList = $('#SOLineHeaderDetailList').kendoDetailList({
+                        namespace: '{!NamespaceUU}',  
+                        sections: [
+                            {
+                                fields: AllowanceLinesManageUtils.SoLineHeaderFieldList
+                            }
+                        ],
+                        lookupSearchAction: '{!$RemoteAction.SalesOrderManageLinesExt.lookupSearchFilter}',
+                        lookupSearchFilters: [],
+                        getDetailListFunction: function(readOptions) {
+
+                            var deferred = $.Deferred();
+                            Visualforce.remoting.Manager.invokeAction(
+                                '{!$RemoteAction.SalesOrderManageLinesExt.getSOLineHeaderDetails}',
+                                soLineId,
+                                function (result, event) {
+                                    deferred.resolve(result, event);
+                                },
+                                {escape: false}
+                            );
+                            return deferred.promise();
+                        } 
+                    }).data('kendoDetailList');
+                },
+                
+                RenderSOLineAllowancesGrid: function(soLineId, allowanceAmout) {
+                    this.ClearStoredData();
+                    this.PopulateAllowanceTypes(soLineId);
+                    var remoteArgs = JSONUtils.Parse(this.AllowanceLinesConfigJson);
+                    remoteArgs.parentRecord = { Id: soLineId };
+                    this.AllowanceLinesConfigJson = remoteArgs;
+
+                    // Destroy POLinesGrid
+                    if (this.allowanceLinesGrid) {
+                        this.allowanceLinesGrid.destroy();
+                        $('#GridSOLineAllowances').empty();
+                        KenandyErp.ClearMessage($('#GridSOLineAllowances').closest("div.grid-container").find("div.grid-message:first"));
+                    }
+
+                    var lookupSearchFilters = [];
+                    this.allowanceLinesGrid = $.fn.GridRelatedList(
+                        $('#GridSOLineAllowances'), 
+                        {
+                            namespace: '{!NamespaceUU}', 
+                            config: AllowanceLinesManageUtils.AllowanceLinesConfigJson, 
+                            fieldList: AllowanceLinesManageUtils.GetFieldList('{!JSENCODE(soLineAllowancesFieldList)}'),
+                            lookupSearchAction: '{!$RemoteAction.SalesOrderManageLinesExt.lookupSearchFilter}', 
+                            getRelatedListFunction: function() {
+
+                                var deferred = $.Deferred();
+
+                                Visualforce.remoting.Manager.invokeAction(
+                                    '{!$RemoteAction.SalesOrderManageLinesExt.getRelatedList}',
+                                    AllowanceLinesManageUtils.AllowanceLinesConfigJson, 
+                                    function (result, event) {
+                                        if (event.type == 'exception') {
+                                            KenandyErp.Alert(event.message);
+                                        } else if (result.records!= null && result.records.length > 0){
+
+                                            KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+
+                                            $.each(result.records, function(){
+                                                // Allowance Code is treated as a reference on the controller. For it to populated on the Data Rows, make it a Related Record. This will also make it a link which is preferred.
+                                                codeRec = {};
+                                                codeRec.Id = this.Allowance_Rule2__r.Id;
+                                                codeRec.Name = this.Allowance_Rule2__r.Allowance_Code__c;
+                                                this.Allowance_Code__r = codeRec;
+
+                                                // populate typeToRulesMap and codeToRulesMap for automatic allowances
+//                                                var allowanceRule = this.Allowance_Rule2__r;
+//                                                var allowanceType = allowanceRule.Allowance_Type__r;
+//
+//                                                if (!(allowanceType.Id in AllowanceLinesManageUtils.typeToRulesMap)) {
+//                                                    AllowanceLinesManageUtils.typeToRulesMap[allowanceType.Id] = [];
+//                                                }
+//                                                AllowanceLinesManageUtils.typeToRulesMap[allowanceType.Id].push(allowanceRule);
+                                            });
+                                        }
+                                        console.log(result.records);
+
+                                        deferred.resolve(result, event);
+                                    },
+                                    {escape: false}
+                                );
+
+                                return deferred.promise();
+                            },
+                            beforeEdit: function(e) {
+                                AllowanceLinesManageUtils.AllowanceLinesGridBeforeEdit.call(this, e);
+                            },
+                            saveRelatedListAction: '{!$RemoteAction.SalesOrderManageLinesExt.saveList}',
+                            aggregates: AllowanceLinesManageUtils.AllowanceLinesGridAggregates,
+                            lookupSearchFilters: []
+                        }
+                    );
+                    this.allowanceLinesGrid.bind("dataBound", $.proxy(AllowanceLinesManageUtils.ShowHideDeleteButton, { grid: this.allowanceLinesGrid }));
+
+                    // bind grid edit event
+                    this.allowanceLinesGrid.bind('edit', $.proxy(AllowanceLinesManageUtils.AllowanceLinesGridEdit, { grid: this.allowanceLinesGrid }));
+
+                    //Bind change event to set the allowance total when the user changes the Allowance amount on the page.
+                    this.allowanceLinesGrid.dataSource.bind('change', function() {
+                        AllowanceLinesManageUtils.SetAllowanceTotal();
+                        AllowanceLinesManageUtils.SetBillbackTotal();
+                    });
+
+                    this.allowanceLinesGrid.element.bind("OnSaveSuccess", function(){
+                        AllowanceLinesManageUtils.IsSaved = true;
+                    });
+
+                    this.allowanceLinesGrid.wrapper.off("click", ".grid-create-command");
+                    this.allowanceLinesGrid.wrapper.on("click", ".grid-create-command", $.proxy(KenandyErp.KendoGridActions.Create, { grid: this.allowanceLinesGrid}));
+
+                    this.allowanceLinesGrid.wrapper.off("click", ".grid-save-command");
+                    this.allowanceLinesGrid.wrapper.on("click", ".grid-save-command", $.proxy(KenandyErp.KendoGridActions.Save, {
+                        grid: this.allowanceLinesGrid,
+                        options: {
+                            saveAction: "{!$RemoteAction.SalesOrderManageLinesExt.saveList}",
+                            referenceFields: KenandyErp.KendoGridOptions.GetReferenceFields(AllowanceLinesManageUtils.soLineAllowancesFieldList),
+                            config: AllowanceLinesManageUtils.AllowanceLinesConfigJson,
+                            dateFields: KenandyErp.KendoGridOptions.GetDateFields(AllowanceLinesManageUtils.soLineAllowancesFieldList)
+                        }
+                    }));
+
+                    // $.each(this.allowanceLinesGrid.columns, function(){
+                    //     if (this.field == "Override_Value__c"){
+                    //         template: kendo.template('$(".kendoNumericTextBox").html()');
+                    //     }
+                    // });
+                },
+
+                GetFieldList: function(fieldList) {
+
+                    fieldList = JSON.parse(fieldList);
+
+                    $.each(fieldList, function() {
+
+                        var aggregateField = _.where(AllowanceLinesManageUtils.AllowanceLinesGridAggregates, {field: this.field})[0];
+
+                        if (aggregateField && this.field == aggregateField.field) {
+                            this.aggregate = aggregateField.aggregate;
+                        }
+
+                        if (this.field.toLowerCase() === 'allowance_type__c') {
+
+                            var title = this.title;
+
+                            this.editor = function(container, options) {
+
+                                // get the current model
+                                var model = options.model;
+                                var field = options.field;
+                                var refField = field;
+                                var required = '';
+
+                                if (refField.endsWith('__c')) {
+                                    refField = refField.replace(/__c/, '__r');
+                                } else if (refField.toLowerCase().endsWith('id')) {
+                                    refField = refField.substring(refField, refField.length - 2);
+                                }
+
+                                var autoComplete = $('<input ' + required + ' name="' + options.field + '" data-title="' + title + '" data-bind="value:' + refField + '.Name" />')
+                                                    .appendTo(container)
+                                                    .kendoLookup({
+                                                        minLength: 0,
+                                                        dataValueField: 'value',
+                                                        dataTextField: 'text',
+                                                        value: (options.model.get(refField) && options.model.get(refField + '.Name')) ? options.model.get(refField + '.Name') : null,
+                                                        dataSource: {
+                                                            data: AllowanceLinesManageUtils.allowanceTypes
+                                                        },
+                                                        suggest: false,
+                                                        highlightFirst: false,
+                                                        filter: "contains",
+                                                        placeholder: ($.support.placeholder) ? "Type to search " + title + "..." : "",
+                                                        select: function(e) {
+
+                                                            var dataItem;
+
+                                                            if (e.item) {
+                                                                dataItem = this.dataItem(e.item.index());
+                                                            }
+
+                                                            // update current model
+                                                            if (dataItem) {
+                                                                KenandyErp.KendoGridOptions.SetLookupModel(model, dataItem, field, refField);
+                                                            }
+                                                        },
+                                                        change: function(e) {
+
+                                                            var dataItem;
+
+                                                            // update current model
+                                                            if (this.current()) {
+                                                                dataItem = this.dataItem(this.current().index());
+                                                            }else {
+                                                                dataItem = { value: null, text: autoComplete.val() };                           
+                                                            }
+
+                                                            if (dataItem) {                             
+                                                                KenandyErp.KendoGridOptions.SetLookupModel(model, dataItem, field, refField);
+                                                            }
+                                                        }
+                                                    });
+                            };
+                        }
+                        if (this.field.toLowerCase() === 'allowance_rule2__c') {
+
+                            var title = this.title;
+
+                            this.editor = function(container, options) {
+
+                                // get the current model
+                                var model = options.model;
+                                var field = options.field;
+                                var refField = field;
+                                var required = '';
+
+                                if (refField.endsWith('__c')) {
+                                    refField = refField.replace(/__c/, '__r');
+                                } else if (refField.toLowerCase().endsWith('id')) {
+                                    refField = refField.substring(refField, refField.length - 2);
+                                }
+
+                                var allowanceRules = AllowanceLinesManageUtils.typeToRulesMap[model.Allowance_Type__c];
+                                var allowanceRuleSelection = [];
+                                $.each(allowanceRules, function (index, rule){
+                                    allowanceRuleSelection.push({selected: false, text: rule.Name, value: rule.Id});
+                                });
+
+
+                                var autoComplete = $('<input ' + required + ' name="' + options.field + '" data-title="' + title + '" data-bind="value:' + refField + '.Name" />')
+                                                    .appendTo(container)
+                                                    .kendoLookup({
+                                                        minLength: 0,
+                                                        dataValueField: 'value',
+                                                        dataTextField: 'text',
+                                                        value: (options.model.get(refField) && options.model.get(refField + '.Name')) ? options.model.get(refField + '.Name') : null,
+                                                        dataSource: {
+                                                            data: allowanceRuleSelection
+                                                        },
+                                                        suggest: false,
+                                                        highlightFirst: false,
+                                                        filter: "contains",
+                                                        placeholder: ($.support.placeholder) ? "Type to search " + title + "..." : "",
+                                                        select: function(e) {
+
+                                                            var dataItem;
+
+                                                            if (e.item) {
+                                                                dataItem = this.dataItem(e.item.index());
+                                                            }
+
+                                                            // update current model
+                                                            if (dataItem) {
+                                                                KenandyErp.KendoGridOptions.SetLookupModel(model, dataItem, field, refField);
+                                                            }
+                                                        },
+                                                        change: function(e) {
+
+                                                            var dataItem;
+
+                                                            // update current model
+                                                            if (this.current()) {
+                                                                dataItem = this.dataItem(this.current().index());
+                                                            }else {
+                                                                dataItem = { value: null, text: autoComplete.val() };
+                                                            }
+
+                                                            if (dataItem) {
+                                                                KenandyErp.KendoGridOptions.SetLookupModel(model, dataItem, field, refField);
+                                                            }
+                                                        }
+                                                    });
+                            };
+                        }
+                        else if (this.field.toLowerCase() === 'allowance_code__c') {
+
+                            var title = this.title;
+
+                            this.editor = function(container, options) {
+
+                                // get the current model
+                                var model = options.model;
+                                var field = options.field;
+                                var refField = field;
+                                var required = '';
+
+                                if (refField.endsWith('__c')) {
+                                    refField = refField.replace(/__c/, '__r');
+                                } else if (refField.toLowerCase().endsWith('id')) {
+                                    refField = refField.substring(refField, refField.length - 2);
+                                }
+
+                                var autoComplete = $('<input ' + required + ' name="' + options.field + '" data-title="' + title + '" data-bind="value:' + refField + '.Name" />')
+                                                    .appendTo(container)
+                                                    .kendoLookup({
+                                                        minLength: 0,
+                                                        dataValueField: 'value',
+                                                        dataTextField: 'text',
+                                                        value: (options.model.get(refField) && options.model.get(refField + '.Name')) ? options.model.get(refField + '.Name') : null,
+                                                        dataSource: {
+                                                            data: AllowanceLinesManageUtils.allowanceCodes
+                                                        },
+                                                        suggest: false,
+                                                        highlightFirst: false,
+                                                        filter: "contains",
+                                                        placeholder: ($.support.placeholder) ? "Type to search " + title + "..." : "",
+                                                        select: function(e) {
+
+                                                            var dataItem;
+
+                                                            if (e.item) {
+                                                                dataItem = this.dataItem(e.item.index());
+                                                            }
+
+                                                            // update current model
+                                                            if (dataItem) {
+                                                                KenandyErp.KendoGridOptions.SetLookupModel(model, dataItem, field, refField);
+                                                            }
+                                                        },
+                                                        change: function(e) {
+
+                                                            var dataItem;
+
+                                                            // update current model
+                                                            if (this.current()) {
+                                                                dataItem = this.dataItem(this.current().index());
+                                                            }else {
+                                                                dataItem = { value: null, text: autoComplete.val() };
+                                                            }
+
+                                                            if (dataItem) {
+                                                                KenandyErp.KendoGridOptions.SetLookupModel(model, dataItem, field, refField);
+                                                            }
+                                                        }
+                                                    });
+                            };
+                        } else if (this.field == 'BillBack_Commitment__c') {
+
+                            var self = this;
+
+                            this.footerTemplate = function(model) {
+
+                                var field = self.field;
+                                var aggregate = self.aggregate;
+                                var format = "{0:n" + self.scale + "}";
+                                var result = '';
+                                result = '<span class="bb-line-total">' + kendo.format(format, model[field].sum) + '</span>';
+                                return result;
+                            };
+                        } else if (this.field == 'Allowance_Amount__c') {
+
+                            var self = this;
+
+                            this.footerTemplate = function(model) {
+
+                                var field = self.field;
+                                var aggregate = self.aggregate;
+                                var format = "{0:n" + self.scale + "}";
+                                var result = '';
+                                result = '<span class="line-total">' + kendo.format(format, model[field].sum) + '</span>';
+                                return result;
+                            };
+                        }
+                    });
+
+                    return fieldList;
+                },
+
+                AllowanceLinesGridEdit : function(e){
+                    var self = this;
+                    var grid = self.grid;
+
+                    // To fetch sales order line details from Product
+                    var ele = $(e.container).find('input[name="Allowance_Type__c"]');
+                    ele.bind('blur',
+                        $.proxy(AllowanceLinesManageUtils.FetchAllowance, { grid: grid, options: {  config: AllowanceLinesManageUtils.AllowanceLinesConfigJson }})
+                    );
+                    var ele = $(e.container).find('input[name="Allowance_Rule2__c"]');
+                    ele.bind('blur',
+                        $.proxy(AllowanceLinesManageUtils.FetchAllowance, { grid: grid, options: {  config: AllowanceLinesManageUtils.AllowanceLinesConfigJson }})
+                    );
+
+                    var overrideEle = $(e.container).find('input[name="Override_Value__c"]');
+                    overrideEle.bind('blur',
+                        $.proxy(AllowanceLinesManageUtils.FetchAllowance, { grid: grid, options: {  config: AllowanceLinesManageUtils.AllowanceLinesConfigJson }})
+                    );
+
+                    var code = $(e.container).find('input[name="Allowance_Code__c"]');
+                    code.bind('blur',
+                        $.proxy(AllowanceLinesManageUtils.FetchAllowance, { grid: grid, options: {  config: AllowanceLinesManageUtils.AllowanceLinesConfigJson }})
+                    );
+
+                },
+
+                AllowanceLinesGridBeforeEdit : function(e){
+                    var grid = this;
+                    var dataItem = e.model; // get the row data
+
+                    if (dataItem.Allowance_Type__c == null ){
+                        e.model.set('Override_Value__c', null);
+                        e.model.set('Allowance_Amount__c', null);
+                        e.model.set('BillBack_Commitment__c', null);
+                    }
+
+                    var columnIndex = grid.cellIndex(e.container);
+                    var fieldName = grid.thead.find("th").eq(columnIndex).data("field");
+                    var isDefaultPrevented = true;
+
+                    var typeHasManyRules = AllowanceLinesManageUtils.typeToRulesMap != null && AllowanceLinesManageUtils.typeToRulesMap[dataItem.Allowance_Type__c] != null && AllowanceLinesManageUtils.typeToRulesMap[dataItem.Allowance_Type__c].length > 1;
+
+                    if  (
+                            (fieldName == 'Allowance_Type__c'
+                                && dataItem.get('Allowance_Type__c')
+                                && dataItem.get('Allowance_Type__r.Manual__c') == true)
+                            ||
+                            (fieldName == 'Override_Value__c'
+                                && dataItem.get('Allowance_Type__c')
+                                && dataItem.get('Allowance_Type__r.Allow_Override__c'))
+                            ||
+                            (fieldName == 'Allowance_Type__c'
+                                && dataItem.get('Id') == '')
+                            ||
+                            (fieldName == 'Allowance_Rule2__c' && typeHasManyRules)
+                            ||
+                            (fieldName == 'Allowance_Code__c'
+                                && dataItem.get('Allowance_Type__c') == null
+                                && dataItem.get('Allowance_Rule2__c') == null)
+                        )
+                    {
+
+                        isDefaultPrevented = false;
+                    }
+
+                    if (isDefaultPrevented) {
+
+                        e.preventDefault();
+                    }
+                },
+
+                ShowHideDeleteButton: function(e){
+                    var self= this;
+                    var grid = self.grid;
+                    var data = grid.dataSource.view();
+
+                    //Selects all delete buttons
+                    $.each(data, function(index, item) {
+                        var hideDeleteButton = true;
+
+                        if (item.get('Allowance_Type__r')
+                            && item.get('Allowance_Type__r.Manual__c') == true || item.get('Id') == '') {
+
+                            hideDeleteButton = false;
+                        }
+
+                        if (hideDeleteButton) {
+
+                            grid.tbody.find("tr[data-uid='" + item.uid + "']").find(".grid-delete-command").addClass('btnDisabled').attr('disabled', true)
+                        }
+                    });
+                },
+
+                GetLineTotal: function() {
+                    if(AllowanceLinesManageUtils.allowanceLinesGrid && AllowanceLinesManageUtils.allowanceLinesGrid.dataSource.total() > 0){
+                        var sum = AllowanceLinesManageUtils.allowanceLinesGrid.dataSource.aggregates().Allowance_Amount__c.sum;
+                        return sum != null ? sum : 0;
+                    } else {
+                        return 0;
+                    }
+                },
+
+                GetLineBBTotal: function() {
+                    if(AllowanceLinesManageUtils.allowanceLinesGrid && AllowanceLinesManageUtils.allowanceLinesGrid.dataSource.total() > 0){
+                        var sum = AllowanceLinesManageUtils.allowanceLinesGrid.dataSource.aggregates().BillBack_Commitment__c.sum;
+                        return sum != null ? sum : 0;
+                    } else {
+                        return 0;
+                    }
+                },
+
+                SetBillbackTotal: function() {
+                    var linesAmount = AllowanceLinesManageUtils.GetLineBBTotal();
+                    $('.bb-line-total').html(kendo.toString('Billback Total : ' + linesAmount, 'n2'));
+                },
+
+                SetAllowanceTotal: function() {
+                    var linesAmount = AllowanceLinesManageUtils.GetLineTotal();                    
+                    $('.line-total').html(kendo.toString('Allowance Total : ' + linesAmount, 'n2'));
+                },
+
+                FetchAllowance: function(e){
+
+                    var  messageElement = $('#GridSOLineAllowances').closest("div.grid-container").find("div.grid-message:first");
+
+                    var self = this;
+                    var grid = this.grid;
+                    var options = self.options;
+                    var cell = grid.editable.element;
+                    var row = $(e.target).closest("tr"); //get the row
+                    var dataItem = grid.dataItem(row); // get the row data
+
+                    var allowanceRuleId = null;
+
+                    /*
+                        Determine how to populate the Allowance Rule:
+                            If allowance rule is already populated, use that Id to fetch allowance amount.
+                            If allowance code is provided, use the code to fetch the rule in the codeToRuleMap map
+                            If the allownace type is provided, check to see if it has many rules associated to it or one rule. If 1 rule, use that one. If many, return nothing, user will specify the rule.
+                    */
+                    if (dataItem.Allowance_Rule2__c != null){
+                        allowanceRuleId = dataItem.Allowance_Rule2__c;
+                    }
+                    else if (dataItem.Allowance_Code__c != null && dataItem.Allowance_Code__c != ""){
+                        if (AllowanceLinesManageUtils.codeToRuleMap[dataItem.Allowance_Code__c] == null){
+                            KenandyErp.Message('Could not find Allowance Code: ' + dataItem.Allowance_Code__c , KenandyErp.MessageType.Error, messageElement);
+                            return;
+                        }
+
+                        allowanceRuleId = AllowanceLinesManageUtils.codeToRuleMap[dataItem.Allowance_Code__c].Id;
+                    }
+                    else if (dataItem.Allowance_Type__c != null){ //dataItem.get('Allowance_Type__c')
+                        if (AllowanceLinesManageUtils.typeToRulesMap[dataItem.Allowance_Type__c].length == 1){
+                            allowanceRuleId = AllowanceLinesManageUtils.typeToRulesMap[dataItem.Allowance_Type__c][0].Id
+                        } else {
+                            return;
+                        }
+                    }
+
+                    // accepts 0 as value
+                    var overrideValue = dataItem.get('Override_Value__c') != null ? dataItem.get('Override_Value__c') : null;
+
+                    var soLine = null;
+                    var headerDateFields = KenandyErp.KendoGridOptions.GetDateFields(SalesOrderManageLinesUtils.SalesOrderLinesFieldList);
+                    var headerRowsList = [];
+                    var headerRows = [];
+                    
+                    $.each(headerDateFields, function(index, item) {
+                        item.field = item.field.replace('soLine.', '');
+                    });
+
+                    headerRowsList.push(AllowanceLinesManageUtils.SOLine);
+                    
+                    headerRows = $.map(headerRowsList, function(item, index) {
+                        item = item.toJSON();
+                        item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+                        
+                        return item;
+                    });
+                    
+                    if (headerRows.length > 0) {
+                        headerRows = Serializer.ParameterMap(headerRows);
+                        soLine = headerRows[0];
+                    }
+
+                    if(allowanceRuleId != null){
+                        KenandyErp.BlockUI($('#GridSOLineAllowances'));
+
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.SalesOrderManageLinesExt.fetchAllowance}',
+                            allowanceRuleId,
+                            soLine.Id,
+                            overrideValue,
+                            function (result, event) {
+                                KenandyErp.UnBlockUI($('#GridSOLineAllowances'));
+
+                                if (event.type == 'exception') {
+                                    KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                                } else {
+                                    KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+
+                                    if (result.success) {
+
+                                        if (result.records && result.records.length > 0) {
+
+                                            var allowanceApplied = result.records[0];
+                                            var allowanceType = result.records[0].Allowance_Type__r;
+                                            var allowanceRule = result.records[0].Allowance_Rule2__r;
+
+                                            var allowanceTypeId = (allowanceType.Id) ? allowanceType.Id : null;
+                                            var allowanceRuleId = (allowanceRule.Id) ? allowanceRule.Id : null;
+
+
+                                            // TO-Do: make this more dynamic
+                                            dataItem.set('Allowance_Type__c', allowanceTypeId);
+                                            dataItem.set('Allowance_Type__r', allowanceType);
+
+                                            dataItem.set('Allowance_Rule2__c', allowanceRuleId);
+                                            dataItem.set('Allowance_Rule2__r', allowanceRule);
+
+                                            dataItem.set('Allowance_Class__c', allowanceType.Allowance_Class__c);
+
+
+                                            if (allowanceRule.Allowance_Code__c!= null){
+                                                dataItem.set('Allowance_Code__c', allowanceRule.Allowance_Code__c);
+
+                                                var codeRecord = {};
+                                                codeRecord.Name = allowanceRule.Allowance_Code__c;
+                                                codeRecord.Id = allowanceRuleId;
+                                                dataItem.set('Allowance_Code__r', codeRecord);
+                                            }
+
+                                            dataItem.set('Allowance_Amount__c', allowanceApplied.Allowance_Amount__c);
+                                            dataItem.set('BillBack_Commitment__c', allowanceApplied.BillBack_Commitment__c);
+
+                                            dataItem.set('Beneficiary__c', allowanceApplied.Beneficiary__c);
+                                            dataItem.set('Beneficiary__r', allowanceApplied.Beneficiary__r);
+
+                                            dataItem.set('Sales_Order_Line__c', allowanceApplied.Sales_Order_Line__c);
+                                            dataItem.set('Unique_Key__c', allowanceApplied.Unique_Key__c);
+                                            dataItem.set('Source__c', allowanceApplied.Source__c);
+
+
+                                        }
+                                    } else if (!result.success){
+                                        KenandyErp.Message(result.messages[0].message, KenandyErp.MessageType.Error, messageElement);
+                                    }
+                                }
+                            },
+                            {escape: false}
+                        );
+                    }
+                }
+            };
+        }();
+    </script>        
+
+</apex:page>

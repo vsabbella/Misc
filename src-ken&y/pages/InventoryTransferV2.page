@@ -1,0 +1,1495 @@
+<apex:page showHeader="true" sidebar="true" extensions="InventoryTransferExtV2" standardController="Inventory_Change__c" tabStyle="Inventory_Change__c" docType="html-5.0">
+    <style type="text/css">
+        .line-total {
+            border: 2px dashed !important;
+            font-weight: bold;
+            width: 100px;
+            text-align: right;
+        }
+        
+        .text-red { border-color: red !important; }
+        .text-green { border-color: green !important; }
+        
+        .invoiced-amount {
+            padding: .3em .4em !important;
+        }
+
+        .column-label {
+            vertical-align: middle !important;
+            width: 15%;
+        }
+        
+        .column-field {
+            vertical-align: middle !important;
+            width: 85%;
+        }
+     </style>
+    
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+    
+    <apex:form id="InventoryTransferForm">
+        <div class="page-container">
+            <apex:sectionHeader title="Inventory Transfer and Update" help="{!URLFOR($Page.HelpInventoryTransfer)}"/>
+            
+            <div class="page-message"></div>
+            <apex:pageMessages id="msgs"/>
+            
+            <apex:pageBlock id="InventoryTransferHeaderDetailBlock">  
+
+                <div id="InventoryChangeHeaderDetailList">
+                </div>
+                
+                <apex:pageBlockButtons location="top">
+                    <apex:outputPanel layout="none">
+                        <input type="button" value="Search" class="btn search-command" onclick="InventoryTransferUtil.RenderSkidsGrid();"/>
+                        <input type="button" value="Save" class="btn save-command" onclick="InventoryTransferUtil.Save();" accesskey="s"/>
+                        <input type="button" value="Save & New" class="btn save-new-command" />
+                        <a href="javascript:reloadPage();" style="text-decoration: none;"><input type="button" value="Cancel" class="btn cancel-command" /></a>
+                    </apex:outputPanel>
+                </apex:pageBlockButtons>
+                
+                <div id="InventoryChangeFiltersDetailList">
+                </div>
+
+                <div id="InventoryChangeDefaultsDetailList">
+                </div>
+            </apex:pageBlock>
+            
+           
+            <apex:pageBlock title="Inventory Information">    
+                <div class="grid-container">
+                    <div class="grid-message"></div>
+                    <div id="SkidsGrid"></div>
+                </div>
+                
+                <div class="serialWindow">
+                    <div class="grid-container k-block k-info-colored">
+                        <div id="availableSerials" style="width:{!gridSize}px" />
+                        <br />
+                        <div id="allocatedSerials" style="width:{!gridSize}px" />
+                    </div>    
+                </div>
+                
+            </apex:pageBlock>
+        </div>
+    </apex:form>
+
+    <script type="text/javascript">
+        
+        var serialFieldList = JSONUtils.Parse('{!serialFieldList}');
+        var allocatedSerialFieldList = JSON.parse("{!JSENCODE(allocatedSerialFields)}");
+        var serialDetailData = [];
+        var itemRecord = {};
+        var serialControl = false;
+        var serialLinesWindow;
+        var record = 0;
+        var record2 = 0;
+        var showSerialTopBar = {!serialShowTopBar};
+
+        var cachedItemId;
+        var cachedFacilityId;
+        var cachedFilterSkid;
+        
+        var renderRecordNumber = function() {
+            return ++record;
+        };
+
+        var renderRecordNumber2 = function() {
+            return ++record2;
+        };
+        
+        function reloadPage() {
+            window.location.reload(false);
+        }
+        
+        var facilityName = function() {
+            var facility = $("#Facility__c").val();
+            if(!facility){
+                facility = $('#InventoryChangeHeaderDetailList').data('kendoDetailList').dataSource.data()[0].Facility__c; 
+            }
+            
+            if(!facility){
+                facility = null;
+            }
+            else{
+                facility = '\''+facility+'\'';
+            }
+            
+            return facility;
+        }
+        
+        var FromLocationName = function() {
+            var fromLoc = $("#Location__c").val();
+            if(!fromLoc){
+                fromLoc = null;
+            }
+            else{
+                fromLoc = '\''+fromLoc+'\'';
+            }
+            return fromLoc;
+        }
+        
+        var ToLocationName = function() {
+            var toLoc = $("#To_Location__c").val();
+            if(!toLoc){
+                toLoc = null;
+            }
+            else{
+                toLoc = '\''+toLoc+'\'';
+            }
+            return toLoc;
+        }
+    
+        var invChangeHeaderData = function(readOptions) {
+            var deferred = $.Deferred();
+
+            setTimeout(function() {
+                var records = [];
+                
+                delete InventoryTransferUtil.inventoryChangeHeaderData['attributes'];
+                KenandyErp.CleanNamespace(InventoryTransferUtil.inventoryChangeHeaderData, '{!NamespaceUU}');
+                if(!InventoryTransferUtil.inventoryChangeHeaderData.Facility__c){
+                    InventoryTransferUtil.inventoryChangeHeaderData.Facility__c="";
+                    InventoryTransferUtil.inventoryChangeHeaderData.To_Facility__c="";
+                    InventoryTransferUtil.inventoryChangeHeaderData.To_Facility__r="";
+                }
+                else{
+                    InventoryTransferUtil.inventoryChangeHeaderData.To_Facility__c = InventoryTransferUtil.inventoryChangeHeaderData.Facility__c;
+                    InventoryTransferUtil.inventoryChangeHeaderData.To_Facility__r = InventoryTransferUtil.inventoryChangeHeaderData.Facility__r;
+                }
+                records.push(InventoryTransferUtil.inventoryChangeHeaderData);
+           
+                deferred.resolve({ records: records, success: true, total: records.total }, { statusCode: 200 });
+            }, 100);
+            
+            return deferred.promise();
+        };
+        
+        var skObjData = function(readOptions) {
+            var deferred = $.Deferred();
+
+            setTimeout(function() {
+                var records = [];
+                
+                delete InventoryTransferUtil.skidObjData['attributes'];
+                
+                records.push(InventoryTransferUtil.skidObjData);
+           
+                deferred.resolve({ records: records, success: true, total: records.total }, { statusCode: 200 });
+            }, 100);
+            
+            return deferred.promise();
+        };
+        
+        var skidsData = function(readOptions) {
+            var deferred = $.Deferred();
+            var facility = $("#Facility__c").val();
+            var toFacility = $("#To_Facility__c").val();
+            var item = $("#Item__c").val();
+            var itemName = $("#Item__r\\.Name").val();
+            var toLocation = $("#To_Location__c").val();
+            var toBin = $("#To_Bin__c").val();
+            var toPKGUOM = $("#To_Packaging_UOM__c").val();
+            if(!toPKGUOM){
+                toPKGUOM= '';
+            }
+            var attributesTocorrect = $("#AttributeToCorrect").val();
+            
+            var detailList = $('#InventoryChangeHeaderDetailList').data('kendoDetailList');
+                    
+            var detailListforfilters = $('#InventoryChangeFiltersDetailList').data('kendoDetailList');
+                
+            
+            if(!facility){
+                facility = $('#InventoryChangeHeaderDetailList').data('kendoDetailList').dataSource.data()[0].Facility__c;
+            }
+            if(!toFacility){
+                toFacility = $('#InventoryChangeHeaderDetailList').data('kendoDetailList').dataSource.data()[0].To_Facility__c;
+            }
+            
+            var headerSkidRows = [];
+            var headerSkidRowsList = [];
+            var detailListforfilters = $('#InventoryChangeFiltersDetailList').data('kendoDetailList');
+            var headerDateFields = detailListforfilters.getDateFields();
+            
+            headerSkidRowsList.push(InventoryTransferUtil.skidObjData);
+ 
+            headerSkidRows = $.map(headerSkidRowsList, function(item, index) {
+                               
+              //item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+              return item;
+            });
+            
+            
+            
+            if (headerSkidRows.length > 0) {
+                headerSkidRows = Serializer.ParameterMap(headerSkidRows);
+            }
+            headerDateFields = headerDateFields ? _.pluck(headerDateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+            
+            var deferred = $.Deferred();
+            var messageElement = $(".page-message");
+            KenandyErp.ClearMessage(messageElement);
+            if (!item || !facility) {
+                setTimeout(function() {
+                    deferred.resolve({ records: [ ], success: true }, { statusCode: 200 });
+                }, 100);
+            } else {
+                $('#InventoryChangeHeaderDetailList').data('kendoDetailList').dataSource.data()[0].Item__c = item;
+                $('#InventoryChangeHeaderDetailList').data('kendoDetailList').dataSource.data()[0].Item__r = {};
+                $('#InventoryChangeHeaderDetailList').data('kendoDetailList').dataSource.data()[0].Item__r.Id = item;
+                $('#InventoryChangeHeaderDetailList').data('kendoDetailList').dataSource.data()[0].Item__r.Name = itemName;
+
+                cachedItemId = item;
+                cachedFacilityId = facility;
+                cachedFilterSkid = InventoryTransferUtil.skidObjData;
+
+                var skidAttrDefaultObj = {};
+                var optionalFilters = {};
+                var optionalFilters_ReferenceType = (_.groupBy(InventoryTransferUtil.invAdditionalFieldList, function(filter){
+                    return filter["fieldtype"];
+                }))['reference'];
+                var optionalFilterList = _.pluck(optionalFilters_ReferenceType,'field');
+                optionalFilterList.splice(optionalFilterList.indexOf('Bin__c'),1);
+                optionalFilterList.splice(optionalFilterList.indexOf('Location__c'),1);
+                optionalFilterList.forEach(function(element){
+                    optionalFilters[element]='';
+                });
+
+
+                if(InventoryTransferUtil.InventoryChangeFiltersDetailList){
+                    var optionalFilterData = InventoryTransferUtil.InventoryChangeFiltersDetailList.data;
+                    Object.keys(optionalFilters).forEach(function(element){
+                        if(optionalFilterData[element] && optionalFilterData[element]!=undefined)
+                            optionalFilters[element] = optionalFilterData[element];
+
+                    });
+                }
+
+                Object.keys(optionalFilters,
+                        function(element){
+                    if(!optionalFilters[element]){
+                        delete optionalFilters[element];
+                    }
+                });
+
+                // Updates the grid with chosen attributes.
+                updateChosenAttributes = function(result){
+                    var NS = InventoryTransferUtil.NameSpaceUU;
+
+                    var chosenAttributes = $("#AttributeToCorrect").data("kendoMultiSelect").value();
+
+                    chosenAttributes.forEach(function(element){
+
+                        result.records.forEach(function(record){
+                            record.toskid[NS.concat(element)] = getDefaultToValue(element,record,NS).value__c;//InventoryTransferUtil.InventoryChangeDefaultsDetailList.data[element];
+                            record.toskid[NS.concat(element.replace('__c','__r'))] =getDefaultToValue(element,record,NS).value__r; //InventoryTransferUtil.InventoryChangeDefaultsDetailList.data[element.replace('__c','__r')];
+                        })
+
+                    });
+
+                },
+
+                getDefaultToValue= function(element,record,NS){
+                    var elementwithPrefix = 'To_'+element;
+                    var value__c = InventoryTransferUtil.InventoryChangeDefaultsDetailList.data[elementwithPrefix];
+                    var value__r = InventoryTransferUtil.InventoryChangeDefaultsDetailList.data[elementwithPrefix.replace('__c','__r')];
+                    if(!value__c){
+                        value__c = record.skid[NS.concat(element)] ;
+                        value__r=record.skid[NS.concat(element.replace('__c','__r'))];
+                    }
+                    return {
+                        value__c:value__c,
+                        value__r:value__r
+                    }
+                },
+
+
+                Visualforce.remoting.Manager.invokeAction(
+                    "{!$RemoteAction.InventoryTransferExtV2.getSkids}",
+                    item,
+                    facility,
+                    InventoryTransferUtil.skidObjData,
+                    toFacility,
+                    toLocation,
+                    toBin,
+                    toPKGUOM,
+                    JSON.stringify(optionalFilters),
+                    attributesTocorrect,
+                    headerDateFields,
+                    function(result,event) {
+                        KenandyErp.UnBlockUI();
+
+                        if (event.type == "exception") {
+                            KenandyErp.Message(event.message,KenandyErp.MessageType.Error,messageElement);
+                        } else if (result.success) {
+                            //this will update the grid's to-attributes(To Bin, To color, To Lot etc)
+                            updateChosenAttributes(result);
+                            deferred.resolve(result,event);
+                        } else {
+                            KenandyErp.Messages(result.messages,messageElement);
+                        }
+                    },
+                    { escape: false }
+                );
+            }
+            return deferred.promise();
+        };
+                
+        $(document).on('KenandyErpReady', function(e) {
+            KenandyErp.KendoGridOptions.DefaultPageSize = KenandyErp.KendoGridOptions.PageSizes[0];
+                            
+            InventoryTransferUtil.Init({
+                InventoryChangeCompany: '{!JSENCODE(inventoryChange.Company__c)}',
+                inventoryChangeHeaderData: '{!JSENCODE(inventoryChangeJson)}',
+                skidObjData: '{!JSENCODE(SkidObjJson)}',
+                inventoryChangeHeaderFieldList: InventoryTransferUtil.GetFieldList('{!JSENCODE(inventoryChangeHeaderFieldList)}'),
+                skidsConfigJson: '{!JSENCODE(skidsConfigJson)}',
+                NameSpaceUU:'{!JSENCODE(NamespaceUU)}'
+            });
+        });
+                
+        var InventoryTransferUtil = function() {
+            
+            return {
+                NameSpaceUU:null,
+                InventoryChangeCompany: null,
+                InventoryChangeHeaderDetailList: null,
+                SkidsGrid: null,
+                inventoryChangeHeaderData: null,
+                inventoryChangeHeaderFieldList: null,
+                skidsConfigJson: null,
+                skidsFieldList: null, 
+                invAdditionalFieldList:null,
+                defaultToFiledList:null,
+                trackedAttributeFieldList:null,
+                attrNames:null,
+                skidObjData:null,
+                attrFieldsByFieldAPIStr: null,
+
+                Init: function(args) {
+                    this.NameSpaceUU=args.NameSpaceUU;
+                    this.InventoryChangeCompany = args.InventoryChangeCompany;
+                    this.inventoryChangeHeaderData = JSON.parse(args.inventoryChangeHeaderData);
+                    this.skidObjData = JSON.parse(args.skidObjData);
+                    this.inventoryChangeHeaderFieldList = args.inventoryChangeHeaderFieldList;
+                    this.skidsConfigJson = JSON.parse(args.skidsConfigJson);
+                    this.defaultToFiledList = [];
+                    this.trackedAttributeFieldList=[];
+                    this.inventoryChangeHeaderFieldList.push ({
+                    	editable: true,
+	                	field: 'AttributeToCorrect',
+	                	fieldtype: 'multipicklist',
+	                	hidden: false,
+	                	title:'Attributes To Correct',
+	                	referenceTo: 'Location__c',
+	                	selectList:[]
+                    });                 
+                                     
+                    this.RenderWidgets();
+                },
+
+                GetFieldList: function(fieldList) {
+
+                    fieldList = JSON.parse(fieldList);
+                    return fieldList;
+                },
+                
+                
+                ManageSerials: function(e) {
+                    var self = this;
+                    var grid = this.grid;
+                    var sw = grid.dataItem($(e.target).closest("tr"));
+                    var serButtons = [KenandyErp.KendoGridOptions.CommandType.Search];
+
+                    var serialAttributes = JSON.parse("{!JSENCODE(serialAttributes)}");
+                    var serialFields = JSON.parse(JSON.stringify(this.serialFieldList));
+                    var allocatedSerialFields = JSON.parse(JSON.stringify(allocatedSerialFieldList));
+					var serialReferenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(serialFields);
+					var allocatedReferenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(allocatedSerialFields);
+
+                    var i = serialFields.length;
+                    while (i--) {
+                        if (_.contains(serialAttributes,serialFields[i].field.toLowerCase()) && (!sw.skid.Item__r.Item_Attribute__r || !sw.skid.Item__r.Item_Attribute__r[serialFields[i].field])) {
+                            serialFields.splice(i,1);
+                            allocatedSerialFields.splice(i,1);
+                        }
+                    }
+
+                    if (!(sw.skid.Input_Quantity__c >= 0)) {
+                        KenandyErp.Alert("Please enter a non-negative count quantity");
+                        return;
+                    }
+
+                    var availableSerials = InventoryTransferUtil.GetSerialListById(sw.uid);
+                    var allocatedSerials = InventoryTransferUtil.GetSerialListById(sw.uid + "Allocated");
+                    var convFactorForSerials = 1;
+                    if(sw.conversionFactor){
+                        convFactorForSerials = sw.conversionFactor;
+                    }
+
+                    if (availableSerials.length == 0 && allocatedSerials.length == 0 && sw.serialList && sw.serialList.length > 0) {
+                        $.each(sw.serialList, function(i,serial) {
+                            serial.SerialName = { Id: serial.Id, Name: serial.Name };
+                            serial.IsSelected__custom = false;
+
+                            if (!serial.Allocated_SKID__c) {
+                                availableSerials.push(serial);
+                            } else {
+                                allocatedSerials.push(serial);
+                            }
+                        });
+
+                        if (availableSerials.length <= (sw.skid.Input_Quantity__c*convFactorForSerials)) {
+                            $.each(availableSerials, function(i,serial) {
+                                serial.IsSelected__custom = true;
+                            });
+                        }
+                    }
+
+                    var getSerialModelAvailable = function() {
+                        var fields = KenandyErp.KendoGridOptions.GetFields(serialFields);
+                        fields.IsSelected__custom = { type: "boolean" };
+                        return kendo.data.Model.define({ id: "Id", fields: fields });
+                    };
+
+                    var getSerialModelAllocated = function() {
+                        return kendo.data.Model.define({ id: "Id", fields: KenandyErp.KendoGridOptions.GetFields(allocatedSerialFields) });
+                    };
+
+                    var determineTotalAvailable = function() {
+                        return availableSerials.length;
+                    };
+
+                    var determineTotalAllocated = function() {
+                        return allocatedSerials.length;
+                    };
+                    
+                    var getSerialDataSourceAvailable = function() {
+                        return new kendo.data.DataSource({
+                            data: availableSerials,
+                            batch: true,
+                            pageSize: 10,
+                            serverPaging: false,
+                            schema: {
+                                model: getSerialModelAvailable(),
+                                total: determineTotalAvailable,
+                                parse: function(response) {
+                                    $.each(response,function(i, item) {
+                                        item = Serializer.ConvertFromSFDCDate(item, { dateFields: KenandyErp.KendoGridOptions.GetDateFields(serialFields) });
+                                    });
+                                    return response;
+                                }
+                            },
+                            change: function() { InventoryTransferUtil.UpdateSerialList(sw.uid,this.data()); }           
+                        });
+                    };
+
+                    var getSerialDataSourceAllocated = function() {
+                        return new kendo.data.DataSource({
+                            data: allocatedSerials,
+                            batch: true,
+                            pageSize: 10,
+                            serverPaging: false,
+                            schema: {
+                                model: getSerialModelAllocated(),
+                                total: determineTotalAllocated,
+                                parse: function(response) {
+                                    $.each(response,function(i, item) {
+                                        item = Serializer.ConvertFromSFDCDate(item, { dateFields: KenandyErp.KendoGridOptions.GetDateFields(allocatedSerialFields) });
+                                    });
+                                    return response;
+                                }
+                            },
+                            change: function() { InventoryTransferUtil.UpdateSerialList(sw.uid + "Allocated", this.data()); }           
+                        });
+                    };
+
+                    var getSerialColumnsAvailable = function() {
+                        var searchFilters = [ ];
+                        if (sw.skid.Id) {
+                            searchFilters.push({ field: "SerialNameId", filter: "SKID__c = \'" + sw.skid.Id + "\' AND Allocated_SKID__c = null" });
+                        } else {
+                            searchFilters.push({ field: "SerialNameId", filter: "Id = " + sw.skid.Id });
+                        }
+                        
+                        var columns = KenandyErp.KendoGridOptions.GetColumns(serialFields, { lookupSearchAction: "{!$RemoteAction.InventoryTransferExtV2.lookupSearchFilter}", lookupSearchFilters: searchFilters, validateLookupOnBlur: true });
+                        columns[0].template= "#= renderRecordNumber() #";
+                        
+                        // Add checkbox column
+                        columns.unshift({ field: 'IsSelected__custom', filterable: false, sortable: false, template: "<input type='checkbox' data-bind='IsSelected__custom' #= IsSelected__custom ? checked='checked': '' # class='grid-select-one' />", headerTemplate: "<input type='checkbox' class='grid-select-all' />", width: 30, attributes: { class: 'kndy-text-left' }, headerAttributes: { class: 'kndy-text-left' } });
+                        
+                        return columns;
+                    };
+
+                    var getSerialColumnsAllocated = function() {
+                        var columns = KenandyErp.KendoGridOptions.GetColumns(allocatedSerialFields);
+                        columns[0].template= "#= renderRecordNumber2() #";
+                        return columns;
+                    };
+
+                    var getToolbar = function() {
+                        return KenandyErp.KendoGridOptions.GetToolbarButtons(serButtons);
+                    };
+
+                    if (!serialLinesWindow) {
+                        serialLinesWindow = $(".serialWindow").kendoWindow({
+                            title: "Serials",
+                            resizable: false,
+                            modal: true,
+                            visible: false,
+                            content: { }
+                        }).data("kendoWindow");
+                    }
+                    
+                    if ($("#availableSerials").data("kendoGrid")) {
+                        $("#availableSerials").off();
+                        $("#availableSerials").data("kendoGrid").destroy();
+                        $("#availableSerials").empty();
+                    }
+
+                    var serialGridAvailable = $("#availableSerials").kendoGrid({
+                        dataSource: getSerialDataSourceAvailable(), 
+                        navigatable: true,
+                        pageable: { 
+                            input: true,
+                            numeric: false, 
+                            pageSizes: KenandyErp.KendoGridOptions.PageSizes,
+                        },
+                        columns: getSerialColumnsAvailable(),
+                        sortable: true,
+                        filterable: true,
+                        toolbar: getToolbar(),
+                        resizable: true,
+                        editable: true,
+                        dataBinding: function() { record = (this.dataSource.page() - 1) * this.dataSource.pageSize(); },
+                        dataBound: function() { record = 0; }
+                    }).data('kendoGrid');
+                    
+                    if ( showSerialTopBar ) {
+                        $("#availableSerials").prepend('<div class="availableSerials-pager"/>');
+                        $('.availableSerials-pager').kendoPager({
+                            dataSource: serialGridAvailable.dataSource,
+                            pageSizes: [10, 25, 50, 100, 200],
+                            input: true,
+                            numeric: false
+                        });
+                    }
+
+					// bind click events to the custom buttons
+                    KenandyErp.KendoGridOptions.BindEvents(serialGridAvailable, serButtons, 
+                        { 
+                            referenceFields: serialReferenceFields
+                        }
+                    );
+                    serialGridAvailable.thead.on("change", ".grid-select-all", $.proxy(KenandyErp.KendoGridActions.SelectAll, { grid: serialGridAvailable }));
+                    serialGridAvailable.tbody.on("change", ".grid-select-one", $.proxy(KenandyErp.KendoGridActions.Select, { grid: serialGridAvailable }));
+                    serialGridAvailable.bind('edit', $.proxy(InventoryTransferUtil.EditSerials, { grid: serialGridAvailable })); 
+                    
+                    serialGridAvailable.thead.find(".grid-select-all").prop("checked", serialGridAvailable.tbody.find(".grid-select-one").length > 0 && !serialGridAvailable.tbody.find(".grid-select-one").is(":not(:checked)"));
+
+                    if ($("#allocatedSerials").data("kendoGrid")) {
+                        $("#allocatedSerials").off();
+                        $("#allocatedSerials").data("kendoGrid").destroy();
+                        $("#allocatedSerials").empty();
+                    }
+
+                    var serialGridAllocated = $("#allocatedSerials").kendoGrid({
+                        dataSource: getSerialDataSourceAllocated(), 
+                        navigatable: true,
+                        pageable: { 
+                            input: true,
+                            numeric: false, 
+                            pageSizes: KenandyErp.KendoGridOptions.PageSizes,
+                        },
+                        columns: getSerialColumnsAllocated(),
+                        toolbar: getToolbar(),
+                        sortable: true,
+                        filterable: true,
+                        resizable: true,
+                        editable: false,
+                        dataBinding: function() { record2 = (this.dataSource.page() - 1) * this.dataSource.pageSize(); },
+                        dataBound: function() { record2 = 0; }
+                    }).data("kendoGrid");
+                    
+                    if ( showSerialTopBar ) {
+                        $("#allocatedSerials").prepend('<div class="allocatedSerials-pager"/>');
+                        $('.allocatedSerials-pager').kendoPager({
+                            dataSource: serialGridAllocated.dataSource,
+                            pageSizes: [10, 25, 50, 100, 200],
+                            input: true,
+                            numeric: false
+                        });
+                    }
+
+                    KenandyErp.KendoGridOptions.BindEvents(serialGridAllocated, serButtons, 
+                       { 
+                           referenceFields: allocatedReferenceFields
+                       }
+                    );
+
+                    //$(".k-grid-toolbar","#allocatedSerials").empty();
+                    $(".k-grid-toolbar","#allocatedSerials").prepend("<h1>Allocated Serials</h1>");
+                    
+                    serialLinesWindow.open().center();
+                },
+                
+                GetSerialListById: function(id) {
+                    var data = _.where(serialDetailData, {Id: id});
+                    var serialList = [];
+                    
+                    if (data.length > 0) {
+                        serialList = data[0].serialList;
+                    }
+                    
+                    return serialList;
+                },
+                
+                UpdateSerialList: function(id,serialList) {
+                    var found = false;
+                    
+                    $.each(serialDetailData, function() {
+                        if (this.Id == id) {
+                            this.serialList = serialList;
+                            found = true;
+                            return false;
+                        }
+                    });
+                    
+                    if (!found) {
+                        serialDetailData.push({ Id: id, serialList: serialList });
+                    }
+                },
+                
+                EditSerials: function(e) {
+		   			var self = this;
+		   			var grid = self.grid;
+		   			var row = e.container.closest('tr');
+                    var dataItem = this.grid.dataItem(row);
+                    var fieldName = e.container.find("input").length > 0 && e.container.find("input").attr("name") ? e.container.find("input").attr("name").toLowerCase(): '';
+                    
+                    if(fieldName != "serialnameid" && (!dataItem.IsSelected__custom)){
+                        e.sender.closeCell();
+                    }
+		   			
+		   			var serialFieldList = '{!serialFieldList}';
+            	    $(e.container).find('input[name="SerialNameId"]').bind('blur',
+	            		$.proxy(KenandyErp.RefreshSerialAttributes, { grid: grid, serialFieldList: serialFieldList,namespace: '{!NamespaceUU}',  refreshAction:'{!$RemoteAction.InventoryTransferExtV2.refreshSerialAttr}' })
+            	    );
+            	    
+            	    
+                },
+                
+                RenderWidgets: function() {
+                    // Show requisition header detail list
+                    var headerLookupSearchFilters = [];
+                    var companyId = InventoryTransferUtil.InventoryChangeCompany;
+                    headerLookupSearchFilters.push({ field: "Item__c", filter: "Company__c = \'"+companyId+"\' and Non_Inventory__c = false" });
+                    headerLookupSearchFilters.push({ field: "Facility__c", filter: "Company__c = \'"+companyId+"\'" });
+                    headerLookupSearchFilters.push({ field: "To_Location__c", filter: "Facility__c = \'#=To_Facility__c#\'" });
+                    headerLookupSearchFilters.push({ field: "Reason_Code__c", filter: "Type__c=\'Inventory Transfer\'" });
+                       
+                    // Destroy InventoryChangeHeaderDetailList
+                    if (this.InventoryChangeHeaderDetailList) {
+                        this.InventoryChangeHeaderDetailList.destroy();
+                        $('#InventoryChangeHeaderDetailList').empty();
+                    }
+
+
+                    // Move the fields To Location and To Bin from header section to Default to Section.
+                    var headerFieldsIndexedByFieldAPI = _.indexBy(InventoryTransferUtil.inventoryChangeHeaderFieldList,'field' );
+                    Array.prototype.push.apply(InventoryTransferUtil.defaultToFiledList, [headerFieldsIndexedByFieldAPI['To_Location__c'],
+                                                                                          headerFieldsIndexedByFieldAPI['To_Bin__c']]);
+
+                    delete headerFieldsIndexedByFieldAPI['To_Location__c'];
+                    delete headerFieldsIndexedByFieldAPI['To_Bin__c'];
+
+                    InventoryTransferUtil.inventoryChangeHeaderFieldList.splice(0,InventoryTransferUtil.inventoryChangeHeaderFieldList.length);
+
+                    Array.prototype.push.apply(InventoryTransferUtil.inventoryChangeHeaderFieldList, _.values(headerFieldsIndexedByFieldAPI));
+                    this.InventoryChangeHeaderDetailList = $('#InventoryChangeHeaderDetailList').kendoDetailList({
+                        namespace: '{!NamespaceUU}',                     
+                        sections: [
+                            {
+                                fields: InventoryTransferUtil.inventoryChangeHeaderFieldList
+                            }
+                        ],
+                        lookupSearchAction: '{!$RemoteAction.InventoryTransferExtV2.lookupSearchFilter}',
+                        lookupSearchFilters: headerLookupSearchFilters,
+                        getDetailListFunction: invChangeHeaderData,
+                         validateLookupOnBlur: true
+                    }).data('kendoDetailList');
+
+                    this.InventoryChangeHeaderDetailList.element.bind('OnReadSuccess', function(){
+
+                        var multiselect = $("#AttributeToCorrect").data("kendoMultiSelect");
+
+                        multiselect.bind('change',function(e){
+                            InventoryTransferUtil.BindAttributeChange(e);
+                        });
+                    });
+
+                    this.InventoryChangeHeaderDetailList.element.bind('change', this.BindICHeaderEvents);
+                },
+                
+                RenderOptionalFilters: function() {
+                    var LookupSearchFilters = [];
+                    var companyId = InventoryTransferUtil.InventoryChangeCompany;
+                    var facilityId = $("#Facility__c").val();
+                    if(!facilityId){
+                        facilityId= $('#InventoryChangeHeaderDetailList').data('kendoDetailList').dataSource.data()[0].Facility__c;
+                    }
+                    LookupSearchFilters.push({ field: "Location__c", filter: "Facility__c = \'"+facilityId+"\'" });
+                       
+                    // Destroy InventoryChangeHeaderDetailList
+                    if (this.InventoryChangeFiltersDetailList) {
+                        this.InventoryChangeFiltersDetailList.destroy();
+                        $('#InventoryChangeFiltersDetailList').empty();
+                    }
+
+                    var namespaceUU= InventoryTransferUtil.NameSpaceUU;
+                    this.InventoryChangeFiltersDetailList = $('#InventoryChangeFiltersDetailList').kendoDetailList({
+                        namespace: '{!NamespaceUU}',                     
+                        sections: [
+                            {
+                                name: 'inventory-optional-filters',
+                                title: 'Optional Filters',
+                                fields: InventoryTransferUtil.invAdditionalFieldList
+                            }
+                        ],
+                        lookupSearchAction: '{!$RemoteAction.InventoryTransferExtV2.lookupSearchFilter}',
+                        lookupSearchFilters: LookupSearchFilters,
+                        getDetailListFunction: skObjData      
+                    }).data('kendoDetailList');
+
+                    this.InventoryChangeFiltersDetailList.element.bind('OnReadSuccess', this.setOptionalFilters);
+                    this.InventoryChangeFiltersDetailList.element.bind('change', this.BindSkidObjEvents);
+                    
+                },
+                
+                UpdateFilters: function(){
+                
+                	var grid = $('#InventoryChangeFiltersDetailList').data('kendoDetailList');
+                	var facilityId = $('#InventoryChangeHeaderDetailList').data('kendoDetailList').dataSource.data()[0].Facility__c;
+                    
+                    grid.options.lookupSearchFilters.push({ field: "Location__c", filter: "Facility__c = \'"+facilityId+"\'" });
+
+                    $("#Location__r\\.Name").data('kendoLookup').options.criteria="Facility__c =\'"+facilityId+"\'";
+                },
+
+                setOptionalFilters: function(e){
+                    //if(e.target.name == 'Lot__c'){}
+                        var itemId = $("#Item__c").val();
+                        if(itemId){
+                            var lotLookup = $("#Lot__r\\.Name");
+                            if(lotLookup){
+                                lotLookup.data('kendoLookup').options.criteria=" Item__c =\'"+itemId+"\'";
+                            }
+                        }
+                },
+
+                BindICHeaderEvents: function(e) {
+                
+                	var self = this;
+          			var detailList = self.detailList;
+          			var str = e.target.name;
+           		    var idx = str.indexOf(".");
+          			
+          			if(e && e.target.value != '' && e.target.name != 'AttributeToCorrect'){
+          				  
+                    	  InventoryTransferUtil.inventoryChangeHeaderData[e.target.name] = e.target.value;
+                    	  if(e.target.name == 'Item__c' || e.target.name == 'Item__r.Id'){
+		                          InventoryTransferUtil.skidObjData[e.target.name] = e.target.value;
+		                  }
+		                  
+		                  
+	           		      if(e.target.name && str.indexOf(".") == -1){
+	           		      
+		                    	if(e.target.name == 'Item__c'){
+		                    		InventoryTransferUtil.GetInvOptionalFieldList();
+		                         }
+		                    	
+		                        if(e.target.name == 'Facility__c' || e.target.name == 'To_Facility__c' ){
+		                    		InventoryTransferUtil.FacilityChange();
+		                        }
+		                        
+	                      }
+	                  
+                    }
+                },
+                
+                BindSkidObjEvents: function(e) {
+                
+                	var self = this;
+          			var detailList = $('#InventoryChangeFiltersDetailList').data('kendoDetailList');
+          			
+          			if(e.target.kendoBindingTarget.target._value && e.target.dataset.role == "datepicker"){
+          			    if(e.target.value != '')
+              				InventoryTransferUtil.skidObjData[e.target.name] = e.target.kendoBindingTarget.target._value;
+              			else
+              				InventoryTransferUtil.skidObjData[e.target.name] = e.target.value;
+              		}
+              		else{
+              			if(e.target.value == ''){
+                           delete InventoryTransferUtil.skidObjData[e.target.name];
+                       }
+                       else{
+                           InventoryTransferUtil.skidObjData[e.target.name] = e.target.value;
+                       }
+
+                        if(e.target.name == 'Location__c' ){
+                            var fromLoc = $("#Location__c").val();
+                            if(fromLoc)
+                                $("#Bin__r\\.Name").data('kendoLookup').options.criteria=" Location__c =\'"+fromLoc+"\'";
+
+
+                        }
+              		}	
+                    
+                },
+                
+                FacilityChange: function(options) {
+                    
+                    var facility = $("#Facility__c").val();
+                    var toFacility = $("#To_Facility__c").val();
+                    if($("#Location__r\\.Name").length){
+                        $("#Location__r\\.Name").data('kendoLookup').options.criteria="Facility__c =\'"+facility+"\'";
+                    }
+                    $("#To_Location__r\\.Name").data('kendoLookup').options.criteria="Facility__c =\'"+toFacility+"\'";
+
+                },
+                
+                GetInvOptionalFieldList: function(){
+                	
+                	var item = $("#Item__c").val();
+                	var deferred = $.Deferred();
+                	var self = this;
+                	var grid = $('#InventoryChangeFiltersDetailList').data('kendoDetailList');
+                	$('[id$=SkidsGrid]').hide();
+                    KenandyErp.ClearMessage();                    
+                    
+                	Visualforce.remoting.Manager.invokeAction(
+                			'{!$RemoteAction.InventoryTransferExtV2.getInvAdditionalFields}',
+                			 item,
+                			function (result, event) {   
+                				deferred.resolve(result, event);         	                           
+                              	InventoryTransferUtil.invAdditionalFieldList =  JSON.parse(result);
+                              	InventoryTransferUtil.RenderOptionalFilters();
+                              	InventoryTransferUtil.GetAttributeValues();
+                            },
+                            {escape: false}
+                        );
+                        return deferred.promise();
+                        
+                        
+                },
+
+                BindAttributeChange: function(e){
+                            var fieldListByField={};
+                            e.sender.value().forEach(function(attribute){
+                                attributeObj = InventoryTransferUtil.attrFieldsByFieldAPIStr[attribute];
+                                var defaultToAttrObj = $.extend({},attributeObj);
+                                defaultToAttrObj['field'] = 'To_'+ defaultToAttrObj['field'];
+
+                                // change label for lot number field.
+                                if(defaultToAttrObj['field'] == 'To_Lot_Number__c'){
+                                    defaultToAttrObj['title'] = 'Default To Lot';
+                                }
+
+                                fieldListByField[attributeObj.field] =  defaultToAttrObj;
+                            });
+                            InventoryTransferUtil.trackedAttributeFieldList.splice(0,InventoryTransferUtil.trackedAttributeFieldList.length);
+                            Array.prototype.push.apply(InventoryTransferUtil.trackedAttributeFieldList , _.values(fieldListByField));
+                            InventoryTransferUtil.GetTrackedAttributeFieldList();
+                },
+
+                RenderDefaultToInputs: function(){
+                    var LookupSearchFilters = [];
+                    if (this.InventoryChangeDefaultsDetailList) {
+                       this.InventoryChangeDefaultsDetailList.destroy();
+                        $("#InventoryChangeDefaultsDetailList").empty();
+                    }
+                    var namespaceUU= InventoryTransferUtil.NameSpaceUU;
+
+                    var defaultTo_trackedAttributes_Union = [];
+                    defaultTo_trackedAttributes_Union.splice(0,defaultTo_trackedAttributes_Union.length);
+                    Array.prototype.push.apply(defaultTo_trackedAttributes_Union,InventoryTransferUtil.defaultToFiledList);
+                    Array.prototype.push.apply(defaultTo_trackedAttributes_Union,InventoryTransferUtil.trackedAttributeFieldList);
+                    this.InventoryChangeDefaultsDetailList = $('#InventoryChangeDefaultsDetailList').kendoDetailList({
+                        namespace: '{!NamespaceUU}',
+                        sections: [
+                            {
+                                name: 'inventory-default-to',
+                                title: 'Default To',
+                                fields: defaultTo_trackedAttributes_Union
+                            }
+                        ],
+                        lookupSearchAction: '{!$RemoteAction.InventoryTransferExtV2.lookupSearchFilter}',
+                        lookupSearchFilters: LookupSearchFilters,
+                        getDetailListFunction: skObjData
+                    }).data('kendoDetailList');
+
+
+                    this.InventoryChangeDefaultsDetailList.element.bind('OnReadSuccess', this.setDefaultToFilterCriteria);
+                    this.InventoryChangeDefaultsDetailList.element.bind('change', this.BindDefaultInputsChange);
+                },
+                setDefaultToFilterCriteria: function(e){
+                    var ToFacilityId = $("#To_Facility__c").val();
+                    if(ToFacilityId){
+                        var ToLocationLookup = $("#To_Location__r\\.Name");
+                        if(ToLocationLookup){
+                            ToLocationLookup.data('kendoLookup').options.criteria=" Facility__c =\'"+ToFacilityId+"\'";
+                        }
+                    }
+                },
+                BindDefaultInputsChange:function(e){
+                    if(e.target.name == 'To_Location__c' ){
+                        //update filters here.
+                        var toLocation = $("#To_Location__c").val();
+                        if(toLocation)
+                            $("#To_Bin__r\\.Name").data('kendoLookup').options.criteria=" Location__c =\'"+toLocation+"\'";
+                    }
+
+
+                },
+                GetTrackedAttributeFieldList:function(){
+                    var chosenAttributes = InventoryTransferUtil.GetChosenAttributes();
+                    $('[id$=SkidsGrid]').hide();
+                    KenandyErp.ClearMessage();
+                    //InventoryTransferUtil.BindAttributeChange();
+                    InventoryTransferUtil.RenderDefaultToInputs();
+
+                },
+                GetChosenAttributes: function(){
+                    var chosenAttributes = $("#AttributeToCorrect").data("kendoMultiSelect").value();
+                    return chosenAttributes;
+                },
+                GetAttributeValues: function(){
+                	
+                	var item = $("#Item__c").val();
+                	var deferred = $.Deferred();
+                	var self = this;
+                	
+                    KenandyErp.ClearMessage();                    
+                    
+                	Visualforce.remoting.Manager.invokeAction(
+                			'{!$RemoteAction.InventoryTransferExtV2.getAttrOptions}',
+                			 item,
+                			function (result, event) {
+                                InventoryTransferUtil.attrNames =  Object.keys(result);
+                                InventoryTransferUtil.attrFieldsByFieldAPIStr = result;
+                              	InventoryTransferUtil.UpdateAttributes();
+                            },
+                            {escape: false}
+                        );
+                       return deferred.promise(); 
+                },
+                
+                UpdateAttributes: function(){
+                		
+                		var str = InventoryTransferUtil.attrNames;
+                    	var multiselect = $("#AttributeToCorrect").data("kendoMultiSelect");
+                    	multiselect.dataSource.data([ ]);
+                		for(i=0;i<str.length;i++)
+                        {    
+                            var strtext = str[i].replace('__c', ''); 
+                            strtext = strtext.replace('_', ' ');
+                            multiselect.dataSource._data.push({text:strtext,value:str[i]});
+	                                              
+                        }
+                		multiselect.trigger("change");
+                       	
+                		$('.k-panelbar-collapse').click();
+                },
+                
+                RenderSkidsGrid: function(options) {
+                    
+                    var detailList = $('#InventoryChangeHeaderDetailList').data('kendoDetailList');
+                    KenandyErp.ClearMessage();
+                    
+                    if (!detailList.validate()) {
+                        KenandyErp.Message("You must enter the required information before clicking Search.");
+                        e.preventDefault();
+                        return false;
+                    }
+                   
+            
+                   
+                    KenandyErp.ClearMessage();
+                    var attributesTocorrect = $("#AttributeToCorrect").val();
+                    var facilityId = $('#Facility__c').val();
+                    var toFacilityId = $('#To_Facility__c').val();
+                    
+                    var item = $("#Item__c").val();
+                    
+                    $('[id$=SkidsGrid]').show();
+                    
+                    if(!facilityId){
+                        facilityId = $('#InventoryChangeHeaderDetailList').data('kendoDetailList').dataSource.data()[0].Facility__c;
+                    }
+                    if(!toFacilityId){
+                        toFacilityId = $('#InventoryChangeHeaderDetailList').data('kendoDetailList').dataSource.data()[0].To_Facility__c;
+                    }
+                    
+                    if( facilityId && item){
+                        // Show skids grid
+                        var configOptions = InventoryTransferUtil.skidsConfigJson;
+                        configOptions.actionColumnButtons = "Serials";
+  
+                        // Destroy SkidsGrid
+                        if ($('#SkidsGrid').data('kendoGridActionList')) {
+                            $('#SkidsGrid').data('kendoGridActionList').destroy();
+                            $('#SkidsGrid').empty();
+                            $('#SkidsGrid').off();
+                            this.SkidsGrid = null;
+                        }
+                        
+                        
+                        var headerSkidRows = [];
+                        var headerSkidRowsList = [];
+	                    var detailListforfilters = $('#InventoryChangeFiltersDetailList').data('kendoDetailList');
+	                    var headerDateFields = detailListforfilters.getDateFields();
+	                    
+	                    headerSkidRowsList.push(InventoryTransferUtil.skidObjData);
+ 	                    
+	                    headerSkidRows = $.map(headerSkidRowsList, function(item, index) {
+                                          
+	                      item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+	                      return item;
+                        });
+	                    if (headerSkidRows.length > 0) {
+	                        headerSkidRows = Serializer.ParameterMap(headerSkidRows);
+	                    }
+                        
+ 						Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.InventoryTransferExtV2.getItemDetails}',
+                            headerSkidRows[0],
+                            headerDateFields,
+                            attributesTocorrect,
+                            function (result, event) {
+                                            
+                                if (event.type == 'exception') {
+                                    KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                                } else {
+                                    KenandyErp.CleanNamespace(result, '{!NamespaceUU}');
+
+                                    itemRecord = result.records[0];
+                                    InventoryTransferUtil.skidsFieldList = JSON.parse(result.additionalInfo);
+                                    
+                                    var LookupSearchFilters = [];
+                                    
+                                    var pkgUOMs = itemRecord.Packaging_UOM__c.replace(/[\[\]']+/g,'');;
+                                    pkgUOMs= '('+pkgUOMs.replace(/"/g, "\'")+')';
+
+                                    LookupSearchFilters.push({ field: "toskid.Location__c", filter: "Facility__c = \'"+toFacilityId+"\'" });
+                                    LookupSearchFilters.push({ field: "toskid.Bin__c", filter: "Location__c = \'#=toskid.Location__c#\'" });
+                                    LookupSearchFilters.push({ field: "toskid.Packaging_UOM__c", filter: "Id IN "+pkgUOMs});
+                                    this.SkidsGrid = $('#SkidsGrid').kendoGridActionList({
+                                        namespace: '{!NamespaceUU}', 
+                                        config: configOptions, 
+                                        fieldList: InventoryTransferUtil.skidsFieldList,
+                                        lookupSearchAction: '{!$RemoteAction.InventoryTransferExtV2.lookupSearchFilter}', 
+                                        getActionListFunction: skidsData,
+                                        showIconButtons: true,
+                                        lookupSearchFilters: LookupSearchFilters,
+                                         validateLookupOnBlur: true,
+                                        allowMassDelete: false
+                                    }).data('kendoGridActionList');
+                                    
+                                    var dateFields = KenandyErp.KendoGridOptions.GetDateFields(InventoryTransferUtil.skidsFieldList);
+                        
+                                    if(this.SkidsGrid.columns[0].field=="IsSelected__custom" && (!this.SkidsGrid.columns[0].hidden)){
+                                        this.SkidsGrid.hideColumn("IsSelected__custom");
+                                    }
+                                    this.SkidsGrid.refresh();
+                                    this.SkidsGrid.bind('dataBound', $.proxy(InventoryTransferUtil.SkidsGridDataBound, { grid: this.SkidsGrid }));
+                                    
+                                      
+                                    var actionColumnIndex = this.SkidsGrid.columns.length - 1;
+                                    var messageElement = this.SkidsGrid.element.closest("div.grid-container").find("div.grid-message:first");
+                                    
+                                    serialTracked = itemRecord.Item_Attribute__r && itemRecord.Item_Attribute__r.Serial_Number__c && '{!inventoryChange.Company__r.Serial_Control__c}' === 'At receipt and all processes';
+                                    
+                                    if(!serialTracked){
+                                        $('#SkidsGrid').data('kendoGridActionList').hideColumn(actionColumnIndex);
+                                        $(".grid-serials-custom-command").hide();
+                                    }
+                                    else{
+                                        $('#SkidsGrid').data('kendoGridActionList').showColumn(actionColumnIndex);
+                                        $(".grid-serials-custom-command").show();
+                                    }
+                
+                                    // unbind and bind the save, save & new, save & return button click events
+                                    $('.save-command').off("click",
+                                        $.proxy(InventoryTransferUtil.Save, { detailList: $('#InventoryChangeHeaderDetailList').data('kendoDetailList'), optionaldetailList: $('#InventoryChangeFiltersDetailList').data('kendoDetailList'), grid: this.SkidsGrid, options: { config: configOptions, dateFields: dateFields } })
+                                    );
+                                    
+                                    $('.save-command').on("click",
+                                        $.proxy(InventoryTransferUtil.Save, { detailList: $('#InventoryChangeHeaderDetailList').data('kendoDetailList'), grid: this.SkidsGrid, options: { config: configOptions, dateFields: dateFields } })
+                                    );
+                                    $('.save-new-command').off("click",
+                                        $.proxy(InventoryTransferUtil.Save, { detailList: $('#InventoryChangeHeaderDetailList').data('kendoDetailList'), optionaldetailList: $('#InventoryChangeFiltersDetailList').data('kendoDetailList'), grid: this.SkidsGrid, options: { config: configOptions, dateFields: dateFields } })
+                                    );
+                                    
+                                    $('.save-new-command').on("click",
+                                        $.proxy(InventoryTransferUtil.Save, { detailList: $('#InventoryChangeHeaderDetailList').data('kendoDetailList'), grid: this.SkidsGrid, options: { config: configOptions, dateFields: dateFields } })
+                                    );
+                                    
+                                    this.SkidsGrid.wrapper.on("click", ".grid-serials-custom-command", $.proxy(InventoryTransferUtil.ManageSerials, { grid: this.SkidsGrid, dateFields: dateFields, serialFieldList: serialFieldList }));
+                                    this.SkidsGrid.bind('edit', $.proxy(InventoryTransferUtil.OnEdit, { grid: this.SkidsGrid }));
+                   
+                                }
+                            },
+                            {escape: false}
+                        );                 
+                    }
+                },
+                
+                AddLine: function(e) {
+                    var self = this;
+                    var grid = self.grid; 
+                    
+                },
+                
+                OnEdit: function (e) {
+                    
+                    var self = this;
+		   			var grid = self.grid;
+		   			var row = e.container.closest('tr');
+                    var dataItem = this.grid.dataItem(row);
+                    var fieldName = e.container.find("input").length > 0 && e.container.find("input").attr("name") ? e.container.find("input").attr("name").toLowerCase(): '';
+                    
+                    var locationId = dataItem.toskid.Location__c;
+                    
+                    
+                    var toskidloc = $(e.container).find('input[name="toskid.Location__c"]');
+                    
+                    toskidloc.on('focus', function() {
+                         $(this).data('default_value', $(this).val());
+                    });
+                    toskidloc.focus();
+                    
+                    toskidloc.on('blur',
+                        $.proxy(InventoryTransferUtil.ClearBin, { grid: grid })
+                    );
+                    
+                    if(fieldName == "toskid.bin__c"){
+                    
+                       Visualforce.remoting.Manager.invokeAction(
+	                        '{!$RemoteAction.InventoryTransferExtV2.getLocationRecord}',
+	                        dataItem.toskid.Location__c,
+	                        function (result, event) {
+	                                        
+	                            if (event.type == 'exception') {
+	                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+	                            } else {
+	                                KenandyErp.CleanNamespace(result, '{!NamespaceUU}');
+	                                var binTracked = result.Bin_Tracked__c == true;
+	                                
+	                                if(!binTracked){
+	                                    e.sender.closeCell();
+	                                }
+	                            }
+	                        },
+	                        {escape: false}
+                       );
+                       
+                    }
+                    
+                    var pkgUOM = $(e.container).find('input[name="toskid.Packaging_UOM__c"]');
+                    
+                    pkgUOM.on('focus', function() {
+                         $(this).data('default_value', $(this).val());
+                    });
+                    
+                    pkgUOM.on('blur',
+                        $.proxy(InventoryTransferUtil.RefreshOnPkgUOMChange, { grid: grid })
+                    );
+                    
+                    if(fieldName == "toskid.license_plate_number__c"){
+                    
+                        if(!(dataItem.containerItem && dataItem.containerItem.Item_Attribute__r && 
+                                dataItem.containerItem.Item_Attribute__r.License_Plate_Number__c)){
+                            e.sender.closeCell();
+                        }
+                        else if(!dataItem.License_Plate_Number__r){
+                            //defining lpn__r to support entering LPN's that do not exist. We store it in the __r.Name and __r needs to exist
+                            dataItem.set('toskid.License_Plate_Number__r', { Id: null, Name: null });
+                            dataItem.set('toskid.License_Plate_Number__c', null);
+                        }
+                    }
+                    
+                    
+                },
+                
+                ClearBin: function(e) {
+                
+                    if ($(e.target).val() == $(e.target).data('default_value')) {
+                        return;
+                    }
+                    
+                    var grid = this.grid;
+                    var cell = grid.editable.element;
+                    var row = $(e.target).closest("tr"); //get the row
+                    var dataItem = grid.dataItem(row); // get the row data
+                    
+                    dataItem.set('toskid.Bin__r', { Id: null, Name: null });
+                    dataItem.set('toskid.Bin__c', null);
+                },
+                
+                RefreshOnPkgUOMChange: function(e) {
+                
+                    if ($(e.target).val() == $(e.target).data('default_value')) {
+                        return;
+                    }
+                    
+                    var grid = this.grid;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                    var cell = grid.editable.element;
+                    var row = $(e.target).closest("tr"); //get the row
+                    var dataItem = grid.dataItem(row); // get the row data
+                    
+                    if(!dataItem.toskid.Packaging_UOM__c){
+                        return;
+                    }
+                    
+                    KenandyErp.BlockUI();
+                    
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.InventoryTransferExtV2.refreshOnPkgUOMChange}',
+                        dataItem.get('skid.Item__r').toJSON(),
+                        dataItem.toskid.Facility2__c,
+                        dataItem.skid.Packaging_UOM__c,
+                        dataItem.toskid.Packaging_UOM__c,
+                        function (result, event) {
+                                        
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                                KenandyErp.CleanNamespace(result, '{!NamespaceUU}');
+                                if(result.records && result.records.length > 0 ){
+                                    dataItem.set('containerItem', result.records[0]);
+                                    
+                                    if(!(dataItem.containerItem && dataItem.containerItem.Item_Attribute__r && 
+                                        dataItem.containerItem.Item_Attribute__r.License_Plate_Number__c)){
+                                    
+                                        dataItem.set('toskid.License_Plate_Number__r', { Id: null, Name: null });
+                                        dataItem.set('toskid.License_Plate_Number__c', null);
+                                    }
+                                    
+                                    if(result.records[1] == dataItem.skid.Packaging_UOM__c){
+                                        dataItem.set('toskid.Stocking_UOM__c', dataItem.skid.Packaging_UOM__c);
+                                        dataItem.set('toskid.Stocking_UOM__r', dataItem.skid.Packaging_UOM__r);
+                                    }
+                                    else{
+                                        dataItem.set('toskid.Stocking_UOM__c', dataItem.toskid.Packaging_UOM__c);
+                                        dataItem.set('toskid.Stocking_UOM__r', dataItem.toskid.Packaging_UOM__r);
+                                    }
+                                    if(result.records[2] > 0){
+                                        //conversion factor from pkg uom to to pkg uom
+                                        var updatedQtyAvailable = dataItem.skid.Quantity_Available__c*result.records[2];
+                                        dataItem.toskid.Quantity_Available__c = updatedQtyAvailable ;
+                                    }
+                                    dataItem.set('conversionFactor', result.additionalInfo);
+                                }
+                            }
+                            KenandyErp.UnBlockUI();
+                        },
+                        {escape: false}
+                   );
+                },
+
+                SkidsGridDataBound: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    try{
+                        //grid.editRow(grid.tbody.children().first());
+                    }
+                    catch(e){
+                        
+                    }
+                },
+
+                Save: function(e) {
+                    
+                    var self = this;
+                    var detailList = self.detailList;
+                    var optionaldetailList = self.optionaldetailList;
+                    var grid = self.grid;
+                   
+                
+                    KenandyErp.ClearMessage();
+                   
+                   if (!grid) {
+                        KenandyErp.Message("You must enter the required information and click Search before you can Save.");
+                        e.preventDefault();
+                        return false;
+                    }
+                    
+                    var options = self.options;
+                    var modelIdField = grid.dataSource.options.schema.model.idField;
+                    var dateFields = KenandyErp.KendoGridOptions.GetDateFields(InventoryTransferUtil.skidsFieldList);
+                    var ToBinId = $("#ToBinId").val();
+                    var ToLocationId = $("#toskid.Location__c").val();
+                    var attributesTocorrect = $("#AttributeToCorrect").val();
+                    
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                    
+                    KenandyErp.ClearMessage();
+                    
+                    var headerDateFields = detailList.getDateFields(); 
+                    var headerRowsList = [];
+                    var headerRows = [];
+                    
+                    headerRowsList.push(detailList.data);
+                    
+                    var updatedRows = [];
+                    
+                    var currentData = grid.dataSource.data();
+                    var updatedRows = {};
+                    var columns = grid.columns;
+                                    
+                    updatedRows = $.map(currentData, function(item, index) {
+            
+                        if ( (item.skid.Input_Quantity__c != null) && (item.skid.Input_Quantity__c != 0) ) {
+
+                            var isNewRow = (!item.get(modelIdField));
+                            var serials = InventoryTransferUtil.GetSerialListById(item.uid);
+                           
+                            var serialList = $.map(serials, function(serialItem, index) {
+                                
+                                if(!serialItem['SerialName']){
+                                    serialItem.SerialName = {};
+                                    serialItem.SerialName.Id = serialItem.Id;
+                                    serialItem.SerialName.Name = serialItem.Name;
+                                }
+                                
+                                if( (serialItem['SerialName']) && (serialItem.SerialName.Name) && (!!serialItem.SerialName.Name.trim()) && (serialItem.IsSelected__custom) ){
+                                    serialItem.Name = serialItem.SerialName.Name;
+                                    serialItem.Id = serialItem.SerialName.Id;
+                                    if(serialItem.hasOwnProperty("SerialName")){
+                                        delete serialItem['SerialName'];
+                                    }
+                                    if(serialItem.hasOwnProperty("SerialNameId")){
+                                        delete serialItem['SerialNameId'];
+                                    }
+                                    delete serialItem[""];
+                                    
+                                    serialItem = serialItem.toJSON();
+                                    delete serialItem[""];
+                                    return serialItem;
+                                }
+                                else{
+                                    return null;
+                                }
+                            });
+                            
+                            item.toskid.Temporary_LPN_Holder__c = null;
+                            if( (!item.toskid.License_Plate_Number__c) && item.toskid.License_Plate_Number__r && item.toskid.License_Plate_Number__r.Name ){
+                                item.toskid.Temporary_LPN_Holder__c = item.toskid.License_Plate_Number__r.Name;
+                            }
+                            
+                            item = item.toJSON();
+                            item = Serializer.ConvertToSFDCDate(item, { dateFields: dateFields });
+                            item.serialList = serialList;
+                            delete item.skid.Serials__r;
+                            
+                            for (var i = 0; i < columns.length; i++) {
+                                var name = columns[i].field;
+                                
+                                delete item[name];
+                            }
+                            
+                            if (isNewRow) {
+                                if (modelIdField == 'Id') {
+                                    delete item.Id;
+                                    
+                                }
+                            }
+                            
+                            return item;
+                        }
+                        else{
+                            return null;
+                        }
+                    });
+                        
+                    if (updatedRows.length == 0) {
+                        KenandyErp.Message("No Quantities Entered.", KenandyErp.MessageType.Error, messageElement);
+                        return;
+                    }
+                    
+                    if (updatedRows.length > 0) {
+                        updatedRows = Serializer.ParameterMap(updatedRows, { isDml: false });
+                    }
+                    
+                        
+                    KenandyErp.BlockUI();
+                    
+                    headerRows = $.map(headerRowsList, function(item, index) {
+                        item.Item__c = itemRecord.Id;
+                        item.Item__r = itemRecord;
+                        item = item.toJSON();
+                        item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+                        delete item.Company__r.attributes;
+                        delete item.Facility__r;
+                        delete item.To_Location__r;
+                        return item;
+                    });
+                    
+                    if (headerRows.length > 0) {
+                        headerRows = Serializer.ParameterMap(headerRows, { isDml: false });
+                    }
+                    
+                    headerDateFields = headerDateFields ? _.pluck(headerDateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+                    var detailDateFields = options.dateFields ? _.pluck(options.dateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+                    
+                    delete headerRows[0].AttributeToCorrect;
+                    delete headerRows[0].To_Location__c;
+                    delete headerRows[0].To_Facility__c;
+                    delete headerRows[0].To_Facility__r;
+                    delete headerRows[0].To_Bin__c;
+                    delete headerRows[0].To_Bin__r;
+
+                    //KenandyErp.removeDevToolsIdError(updatedRows);
+
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.InventoryTransferExtV2.saveAction}',
+                        headerRows[0],
+                        updatedRows,
+                        attributesTocorrect,
+                        cachedItemId,
+                        cachedFacilityId,
+                        cachedFilterSkid,
+                        headerDateFields,
+                        detailDateFields,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();
+                                        
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message);
+                            } else {
+                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                
+                                if (result.success) {
+                                	if($(e.target).hasClass('save-new-command')){
+                                			KenandyErp.NavigateToURL('/apex/InventoryTransferV2', false);
+                                        } else {
+                                    		var recordId = result.additionalInfo;
+                                    		KenandyErp.NavigateToSObject(recordId,'detail');
+                                    }
+                                }
+                                else {
+                                    KenandyErp.Messages(result.messages);
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                }
+            };
+        }();
+    </script>
+    
+</apex:Page>

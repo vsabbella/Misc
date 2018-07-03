@@ -1,0 +1,449 @@
+<apex:page standardController="Receiving_Document__c" extensions="ReceivingDocumentVoidCancelExt">
+    <apex:sectionHeader title="Void/Cancel" subtitle="{!Receiving_Document__c.Name}"/>
+    <apex:form id="form">
+    <c:busyWait /> 
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+      <div id="MessagesBlock">  
+                   <apex:pagemessages id="Messages" />
+                    <div class="page-message"></div>
+    </div>
+
+    <div style="display:none;">
+    	<apex:outputField value="{!Receiving_Document__c.Company__c}" />
+    </div>
+    
+    <apex:pageBlock >
+    	<apex:pageBlockButtons location="top">
+    	<apex:commandButton value="Return to {!Receiving_Document__c.Name}" action="{!cancel}" rerender="form" status="actionStatus"/>
+            <apex:commandButton value="Void {!Receiving_Document__c.Name}" disabled="{!disableVoid}" action="{!prepreVoid}" rerender="jsPanel" oncomplete="showProgressBar();"  onclick="KenandyErp.BlockUI();"/>
+            <apex:commandButton value="Cancel {!Receiving_Document__c.Name}" disabled="{!disableCancel}" action="{!cancelDocs}" rerender="form" status="actionStatus"/>
+        </apex:pageBlockButtons>
+        <apex:pageBlockSection >
+            <apex:outputField value="{!Receiving_Document__c.Name}"/>
+            <apex:outputField value="{!Receiving_Document__c.Company__c}"/>
+            <apex:outputField value="{!Receiving_Document__c.Finalized__c}"/>
+            <apex:outputField value="{!Receiving_Document__c.Transaction_Date__c}"/>
+            <apex:outputField value="{!Receiving_Document__c.Finalized_Date__c}"/>
+            <apex:outputField value="{!Receiving_Document__c.Posting_Date__c}"/>
+            <apex:outputField value="{!Receiving_Document__c.Status__c}"/>
+            <apex:outputField value="{!Receiving_Document__c.Void__c}"/>
+            <apex:outputText value=""/>
+            <apex:outputField value="{!Receiving_Document__c.Void_Date__c}"/>
+        </apex:pageBlockSection>
+       	<div id="tab" >
+        <apex:pageBlockSection >
+        	<apex:pageBlockSection title="Void Details" columns="1">
+        		<apex:pageBlockTable value="{!voidCancelDetails.voidMessages}" var="msg">
+        			<apex:column >
+        				<apex:outputText value="{!msg}"/>
+        			</apex:column>
+        		</apex:pageBlockTable>
+        	</apex:pageBlockSection>
+       		<apex:pageBlockSection title="Cancel Details" columns="1">
+       			<apex:pageBlockTable value="{!voidCancelDetails.cancelMessages}" var="msg">
+	       			<apex:column >
+	       				<apex:outputText value="{!msg}"/>
+	       			</apex:column>
+       			</apex:pageBlockTable>
+        	</apex:pageBlockSection>
+        </apex:pageBlockSection>	
+        </div>
+        <table class="kndy-table">
+        	<tr>
+        		<td align="center">
+        			<div id="ProgressBar" ></div>
+        		</td>
+        	</tr>
+        </table>
+    </apex:pageBlock>
+    </apex:form>
+    <div style="display:none;">
+    	<apex:outputField value="{!Receiving_Document__c.Historical__c}"/>
+    </div>
+    <script>
+       Visualforce.remoting.timeout = 120000; // Set timeout at page level
+       
+       var namespace = '{!namespace}';
+       var headerDateFields = [
+       		{ field: "Transaction_Date__c", fieldtype: "datetime"},
+       		{ field: "Finalized_Date__c", fieldtype: "datetime"},
+       		{ field: "Posting_Date__c", fieldtype: "datetime"},
+       		{ field: "Void_Date__c", fieldtype: "datetime"}
+       	];
+   	   var revChunks = '';//serialized map of the AutoNumReverseChunks
+       var voidAEId='';
+       var doVoid = true;
+       var revSize='';
+    	var RemoteDeferredReverse = [];
+    	var pb;
+    	var AELineCount;
+    	var deferredReverse = $.Deferred();
+    	var Progress = 0;
+    	var voidRD = [];
+    	var guid= '';
+    	var AlreadyVoided = false;
+    	var numberOfRetries=1;
+        var realtimeRetriesReversal=new Array();
+//        var stopRetry = '';
+
+	      /*Do a retry for the failed chunk in case of transaction timeouts*/
+	   	function checkRetry(event) {
+	        var doRetry = false;
+	        if (event.type === 'exception') {
+	        	if ((event.message.indexOf("timeout") > -1) ||
+	        		(event.message.indexOf("Remoting request invalid for your session") > -1) || 
+	        		(event.message.indexOf("Logged in") > -1)) {
+	        		doRetry = true;	
+	        	}	
+	        }  
+	        return doRetry;  	
+		}      
+    
+
+    	function showProgressBar() {
+            debugger;
+		    if(AlreadyVoided == "true"){
+		        KenandyErp.UnBlockUI();
+            	KenandyErp.Message('Document Already Voided.', KenandyErp.MessageType.Info);
+            }
+            else {
+                if(revSize == 0){
+                    debugger;
+                    Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.ReceivingDocumentVoidCancelExt.VoidWithoutAEL}',
+                     voidAEId,
+                     guid,
+                     function (result, event) {
+                         if (result.AllDone==true){
+                            debugger;
+                            var headerRowsList = [];
+                            var headerRows = [];
+                             
+                            headerRowsList.push(voidRD);
+                             
+                            headerRows = $.map(headerRowsList, function(item, index) {
+                                delete item['attributes'];                      
+                                item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+                                 
+                                return item;
+                            });
+                             
+                            if (headerRows.length > 0) {
+                                headerRows = Serializer.ParameterMap(headerRows);
+                            }
+                             
+                            Visualforce.remoting.Manager.invokeAction(
+                                 '{!$RemoteAction.ReceivingDocumentVoidCancelExt.ActualVoidSD}',
+                                 headerRows, 
+                                 guid,
+                                 function (result, event) {
+                                     if (result.AllDone==true){
+                                         KenandyErp.UnBlockUI();
+                                         KenandyErp.Message('Document Successfully Voided.', KenandyErp.MessageType.Info);
+                                     }
+                                     else{
+                                         KenandyErp.UnBlockUI();
+                                         KenandyErp.Message(result.Messages, KenandyErp.MessageType.Error);
+                                     }
+                             });
+                        }
+                        else{
+                            KenandyErp.UnBlockUI();
+                            KenandyErp.Message(result.Messages, KenandyErp.MessageType.Info);
+                        }
+                     });
+                                                     
+                }
+                else{
+                    $('#tab').hide();
+                    var largemsg='The Source Document is being Voided.Please do not refresh page or press Back button of browser';                                                     
+                    KenandyErp.Message(largemsg, KenandyErp.MessageType.Info);                                              
+                    progressbar(0, AELineCount);
+                    reverseAE(0);
+                }
+        	}
+    	}
+    	
+        function reverseAE(chunkIndex)
+        { debugger;
+             
+                $('#ProgressBar').show();
+                var RemoteDeferredItemReverse= $.Deferred();
+                var currchunkIndex = chunkIndex;
+                var chunkItem=revChunks[currchunkIndex];
+                var max=chunkItem['max']; 
+                var min=chunkItem['min']; 
+                RemoteDeferredReverse.push(RemoteDeferredItemReverse);  
+                console.log('chunks here');
+                console.log(revChunks);
+                console.log('currchunkIndex');
+                console.log(currchunkIndex);
+            
+                Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.ReceivingDocumentVoidCancelExt.reverseAE}',
+                            voidAEId, 
+                            currchunkIndex,
+                            revSize,
+                            min,
+                            max,
+                            doVoid,
+                            guid,
+                            function (result, event) {
+                                
+                                console.log('Entered VF Reverse');   
+                                console.log('Remote result ');
+                                console.log(result);                             
+                                //console.log('Remote event');      
+                                //console.log(event);                            
+                               
+                                EventObj=Object.create(event);
+                                //console.log('My eventObj');      
+                                //console.log(EventObj);
+                                if(event.status==true)
+                                {
+    //                                KenandyErp.Message(result.Messages, KenandyErp.MessageType.Info);                               
+                                    if(!result.AllDone)
+                                    {
+                                        Progress=result.Progress;
+                                        if(Progress!=-1)
+                                            {
+                                               if(result.ChunkReverse==true)
+                                                    {                                                                                            
+                                                        reverseAE(result.NextChunkIndex);
+                                                        console.log('Progress'+result.Progress);                                        
+                                                    }
+                                                else
+                                                    {
+                                                        //some error deleting current current chunk .Displayed in messages.  
+                                                    }  
+                                            }
+                                        else
+                                            {
+                                                //Some Error 
+                                            }
+                                         RemoteDeferredItemReverse.resolve(result, event);                                    
+                                    }
+                                    else if(result.AllDone)
+                                    {
+                                        Progress=AELineCount-1;
+                                        console.log('Reverse Complete');                                         
+                                        RemoteDeferredItemReverse.resolve(result, event);      
+                                        $.when.apply($, RemoteDeferredReverse).done( function (obj1,obj2)
+                 						
+                                        {                                                      
+                                            deferredReverse.resolve(obj1,obj2);                                              
+                                            console.log('deferredDelResolve');                                        
+                                            console.log('RemoteDeferredReverse Array');                                              
+                                            console.log(RemoteDeferredReverse); 
+                                            if(result.ChunkReverse==true)
+                                            {
+                                               debugger;
+                                               var headerRowsList = [];
+                                               var headerRows = [];
+                                                
+                                               headerRowsList.push(voidRD);
+                                                
+                                                headerRows = $.map(headerRowsList, function(item, index) {
+                                                    delete item['attributes'];                      
+                                                    item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+                                                    
+                                                    return item;
+                                                });
+                                                
+                                                if (headerRows.length > 0) {
+                                                    headerRows = Serializer.ParameterMap(headerRows);
+                                                }
+                                               
+                                                Visualforce.remoting.Manager.invokeAction(
+                                                   '{!$RemoteAction.ReceivingDocumentVoidCancelExt.ActualVoidSD}',
+                                                    headerRows,
+                                                    guid, 
+                                                    function (result, event) {
+                                                       if(event.status==true){
+                                                        
+	                                                        if (result.AllDone==true){
+	                                                            $('#tab').show();
+	                                                            $('#ProgressBar').hide(); 
+	                                                            KenandyErp.UnBlockUI();
+	                                                            KenandyErp.Message('Document Successfully Voided.', KenandyErp.MessageType.Info);
+	                                                        }
+	                                                        else{
+	                                                            KenandyErp.UnBlockUI();
+	                                                            KenandyErp.Message(result.Messages, KenandyErp.MessageType.Error);
+	                                                            $('#tab').show();
+	                                                            $('#ProgressBar').hide();  
+	                                                        }
+                                                        }
+										                else
+										                {
+					                                        var isTimeout=checkRetry(event);
+											                if(isTimeout)
+											                {	
+											                	for(var i=1; i<=numberOfRetries;i++){
+											                	var ckeckBreak = false;
+					                                                Visualforce.remoting.Manager.invokeAction(
+					                                                   '{!$RemoteAction.ReceivingDocumentVoidCancelExt.getstopRetry}',
+					                                                    voidAEId, 
+					                                                    function (result, event) {
+					                                                    	if(event.status==true){
+					                                                    		if(result == true){
+					                                                    		    KenandyErp.UnBlockUI();
+																					KenandyErp.Message('Document Successfully Voided.', KenandyErp.MessageType.Info);
+						                                                            $('#tab').show();
+						                                                            $('#ProgressBar').hide();  
+														                			ckeckBreak = true;
+											                					}
+											                				}
+											                			}
+											                		);
+					                                                
+					                                                if(ckeckBreak == true){
+			                                                            $('#tab').show();
+			                                                            $('#ProgressBar').hide();  
+			                                                            KenandyErp.UnBlockUI();
+			                                                            KenandyErp.Message('Document Successfully Voided.', KenandyErp.MessageType.Info);
+														            	break;
+					                                                }   													                		
+					                                                Visualforce.remoting.Manager.invokeAction(
+					                                                   '{!$RemoteAction.ReceivingDocumentVoidCancelExt.ActualVoidSD}',
+					                                                    headerRows,
+					                                                    guid, 
+					                                                    function (result, event) {
+					                                                        if(event.status==true){
+					                                                        
+						                                                        if (result.AllDone==true){
+						                                                            $('#tab').show();
+						                                                            $('#ProgressBar').hide(); 
+						                                                            KenandyErp.UnBlockUI();
+						                                                            KenandyErp.Message('Document Successfully Voided.', KenandyErp.MessageType.Info);
+						                                                        }
+						                                                        else{
+						                                                            KenandyErp.UnBlockUI();
+						                                                            KenandyErp.Message(result.Messages, KenandyErp.MessageType.Error);
+						                                                            $('#tab').show();
+						                                                            $('#ProgressBar').hide();  
+						                                                        }
+						                                                    }
+/*																			else{ 
+																				if(stopRetry = true){
+																					KenandyErp.Message('Document Successfully Voided.', KenandyErp.MessageType.Info);
+						                                                            $('#tab').show();
+						                                                            $('#ProgressBar').hide();  
+																				}
+																				else{
+						                                							KenandyErp.Message(event.message + 'Actual void', KenandyErp.MessageType.Fatal);
+						                 	                                        $('#tab').show();
+	                                                           					    $('#ProgressBar').hide();  
+						                                						}
+						                                				    }						
+*/																		}
+					                                                );											                													                												                												                	
+											                	}
+											                }	
+											            }
+                                                        
+                                                    }
+                                                );
+                                                 
+                                              } else {
+                                                  KenandyErp.UnBlockUI();
+                                                     KenandyErp.Message(event.message, KenandyErp.MessageType.Fatal);
+    
+                                              }
+                                        });                                                                     
+                                    }                           
+                                }
+                                else  //Remoting failure
+                                    {
+                                                                        
+                                        var isTimeout=checkRetry(event);
+						                if(isTimeout)
+						                {
+											if (currchunkIndex in realtimeRetriesReversal) 
+											{
+												realtimeRetriesReversal[currchunkIndex]++;
+											} 
+											else 
+											{
+												realtimeRetriesReversal[currchunkIndex] = 1;
+											}
+											
+											if (realtimeRetriesReversal[currchunkIndex] <= numberOfRetries) {
+											
+												console.log('Inside Void -'+' Current Retry Count:'+realtimeRetriesReversal[currchunkIndex]+', currchunkIndex: '+currchunkIndex+', max:'+ max+', min :'+ min +', curr time: ' + new Date());
+                                                RemoteDeferredItemReverse.resolve(result, event);						
+												reverseAE(currchunkIndex);
+												
+											} 
+											else {
+												//we hit our number of retries, time to fail
+												KenandyErp.UnBlockUI();
+                                                KenandyErp.Message(event.message, KenandyErp.MessageType.Fatal);
+                                                $('#tab').show();
+                                                $('#ProgressBar').hide();  
+											}
+						                
+						                }
+						                else
+						                {
+						                      KenandyErp.UnBlockUI();
+		                                      KenandyErp.Message(event.message, KenandyErp.MessageType.Fatal);
+                                              $('#tab').show();
+                                              $('#ProgressBar').hide();  
+						                }
+
+                                }
+    
+                            },
+                            {escape: false});
+                progressbar(Progress,AELineCount);
+                return RemoteDeferredItemReverse.promise();
+			                                 			
+        } 
+        
+        function progressbar(progressCount,LineCount)
+            {
+                var exp=LineCount;
+                var curr=progressCount;
+
+                if (pb) {
+                    pb.value(curr);
+                }
+                else {
+                    pb = $("#ProgressBar").kendoProgressBar({
+                        type: "percent",
+                        min: 0,
+                        max: exp,
+                        value: curr,
+                        animation: {
+                            duration: 200
+                        }
+                    }).data("kendoProgressBar");
+                }
+            }
+    </script>
+    <apex:outputPanel id="jsPanel">
+    <script>
+   		revChunks = JSONUtils.Parse('{!reverseChunkMap}');
+   		voidAEId  = "{!voidAEId}";
+   		revSize   = "{!reverseSize}";
+   		AELineCount = "{!AELineCount}";
+   		voidRD = JSONUtils.Parse('{!voidRDSer}');
+   		guid = "{!guid}";
+		numberOfRetries='{!NumberOfRetries}';
+   		if (voidRD.length > 0) {
+   			voidRD = voidRD[0];
+   			KenandyErp.CleanNamespace(voidRD, namespace);
+   			Serializer.ConvertFromSFDCDate(voidRD, { dateFields: headerDateFields });
+   		}
+		AlreadyVoided = "{!AlreadyVoided}";
+   		console.log('inside JSPanel');
+        console.log('chunks');
+        console.log('revChunks');
+        console.log(revChunks);
+        console.log('voidRD');
+        console.log(voidRD);
+    </script>
+        </apex:outputPanel>
+    </apex:page>

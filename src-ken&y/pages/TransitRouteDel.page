@@ -1,0 +1,29 @@
+<apex:page standardController="Transit_Route__c" extensions="TransitRouteNewExt" >
+    <apex:form id="form" >
+        
+        <apex:sectionHeader title="{!$Label.Delete} {!$ObjectType.Transit_Route__c.Label}" 
+                            subtitle="{!$Label.Delete} {!$ObjectType.Transit_Route__c.Label} {!Transit_Route__c.Name}"/>
+        <apex:pagemessages ></apex:pagemessages>
+        <apex:pageBlock mode="maindetail">
+            <apex:pageBlockButtons >
+
+                <apex:commandButton value="{!$Label.Delete} " action="{!deleteRoute}" rerender="form" />    	
+                <apex:commandButton value="{!$Label.Cancel} " action="{!cancel}" immediate="true" />
+                
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockSection title="{!$Label.Transit_Route_Information}" columns="2" collapsible="false">
+                <apex:repeat value="{!$ObjectType.Transit_Route__c.FieldSets.New_Transit_Route}" var="f" > 
+                    <apex:outputField value="{!newObj[f]}" />
+                </apex:repeat>            
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Freight Allowance Information" columns="2" collapsible="false">
+                <apex:repeat value="{!$ObjectType.Transit_Route__c.FieldSets.Freight_Allowances}" var="f">
+                    <apex:outputField value="{!Transit_Route__c[f]}" />
+                </apex:repeat>
+            </apex:pageBlockSection>
+            
+        </apex:pageBlock>
+    </apex:form>      
+</apex:page>

@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpECO</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>ECO detail lines</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fields>
+        <fullName>ECO__c</fullName>
+        <description>ECO</description>
+        <externalId>false</externalId>
+        <label>ECO</label>
+        <referenceTo>ECO__c</referenceTo>
+        <relationshipLabel>ECO Lines</relationshipLabel>
+        <relationshipName>ECO_Lines</relationshipName>
+        <relationshipOrder>0</relationshipOrder>
+        <reparentableMasterDetail>false</reparentableMasterDetail>
+        <trackTrending>false</trackTrending>
+        <type>MasterDetail</type>
+        <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Item__c</fullName>
+        <deleteConstraint>Restrict</deleteConstraint>
+        <description>ECO Item</description>
+        <externalId>false</externalId>
+        <label>Item</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>Item is not active.</errorMessage>
+            <filterItems>
+                <field>Item__c.Active__c</field>
+                <operation>equals</operation>
+                <value>True</value>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Item__c</referenceTo>
+        <relationshipLabel>ECO Lines</relationshipLabel>
+        <relationshipName>ECO_Lines</relationshipName>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>New_Item_Specification__c</fullName>
+        <deleteConstraint>Restrict</deleteConstraint>
+        <description>New Item Specification</description>
+        <externalId>false</externalId>
+        <label>New Item Specification</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Item_Specification__c.Item__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Item__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Item_Specification__c</referenceTo>
+        <relationshipLabel>ECO Lines</relationshipLabel>
+        <relationshipName>ECO_Lines</relationshipName>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>New_Revision__c</fullName>
+        <description>New Item Specification&apos;s Revision</description>
+        <externalId>false</externalId>
+        <formula>New_Item_Specification__r.Revision__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>New Revision</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Old_Item_Specification__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Old Item Specification</description>
+        <externalId>false</externalId>
+        <label>Old Item Specification</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Item_Specification__c.Item__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Item__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Item_Specification__c</referenceTo>
+        <relationshipLabel>ECO Lines (Old Item Specification)</relationshipLabel>
+        <relationshipName>ECO_Lines1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Old_Revision__c</fullName>
+        <description>Old Item Specification&apos;s Revision</description>
+        <externalId>false</externalId>
+        <formula>Old_Item_Specification__r.Revision__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Old Revision</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <label>ECO Line</label>
+    <listViews>
+        <fullName>All</fullName>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <displayFormat>{0000000000}</displayFormat>
+        <label>ECO Line</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>ECO Lines</pluralLabel>
+    <searchLayouts>
+        <excludedStandardButtons>New</excludedStandardButtons>
+        <excludedStandardButtons>Accept</excludedStandardButtons>
+        <excludedStandardButtons>ChangeOwner</excludedStandardButtons>
+        <searchFilterFields>NAME</searchFilterFields>
+    </searchLayouts>
+    <sharingModel>ControlledByParent</sharingModel>
+    <validationRules>
+        <fullName>Specification_Start_Dates</fullName>
+        <active>true</active>
+        <description>New Specification&apos;s Start Date must be after Old Specification&apos;s Start Date</description>
+        <errorConditionFormula>New_Item_Specification__r.Start_Date2__c &lt;=  Old_Item_Specification__r.Start_Date2__c</errorConditionFormula>
+        <errorDisplayField>New_Item_Specification__c</errorDisplayField>
+        <errorMessage>The Start date for the new specification must come after the Start date for the old specification</errorMessage>
+    </validationRules>
+</CustomObject>

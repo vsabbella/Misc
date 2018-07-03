@@ -1,0 +1,73 @@
+<apex:page standardController="Stock_Movement_Rule__c" extensions="StockMovementRuleManageExt">
+    <apex:includeScript value="{!URLFOR($Resource.jquery_ui_110,'/jquery-ui-1.10.0.custom/js/jquery-1.9.0.js')}" />
+    <apex:form id="theForm">
+        <c:busyWait />
+        <script>
+            function inputChange(element, fieldPath){          
+                inputID = $("."+fieldPath).parent().parent().find('input[name*="lkid"]').val();            
+                if (inputID == '' || inputID == null || inputID == 000000000000000) {
+                    return;
+                } else {              
+                    copyChange(inputID, fieldPath);  
+                }   
+            }
+        </script>
+        
+        <apex:actionFunction name="copyChange" immediate="true" action="{!syncClones}" reRender="theForm"    status="actionStatus">
+            <apex:param id="param" name="changedId" value=""/>
+            <apex:param id="param1" name="fieldPath" value=""/>
+        </apex:actionFunction> 
+    
+        <apex:sectionHeader subtitle="Stock Movement Rule" title="Stock Movement Rule"/>
+        <apex:outputPanel id="msgPanel">
+            <apex:pagemessages />
+        </apex:outputPanel>
+        
+        <apex:pageBlock id="thePageBlock" >
+        
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Save " action="{!save}" rerender="theForm" status="actionStatus"/>
+                <apex:commandButton value="Cancel " action="{!cancel}" rerender="theForm" status="actionStatus"/>
+            </apex:pageBlockButtons>
+     
+            <apex:pageBlockSection title="Information" columns="2" collapsible="false">
+                
+                <apex:repeat value="{!$ObjectType.Stock_Movement_Rule__c.FieldSets.Rule_Information}" var="f" > 
+                    <apex:inputField value="{!smr[f]}" required="{!OR(f.required, f.dbrequired)}" />
+                </apex:repeat>            
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Criteria" columns="2" collapsible="false">
+                <apex:repeat value="{!$ObjectType.Stock_Movement_Rule__c.FieldSets.Criteria_Information}" var="f" > 
+                    <apex:inputField value="{!smr[f]}" styleClass="{!f.FieldPath}" required="{!OR(f.required, f.dbrequired)}" onchange="inputChange(this, '{!f.FieldPath}')" />
+                </apex:repeat>            
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection id="result" title="Result" columns="1" collapsible="false">
+                <apex:repeat value="{!smrList}" var="smrLocation" > 
+                        
+                            <apex:inputField value="{!smrLocation['Location__c']}" />
+                
+                </apex:repeat>
+                <apex:pageBlockSectionItem >
+                    <apex:commandButton value="Add Location" action="{!addNewLocation}" rerender="theForm" status="actionStatus"/>
+                </apex:pageBlockSectionItem>    
+                
+            </apex:pageBlockSection>
+            
+        </apex:pageBlock>
+        
+        <div id="hiddenDiv" style="display:none">
+      	    <apex:inputField value="{!Stock_Movement_Rule__c.Company__c}" />
+      	    <apex:inputField value="{!Stock_Movement_Rule__c.Facility__c}" />
+      	    <apex:inputField value="{!Stock_Movement_Rule__c.Location__c}" />
+      	    <apex:inputField value="{!Stock_Movement_Rule__c.Location_List__c}" />
+      	    <apex:repeat value="{!smrList}" var="smrLocation" > 
+                <apex:inputField value="{!smrLocation['Company__c']}" />
+                <apex:inputField value="{!smrLocation['Facility__c']}" />
+            </apex:repeat>
+        </div>
+        
+    </apex:form>  
+    
+</apex:page>

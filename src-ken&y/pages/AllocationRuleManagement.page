@@ -1,0 +1,161 @@
+<apex:page standardController="Product__c"
+		extensions="AllocationRuleManagementExt,KendoExt,BaseController" 
+		docType="html-5.0">
+
+
+	<div style="display:none;">
+	    <!-- 
+	    Reason : http://salesforce.stackexchange.com/questions/7973/i-am-getting-a-sobject-row-was-retrieved-via-soql-without-querying-the-requested        
+	    Moving some merge fields used in Javascript code and other places in page at top, to ensure they are loaded correctly by JS run time.
+	    -->
+	    <apex:outputField value="{!Product__c.Company__c}"/>
+	    <apex:outputField value="{!Product__c.Id}"/>
+	    <apex:outputField value="{!Product__c.Name}"/>
+	    <apex:outputField value="{!Product__c.Description__c}"/>
+	</div>
+
+	<c:KendoResources />
+    <apex:includeScript value="{!$Resource.kendoRemoteComboBox}" />
+
+    <apex:sectionHeader title="{!$ObjectType.Allocation_Rule__c.LabelPlural}"/>
+
+	<style type="text/css">
+		
+		.filterLabel {
+			font-weight: bold;
+			font-size: 110%;
+		}
+		
+		.displayNone {
+		    display:none;
+		}
+		
+		.dateRange {
+		    border: 1px solid lightgray;
+		    padding: 5px;
+		    border-radius: 5px;
+		    text-align: center;
+		}
+	</style>
+    
+    <apex:outputPanel layout="block" style="padding:10px;">
+        <a href="{!URLFOR($Action.Allocation_Rule__c.List, $ObjectType.Allocation_Rule__c)}" class="k-button" style="width:200px;" target="_blank">{!$Label.View_All_Rules}</a>
+    </apex:outputPanel> <!-- pxp -->
+
+	<apex:form >
+		<apex:pageBlock title="{!$Label.Filter_to_show_rules_below}" id="changeFiltersBlock">
+		    <apex:facet name="header">
+	            <apex:panelGrid columns="1" width="100%" columnClasses="pbTitle" styleClass="pbHeader">
+	                <h2 class="mainTitle">{!$Label.Filter_to_show_rules_below}</h2>
+	            </apex:panelGrid>
+		    </apex:facet>
+		    
+		    <apex:facet name="footer">
+		        <apex:panelGrid columns="2" width="100%">
+		            <apex:outputPanel layout="block">
+    	                <b>{!$Label.Name_for_new_Allocation_Rules}</b> 
+        			<!-- 	<input type="hidden" id="sequenceNumber" value="{!biggestNextSequenceNumber}"/> -->
+        				<input type="text" id="nameSuggestion" />
+		            </apex:outputPanel>
+		            <apex:outputPanel layout="block">
+		                <button id="applyFiltersButton" type="button" data-role="button">{!$Label.Apply_Filters}</button>
+		            </apex:outputPanel>
+	            </apex:panelGrid>
+		    </apex:facet>
+		    
+			<apex:panelGrid columns="6" cellspacing="4" width="100%" >
+				<apex:outputLabel value="{!$Label.Product_Name}" styleClass="filterLabel" />
+				<apex:outputLabel value="{!$Label.Product_Description}" styleClass="filterLabel" />
+				<apex:outputLabel value="{!$ObjectType.Hierarchy__c.Fields.Type__c.Label}" styleClass="filterLabel" />
+				<apex:outputLabel value="{!$Label.History_Dates}" styleClass="filterLabel" />
+				<apex:outputLabel value="{!$Label.Rule_Dates}" styleClass="filterLabel" />
+				<apex:outputLabel value="{!$Label.Quantity_to_allocate}" styleClass="filterLabel showInHFS displayNone" />
+
+                <!-- row 2 starts -->
+				<apex:outputPanel layout="block" >
+					<input type="text" id="productFilter" />
+				</apex:outputPanel>
+				
+				<apex:outputPanel layout="block">
+					<input type="text" id="productDescFilter" style="width:300px;"/>
+				</apex:outputPanel>
+
+				<apex:outputPanel layout="block"> 
+					<input type="radio" name="ruleType" value="{!TYPE_PICKVAL_FB.value}"	data-name-prefix="FB"  checked="checked" />{!TYPE_PICKVAL_FB.label} &nbsp; <br />
+					<input type="radio" name="ruleType" value="{!TYPE_PICKVAL_HFS.value}" data-name-prefix="HFS"/>{!TYPE_PICKVAL_HFS.label} &nbsp; <br />
+					<input type="radio" name="ruleType" value="{!TYPE_PICKVAL_M.value}" data-name-prefix="M"/>{!TYPE_PICKVAL_M.value} &nbsp; 					
+				</apex:outputPanel>
+
+                <apex:outputPanel layout="block" styleClass="dateRange">
+					<input name="histFromDateFilter" id="histFromDateFilter" data-role="kndydatepicker" 
+					    data-dayoffset = "-365" style="width:100px;"
+						class="kendoWidgetSelector" type="date"/>
+					<span class="k-invalid-msg" data-for="histFromDateFilter"></span>
+					&nbsp; {!$Label.to} &nbsp;
+					<input name="histToDateFilter" id="histToDateFilter" 
+						data-role="kndydatepicker" data-dayoffset = "-305" style="width:100px;"
+						class="kendoWidgetSelector" type="date" />
+					<span class="k-invalid-msg" data-for="histToDateFilter"></span>
+				</apex:outputPanel>
+
+				<apex:outputPanel layout="block" styleClass="dateRange">
+					<input name="fromDateFilter" id="fromDateFilter" data-role="kndydatepicker" 
+					    data-dayoffset = "1" style="width:100px;"
+						class="kendoWidgetSelector" type="date"/>
+					<span class="k-invalid-msg" data-for="fromDateFilter"></span>
+					&nbsp; {!$Label.to} &nbsp;
+					<input name="toDateFilter" id="toDateFilter" 
+						data-role="kndydatepicker" data-dayoffset = "60" style="width:100px;"
+						class="kendoWidgetSelector" type="date" />
+					<span class="k-invalid-msg" data-for="toDateFilter"></span>
+				</apex:outputPanel>
+
+                <apex:outputPanel styleClass="showInHFS displayNone">
+					<input type="number" value="1" min="1" id="qtyToAllocate" />
+				</apex:outputPanel>
+				
+			</apex:panelGrid>
+		</apex:pageBlock>
+    
+		<apex:pageBlock title="{!$Label.Results_from_Filter_above}"> 
+			<div class="grid-container">
+				<div class="grid-message"></div>
+				<div id="matchingRulesDiv"></div>
+			</div>
+		</apex:pageBlock>
+
+	</apex:form>
+
+
+	<script type="text/javascript"> 
+		var vfPageData = {
+		    corpCustomerRecordTypeId                    : '{!corpCustomerRecordTypeId}',
+			currentCompanyId                			: '{!Product__c.Company__c}',
+			currentProductId			                : '{!Product__c.Id}',
+			currentProductName			                : '{!Product__c.Name}',
+			currentProductDesc                          : '{!Product__c.Description__c}',
+			namespacePrefix				                : '{!namespacePrefix}',
+			currentFieldInfos			                :  JSON.parse('{!defaultFieldInfos}'), // Field infos loaded as defaults for first use in grid
+			remoteActionLoadRules		                : '{!$RemoteAction.AllocationRuleManagementExt.loadRules}',
+			remoteActionSaveRules               		: '{!$RemoteAction.AllocationRuleManagementExt.saveRules}', 
+			remoteActionGetFieldInfos	                : '{!$RemoteAction.AllocationRuleManagementExt.getFieldInfos}',
+			remoteActionNewRule			                : '{!$RemoteAction.AllocationRuleManagementExt.newRule}',
+			
+			remoteActionLoadRecords             		: '{!$RemoteAction.KendoExt.loadRecords}',
+			remoteActionLookupSearchFilter	            : '{!$RemoteAction.BaseController.lookupSearchFilter}',
+			gridContainerSelector		                : '#matchingRulesDiv',
+			types               						: {
+                												fb : '{!TYPE_PICKVAL_FB.value}',
+                												hfs : '{!TYPE_PICKVAL_HFS.value}',
+                												m : '{!TYPE_PICKVAL_M.value}'
+            										      },
+			// This is needed because of the way currently kendo is working, it fires the read function which considers the data
+			// recently saved as existing rules for the data range and throws warning
+		    showWarningsForExistingRules               : true  
+		};
+		// Some state which is required from Visualforce by various scripts
+	</script>
+
+	<apex:includeScript value="{!$Resource.AllocationRuleJS}" />
+
+</apex:page>

@@ -1,0 +1,35 @@
+<apex:page standardController="Bank_Transaction_Group__c" 
+					tabStyle="Bank_Transaction_Group__c" 
+	               	 sidebar="false" 
+				recordSetVar="btgs"
+                  extensions="BankTransactionGroupAccountingExt">
+    <apex:form id="theForm" >
+    <c:busyWait />
+        <apex:sectionHeader subtitle="{!$Label.Generate_Bank_Transaction_Group_Accounting }" title="{!$Label.Generate_Bank_Transaction_Group_Accounting }"/>
+    	<apex:pageBlock id="pblock">
+    	<apex:pageMessages id="pageMessages" ></apex:pageMessages>
+    		<apex:pageBlockTable value="{!objectList}" var="line" id="BankTxnGrp" rendered="{!not(selecterror)}">
+
+                    <apex:repeat value="{!$ObjectType.Bank_Transaction_Group__c.FieldSets.Bank_Transaction_Group_AE_RO}" var="f" >
+                        <apex:column headerValue="{!f.label}"  styleClass="{!f.Type}  {!f.FieldPath}"  rendered="{!f.FieldPath!='Line_Value__c'}">
+                            <apex:outputField value="{!line[f]}" />
+                        </apex:column>
+                    </apex:repeat>                    
+                                      
+            </apex:pageBlockTable>
+            
+        	<apex:pageBlockButtons >
+        		<apex:commandButton value="{!$Label.Generate}" 
+        											action="{!generateBankTransactionGroupAccounting}" 
+        											status="actionStatus" rerender="theForm"
+        											disabled="{!(requiredFielderror || BatchInitiated)}"/>
+        		<apex:commandButton value="{!$Label.Go_Back } " action="{!cancel}" status="actionStatus" rerender="theForm"/>
+        	</apex:pageBlockButtons> 
+        	   
+    	</apex:pageBlock>
+    	
+    </apex:form>
+    
+    <div id="responseErrors" >
+    </div>
+</apex:page>

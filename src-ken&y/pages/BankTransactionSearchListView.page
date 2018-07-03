@@ -1,0 +1,96 @@
+<apex:page standardController="Bank_Account__c" extensions="YodleeTransactionSearchExt" recordSetVar="bankAccount" showheader="false" sidebar="false">
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.BankTransactionYodleeJS}" />
+    <style>
+        div.inlineFC{
+        width: 100%;
+        }
+        
+        div.inlineCol{
+        box-sizing: border-box;
+        float: left;
+        text-align: left;         
+        margin-right: 10px;    
+        }
+    </style>
+    <script>
+         Visualforce.remoting.timeout = 120000;
+         var nspaceForYodlee = "{!nspace}";
+         $(document).on('KenandyErpReady', function(e) { 
+             var messageElement = document.getElementById("message");
+             $.fn.KendoDatePicker($('#datepickerfrom'), {value: new Date()});
+             $.fn.KendoDatePicker($('#datepickerto'), {value: new Date()});
+             $("#searchFilter").click(function(){
+                    var datemessageElement = document.getElementById("user-message");
+                    if(datemessageElement != undefined){
+                        KenandyErp.ClearMessage(datemessageElement);    
+                    }
+                    KenandyErp.BlockUI();
+                    var bankAccount = [];
+                    bankAccount = {!lstYodleeBankAccount};
+                    console.log('bankAccount'+bankAccount);
+                    var fromDate = $("#datepickerfrom").val();
+                    var toDate = $("#datepickerto").val();
+                    if(new Date(fromDate) > new Date(toDate)){
+                        if(datemessageElement != undefined){
+                            KenandyErp.Message('From date cant be greater than the To date', KenandyErp.MessageType.Error, datemessageElement);
+                        }
+                        KenandyErp.UnBlockUI();
+                    }else{
+                    	if(bankAccount != ''){
+                    		if(messageElement != undefined){
+				                KenandyErp.Message('To ensure all processes complete, don\'t close window until you receive success message.', KenandyErp.MessageType.Warning, messageElement);
+				            }
+                        	cobrandloginAndSearchForMultipleAccount(bankAccount,yyyymmdd(fromDate),yyyymmdd(toDate));
+                        }else{
+                        	if(datemessageElement != undefined){
+		                        KenandyErp.ClearMessage(datemessageElement);
+		                        KenandyErp.Message('{!$Label.Selected_Bank_Accounts_Not_Set_up_for_Import}', KenandyErp.MessageType.Error, datemessageElement);
+		                        KenandyErp.UnBlockUI();     
+		                    }
+                        }
+                    }
+             });
+             
+             $("#allTransaction").click(function(){
+                    var datemessageElement = document.getElementById("user-message");
+                    if(datemessageElement != undefined){
+                        KenandyErp.ClearMessage(datemessageElement);    
+                    }
+                    KenandyErp.BlockUI();
+                    var bankAccount = [];
+                    bankAccount = {!lstYodleeBankAccount};
+                    console.log('bankAccount'+bankAccount);
+                    if(bankAccount != ''){
+                    	if(messageElement != undefined){
+				        	KenandyErp.Message('To ensure all processes complete, don\'t close window until you receive success message.', KenandyErp.MessageType.Warning, messageElement);
+				        }
+                    	cobrandloginAndSearchForMultipleAccount(bankAccount,'','');
+                    }else{
+                    	if(datemessageElement != undefined){
+		                	KenandyErp.ClearMessage(datemessageElement);
+		                    KenandyErp.Message('{!$Label.Selected_Bank_Accounts_Not_Set_up_for_Import}', KenandyErp.MessageType.Error, datemessageElement);  
+		                    KenandyErp.UnBlockUI();  
+		                }
+                    }
+             });
+         });
+    </script>
+    <apex:form >
+        <apex:pageBlock title="Import Bank Transactions">
+            <apex:pagemessages />
+            <apex:outputPanel rendered="{!lstYodleeBankAccount!=null}">
+                <div id="message"></div>
+                <div id="user-message"></div>
+                <h1>Enter Dates</h1>
+                <div class="inlineFC">
+                    <div class="inlineCol"><span class="">From Date </span><span class=""><input id="datepickerfrom" name="datepickerfrom" type="datetime"/></span></div>
+                    <div class="inlineCol"><span class="">To Date </span><span class=""><input id="datepickerto" name="datepickerto" type="datetime" /></span></div>
+                    <div class="inlineCol"><span class=""><input name="searchFilter" style="left-margin: 40%;" id="searchFilter" type="button" value="Import using Date Range" class="btn" /></span></div>
+                    <div class="inlineCol"><span class=""><input name="allTransaction" style="left-margin: 40%;" id="allTransaction" type="button" value="Import Latest" class="btn" /></span></div>
+                </div>
+            </apex:outputPanel>
+            <apex:commandButton value="{!$Label.Go_Back}" action="{!goback}"/>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

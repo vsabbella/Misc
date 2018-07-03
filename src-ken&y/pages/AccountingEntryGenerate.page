@@ -1,0 +1,254 @@
+<!-- <apex:page controller="AccountingEntryGenerateCon"  action="{!previewAE}" > -->
+<!-- Replaced with SourceDocumentAccounting page -->
+  <apex:page >
+  Deprecated Page<!--  
+	<c:KendoResources />
+	<apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+	<script>
+	
+		var aeLinesGrid = null;
+		var rulesGrid = null;
+		var aggregates = [];
+		
+		var AELineUtils = function(fieldList) {
+        	return {
+        		GetFieldList: function(fieldList) {
+        			fieldList = JSON.parse(fieldList);
+        			
+        			$.each(fieldList, function() {
+        				var aggregateField = _.where(aggregates, {field: this.field})[0];
+        				
+        				if (aggregateField && this.field == aggregateField.field) {
+			            	this.aggregate = aggregateField.aggregate;
+			            }
+        			});
+        			return JSON.stringify(fieldList);
+        		}
+        		
+        	};
+		}();
+		
+		var getAELinesData = function(config) {
+		    if(!config){
+		        return;
+		    }
+            var deferred = $.Deferred();
+            var remoteArgs = JSON.parse(config);
+            // The stuff returned from Salesforce has extra properties like "attributes"
+            // which couldn't be deserialised back
+            remoteArgs.parentRecord = { Id: remoteArgs.parentRecord.Id };
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.AccountingEntryGenerateCon.getAELines}',
+                remoteArgs,
+                function (result, event) {
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+            );
+
+            return deferred.promise();
+        }
+        
+        var getRulesData = function(config) {
+		    if(!config){
+		        return;
+		    }
+            var deferred = $.Deferred();
+            var remoteArgs = JSON.parse(config);
+            // The stuff returned from Salesforce has extra properties like "attributes"
+            // which couldn't be deserialised back
+            remoteArgs.parentRecord = { Id: remoteArgs.parentRecord.Id };
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.AccountingEntryGenerateCon.getRules}',
+                remoteArgs,
+                function (result, event) {
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+            );
+
+            return deferred.promise();
+        }
+		
+		$(document).ready(function() {
+			console.log('ready');
+			if({!renderReview}){
+				gridInit("{!record.Id}");
+				rulesGridInit("{!record.Id}");
+			}
+		});
+		
+		function gridInit(recordId){
+			
+			if (aeLinesGrid) {
+                aeLinesGrid.destroy();
+                $('#aeLinesGrid').empty();
+            }
+            
+            if(recordId == ""){
+            	return;
+            }
+            
+            var lookupSearchFilters = [];
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.AccountingEntryGenerateCon.getGridConfig}',
+                "{!theSourceDocId}",
+                recordId,
+                function (result, event) {
+                	var getAELinesData = function() {
+                        var deferred = $.Deferred();
+                        var remoteArgs = JSON.parse(result.config);
+                        // The stuff returned from Salesforce has extra properties like "attributes"
+                        // which couldn't be deserialised back
+                        remoteArgs.parentRecord = { Id: remoteArgs.parentRecord.Id };
+                        
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.AccountingEntryGenerateCon.getAELines}',
+                            remoteArgs,
+                            function (result, event) {
+                                deferred.resolve(result, event);
+                            },
+                            {escape: false}
+                        );
+                        return deferred.promise();
+                    }
+                    
+                    
+		            aeLinesGrid = $.fn.GridRelatedList($('#aeLinesGrid'), { namespace: '{!NamespaceUU}', config: result.config, fieldList: AELineUtils.GetFieldList(result.fieldInfoList), lookupSearchAction: '{!$RemoteAction.AccountingEntryGenerateCon.lookupSearchFilter}', getRelatedListFunction: getAELinesData, lookupSearchFilters: lookupSearchFilters, saveRelatedListAction: '{!$RemoteAction.AccountingEntryGenerateCon.saveAction}' });
+           			
+                },
+                {escape: false}
+            );
+        }
+        
+        function rulesGridInit(recordId){
+			
+			if (rulesGrid) {
+                rulesGrid.destroy();
+                $('#rulesGrid').empty();
+            }
+            
+            if(recordId == ""){
+            	return;
+            }
+            
+            var lookupSearchFilters = [];
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.AccountingEntryGenerateCon.getRulesGridConfig}',
+                "{!theSourceDocId}",
+                recordId,
+                function (result, event) {
+                	var getRulesData = function() {
+                        var deferred = $.Deferred();
+                        var remoteArgs = JSON.parse(result.config);
+                        // The stuff returned from Salesforce has extra properties like "attributes"
+                        // which couldn't be deserialised back
+                        remoteArgs.parentRecord = { Id: remoteArgs.parentRecord.Id };
+                        
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.AccountingEntryGenerateCon.getRules}',
+                            remoteArgs,
+                            function (result, event) {
+                                deferred.resolve(result, event);
+                            },
+                            {escape: false}
+                        );
+                        return deferred.promise();
+                    }
+                    
+                    
+		            rulesGrid = $.fn.GridRelatedList($('#rulesGrid'), { namespace: '{!NamespaceUU}', config: result.config, fieldList: AELineUtils.GetFieldList(result.fieldInfoList), lookupSearchAction: '{!$RemoteAction.AccountingEntryGenerateCon.lookupSearchFilter}', getRelatedListFunction: getRulesData, lookupSearchFilters: lookupSearchFilters, saveRelatedListAction: '{!$RemoteAction.AccountingEntryGenerateCon.saveAction}' });
+           			
+                },
+                {escape: false}
+            );
+        }
+	</script>
+	
+    <apex:sectionHeader subtitle="{!$Label.Generate_Accounting_Entry}" 
+                                        title="{!$Label.Generate_for} {!SourceDocName}"/>
+    
+    <apex:form id="form" > 
+    <c:busyWait />
+    <apex:pagemessages />
+    <apex:actionRegion >
+     <!--Commenting as part of KNDY-6885
+     <apex:actionPoller action="{!refresh}" reRender="form" interval="5" enabled="{!(manyLines || tooManyLines)}" oncomplete="gridInit('{!record.Id}');rulesGridInit('{!record.Id}');"/>       -->     
+    
+    <!--  <apex:outputText rendered="{!record.name == null}" >
+         {!$Label.Click_Generate_to_save_AccountingEntries}</apex:outputText>-->
+    <!--  
+    <apex:pageBlock title="{!$Label.Accounting_Entry_Generated}" rendered="{!renderReview}" id="DataPanel1">
+        <apex:pageBlockButtons location="top">
+        <apex:commandButton value="{!$Label.Return_to} {!SourceDocName}" 
+                                            action="{!close}" status="actionStatus" rerender="form"/>
+       	<apex:commandButton value="Review Accounting Entry" 
+                                        action="{!review}"
+                                        rendered="{!renderReview}" status="actionStatus" rerender="form"/>
+        </apex:pageBlockButtons>
+        
+        <apex:pageBlockSection rendered="{!record.name != null}">
+        <apex:repeat value="{!$ObjectType.Accounting_Entry__c.FieldSets.Preview}" var="f">
+        	<apex:outputField value="{!record[f]}"  />          
+        </apex:repeat>
+         
+        </apex:pageBlockSection>
+
+           
+    </apex:pageBlock> 
+    
+    <apex:pageBlock title="{!$Label.Accounting_Entry_Lines_Generated}" rendered="{!renderReview}" id="DataPanel2">
+    	<div class="grid-container">
+    		<div class="grid-message"></div>
+        	<div id="aeLinesGrid"></div>
+        </div>  
+    </apex:pageBlock>
+    
+    <apex:pageBlock title="{!$Label.Accounting_Rules_Matched}" rendered="{!renderReview}" id="DataPanel3">
+    	<div class="grid-container">
+    		<div class="grid-message"></div>
+        	<div id="rulesGrid"></div>
+        </div>
+    </apex:pageBlock>
+    
+            <br/>
+         <!--Commenting as part of KNDY-6885 
+            <apex:outputpanel rendered="{!!renderReview && (manyLines || tooManyLines)}" id="LoadingPanel" >-->
+
+                <!--<apex:image url="/img/loading32.gif"/>-->
+                <!--  <apex:pageblock rendered="{!renderDraft}">
+                    <apex:pageBlockSection >
+                          <apex:outputField value="{!draft.name}"/>
+                        <apex:outputField value="{!draft.Company__c}"/>                  
+                    </apex:pageBlockSection>
+               
+                </apex:pageblock>-->
+                <!--Commenting as part of KNDY-6885 
+                <apex:pageblock >
+                <table width="100%">
+					<tr>
+                        <td align="center"><div id="ProgressBar" ></div></td>
+                    </tr>                    
+                </table>  
+                </apex:pageblock>
+             <script>
+             /*   var exp={!expCount};
+                var curr={!CurrCount};                
+                var pb = $("#ProgressBar").kendoProgressBar({
+                    type: "percent",
+                    min: 0,
+                    max: exp,
+                    value: curr,
+                    animation: {
+                        duration: 600
+                    }
+        }).data("kendoProgressBar");*/
+                </script>
+            </apex:outputpanel>-->
+      <!--   </apex:actionRegion>
+</apex:form>  -->
+</apex:page>

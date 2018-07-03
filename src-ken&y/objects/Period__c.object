@@ -1,0 +1,1049 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpPeriods</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Segment of time that financial entries fall into</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableEnhancedLookup>true</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>Review</fullName>
+        <description>PeriodClose</description>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Prior_Period__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Period_Start__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Period_End__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Review</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>SubledgerCutOffs</fullName>
+        <description>PeriodService.cls</description>
+        <displayedFields>
+            <field>FA_Subledger_Cutoff__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Shipment_Subledger_Cutoff__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Receiving_Subledger_Cutoff__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>AR_Subledger_Cutoff__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>AP_Subledger_Cutoff__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Inventory_Subledger_Cutoff__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>SubledgerCutOffs</label>
+    </fieldSets>
+    <fields>
+        <fullName>AP_Subledger_Closed__c</fullName>
+        <externalId>false</externalId>
+        <label>AP Closed</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>AP_Subledger_Cutoff__c</fullName>
+        <description>Cut off date time for AP.</description>
+        <externalId>false</externalId>
+        <label>AP Cutoff</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>AP_Subledger_Job__c</fullName>
+        <externalId>false</externalId>
+        <label>AP Job</label>
+        <length>18</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>AP_Subledger_Last_Run__c</fullName>
+        <externalId>false</externalId>
+        <label>AP Last Run</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>AP_Subledger_job_Exception__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>AP job Exception</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>AP_Valid_After__c</fullName>
+        <externalId>false</externalId>
+        <label>AP Valid After</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>AR_Subledger_Closed__c</fullName>
+        <externalId>false</externalId>
+        <label>AR Closed</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>AR_Subledger_Cutoff__c</fullName>
+        <description>This field indicates the date and time when the AR cut off is.</description>
+        <externalId>false</externalId>
+        <label>AR Cutoff</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>AR_Subledger_Job__c</fullName>
+        <externalId>false</externalId>
+        <label>AR Job</label>
+        <length>18</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>AR_Subledger_Last_Run__c</fullName>
+        <externalId>false</externalId>
+        <label>AR Last Run</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>AR_Subledger_job_Exception__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>AR job Exception</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>AR_Valid_After__c</fullName>
+        <externalId>false</externalId>
+        <label>AR Valid After</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Adjustment_Period__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Check the box if this is an adjustment period</description>
+        <externalId>false</externalId>
+        <label>Adjustment Period</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Budget_Calculations_Complete__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Budget Calculations Complete</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Closed__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Check this box to close the period</description>
+        <externalId>false</externalId>
+        <inlineHelpText>A checkmark indicate that the period is closed. You can open a closed period to make changes. Once permanently closed, modifications are not allowed.</inlineHelpText>
+        <label>Closed</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Periods</relationshipLabel>
+        <relationshipName>Periods</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Corporate__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Check this box of this period falls under corporate calendar</description>
+        <externalId>false</externalId>
+        <label>Corporate</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Delete_ObsoleteAEs__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Delete Obsolete Accounting Entries</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>FA_Subledger_Closed__c</fullName>
+        <externalId>false</externalId>
+        <label>FA Closed</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>FA_Subledger_Cutoff__c</fullName>
+        <description>Cut Off date and time for the Fixed Assets.</description>
+        <externalId>false</externalId>
+        <label>FA Cutoff</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>FA_Subledger_Job__c</fullName>
+        <externalId>false</externalId>
+        <label>FA Job</label>
+        <length>18</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>FA_Subledger_Last_Run__c</fullName>
+        <externalId>false</externalId>
+        <label>FA Last Run</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>FA_Subledger_job_Exception__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>FA job Exception</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>FA_Valid_After__c</fullName>
+        <externalId>false</externalId>
+        <label>FA Valid After</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>FiscalYear__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Fiscal Year</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>$Source.Company__c</field>
+                <operation>equals</operation>
+                <valueField>Fiscal_Year__c.Company__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Fiscal_Year__c</referenceTo>
+        <relationshipLabel>Periods</relationshipLabel>
+        <relationshipName>Periods</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Fiscal_Year__c</fullName>
+        <description>Label to describe the fiscal year</description>
+        <externalId>false</externalId>
+        <label>Fiscal Year</label>
+        <length>4</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Fiscal__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Check this box of this period falls under Fiscal calendar</description>
+        <externalId>false</externalId>
+        <inlineHelpText>A checkmark indicates  this period belongs to a fiscal calendar. Only one period type can be selected.</inlineHelpText>
+        <label>Fiscal</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>GL_Close__c</fullName>
+        <externalId>false</externalId>
+        <label>GL Close</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>InterCompany_Subledger_Closed__c</fullName>
+        <externalId>false</externalId>
+        <label>InterCompany Closed</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>InterCompany_Subledger_Cutoff__c</fullName>
+        <description>Cut off date time for InterCompanympany.</description>
+        <externalId>false</externalId>
+        <label>InterCompany Cutoff</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>InterCompany_Subledger_Job_Exception__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>InterCompany Job Exception</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>InterCompany_Subledger_Job__c</fullName>
+        <externalId>false</externalId>
+        <label>InterCompany Job</label>
+        <length>18</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>InterCompany_Subledger_Last_Run__c</fullName>
+        <externalId>false</externalId>
+        <label>InterCompany Last Run</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>InterCompany_Valid_After__c</fullName>
+        <externalId>false</externalId>
+        <label>InterCompany Valid After</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Inventory_Subledger_Closed__c</fullName>
+        <externalId>false</externalId>
+        <label>Inventory Closed</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Inventory_Subledger_Cutoff__c</fullName>
+        <description>Cut Off date and time for the inventory related transactions ( Work Orders, Inventory Changes etc).</description>
+        <externalId>false</externalId>
+        <label>Inventory Cutoff</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Inventory_Subledger_Job__c</fullName>
+        <externalId>false</externalId>
+        <label>Inventory Job</label>
+        <length>18</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Inventory_Subledger_Last_Run__c</fullName>
+        <externalId>false</externalId>
+        <label>Inventory Last Run</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Inventory_Subledger_job_Exception__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Inventory job Exception</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Inventory_Valid_After__c</fullName>
+        <externalId>false</externalId>
+        <label>Inventory Valid After</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>JE_Cutoff__c</fullName>
+        <externalId>false</externalId>
+        <label>JE Cutoff</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>JE_Subledger_Job__c</fullName>
+        <externalId>false</externalId>
+        <label>JE Job</label>
+        <length>18</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>JE_Subledger_Last_Run__c</fullName>
+        <externalId>false</externalId>
+        <label>JE Last Run</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>JE_Subledger_job_Exception__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>JE job Exception</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>JE_Valid_After__c</fullName>
+        <externalId>false</externalId>
+        <label>JE Valid After</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Next_Period__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Next Period</label>
+        <referenceTo>Period__c</referenceTo>
+        <relationshipLabel>Periods (Next Period)</relationshipLabel>
+        <relationshipName>Next_Periods</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Open__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Check this box to open the period</description>
+        <externalId>false</externalId>
+        <label>Open</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Period_Close_Job__c</fullName>
+        <externalId>false</externalId>
+        <label>Period Close Job</label>
+        <length>18</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Period_Closed__c</fullName>
+        <externalId>false</externalId>
+        <label>Period Closed</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Period_End__c</fullName>
+        <description>Period End is the date and time when the period actually ends.</description>
+        <externalId>false</externalId>
+        <label>Period End</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Period_Number__c</fullName>
+        <description>Period Number in sequence from 1-12 or 1-13 etc</description>
+        <externalId>false</externalId>
+        <label>Period Number</label>
+        <precision>2</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Period_Start__c</fullName>
+        <description>Period Start is date and time when this period actually starts.</description>
+        <externalId>false</externalId>
+        <label>Period Start</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Permanently_Closed__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Check this box to permanently close the period which mean no modifications to any transactions in the previous period will be allowed.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>A checkmark indicates that the period is permanently closed and no modifications can be made to the period.</inlineHelpText>
+        <label>Permanently Closed</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Primary_Key__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>This field serves the purpose of the primary key on the Period object which will be a combination of the fields Fiscal, Corporate, Tax, Company, Year start date</description>
+        <externalId>false</externalId>
+        <label>Primary Key</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Prior_Period__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Prior period indicates which was the previous period for this record.</description>
+        <externalId>false</externalId>
+        <label>Prior Period</label>
+        <referenceTo>Period__c</referenceTo>
+        <relationshipLabel>Periods</relationshipLabel>
+        <relationshipName>Periods</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Quarter_Number__c</fullName>
+        <description>Enter the quarter number for the period ex. 1</description>
+        <externalId>false</externalId>
+        <label>Quarter Number</label>
+        <precision>1</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Receiving_Subledger_Closed__c</fullName>
+        <externalId>false</externalId>
+        <label>Receiving Closed</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Receiving_Subledger_Cutoff__c</fullName>
+        <description>Cut off date time for the Receiving Documents.</description>
+        <externalId>false</externalId>
+        <label>Receiving Cutoff</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Receiving_Subledger_Job__c</fullName>
+        <externalId>false</externalId>
+        <label>Receiving Job</label>
+        <length>18</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Receiving_Subledger_Last_Run__c</fullName>
+        <externalId>false</externalId>
+        <label>Receiving Last Run</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Receiving_Subledger_job_Exception__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Receiving job Exception</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Receiving_Valid_After__c</fullName>
+        <externalId>false</externalId>
+        <label>Receiving Valid After</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Shipment_Subledger_Closed__c</fullName>
+        <externalId>false</externalId>
+        <label>Shipment Closed</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Shipment_Subledger_Cutoff__c</fullName>
+        <description>Cut off date and time for shipments.</description>
+        <externalId>false</externalId>
+        <label>Shipment Cutoff</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Shipment_Subledger_Job__c</fullName>
+        <externalId>false</externalId>
+        <label>Shipment Job</label>
+        <length>18</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Shipment_Subledger_Last_Run__c</fullName>
+        <externalId>false</externalId>
+        <label>Shipment Last Run</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Shipment_Subledger_job_Exception__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Shipment job Exception</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Shipment_Valid_After__c</fullName>
+        <externalId>false</externalId>
+        <label>Shipment Valid After</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Tax__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Check this box of this period falls under Tax calendar</description>
+        <externalId>false</externalId>
+        <inlineHelpText>A checkmark indicates that this period belongs to a tax calendar. Only one period type can be selected.</inlineHelpText>
+        <label>Tax</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Type__c</fullName>
+        <externalId>false</externalId>
+        <label>Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Adjustment</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Fiscal</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Historical</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Period 13</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Year_End_Date__c</fullName>
+        <description>End date of the year in period calendar. Ex. Year end date for the corporate calendar to which this period belongs to.</description>
+        <externalId>false</externalId>
+        <label>Year End Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Year_Start_Date__c</fullName>
+        <description>Start date of the year in period calendar. Ex. Year end date for the corporate calendar to which this period belongs to.</description>
+        <externalId>false</externalId>
+        <label>Year Start Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <label>Period</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Company__c</columns>
+        <columns>Type__c</columns>
+        <columns>FiscalYear__c</columns>
+        <columns>Period_Start__c</columns>
+        <columns>Period_End__c</columns>
+        <columns>Period_Number__c</columns>
+        <columns>Quarter_Number__c</columns>
+        <columns>Prior_Period__c</columns>
+        <columns>Open__c</columns>
+        <columns>Closed__c</columns>
+        <columns>Permanently_Closed__c</columns>
+        <columns>Corporate__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Period</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Periods</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Company__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Open__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Closed__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Permanently_Closed__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Period_Start__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Period_End__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Fiscal__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Corporate__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Tax__c</customTabListAdditionalFields>
+        <listViewButtons>Generate_Recurring_AE</listViewButtons>
+        <lookupDialogsAdditionalFields>Company__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Period_Number__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Fiscal_Year__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Period_Start__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Period_End__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Open__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Closed__c</lookupDialogsAdditionalFields>
+        <searchResultsAdditionalFields>Company__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Fiscal_Year__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Period_Number__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Period_Start__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Period_End__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Open__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Closed__c</searchResultsAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>Check_Company_Information</fullName>
+        <active>true</active>
+        <description>Check if finaicial company is missing on the record</description>
+        <errorConditionFormula>ISBLANK(  Company__c )</errorConditionFormula>
+        <errorMessage>Please select a valid financial company</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Check_InterCompany_subledger_cutoff</fullName>
+        <active>false</active>
+        <description>Check InterCompany cutoff should always be same as period end.</description>
+        <errorConditionFormula>InterCompany_Subledger_Cutoff__c      &lt;  Period_End__c</errorConditionFormula>
+        <errorMessage>Check InterCompany cutoff should always be same as period end.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Check_Intercompany_SubledgerCutoff</fullName>
+        <active>true</active>
+        <description>Check Intercompany Cutoff. If the cutoff is before period end then throw error.</description>
+        <errorConditionFormula>InterCompany_Subledger_Cutoff__c &lt;  Period_End__c</errorConditionFormula>
+        <errorMessage>Intercompany cutoff can not be before Period End.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Check_Year_End_Date</fullName>
+        <active>true</active>
+        <description>Check if Year end date is less than Year start date</description>
+        <errorConditionFormula>Year_End_Date__c &lt;= Year_Start_Date__c</errorConditionFormula>
+        <errorDisplayField>Year_End_Date__c</errorDisplayField>
+        <errorMessage>Please enter a Year End Date which is greater than Year Start Date</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Check_on_Period_Start_Date</fullName>
+        <active>false</active>
+        <description>Check if the period start date is between year start date and year end date</description>
+        <errorConditionFormula>!ISPICKVAL(Type__c, &apos;Zero&apos;) &amp;&amp;
+(DATEVALUE(Period_Start__c) &lt; Year_Start_Date__c || 
+DATEVALUE(Period_Start__c) &gt; Year_End_Date__c)</errorConditionFormula>
+        <errorDisplayField>Period_Start__c</errorDisplayField>
+        <errorMessage>Please enter the period start between the year start date and year end date</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Check_on_period_type_selection</fullName>
+        <active>true</active>
+        <description>For a given record only one check box for period type should be checked.</description>
+        <errorConditionFormula>( Fiscal__c == true &amp;&amp; Corporate__c == true &amp;&amp; Tax__c ==true ) || 
+( Fiscal__c == true &amp;&amp; Corporate__c == true &amp;&amp; Tax__c == false ) || 
+( Fiscal__c == true &amp;&amp; Corporate__c == false &amp;&amp; Tax__c == true) || 
+( Fiscal__c == false &amp;&amp; Corporate__c == true &amp;&amp; Tax__c == true)</errorConditionFormula>
+        <errorMessage>The period can be only one period type for a record Corporate or Fiscal or Tax.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Check_on_the_status_selection</fullName>
+        <active>true</active>
+        <description>To perform the check on the status of the period. For a given record only one status at a time is valid.</description>
+        <errorConditionFormula>( Closed__c = true &amp;&amp; Open__c == true &amp;&amp; Permanently_Closed__c == true) || 
+( Closed__c = true &amp;&amp; Open__c == true &amp;&amp; Permanently_Closed__c == false) || 
+( Closed__c = true &amp;&amp; Open__c == false&amp;&amp; Permanently_Closed__c == true) || 
+( Closed__c = false &amp;&amp; Open__c == true &amp;&amp; Permanently_Closed__c == true)</errorConditionFormula>
+        <errorMessage>The period can only be in one status at a time (Open or Closed or Permanently Closed)</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Fiscal_Corporate_Tax_Validation</fullName>
+        <active>true</active>
+        <description>The purpose of this rule is to identify if atleast one checkbox is selected</description>
+        <errorConditionFormula>Corporate__c == false &amp;&amp; Fiscal__c == false &amp;&amp; Tax__c == false &amp;&amp; !ISPICKVAL(Type__c, &apos;Historical&apos;)</errorConditionFormula>
+        <errorMessage>Please select at least one period type of Fiscal/Corporate/Tax</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Fiscal_Year_Check</fullName>
+        <active>true</active>
+        <description>Fiscal Year check for the start and end dates</description>
+        <errorConditionFormula>NOT(ISBLANK(FiscalYear__c)) 
+&amp;&amp; 
+NOT(ISPICKVAL(Type__c, &apos;Zero&apos;))
+&amp;&amp;
+(Period_Start__c &lt; FiscalYear__r.Fiscal_Year_Start_Date__c  
+||
+Period_End__c  &gt; FiscalYear__r.Fiscal_Year_End_Date__c)</errorConditionFormula>
+        <errorMessage>Period start date and end date should be within the associated fiscal year.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Fiscal_Year_can_not_be_blank</fullName>
+        <active>true</active>
+        <description>Fiscal year can not be blank</description>
+        <errorConditionFormula>ISBLANK( FiscalYear__c )</errorConditionFormula>
+        <errorDisplayField>Fiscal_Year__c</errorDisplayField>
+        <errorMessage>Fiscal year can not be blank</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>No_status_Change_on_Permanently_Closed</fullName>
+        <active>true</active>
+        <description>Once the status of the record is Permanently Closed it can not be changed to Closed or Open.</description>
+        <errorConditionFormula>(Permanently_Closed__c == false &amp;&amp; ISCHANGED( Permanently_Closed__c))</errorConditionFormula>
+        <errorDisplayField>Permanently_Closed__c</errorDisplayField>
+        <errorMessage>Status of the record is Permanently Closed and it can not be changed.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Open_Period_Validations</fullName>
+        <active>true</active>
+        <description>Once the period is opened, the period start date, period end date, period number, quarter number, year start date, year end date can not be modified.</description>
+        <errorConditionFormula>(Open__c == true || Closed__c == true || Permanently_Closed__c == true) &amp;&amp; (
+ ISCHANGED( Period_Start__c ) ||
+ ISCHANGED ( Period_End__c ) ||
+ ISCHANGED ( Year_Start_Date__c )||
+ ISCHANGED( Year_End_Date__c )||
+ ISCHANGED( Period_Number__c ) ||
+ ISCHANGED( Quarter_Number__c )
+)</errorConditionFormula>
+        <errorMessage>Period Start, Period End, Year Start, Year End, Period Number, Quarter Number can not be modified when the period is Open.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Period_Cannot_Close_with_Open_Subledgers</fullName>
+        <active>true</active>
+        <errorConditionFormula>!ISPICKVAL(Type__c, &apos;Historical&apos;) 
+&amp;&amp;
+!ISPICKVAL(Type__c, &apos;Zero&apos;)
+&amp;&amp;
+!ISPICKVAL(Type__c, &apos;Period 13&apos;)
+&amp;&amp;
+OR(Closed__c, Permanently_Closed__c)
+&amp;&amp;
+OR( 
+ISNULL( AP_Subledger_Closed__c ) ,
+ISNULL( AR_Subledger_Closed__c ) ,
+ISNULL( Inventory_Subledger_Closed__c ) ,
+ISNULL( FA_Subledger_Closed__c ) ,
+ISNULL( Shipment_Subledger_Closed__c ) ,
+ISNULL( Receiving_Subledger_Closed__c ),
+ISNULL( GL_Close__c )
+
+)</errorConditionFormula>
+        <errorDisplayField>Closed__c</errorDisplayField>
+        <errorMessage>You cannot close this period with open areas.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Period_Close_check</fullName>
+        <active>true</active>
+        <errorConditionFormula>PRIORVALUE(Closed__c) == false &amp;&amp; !(ISCHANGED(Closed__c)) &amp;&amp; Closed__c == true</errorConditionFormula>
+        <errorMessage>Period can not be modified when in closed state</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Period_End_Date_Validation</fullName>
+        <active>false</active>
+        <description>Check if the period end date is greater than period start date and it is between year start date and year end date</description>
+        <errorConditionFormula>(DATEVALUE(Period_End__c) &lt; DATEVALUE(Period_Start__c)) ||
+(DATEVALUE(Period_End__c) &lt; Year_Start_Date__c || 
+DATEVALUE(Period_End__c) &gt; Year_End_Date__c)</errorConditionFormula>
+        <errorDisplayField>Period_End__c</errorDisplayField>
+        <errorMessage>Please enter valid Period end. Period End should be greater than Period Start and It should fall in between year start date and year end date</errorMessage>
+    </validationRules>
+    <webLinks>
+        <fullName>FX_Calculations</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>FX Calculations</masterLabel>
+        <openType>sidebar</openType>
+        <page>PeriodUfxCalculator</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Generate_Recurring_AE</fullName>
+        <availability>online</availability>
+        <displayType>massActionButton</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Generate Recurring AE</masterLabel>
+        <openType>sidebar</openType>
+        <page>RecurringAccountingEntryGenerate</page>
+        <protected>false</protected>
+        <requireRowSelection>true</requireRowSelection>
+    </webLinks>
+    <webLinks>
+        <fullName>Manage_Documents</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <linkType>page</linkType>
+        <masterLabel>Manage Documents</masterLabel>
+        <openType>replace</openType>
+        <page>SourceDocumentPost</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Manage_Period_Close</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <linkType>page</linkType>
+        <masterLabel>Manage Period Close</masterLabel>
+        <openType>replace</openType>
+        <page>PeriodClose</page>
+        <protected>false</protected>
+    </webLinks>
+</CustomObject>

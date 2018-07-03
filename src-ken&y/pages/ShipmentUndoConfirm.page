@@ -1,0 +1,50 @@
+<apex:page standardController="Shipment__c"
+                tabStyle="Shipment__c" 
+                id="thePage"
+                extensions="ShipmentUndoConfirmExt">
+                
+                
+                
+                <script type="text/javascript"> 
+                    $(document).ready(function() { 
+                        undoShipConfirm();
+                        return false;
+                    });
+                    
+                    function undoShipConfirm(){
+                        
+                        result = window.confirm('{!$Label.ConfirmUnconfirm}');
+                        if(result == true) {
+                            undoConfirmShipAF();
+                        }
+                        return false;
+                    }
+                    function goback(){
+                        if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+                            sforce.one.back(true);
+                        } else {
+                            window.location.href = '/{!Shipment__c.Id}';
+                        }
+                    }
+                </script>    
+                
+                
+                <apex:form id="form">
+                    
+                    <c:busyWait />
+                    
+                    <apex:pageBlock >
+                    
+                        <apex:outputPanel id="errPanel">
+                            <apex:PageMessages />
+                        </apex:outputPanel>
+        			    
+        			    <apex:actionFunction name="undoConfirmShipAF" action="{!undoShipConfirm}" status="actionStatus" reRender="errPanel" />
+        			    
+        			    <apex:pageBlockButtons location="bottom">
+        				    <apex:commandButton value="{!$Label.Go_Back}"  onClick="goback();return false;" status="actionStatus" rerender="form" />
+        			    </apex:pageBlockButtons>
+        			    
+        		    </apex:pageBlock>
+                </apex:form>
+</apex:page>

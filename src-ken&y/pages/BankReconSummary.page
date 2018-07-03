@@ -1,0 +1,1650 @@
+<apex:page sidebar="false" standardController="Bank_Account__c"
+	extensions="BankReconSummaryExt" showHeader="false">
+	<style>
+
+#wrapper {
+	display: none;
+	overflow: hidden;
+	height: 100%;
+	background: rgba(193, 193, 193, 1);
+}
+
+#output {
+	display: none;
+	width: 100%;
+	height: 100%;
+	background: rgb(92, 93, 95);
+}
+
+
+    .pointer{
+    	cursor: pointer;
+}
+
+.borderTop, #CalculatedEndingBalance,  #Difference, #NetCashPosition{
+    	border-top: 2px solid #333;
+    
+}
+
+.greyBold {
+    color : rgb(84, 85, 86);
+}
+    
+.padRow td{
+	padding: 0px 0px 15px 0px;
+        }
+
+ 	.gridwidth{width: 105%;}
+
+.tableContainerM {
+	display: table;
+	width: 92%;
+}
+
+tr.header {
+	font-weight: bold;
+	border-collapse:collapse;
+	table-layout: fixed;
+	margin: 0px auto;
+	margin-top: 10px;
+}
+
+
+table.bankInfo {
+	width: 90%;
+	border-collapse:collapse;
+	table-layout: fixed;
+	margin: 0px auto;
+	margin-top: 10px;
+}
+
+table.bankInfo tr td:first-child {
+	width: 40%;
+}
+
+
+table.first tr td:nth-child(2) {
+	width: 65%;
+	text-align: left;
+}
+
+table.first {
+	width: 90%;
+	border-collapse:collapse;
+	table-layout: fixed;
+	margin: 0px auto;
+	margin-top: 10px;
+}
+
+table.first tr td:first-child {
+	width: 65%;
+}
+
+table.first tr td:nth-child(2) {
+	text-align: right;
+}
+
+table.first tr td:nth-child(3) {
+	text-align: right;
+	width: 5%;
+}
+
+tr.accordian{
+background-color: rgb(227,243,255);
+cursor: pointer;
+}
+
+tr.accordian:hover{
+background-color: rgb(207,238,248);
+}
+
+tr.title {
+    background-color: rgb(210, 212, 216);
+}
+.dashes {
+    font-size:large;
+}
+
+.button-text-bold {
+            font-weight: bold;
+        }
+
+</style>
+    <script type="text/javascript">
+    UserContext = parent.UserContext;
+    </script>
+	<c:KendoResources includeJquery="TRUE" ></c:KendoResources>
+
+       <div id="HiddenFields" style="display:none;">
+             <apex:outputText value="{!Bank_Account__c.name}" />
+              <apex:outputText value="{!Bank_Account__c.Id}" />
+              <apex:outputText value="{!Bank_Account__c.Company__c}" />
+			  <apex:outputText value="{!Bank_Account__c.company__r.name}" />
+              <apex:outputText value="{!Bank_Account__c.Currency__c}" />
+              <apex:outputText value="{!Bank_Account__c.Currency__r.ISO_Code__c}" />
+              <apex:outputText value="{!Bank_Account__c.GL_Account__c}" />
+              <apex:outputText value="{!Bank_Account__c.GL_Account__r.Name}" />
+              <apex:outputText value="{!Bank_Account__c.Opening_Balance__c}" />
+              <apex:outputText value="{!Bank_Account__c.Balance_Offset__c}" />
+             </div>
+	<script src="../../soap/ajax/38.0/connection.js" type="text/javascript" />
+
+	<apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+	<apex:includeScript value="{!$Resource.GridActionListJS}" />
+    <apex:includeScript value="{!$Resource.FileServiceJS}" />
+	<apex:includeScript value="{!$Resource.jsZip}"/>
+	<c:busyWait includeScripts="false" />
+
+
+	<div id="page-container">
+		<div class="page-message"></div>
+		<div id="errMsgIFrame"></div>
+
+		<table class="bankInfo">
+			<tr>
+				<td>{!$ObjectType.Bank_Account__c.Label}</td>
+				<td class = "greyBold">{!Bank_Account__c.name} (Company: {!Bank_Account__c.company__r.name})</td>
+			</tr>
+            <tr>
+                <td>{!$ObjectType.Bank_Account__c.Label} {!$ObjectType.Currency__c.Label}</td>
+                <td class = "greyBold">{!Bank_Account__c.Currency__r.ISO_Code__c}</td>
+            </tr>
+            <tr>
+                <td>{!$ObjectType.GL_Account__c.Label}</td>
+                <td class = "greyBold">{!Bank_Account__c.GL_Account__r.Name}</td>
+            </tr>
+
+		</table>
+
+		<table class="first">
+			<tr>
+				<td>{!$Label.Reconciled_Balance}</td>
+				<td id="ReconciledBankID">Loading...</td>
+				<td></td>
+			</tr>
+			<tr class="accordian" id="p1">
+				<td>{!$Label.Matched_and_Approved}</td>
+				<td  id="MatchedAmt">Loading...</td>
+				<td><span class="k-icon k-i-arrow-s"></span></td>
+			</tr>
+			<tr id="c1">
+			<td colspan="3">
+			<div id="Matchedcontent" class="gridwidth"></div>		
+			</td>
+			</tr>
+			<tr class="accordian" id="p2">
+				<td>{!$Label.Not_Matched_or_Match_not_Approved}</td>
+				<td id="UnmatchedAmt">Loading...</td>
+				<td><span class="k-icon k-i-arrow-s"></span></td>
+			</tr>					
+			<tr>
+			<td colspan="3" id="c2">
+				<div id="UnMatchedcontent" class="gridwidth"></div>			
+			</td>
+			</tr>
+				<tr class="padRow">
+				<td>{!$Label.Calculated_Ending_Balance}</td>
+				<td ><span id="CalculatedEndingBalance"></span></td>
+				<td></td>
+			</tr>
+
+            <tr class="accordian" id="p5">
+                <td>{!$Label.Actual_GL_Balance}</td>
+                <td id="CurrentGLBankBalance">Loading...</td>
+                <td><span class="k-icon k-i-arrow-s"></span></td>
+            </tr>
+            <tr>
+                <td colspan="3" id="c5">
+                    <div id="ActualGLGrid" class="gridwidth"></div>
+                </td>
+            </tr>
+			<tr class="padRow">
+				<td>{!$Label.Difference}</td>
+				<td><span id="Difference">Loading...</span></td>
+				<td></td>
+			</tr>
+			<tr class="title">
+				<td colspan="4"><strong>{!$Label.Uncleared_Items}</strong></td>
+			</tr>
+            <tr class="accordian" id="p6">
+                <td>{!$Label.Outstanding_Deposits_and_Credits}</td>
+                <td id="DepAddTotal">Loading...</td>
+                <td><span class="k-icon k-i-arrow-s"></span></td>
+            </tr>
+            <tr>
+                <td colspan="3" id="c6">
+                    <div id="DepositsCreditsGrid" class="gridwidth"></div>
+                </td>
+            </tr>
+            <tr class="accordian" id="p7">
+                <td>{!$Label.Outstanding_Payments_and_Debits}</td>
+                <td id="PayCredTotal">Loading...</td>
+                <td><span class="k-icon k-i-arrow-s"></span></td>
+            </tr>
+            <tr>
+                <td colspan="3" id="c7">
+                    <div id="PaymentsDebitsGrid" class="gridwidth"></div>
+                </td>
+            </tr>
+            <tr class="padRow">
+                <td>{!$Label.Net_Cash_Position}</td>
+                <td><span id="NetCashPosition">Loading...</span></td>
+                <td></td>
+            </tr>
+			</table>
+			<br/>
+			<table style="width: 90%; margin: 0px auto;">
+			<tr>
+			<td><apex:outputLabel value="{!$label.Notes}" for="ReconcileNotes" /></td>
+			<td><textarea rows="5" cols="70"  name="ReconcileNotes" id="ReconcileNotes" class="k-textbox" style="width: 500px;"></textarea></td>
+			</tr>
+			<tr>
+			<td colspan="2">
+		<br />
+		<input type="button" value="{!$Label.Export_Excel}"	id="exportExcelBtn" class="k-button button-text-bold" />
+		<input type="button" value="{!$label.Refresh}" id="refreshBtn" class="k-button button-text-bold" />
+		<input type="button"  value="{!$Label.Reconcile}" id="reconcileBtn" class="k-button button-text-bold" />
+			</td>
+			</tr>
+			</table>
+        <div id="ReconSummaryGrid" class="gridwidth" style="display: none"></div>
+		<span id="status-message1X"></span> <span id="status-message2X"></span>
+		<br />
+
+		<p id="timeleft">		</p>
+	</div>
+	<!-- <apex:pageBlock id="pgBlock"> -->
+	<!-- TODO Show the iframe when loading Do we need this pgBlock? -->
+		<div id="wrapper" class="pure-u-1 pure-u-md-4-5">
+			<!-- To view the PDF -->
+			<iframe id="output"></iframe>
+		</div>
+	<!-- </apex:pageBlock> -->
+	<script>
+        //End date from the UI of the parent page.
+        var endDateParentPage = $("#datepickerto", parent.document.body).val();
+        var fromDateParentPage = $("#datepickerfrom", parent.document.body).val();
+        
+	    var str = '<div class="tableContainerM">  <div class="tableRow">   <div class="tableCell">#= textName #</div>   <div class="tableCell" id="#=id#">#= amtVal #</div></div></div>';
+
+        //Variables holding summaries 
+        
+     
+      var BankAcctOpeningBal ='{!Bank_Account__c.opening_balance__C}';
+      var BankAcctOpeningBalAdjustment ='{!Bank_Account__c.Balance_Offset__c}';
+      var BeginingBal=Number(BankAcctOpeningBal) + Number(BankAcctOpeningBalAdjustment);
+    
+      var Matched =0;
+      var MatchedData =[]; 
+    
+      var MatchedFinalized=0;
+      var MatchedFinalizedData =[] ;
+     
+      var UnMatched=0;
+      var UnMatchedData=[];
+      var CalcBankEndingBal=0;
+      var UnclearedDeposits=0;
+      var UnclearedDeductions=0;
+      var CalculatedGLBal=0;
+      var AELinesData = [];
+
+      var totalPandC = 0;
+      var PandC_SameCurrency = true;
+
+      var UnclearedDeposits=0;
+      var UnclearedDeposits_SameCurrency = true;
+    // variables intermediate result 
+    var SuppPayments=0;
+    var SuppPaymentsData =[];
+    var JELinesDebit=0;
+    var JELinesDebitData =[];
+    var JELinesCredit=0;
+    var JELinesCreditData =[];
+    var AELinesDebit=0;
+    
+    var AELinesCredit=0;
+    
+    var CRAmount=0;
+    var CRData =[];
+
+    var RefundAmount = 0;
+    var RefundData = [];
+
+    var InterCoReceiptAmount = 0;
+    var InterCoReceiptData = [];
+
+    var InterCoPaymentAmount = 0;
+	var InterCoPaymentData = [];
+
+    var NetCashPosition = 0;
+    var recordSummary = [];
+    
+    var messageElement = document.getElementById("errMsgIFrame");
+    
+    //Code to toggle the grid
+    $("#c1").hide();
+    $("#c2").hide();
+    $("#c3").hide();
+    $("#c4").hide();
+    $("#c5").hide();
+    $("#c6").hide();
+    $("#c7").hide();
+    
+    $("#p1").click(function(){
+	    $( "#c1" ).slideToggle();    
+    });
+    $("#p2").click(function(){
+	    $( "#c2" ).slideToggle();    
+    });   
+    $("#p3").click(function(){
+	    $( "#c3" ).slideToggle();    
+    }); 
+    $("#p4").click(function(){
+	    $( "#c4" ).slideToggle();    
+    });
+    $("#p5").click(function(){
+	    $( "#c5" ).slideToggle();
+    });
+    $("#p6").click(function(){
+	    $( "#c6" ).slideToggle();
+    });
+    $("#p7").click(function(){
+	    $( "#c7" ).slideToggle();
+    });
+    //End of code to toggle the grid
+    
+
+	//End of function to save file as attachmen  t
+     
+     //Code to initialize table values
+     NUMBER_OF_ITEMS = 8; //BTUM +BTM+AE+JE+SP+CR + InterCoR +InterCoP = total should be 8
+   var checkCompleted = (function(){
+	     var i = 0;
+	     return {
+	    	Increment: function(){return ++i;},
+			SetValue: function(j, reset){ 
+			i = (reset === true)? j : i;
+			}
+			}
+		 }
+	)();      
+     function isComplete(label, options){
+     var count = checkCompleted;
+     if(options!== undefined){
+     //Going to reset the counter.
+     count.SetValue(options, true);
+     }
+     var testcount = count.Increment();
+     //console.log("Just finished: "+label+". Counter value is: "+testcount);
+     if(NUMBER_OF_ITEMS===testcount ){
+         //Initalize the UI here
+		$(document).trigger("IFrameReady");
+     }
+     }     
+     
+      
+
+		var ConfigObj = function(uniqueId, title, objectName, fieldset, buttons, alwaysUseFullDateTimeFormat, renderCheckboxes, scrollable){
+			         this.uniqueId = uniqueId;
+			         this.title = title;
+			         this.objectName = objectName;
+			         this.fieldset = fieldset;
+			         this.buttons = 'search';
+			         this.alwaysUseFullDateTimeFormat = alwaysUseFullDateTimeFormat;
+			         this.renderCheckboxes = renderCheckboxes;
+			         this.scrollable = scrollable;
+		         };  
+		var FSObj = (function(){
+			function FSObj(FSVal){
+				if(FSVal){
+					if(FSVal.editable !== undefined){ this.editable = FSVal.editable;}
+					if(FSVal.field !== undefined){this.field = FSVal.field;}
+					if(FSVal.fieldtype !== undefined){this.fieldtype = FSVal.fieldtype;}
+					if(FSVal.filterable !== undefined){this.filterable = FSVal.filterable;}
+					if(FSVal.format !== undefined){this.format = FSVal.format;}
+					if(FSVal.hidden !== undefined){this.hidden = FSVal.hidden;}
+					if(FSVal.nullable !== undefined){this.nullable = FSVal.nullable;}
+					if(FSVal.precision !== undefined){this.precision = FSVal.precision;}
+					if(FSVal.referenceTo !== undefined){this.referenceTo = FSVal.referenceTo;}
+					if(FSVal.required !== undefined){this.required = FSVal.required;}
+					if(FSVal.scale !== undefined){this.scale = FSVal.scale;}
+					if(FSVal.selectList !== undefined){this.selectList = FSVal.selectList;}
+					if(FSVal.sortable !== undefined){this.sortable = FSVal.sortable;}
+					if(FSVal.title !== undefined){this.title = FSVal.title;}
+					if(FSVal.validation !== undefined){this.validation = FSVal.validation;}
+					if(FSVal.width !== undefined){this.width = FSVal.width;}
+					if(FSVal.nonhoverable !== undefined){this.nonhoverable = FSVal.nonhoverable;}						
+				}
+				else{
+					console.log("Invalid FSVal = "+FSVal);
+					return {};
+				}		
+			}
+	           	FSObj.prototype.editable =  false;
+	           	FSObj.prototype.field =  null;
+	           	FSObj.prototype.fieldtype = 'string';
+	           	FSObj.prototype.filterable = true;
+	           	FSObj.prototype.format = null;
+	           	FSObj.prototype.hidden = false;
+	           	FSObj.prototype.nullable = false;
+	           	FSObj.prototype.precision = 0;
+	           	FSObj.prototype.referenceTo = null;
+	           	FSObj.prototype.required = false;
+	           	FSObj.prototype.scale = 0;
+	           	FSObj.prototype.selectList = false;
+	           	FSObj.prototype.sortable = true;
+	           	FSObj.prototype.title = null;
+	           	FSObj.prototype.validation = null;
+	           	FSObj.prototype.width = null;
+	           	FSObj.prototype.nonhoverable = false;			
+		return FSObj;
+		})();	
+       //End of Objects to initialize the grid
+      
+      //Object for Summary values
+
+      
+     var SummaryValues = (function(){
+      	function SummaryValues(){
+	      	this.ReconSummary;
+	      	this.Matched;
+	      	this.Unmatched;
+	      	this.CalBnkEndingBal;
+	      	this.DepAddtions;
+	      	this.PaymentsCredits;
+	      	this.CalGLBal;
+	      	this.ActualGLBal;
+	      	this.Difference;
+	      	this.UnmatchedArr;
+	      	this.MatchedArr;
+	      	this.AdditionsArr;
+	      	this.DeductionsArr;
+	      	this.NetCashPosition;
+      	}
+      	
+		//Combine JELinesCreditData and SuppPaymentData - Deductions not yet cleared      	
+      	SummaryValues.prototype.CombineForPD = function(){
+					var tmpPDArr = [];
+					 //If SuppPaymentsData is greater than 1
+					if(SuppPaymentsData && SuppPaymentsData.length > 0){
+						//Begin processing
+						//for each element, 
+						var t = $.map(SuppPaymentsData, function(element, index){
+							var x =new Object();
+							if(element.Id){x.RecordId = element.Id;}
+							if(element.Name){x.RecordName = element.Name;};
+							if(element.normalizeDateTransaction_Date__c){x.TxnDate = element.normalizeDateTransaction_Date__c; };
+							if(element.Check_Number__c){x.RefNo = element.Check_Number__c};
+							if(element.Supplier__r.Name){x.TxnWth = element.Supplier__r.Name};
+							if(element.Payment_Amount__c){x.Amt = element.Payment_Amount__c * -1 } ;
+							if(element.Currency__c){x.CurrencyId = element.Currency__c;}
+							if(element.Currency__r.ISO_Code__c){x.Currency = element.Currency__r.ISO_Code__c;};
+							x.DocType = '{!$ObjectType.Supplier_Payment__c.Label}';
+							x.Dspxn = "";
+							if(element.Payment_Method_G__c){x.PaymentMethod= element.Payment_Method_G__c};
+							return x;						
+						});			
+						tmpPDArr = tmpPDArr.concat(t);			
+					}
+      	
+
+					if(RefundData && RefundData.length > 0) {
+					    var t = $.map(RefundData, function(element, index){
+							var x = new Object();
+							if(element.Id){x.RecordId = element.Id;}
+							if(element.Name){x.RecordName = element.Name;};
+							if(element.normalizeDateTransaction_Date__c){x.TxnDate = element.normalizeDateTransaction_Date__c; };
+							if(element.Reference_Number__c){x.RefNo = element.Reference_Number__c};
+							if(element.Customer__r.Name){x.TxnWth = element.Customer__r.Name};
+							if(element.Amount_Received__c){x.Amt = element.Amount_Received__c };
+							if(element.Currency__c){x.CurrencyId = element.Currency__c;}
+							if(element.Currency__r.ISO_Code__c){x.Currency = element.Currency__r.ISO_Code__c;};
+							x.Dspxn = "";
+							x.DocType = '{!$ObjectType.Customer_Receipt__c.Label}';
+							if(element.Payment_Method_G__c){x.PaymentMethod= element.Payment_Method_G__c};
+							return x;
+						});
+						tmpPDArr = tmpPDArr.concat(t);
+     				}
+
+     				if(InterCoPaymentData && InterCoPaymentData.length > 0) {
+					    var t = $.map(InterCoPaymentData, function(element, index){
+							var x = new Object();
+							if(element.Id){x.RecordId = element.Id;}
+							if(element.Name){x.RecordName = element.Name;};
+							if(element.normalizeDateTransaction_Date__c){x.TxnDate = element.normalizeDateTransaction_Date__c; };
+							if(element.Reference_Number__c){x.RefNo = element.Reference_Number__c};
+							if(element.From_Company__r.Name){x.TxnWth = element.From_Company__r.Name};
+							if(element.Payment_Amount__c){x.Amt = element.Payment_Amount__c * -1 };
+							if(element.Currency__c){x.CurrencyId = element.Currency__c;}
+							if(element.Currency__r.ISO_Code__c){x.Currency = element.Currency__r.ISO_Code__c;};
+							x.Dspxn = "";
+							x.DocType = '{!$ObjectType.Payment__c.Label}';
+							return x;
+						});
+						tmpPDArr = tmpPDArr.concat(t);
+     				}
+					if(JELinesCreditData && JELinesCreditData.length > 0){
+					
+						//Begin processing
+						//for each element, 
+						var t = $.map(JELinesCreditData, function(element, index){
+							var x = new Object();
+							if(element.Id){x.RecordId = element.Id;}
+							if(element.Name){x.RecordName = element.Name;};
+							if(element.normalizeDateTransaction_Date__c){x.TxnDate = element.normalizeDateTransaction_Date__c; };
+							x.RefNo = ""; //Reference number is blank
+							x.TxnWth = ""; //Txn With is blank
+							if(element.Amount_CR__c){x.Amt = element.Amount_CR__c * -1 }; //need confirmation
+							if(element.Description__C){x.Dspxn = element.Description__C};
+							if(element.Journal_Entry__r.Currency__c){x.CurrencyId = element.Journal_Entry__r.Currency__c;}
+							if(element.Journal_Entry__r.Currency__r.ISO_Code__c){x.Currency = element.Journal_Entry__r.Currency__r.ISO_Code__c;};
+							x.DocType = '{!$ObjectType.Journal_Entry_Line__c.Label}';
+							return x;							
+						});		
+						tmpPDArr = tmpPDArr.concat(t);	
+					}
+					return tmpPDArr;				
+      	}
+      	
+      	//Combine CRData and JELinesDebitData - Additions not yet cleared
+      	SummaryValues.prototype.CombineForDC = function(){
+				var tmpDCArr = [];
+					//If CRData is greater than 1
+					if(CRData && CRData.length > 0){
+						//for each element, 
+
+						var t = $.map(CRData, function(element, index){
+							var x = {};
+							if(element.Id){x.RecordId = element.Id;}
+							if(element.Name){x.RecordName = element.Name;};
+							if(element.normalizeDateTransaction_Date__c){x.TxnDate = element.normalizeDateTransaction_Date__c; };
+							if(element.Reference_Number__c){x.RefNo = element.Reference_Number__c};
+							if(element.Customer__r.Name){x.TxnWth = element.Customer__r.Name};
+							if(element.Amount_Received__c){x.Amt = element.Amount_Received__c};
+							x.Dspxn = "";
+							if(element.Currency__c){x.CurrencyId = element.Currency__c;}
+							if(element.Currency__r.ISO_Code__c){x.Currency = element.Currency__r.ISO_Code__c;};
+							x.DocType = '{!$ObjectType.Customer_Receipt__c.Label}';
+							if(element.Payment_Method_G__c){x.PaymentMethod= element.Payment_Method_G__c};
+							return x;
+
+						});			
+						tmpDCArr = tmpDCArr.concat(t);			
+					}
+					if(InterCoReceiptData && InterCoReceiptData.length > 0) {
+					    var t = $.map(InterCoReceiptData, function(element, index){
+							var x = new Object();
+							if(element.Id){x.RecordId = element.Id;}
+							if(element.Name){x.RecordName = element.Name;};
+							if(element.normalizeDateTransaction_Date__c){x.TxnDate = element.normalizeDateTransaction_Date__c; };
+							if(element.Reference_Number__c){x.RefNo = element.Reference_Number__c};
+							if(element.To_Company__r.Name){x.TxnWth = element.To_Company__r.Name};
+							if(element.Payment_Amount__c){x.Amt = element.Payment_Amount__c};
+							if(element.Currency__c){x.CurrencyId = element.Currency__c;}
+							if(element.Currency__r.ISO_Code__c){x.Currency = element.Currency__r.ISO_Code__c;};
+							x.Dspxn = "";
+							x.DocType = '{!$ObjectType.Payment__c.Label}';
+							return x;
+						});
+						tmpDCArr = tmpDCArr.concat(t);
+     				}
+					if(JELinesDebitData && JELinesDebitData.length > 0){
+						//Begin processing
+						//for each element, 
+						var t = $.map(JELinesDebitData, function(element, index){
+							var x = {};
+							if(element.Id){x.RecordId = element.Id;}
+							if(element.Name){x.RecordName = element.Name;};
+							if(element.normalizeDateTransaction_Date__c){x.TxnDate = element.normalizeDateTransaction_Date__c;};
+							x.RefNo = ""; //Reference number is blank
+							x.TxnWth = ""; //Txn With is blank
+							if(element.Amount_DR__c){x.Amt = element.Amount_DR__c}; //need confirmation
+							if(element.Description__C){x.Dspxn = element.Description__C};
+							if(element.Journal_Entry__r.Currency__c){x.CurrencyId = element.Journal_Entry__r.Currency__c;}
+							if(element.Journal_Entry__r.Currency__r.ISO_Code__c){x.Currency = element.Journal_Entry__r.Currency__r.ISO_Code__c;};
+							x.DocType = '{!$ObjectType.Journal_Entry_Line__c.Label}';
+							return x;
+						});		
+						tmpDCArr = tmpDCArr.concat(t);	
+					}
+					return tmpDCArr;			
+      	}
+
+      	SummaryValues.prototype.setDeductionsArr = function(DeductionsArr){
+      		this.DeductionsArr = this.CombineForPD();
+      		return this;
+      	}
+      	
+      	SummaryValues.prototype.getDeductionsArr = function(){
+      		return this.DeductionsArr;
+      	} 
+      	
+      	SummaryValues.prototype.setAdditionsArr = function(AdditionsArr){
+      		this.AdditionsArr = this.CombineForDC();
+      		return this;
+      	}
+      	
+      	SummaryValues.prototype.getAdditionsArr = function(){
+      		return this.AdditionsArr;
+      	}      	
+      	
+      	SummaryValues.prototype.setReconSummary = function(ReconSummary){
+   		   	this.ReconSummary = Number(ReconSummary);
+   		   	return this;
+   		   	
+      	};
+		SummaryValues.prototype.getReconSummary = function(type){
+			if(type) return this.ReconSummary;
+   		   	return parent.formatNumbersToCommas(this.ReconSummary.toFixed(2));
+      	};
+      	SummaryValues.prototype.setMatched = function(Matched){
+   		   	this.Matched = Number(Matched);
+   		   	return this;
+      	};
+		SummaryValues.prototype.getMatched = function(type){
+			if(type) return this.Matched;
+   		   	return parent.formatNumbersToCommas(this.Matched.toFixed(2));
+      	};      	
+      	     	
+		SummaryValues.prototype.getUnmatched = function(){
+   		   	return parent.formatNumbersToCommas(this.Unmatched.toFixed(2));
+      	};        	     	
+      	SummaryValues.prototype.setUnmatched = function(Unmatched){
+   		   	this.Unmatched = Number(Unmatched);
+   		   	return this;
+      	};
+      	
+      	SummaryValues.prototype.setUnmatchedArr = function(UnmatchedArr){
+   		   	this.UnmatchedArr = UnmatchedArr;
+   		   	return this;
+      	};
+      	
+      	SummaryValues.prototype.getUnmatchedArr = function(){
+			return this.UnmatchedArr
+      	};      	
+      	
+      	SummaryValues.prototype.setMatchedArr = function(MatchedArr){
+   		   	this.MatchedArr = MatchedArr;
+   		   	return this;
+      	};
+      	
+      	SummaryValues.prototype.getMatchedArr = function(type){
+	      	var tmpArr;
+	      	if(type === "p"){
+		      	tmpArr = $.map(this.MatchedArr, function(val, i){
+		      			if(val.Amount__c >= 0) return val;
+		      	});
+		      	return tmpArr;
+	      	}
+	      	if(type="n"){
+		      	tmpArr = $.map(this.MatchedArr, function(val, i){
+		      			if(val.Amount__c < 0) return val;
+		      	});
+		      	return tmpArr;      	
+	      	}
+	      	return this.MatchedArr;
+      	};   
+      	
+
+      	SummaryValues.prototype.setCalBnkEndingBal = function(CalBnkEndingBal){
+   		   	this.CalBnkEndingBal = this.ReconSummary + this.Matched + this.Unmatched;
+   		   	return this;
+      	};
+		SummaryValues.prototype.getCalBnkEndingBal = function(){
+   		   	return parent.formatNumbersToCommas(Number(this.CalBnkEndingBal).toFixed(2));
+      	}; 
+      	SummaryValues.prototype.setDepAddtions = function(DepAddtions){
+   		   	this.DepAddtions = Number(DepAddtions);
+   		   	return this;
+      	};
+		SummaryValues.prototype.getDepAddtions = function(type){
+			if(type) return this.DepAddtions;
+   		   	return UnclearedDeposits_SameCurrency ? parent.formatNumbersToCommas(this.DepAddtions.toFixed(2)) : "----.--";
+      	};  
+      	SummaryValues.prototype.setPaymentsCredits = function(PaymentsCredits){
+   		   	this.PaymentsCredits = Number(PaymentsCredits) * Number(-1.00);
+
+   		   	return this;
+      	};
+      	
+		SummaryValues.prototype.getPaymentsCredits = function(type){
+			//this.PaymentsCredits = this.PaymentsCredits * -1;
+			if(type) return this.PaymentsCredits;
+   		   	return PandC_SameCurrency ? parent.formatNumbersToCommas(this.PaymentsCredits.toFixed(2)) : "----.--";
+      	};         
+      	SummaryValues.prototype.setActualGLBal = function(ActualGLBal){
+   		   	this.ActualGLBal = ActualGLBal;
+   		   	return this;
+      	};
+		SummaryValues.prototype.getActualGLBal = function(){
+   		   	return parent.formatNumbersToCommas(this.ActualGLBal.toFixed(2));
+      	};        	 
+      	SummaryValues.prototype.setDifference = function(){
+   		   	this.Difference =  this.CalBnkEndingBal - this.ActualGLBal;
+   		   	return this;
+      	};
+		SummaryValues.prototype.getDifference = function(){
+   		   	return parent.formatNumbersToCommas(this.Difference.toFixed(2));
+      	};
+      	SummaryValues.prototype.setNetCashPosition = function() {
+      	     this.NetCashPosition = this.ActualGLBal + this.DepAddtions + this.PaymentsCredits;
+      	     return this;
+       };
+       SummaryValues.prototype.getNetCashPosition = function() {
+              return (PandC_SameCurrency && UnclearedDeposits_SameCurrency) ? parent.formatNumbersToCommas(Number(this.NetCashPosition).toFixed(2)) : "----.--"; ;
+       };
+      	return SummaryValues;   
+      })();
+      //Initialize the object
+      var sumValObj = new SummaryValues(); 
+      //End of Object for Summary values 
+
+      //Function to create a countdown timer
+      var COUNTDOWNSECONDS = 60*3;
+      var intcount;
+	   
+      function countDown(i, id, callback) {
+    	callback = callback || function(){};
+    	intcount = setInterval(function() {
+    	//document.getElementById(id).innerHTML = "Seconds left to click the 'Reconcile' Button " + i;
+        i-- || (clearInterval(intcount), callback());
+    		}, 1000);
+		}
+
+     
+             $(document).ready(function() {
+			//Code to execute after all the chunking code is coplete.                   
+             $(document).on('IFrameReady', function(e) {
+	            var getMatchedTxnsFieldList = function(){
+	          	return [
+							new FSObj({ field: "DocType", title: "{!$Label.Doc_Type}", width: "130px", editable: false }),
+							new FSObj({ field: "RecordId", title: "Record Id", width: "10px", hidden: true, editable: false }),
+            				new FSObj({ field: "RecordName", title: "{!$label.Name}", width: "130px", editable: false, fieldtype: 'Name', referenceTo: 'RecordId', nonhoverable: true }),
+            				new FSObj({ field: "TxnDate", title: "{!$Label.Transaction_Date}", width: "130px", fieldtype: "datetime", editable: false}),
+							new FSObj({ field: "TxnWth", title: "{!$Label.Transacted_With}" , width: "130px", editable: false }),
+							new FSObj({ field: "RefNo", title: "{!$Label.Reference_Number}", width: "130px", editable: false }),
+							new FSObj({ field: "Dspxn", title: "{!$Label.SCDescription}" , width: "130px", editable: false }),
+							new FSObj({ field: "PaymentMethod", title: "{!$ObjectType.Payment_Method__c.Label}", width: "130px",  editable: false }),
+							new FSObj({ field: "Currency", title: "{!$ObjectType.Currency__c.Label}" , width: "90px", editable: false  ,fieldtype: 'Name', referenceTo: 'CurrencyId', nonhoverable: true  }),
+							new FSObj({ field: "CurrencyId", title: "Currency Id", width: "10px", hidden: true, editable: false }),
+							new FSObj({ field: "Amt", title: "{!$Label.Amount}", width: "130px", format: "{0:n2}", fieldtype:"double", scale: 2, editable: false })
+
+	                   ];
+				};
+				//KNDY-15576 - set format for dates
+				var getMatchedTxnsFieldListSetFieldType = function(){
+					var tmparr = [];		
+					$.each(getMatchedTxnsFieldList(), function(index, element){
+					//change the format of the date.
+						//Show the date as date only
+						if(element.field === "TxnDate"){
+							console.log('getMatchedTxnsFieldListSetFieldType');
+							element.format =  KenandyErp.DateFormat ;
+							console.log(element);
+						}		
+						tmparr.push(new FSObj(element));
+					});
+					return tmparr;
+				};
+			
+
+				 //Additions		
+				 var getDepCreditDataSourcePromise = function(){
+		         var deferred = $.Deferred();
+		         deferred.resolve({records: sumValObj.setAdditionsArr().getAdditionsArr()}, {type: "none"});
+		         return deferred.promise();
+		         };    
+		         
+				 var getPayDebitDataSourcePromise = function(){
+		         var deferred = $.Deferred();
+		         deferred.resolve({records: sumValObj.setDeductionsArr().getDeductionsArr()}, {type: "none"});
+		         return deferred.promise();
+		         };
+
+
+
+				$('#DepositsCreditsGrid').width('100%');
+		        $('#DepositsCreditsGrid').kendoGridActionList({
+		        	namespace: '', 
+		            config: new ConfigObj('DepositsCreditsGrid', '', '', '', '', true, false, true), 
+		            fieldList: getMatchedTxnsFieldListSetFieldType(),//getMatchedTxnsFieldList(), KNDY-15576
+		            getActionListFunction: getDepCreditDataSourcePromise,
+
+		        }).data('kendoGridActionList');    			 		                     
+	             var DepCredGrid = $('#DepositsCreditsGrid').data('kendoGridActionList');
+					DepCredGrid.bind('excelExport', function(e) {
+		            var sheet = e.workbook.sheets[0];
+		            for (var rowIndex = 1; rowIndex < sheet.rows.length; rowIndex++) {
+						var row = sheet.rows[rowIndex];
+						for(cellIndex = 0; cellIndex < row.cells.length; cellIndex++) {
+						    if(cellIndex == 8) {
+						        row.cells[cellIndex].format = "[Black]#,##0.00;[Black]-#,##0.00;0.00;"
+				            }
+				            if(row.cells[cellIndex].value == undefined) {
+				                row.cells[cellIndex].value = "";
+                			}
+						}
+		            }
+		            e.preventDefault();
+		        	promises[4].resolve(e.workbook);
+          		});
+	             
+				$('#PaymentsDebitsGrid').width('100%');
+	            $('#PaymentsDebitsGrid').kendoGridActionList({
+		        	namespace: '', 
+		            config: new ConfigObj('PaymentsDebitsGrid', '', '', '', '', true, false, true), 
+		            fieldList: getMatchedTxnsFieldListSetFieldType(),//getMatchedTxnsFieldList(), KNDY-15576
+		            getActionListFunction: getPayDebitDataSourcePromise
+		        }).data('kendoGridActionList');
+		        var PayDebGrid = $('#PaymentsDebitsGrid').data('kendoGridActionList');
+					PayDebGrid.bind('excelExport', function(e) {
+		            var sheet = e.workbook.sheets[0];
+		            for (var rowIndex = 1; rowIndex < sheet.rows.length; rowIndex++) {
+						var row = sheet.rows[rowIndex];
+						for(cellIndex = 0; cellIndex < row.cells.length; cellIndex++) {
+						    if(cellIndex == 8) {
+						        row.cells[cellIndex].format = "[Black]#,##0.00;[Black]-#,##0.00;0.00;"
+				            }
+				            if(row.cells[cellIndex].value == undefined) {
+				                row.cells[cellIndex].value = "";
+                			}
+						}
+		            }
+		            e.preventDefault();
+		        	promises[5].resolve(e.workbook);
+          		});
+
+		      //GRID FOR AEL --> ACTUAL BALANCE
+		      var getAELinesFieldList = function(){
+	          	return [
+	          	    //| Name | Source | Subtransaction Type | Transaction Date | GL Account | Amount DR | Amount CR |
+							new FSObj({ field: "Id", title: "Record Id", width: "10px", hidden: true, editable: false }),
+            				new FSObj({ field: "Name", title: "{!$ObjectType.Accounting_Entry_Line__c.fields.Name.Label}", width: "130px", editable: false, fieldtype: 'Name', referenceTo: 'Id', nonhoverable: true }),
+            				new FSObj({ field: "Source_ID__c", title: "Source Id", width: "10px", hidden: true, editable: false }),
+            				new FSObj({ field: "Source_Name__c", title: "{!$ObjectType.Accounting_Entry_Line__c.fields.Source__c.Label}", width: "130px", editable: false, fieldtype: 'Name', referenceTo: 'Source_ID__c', nonhoverable: true }),
+            				new FSObj({ field: "SubTransaction_Type__c", title: "{!$ObjectType.Accounting_Entry_Line__c.fields.SubTransaction_Type__c.Label}", width: "130px", editable: false,}),
+            				new FSObj({ field: "Accounting_Entry__r.Transaction_Date__c", title: "{!$ObjectType.Accounting_Entry__c.fields.Transaction_Date__c.Label}", width: "130px", fieldtype: "datetime", editable: false}),
+							new FSObj({ field: "Amount_DR__c", title: "{!$ObjectType.Accounting_Entry_Line__c.fields.Amount_DR__c.Label}", width: "130px", format: "{0:n2}", fieldtype:"double", scale: 2, editable: false }),
+							new FSObj({ field: "Amount_CR__c", title: "{!$ObjectType.Accounting_Entry_Line__c.fields.Amount_CR__c.Label}", width: "130px", format: "{0:n2}", fieldtype:"double", scale: 2, editable: false }),
+	                   ];
+				};
+				var getAELinesFieldListSetFieldType = function(){
+					var tmparr = [];
+					$.each(getAELinesFieldList(), function(index, element){
+						//change the format of the date.
+						//Show the date as date only
+						if(element.field === "Accounting_Entry__r.Transaction_Date__c"){
+							console.log('getMatchedTxnsFieldListSetFieldType');
+							element.format =  KenandyErp.DateFormat ;
+							console.log(element);
+						}
+						tmparr.push(new FSObj(element));
+					});
+					return tmparr;
+				};
+
+			var getAELinesDataSourcePromise = function(){
+	         	var deferred = $.Deferred();
+	         	deferred.resolve({records: AELinesData}, {type: "none"});
+	         	return deferred.promise();
+	         };
+				  $('#ActualGLGrid').width('100%');
+		          $('#ActualGLGrid').kendoGridActionList({
+		        	namespace: '',
+		            config: new ConfigObj('ActualGLGrid', '', '', '', '', true, false, true),
+		            fieldList: getAELinesFieldListSetFieldType(),
+		            getActionListFunction: getAELinesDataSourcePromise
+		        }).data('kendoGridActionList');
+		        var AELGrid = $('#ActualGLGrid').data('kendoGridActionList');
+					AELGrid.bind('excelExport', function(e) {
+		            var sheet = e.workbook.sheets[0];
+		            for (var rowIndex = 1; rowIndex < sheet.rows.length; rowIndex++) {
+						var row = sheet.rows[rowIndex];
+						for(cellIndex = 0; cellIndex < row.cells.length; cellIndex++) {
+						    if(cellIndex >= 4) {
+						        row.cells[cellIndex].format = "[Black]#,##0.00;[Black]-#,##0.00;0.00;"
+				            }
+				            if(row.cells[cellIndex].value == undefined) {
+				                row.cells[cellIndex].value = "";
+                			}
+						}
+		            }
+		            e.preventDefault();
+		        	promises[3].resolve(e.workbook);
+          		});
+	             
+   				 //Initializing the Match and Unmatched grids
+         var getBankTxnFieldList = function(){
+          	return [
+
+
+				new FSObj({ field: "Id", title: "Record Id", width: "0px", hidden: true, editable: false }),
+				new FSObj({ field: "Name", title: "{!$ObjectType.Bank_Transaction__c.fields.Name.Label}", width: "130px", editable: false, fieldtype: 'Name', referenceTo: 'Id', nonhoverable: true }),
+				new FSObj({ field: "Transaction_Type__c", title: "{!$ObjectType.Bank_Transaction__c.fields.Transaction_Type__c.Label}", width: "65px", editable: false }),
+				new FSObj({ field: "Transaction_Date__c", title: "{!$ObjectType.Bank_Transaction__c.fields.Transaction_Date__c.Label}", width: "130px", fieldtype: "datetime", editable: false}),
+				new FSObj({ field: "Reference_Number__c", title: "{!$ObjectType.Bank_Transaction__c.fields.Reference_Number__c.Label}", width: "130px", editable: false }),
+				new FSObj({ field: "Transacted_With__c", title: "{!$ObjectType.Bank_Transaction__c.fields.Transacted_With__c.Label}", width: "130px", editable: false }),
+				new FSObj({ field: "Amount__c", title: "{!$ObjectType.Bank_Transaction__c.fields.Amount__c.Label}", format: "{0:n2}", width: "130px",fieldtype:"double", scale: 2, editable: false })
+
+
+                        ];	
+         };
+         //KNDY-15576 - set format for dates
+		var getBankTxnFieldListSetFieldType = function(){
+				var tmparr = [];		
+				$.each(getBankTxnFieldList(), function(index, element){
+				//change the format of the date.
+					//Show the date as date only
+					if(element.field === "Transaction_Date__c"){
+						console.log('getBankTxnFieldListSetFieldType');
+						element.format =  KenandyErp.DateFormat ;
+						console.log(element);
+         }
+					tmparr.push(new FSObj(element));
+				});
+				return tmparr;
+		};
+         
+         
+
+         
+	         var getUnMatchedDataSourcePromise = function(){
+	         var deferred = $.Deferred();
+	         deferred.resolve({records: UnMatchedData}, {type: "none"});
+	         return deferred.promise();
+	         };
+	         
+	         var getMatchedDataSourcePromise = function(){
+	         var deferred = $.Deferred();
+	         deferred.resolve({records: MatchedData}, {type: "none"});
+	         return deferred.promise();
+	         };
+	         $('#UnMatchedcontent').width('100%');
+         	$('#UnMatchedcontent').kendoGridActionList({
+		        	namespace: '', 
+		            config: new ConfigObj('UnMatchedcontent', '', '', '', '', true, false, true), 
+		            fieldList: getBankTxnFieldListSetFieldType(),//getBankTxnFieldList(), //KNDY-15576
+		            getActionListFunction: getUnMatchedDataSourcePromise
+		        }).data('kendoGridActionList');
+
+		        var unMatchedGrid = $('#UnMatchedcontent').data('kendoGridActionList');
+		        unMatchedGrid.bind('excelExport', function(e) {
+		            var sheet = e.workbook.sheets[0];
+		            for (var rowIndex = 1; rowIndex < sheet.rows.length; rowIndex++) {
+						var row = sheet.rows[rowIndex];
+						for(cellIndex = 0; cellIndex < row.cells.length; cellIndex++) {
+						    if(cellIndex == 5) {
+						        row.cells[cellIndex].format = "[Black]#,##0.00;[Black]-#,##0.00;0.00;"
+				            }
+				            if(row.cells[cellIndex].value == undefined) {
+				                row.cells[cellIndex].value = "";
+                			}
+						}
+		            }
+		            e.preventDefault();
+		        	promises[2].resolve(e.workbook);
+          		});
+
+
+				$('#Matchedcontent').width('100%');
+		        $('#Matchedcontent').kendoGridActionList({
+		        	namespace: '', 
+		            config: new ConfigObj('Matchedcontent', '', '', '', '', true, false, true), 
+		            fieldList: getBankTxnFieldListSetFieldType(),//getBankTxnFieldList(),//KNDY-15576
+		            getActionListFunction: getMatchedDataSourcePromise
+		        }).data('kendoGridActionList'); 
+   				 var MatchedGrid = $('#Matchedcontent').data('kendoGridActionList');
+					MatchedGrid.bind('excelExport', function(e) {
+
+		            var sheet = e.workbook.sheets[0];
+		            for (var rowIndex = 1; rowIndex < sheet.rows.length; rowIndex++) {
+						var row = sheet.rows[rowIndex];
+						for(cellIndex = 0; cellIndex < row.cells.length; cellIndex++) {
+						    if(cellIndex == 5) {
+						        row.cells[cellIndex].format = "[Black]#,##0.00;[Black]-#,##0.00;0.00;"
+				            }
+				            if(row.cells[cellIndex].value == undefined) {
+				                row.cells[cellIndex].value = "";
+                			}
+						}
+		            }
+		            e.preventDefault();
+		        	promises[1].resolve(e.workbook);
+          		});
+
+   				 
+   				 //End of initializing the matched andunmatched grid
+              //Initialized the reconciled bank balance here.
+              $("#ReconciledBankID").text(sumValObj.setReconSummary(MatchedFinalized + BeginingBal).getReconSummary());
+              
+       				              	             
+	             
+        		//Initialize the matched and unmatched values in the object and UI 
+        		$("#MatchedAmt").text(sumValObj.setMatched(Matched).getMatched());
+        		$("#UnmatchedAmt").text(sumValObj.setUnmatched(UnMatched).getUnmatched());
+        		//Set Unmatched arr as the amount could also be negative or and also net amount could be =0 
+        		sumValObj.setUnmatchedArr(UnMatchedData);
+        		//Set the Matched array
+        		sumValObj.setMatchedArr(MatchedData);
+
+        		var addClasses = function(selector) {
+        		    if(selector) {
+        		       selector.addClass("dashes").addClass("grey-bold");
+              		}
+          		}
+
+	             //Set the value of the Deposits and Credits on the object.
+			     $("#DepAddTotal").text(sumValObj.setDepAddtions(UnclearedDeposits).getDepAddtions());
+			     if(!UnclearedDeposits_SameCurrency) {
+	             	     addClasses($("#DepAddTotal"));
+               	 }
+			     //Set the value of Payments and Debits
+		         $("#PayCredTotal").text(sumValObj.setPaymentsCredits(totalPandC).getPaymentsCredits());			      
+	             if(!PandC_SameCurrency) {
+	             	     addClasses($("#PayCredTotal"));
+               	 }
+	            //Calculate value for D. Calculated Bank Ending Balance (A+B+C)
+	            //Set the value on the UI
+	            $("#CalculatedEndingBalance").text(sumValObj.setCalBnkEndingBal().getCalBnkEndingBal());
+	            //Calculate the Actual GL Balance
+	            $("#CurrentGLBankBalance").text(sumValObj.setActualGLBal(AELinesDebit - AELinesCredit).getActualGLBal());
+	            //Calculate Value for I. Difference (G-H)
+	            //set the difference and initialize the UI with this value.
+	            $("#Difference").text(sumValObj.setDifference().getDifference());
+	            $("#NetCashPosition").text(sumValObj.setNetCashPosition().getNetCashPosition());
+	            if(!(PandC_SameCurrency && UnclearedDeposits_SameCurrency)) {
+	             	     addClasses($("#NetCashPosition"));
+               	 }
+
+               	  recordSummary.push({Summary: "{!$Label.Bank_Rec_As_Of} "+ endDateParentPage, SummaryAmount: ""});
+				  recordSummary.push({Summary: "", SummaryAmount: ""});//BLANK ROW
+				  recordSummary.push({Summary: "{!$ObjectType.Bank_Account__c.Label}", SummaryAmount: "{!Bank_Account__c.name} (Company: {!Bank_Account__c.company__r.name})"});
+				  recordSummary.push({Summary: "{!$ObjectType.Bank_Account__c.Label} {!$ObjectType.Currency__c.Label}", SummaryAmount: "{!Bank_Account__c.Currency__r.ISO_Code__c}"});
+				  recordSummary.push({Summary: "{!$ObjectType.GL_Account__c.Label}", SummaryAmount: "{!Bank_Account__c.GL_Account__r.Name}"});
+				  recordSummary.push({Summary: "", SummaryAmount: ""});//BLANK ROW
+				  recordSummary.push({Summary: "{!$Label.Reconciled_Balance}", SummaryAmount: sumValObj.setReconSummary(MatchedFinalized + BeginingBal).getReconSummary()});
+				  recordSummary.push({Summary: "{!$Label.Matched_and_Approved}", SummaryAmount: sumValObj.setMatched(Matched).getMatched()});
+				  recordSummary.push({Summary: "{!$Label.Not_Matched_or_Match_not_Approved}", SummaryAmount: sumValObj.setUnmatched(UnMatched).getUnmatched()});
+				  recordSummary.push({Summary: "{!$Label.Calculated_Ending_Balance}", SummaryAmount: sumValObj.setCalBnkEndingBal().getCalBnkEndingBal()});
+				  recordSummary.push({Summary: "", SummaryAmount: ""});//BLANK ROW
+				  recordSummary.push({Summary: "{!$Label.Actual_GL_Balance}", SummaryAmount: sumValObj.setActualGLBal(AELinesDebit - AELinesCredit).getActualGLBal()});
+				  recordSummary.push({Summary: "{!$Label.Difference}", SummaryAmount: sumValObj.setDifference().getDifference()});
+				  recordSummary.push({Summary: "", SummaryAmount: ""});//BLANK ROW
+				  recordSummary.push({Summary: "{!$Label.Uncleared_Items}", SummaryAmount: ""});
+				  recordSummary.push({Summary: "{!$Label.Outstanding_Deposits_and_Credits}", SummaryAmount: sumValObj.setDepAddtions(UnclearedDeposits).getDepAddtions()});
+				  recordSummary.push({Summary: "{!$Label.Outstanding_Payments_and_Debits}", SummaryAmount: sumValObj.setPaymentsCredits(totalPandC).getPaymentsCredits()});
+				  recordSummary.push({Summary: "{!$Label.Net_Cash_Position}", SummaryAmount: sumValObj.setNetCashPosition().getNetCashPosition()});
+				  recordSummary.push({Summary: "", SummaryAmount: ""});//BLANK ROW
+				  recordSummary.push({Summary: "{!$Label.Notes}", SummaryAmount: $("#ReconcileNotes").val() });
+
+				//RECON SUMMARY GRID -- DISPLAY WILL BE NONE SO USERS WILL NOT SEE THEM> USED TO EXPORT TO EXCEL
+				var getReconSummaryFieldList = function(){
+					return [
+						new FSObj({ field: "Summary", title: "", width: "200px", hidden: false, editable: false }),
+						new FSObj({ field: "SummaryAmount", title: "", width: "230px", editable: false})
+					];
+				 };
+
+				 var getReconSummaryFieldListType = function(){
+						var tmparr = [];
+						$.each(getReconSummaryFieldList(), function(index, element){//sdsds
+							tmparr.push(new FSObj(element));
+						});
+						return tmparr;
+				};
+
+				 var getReconSummaryDataSourcePromise = function(){
+					 var deferred = $.Deferred();
+					 deferred.resolve({records: recordSummary}, {type: "none"});
+					 return deferred.promise();
+				};
+
+				$('#ReconSummaryGrid').kendoGridActionList({
+		        	namespace: '',
+		            config: new ConfigObj('ReconSummaryGrid', '', '', '', '', true, false, true),
+		            fieldList: getReconSummaryFieldListType(),//getBankTxnFieldList(),//KNDY-15576
+		            getActionListFunction: getReconSummaryDataSourcePromise
+		        }).data('kendoGridActionList');
+
+
+		        var reconGrid = $('#ReconSummaryGrid').data('kendoGridActionList');
+		        reconGrid.bind('excelExport', function(e) {
+		            e.workbook.sheets[0].rows.splice(0,1); //TAKE OUT THE COLUMN HEADERS
+		            e.workbook.sheets[0].autoWidth = true;
+		            var sheet = e.workbook.sheets[0];
+
+		            for (var rowIndex = 0; rowIndex < sheet.rows.length; rowIndex++) {
+		            		var row = sheet.rows[rowIndex];
+		            		for(cellIndex = 0; cellIndex < row.cells.length; cellIndex++) {
+		            		    if((rowIndex == 0 || rowIndex == 14) && cellIndex == 0) {//bank Recon Summary as of, Uncleared Items
+		            		        row.cells[cellIndex].colSpan = 2;
+		            		        row.cells[cellIndex].background = "#D2D4D8";
+		            		        row.cells[cellIndex].bold = true;
+
+								}
+								if(rowIndex > 1 && rowIndex < 5 && cellIndex == 1){ //bank account name, currency and gl account in grey
+								    row.cells[cellIndex].color = "#545556";
+								    row.cells[cellIndex].textAlign = "left";
+        						}
+        						if(rowIndex > 5 && cellIndex == 1){
+        						    if(rowIndex == 19) { //row for NOTES.
+        						        row.cells[cellIndex].wrap = true;
+                  					}
+                  					else {
+                  					    row.cells[cellIndex].hAlign = "right";
+										if(row.cells[cellIndex].value != "----.--" && row.cells[cellIndex].value.trim() != "") {
+											var num = row.cells[cellIndex].value.replace(',','').replace(' ','')
+											row.cells[cellIndex].value = Number(num);
+											row.cells[cellIndex].format = "[Black]#,##0.00;[Black]-#,##0.00;0.00;";
+										}
+
+										if(rowIndex == 8 || rowIndex == 11 || rowIndex == 16) {
+											row.cells[cellIndex].underline = true;
+										}
+                       				}
+              					}
+              					if(rowIndex == 19 && cellIndex == 0) {
+              					    row.cells[cellIndex].vAlign = "top";
+                   				}
+                			}
+		            }
+
+		        	    e.preventDefault();
+		        	    promises[0].resolve(e.workbook);
+          		});
+
+	            //If Difference and Unmatched is greater than zero and if AELinesDebit is not equal to z AELinesCredit is not equal to zero
+	            var isDiff = sumValObj.getDifference() != 0;
+	            var isUmLen = sumValObj.getUnmatchedArr() && sumValObj.getUnmatchedArr().length > 0;
+	            var isAeCr =  (AELinesDebit === 0 || AELinesDebit === null);
+	            var isAeDb = (AELinesCredit === 0 || AELinesCredit === null);
+	            var isMatchedData = MatchedData && MatchedData.length>0;
+	        	var messages = [];
+	        	if((isDiff || isUmLen) ||  (isAeCr && isAeDb) || !isMatchedData){
+	            		//disable the reconcile button
+	            		document.getElementById("reconcileBtn").disabled = true;
+	            		//Show an error message
+						messages.push({message: "{!$Label.Bank_Rec_Info}",severity: KenandyErp.MessageType.Info});
+	  					if(!(PandC_SameCurrency && UnclearedDeposits_SameCurrency)) {
+	  					    messages.push({message: "{!$Label.Uncleared_Items_Diferent_Currency}",severity: KenandyErp.MessageType.Info});
+           				}
+	  					KenandyErp.Messages(messages, messageElement);
+	            }
+	            else{
+	                if(!(PandC_SameCurrency && UnclearedDeposits_SameCurrency)) {
+						messages.push({message: "{!$Label.Uncleared_Items_Diferent_Currency}",severity: KenandyErp.MessageType.Info});
+					}
+					KenandyErp.Messages(messages, messageElement);
+	            	//Else
+					//Enable the button
+					document.getElementById("reconcileBtn").disabled = false;
+					//initialize the time initialized. 
+					//console.log("Enable the button and initialize timer");
+					//Clear a timer if already set.
+						clearInterval(intcount);   
+	        		    countDown(COUNTDOWNSECONDS, "timeleft", function(){
+	        		    //Disable the reconcile button
+	        			document.getElementById("reconcileBtn").disabled = true;
+	        			KenandyErp.Message("{!$Label.Bank_Rec_Timed_Out}", KenandyErp.MessageType.Warning, messageElement)});
+	            
+	             }
+	                //Unblock the UI
+   					KenandyErp.UnBlockUI($("#page-container"));	             
+                   });
+                   
+                   $("#refreshBtn").click(function(){
+	                   //Update the parent window
+	                   parent.refreshWindow();
+                   });
+                   
+                   $("#reconcileBtn").click(function(){
+					   Utils.StartToReconcile();
+                   });
+
+                   //On clicking the reconcile button
+                   $("#exportExcelBtn").click(function(e){
+					   Utils.ExportToExcel( false);
+                   });
+                   $("#ReconcileNotes").blur(function(e) {
+                      recordSummary["19"].SummaryAmount = $("#ReconcileNotes").val();
+                      $('#ReconSummaryGrid').data('kendoGridActionList').dataSource.read(); // push data to grid.
+                   });
+            
+
+				//Begin Chunking!
+				 KenandyErp.BlockUI($("#page-container"));
+			           chunkEntireDB(NameSpaceUU+'Accounting_Entry_Line__c');
+
+                       chunkEntireDB(NameSpaceUU+'Bank_Transaction__c');
+                  //console.log('***Bank_Transaction__c');
+                       chunkEntireDB(NameSpaceUU+'Journal_Entry_Line__c');
+                  //console.log('***Journal_Entry_Line__c');
+                       chunkEntireDB(NameSpaceUU+'Customer_Receipt__c');
+                  //console.log('***Accounting_Entry_Line__c');
+                       chunkEntireDB(NameSpaceUU+'Supplier_Payment__c');
+                  //console.log('***Supplier_Payment__c');
+                  chunkEntireDB(NameSpaceUU+'Payment__c');
+                       
+    }); 
+  		var promises;
+   	    var Utils = function() {
+    	return {
+
+    	    ExportToExcel: function(isReconiled) {
+    	        promises = [];
+    	        for(var i = 0; i < 6; ++i) { //one for each grid
+    	             promises.push($.Deferred());
+             	}
+
+    	        $('#ReconSummaryGrid').data('kendoGridActionList').saveAsExcel();
+    	        $('#Matchedcontent').data('kendoGridActionList').saveAsExcel();
+    	        $('#UnMatchedcontent').data('kendoGridActionList').saveAsExcel();
+    	        $('#ActualGLGrid').data('kendoGridActionList').saveAsExcel();
+    	        $('#PaymentsDebitsGrid').data('kendoGridActionList').saveAsExcel();
+    	        $('#DepositsCreditsGrid').data('kendoGridActionList').saveAsExcel();
+
+    	        $.when.apply(null,promises).then(function(reconSummaryWorkbook, MatchedBTWorkbook, unMatchedBTWorkbook,AELWorkbook, DepCredWorkbook, PayDebWorkbook) {//
+    	            var sheets = [reconSummaryWorkbook.sheets[0], MatchedBTWorkbook.sheets[0], unMatchedBTWorkbook.sheets[0], AELWorkbook.sheets[0], DepCredWorkbook.sheets[0], PayDebWorkbook.sheets[0]]; //
+
+    	            sheets[0].title = "{!$Label.Bank_Rec_Summary}";
+    	            sheets[1].title = "{!$Label.Matched_and_Approved}";
+    	            sheets[2].title = "{!$Label.Not_Matched_or_Match_not_Approved_Excel}";
+    	            sheets[3].title = "{!$Label.Actual_GL_Balance}";
+    	            sheets[4].title = "{!$Label.Outstanding_Deposits_and_Credits_Excel}";
+    	           	sheets[5].title = "{!$Label.Outstanding_Payments_and_Debits_Excel}";
+    	            var workbook = new kendo.ooxml.Workbook({sheets: sheets});
+
+					var FileName = '{!$Label.Bank_Recon_Excel_File_Name}'; //Bank Reconciliation - <Bank Account> as of MM-DD-YYYY
+    	            FileName = FileName.replace("{Bank Account}","{!Bank_Account__c.Name}");
+    	            var dateMod = endDateParentPage.replace(new RegExp('/', 'g'), '-');
+    	            FileName = FileName.replace('{MM-DD-YYYY}',dateMod);
+
+    	            var onFileUploadSuccess = function() {
+
+                 	}
+
+                 	var onFileUploadFailure = function(error) {
+                 	    KenandyErp.Message(error, KenandyErp.MessageType.Error, messageElement);
+                  	}
+
+					if(isReconiled) {
+					    var base64 = workbook.toDataURL().split(";base64,")[1];
+    	            	FileServiceUtil.UploadContentVersion('{!JSEncode($Api.Session_ID)}',base64, true,  FileName+".xlsx", "{!Bank_Account__c.Id}", "V", null,
+    	            										 onFileUploadSuccess,onFileUploadFailure);
+
+     				}else {
+     				    kendo.saveAs({
+							dataURI: workbook.toDataURL(),
+							fileName: FileName+".xlsx"
+						 });
+         			}
+             	});
+
+         	},
+
+    		StartToReconcile: function() {
+                var reconcileDate = endDateParentPage;
+                //console.log("Going to reconcile");  
+                   		//Clear setInterval
+                   		clearInterval(intcount); 
+
+                        var arrays = []; 
+                        var i,j,chunk = 5000; //NEED TO SEND ONLY 5K RECORDS AT A TIME
+                        for (i=0,j=MatchedData.length; i<j; i+=chunk) {
+                            arrays.push(MatchedData.slice(i,i+chunk)); //CREATE ARRAY OF 50K RECORDS
+                        }
+                        for(var i=0; i< arrays.length; i++) {
+                        	var isLastChunk = false;
+                        	isLastChunk = i == (arrays.length - 1) ? true : false; //SEND ISLASTCHUNK INFO
+                        	var arrIds =arrays[i].map(function(a) {return a.Id;});
+                        	var result = parent.ReconcileUtils.ReconcileInChunks({reconcileDate : reconcileDate, records : arrIds, isLastChunk : isLastChunk});
+                        	result.done(function(result, event){
+                        	if(event.type === 'exception'){
+                        	//console.log("Received an exception");
+                        	console.log(event);
+                        	}else{
+								if(result.success){
+						            //Get the report
+						            Utils.ExportToExcel( true);
+                                    parent.kwindow.close();
+								}
+								else{
+									//console.log("Error getting result. Value of result is,");
+									//console.log(result);
+								}                        	
+                        	}
+                        	});
+                                };
+				}
+    		}
+    	}();
+    
+      //Setup Queries from controller 
+      var baseQueryCR=  "{!baseQueryCustomerReceiptsInTransit}"  ; 
+      var baseFilter=  "{!baseFilterCustomerReceiptsInTransit}"  ;
+     
+     
+    
+   	  var baseQueryMatchedFinalized= "{!bankTranSummarySelectQry}"   +' ' ;
+      var baseFilterMatchedFinalized= "{!baseFilterReconciledTransactions}" + ' ' ;
+    
+      var baseQueryBankMatch= "{!bankTranSummarySelectQry}"   +' ' ;
+      var baseFilterBankMatch= "{!bankTranSummaryQryWhereClause}" + ' ' ;
+   
+      var baseQuerySuppPayments= "{!baseQuerySuppPayments}"  ;
+	  var baseFilterSuppPayments="{!baseFilterSuppPayments}" + ' ' ;
+    
+      var baseQueryJELines= '{!baseQueryJELines}';
+      var baseFilterJELines= "{!baseFilterJELines}";
+ 	  var baseJournalEntryLinesInTransitMap =JSON.parse(JSON.stringify('{!JSENCODE(baseJournalEntryLinesInTransitMap)}'));
+    
+      var baseQueryAELines= "{!baseQueryAELines}";
+      var baseFilterAELines= "{!baseFilterAELines}";
+
+      var baseQueryInterco = "{!baseQueryIntecoInTransit}";
+      var baseFilterInterCoReceipts = "{!baseFilterIntecoReceiptsInTransit}";
+      var baseFilterInterCoPayments = "{!baseFilterIntecoPaymentsInTransit}";
+ 
+                    //QL chunks are complete, call the chunk queries
+    
+    OnCompleteQLPK = function(type){
+                 if( type==null){
+                     console.log('no transaction found');
+                     isComplete("no Transaction found for one of the objects");
+                     }else
+                switch (type) {
+                    case NameSpaceUU+'Accounting_Entry_Line__c':
+                        parallelStart_AELines(baseQueryAELines, chunkList[type], chunkCallbackAELines, completeCallbackAELines, checkErrors, updateStatus,baseFilterAELines);
+                        break;
+                        
+                    case NameSpaceUU+'Customer_Receipt__c':
+ 						parallelStart_CustRcpt(baseQueryCR, chunkList[type], chunkCallbackCustReceipt, completeCallbackCustReceipt, checkErrors, updateStatus,baseFilter);
+                        break;
+                    case NameSpaceUU+'Journal_Entry_Line__c':
+                    	//KNDY-16492
+                         parallelStart_JELines(baseQueryJELines, chunkList[type], chunkCallbackJELines, completeCallbackJELines, checkErrors, updateStatus,baseFilterJELines);
+                        break;
+                    case NameSpaceUU+'Supplier_Payment__c':
+                        parallelStart_SuppPayments(baseQuerySuppPayments, chunkList[type], chunkCallbackSuppPayments, completeCallbackSuppPayments, checkErrors, updateStatus,baseFilterSuppPayments);
+                        break;
+                    case NameSpaceUU+'Bank_Transaction__c':
+                        parallelStart_BankMatch(baseQueryBankMatch, chunkList[type], chunkCallbackBankMatch, completeCallbackBankMatch, checkErrors, updateStatus,baseFilterBankMatch);
+                   		parallelStart_BankMatchApproved(baseQueryBankMatch, chunkList[type], chunkCallbackBankMatchApproved, completeCallbackBankMatchApproved, checkErrors, updateStatus,baseFilterMatchedFinalized);
+                        break;
+					case NameSpaceUU+'Payment__c':
+						 parallelStart_InterCoReceipt(baseQueryInterco, chunkList[type], chunkCallBackInterCoReceipt, completeCallBackInterCoReceipt, checkErrors, updateStatus,baseFilterInterCoReceipts);
+						 parallelStart_InterCoPayment(baseQueryInterco, chunkList[type], chunkCallBackInterCoPayment, completeCallBackInterCoPayment, checkErrors, updateStatus,baseFilterInterCoPayments);
+						 break;
+
+
+                }
+        
+        };
+    
+         //====== BEGIN QueryChunk.component methods
+      //this is the function that each chunk query from the QueryChunk.component will call back to.
+      //we are defining it here and passing it into the component
+    var chunkCallbackCustReceipt = function(result, event) {
+
+           KenandyErp.CleanNamespace(result, NameSpaceUU);
+         for (index = 0; index < result.length; ++index) {
+             result[index]['normalizeDateTransaction_Date__c'] = normalizeDate(result[index]['Transaction_Date__c']);// normalize date field
+			 if(result[index]['Amount_Received__c'] !=undefined){
+
+                 if(result[index]['Amount_Received__c'] > 0 ) {
+                     CRAmount =   CRAmount + result[index]['Amount_Received__c'] ;
+           		 	 CRData.push(result[index]);
+           		 	 if(UnclearedDeposits_SameCurrency && (result[index]['Currency__c'].localeCompare("{!Bank_Account__c.Currency__c}") != 0)) {
+           		 	     UnclearedDeposits_SameCurrency = false;
+					 }
+                 }else {
+                     RefundAmount = RefundAmount + (result[index]['Amount_Received__c'] * -1 ) ;
+           		 	 RefundData.push(result[index]);
+           		 	 if(PandC_SameCurrency && (result[index]['Currency__c'].localeCompare("{!Bank_Account__c.Currency__c}") != 0)) {
+           		 	     PandC_SameCurrency = false;
+					 }
+                 }
+
+             }
+
+
+           } // end of for loop
+         //console.log('CRAmount' + CRAmount);
+        };
+    
+    var chunkCallbackBankMatch = function(result, event) {
+
+        
+        KenandyErp.CleanNamespace(result, NameSpaceUU);
+	  
+
+        for (index = 0; index < result.length; ++index) {
+           if( result[index]['Match_Approved__c'] ==false ){
+               UnMatched = UnMatched + result[index]['Amount__c'] ;
+            	UnMatchedData.push(result[index]);
+               
+           }else{
+            Matched =   Matched + result[index]['Amount__c'] ;
+                MatchedData.push(result[index]);
+            }
+        } // end of for loop
+
+    };
+   
+    chunkCallbackBankMatchApproved= function(result, event) {
+
+        
+        KenandyErp.CleanNamespace(result, NameSpaceUU);
+	   
+        
+        for (index = 0; index < result.length; ++index) {
+            MatchedFinalized =MatchedFinalized + result[index]['Amount__c'];
+                MatchedFinalizedData.push(result[index]);
+        } // end of for loop
+
+
+		//console.log("MatchedFinalized = "+MatchedFinalized);
+    };
+    
+    
+     var chunkCallbackSuppPayments = function(result, event) {
+         
+
+         KenandyErp.CleanNamespace(result, NameSpaceUU);
+           for (index = 0; index < result.length; ++index) {
+            	result[index]['normalizeDateTransaction_Date__c'] = normalizeDate(result[index]['Transaction_Date__c']);
+                SuppPayments =   SuppPayments + result[index]['Payment_Amount__c'] ;
+            	SuppPaymentsData.push(result[index]);
+            	if(PandC_SameCurrency && (result[index]['Currency__c'].localeCompare("{!Bank_Account__c.Currency__c}") != 0)) {
+					 PandC_SameCurrency = false;
+				 }
+           } // end of for loop
+         //console.log('suppPayments' + SuppPayments);
+        };
+    
+    
+    var chunkCallbackJELines = function(result, event) {
+          
+
+        KenandyErp.CleanNamespace(result, NameSpaceUU);
+           for (index = 0; index < result.length; ++index) {
+               result[index]['normalizeDateTransaction_Date__c'] = normalizeDate(result[index]['Journal_Entry__r']['Transaction_Date__c']);
+
+               if(result[index]['Amount_DR__c'] !=undefined && result[index]['Amount_DR__c'] >0 ){
+            		JELinesDebit =   JELinesDebit + result[index]['Amount_DR__c'] ;
+                    JELinesDebitData.push(result[index]);
+                    if(UnclearedDeposits_SameCurrency && (result[index]['Journal_Entry__r']['Currency__c'].localeCompare("{!Bank_Account__c.Currency__c}") != 0)) {
+           		 	     UnclearedDeposits_SameCurrency = false;
+					 }
+                   }
+                if(result[index]['Amount_CR__c'] !=undefined && result[index]['Amount_CR__c']>0){
+					 JELinesCredit =   JELinesCredit + result[index]['Amount_CR__c'] ;
+                     JELinesCreditData.push(result[index]);
+                     if(PandC_SameCurrency && (result[index]['Journal_Entry__r']['Currency__c'].localeCompare("{!Bank_Account__c.Currency__c}") != 0)) {
+						 PandC_SameCurrency = false;
+					 }
+                   }
+
+           } // end of for loop
+
+
+        };
+    
+     var chunkCallbackAELines = function(result, event) {
+          
+
+         KenandyErp.CleanNamespace(result, NameSpaceUU);
+           for (index = 0; index < result.length; ++index) {
+                if(result[index]['Amount_DR__c'] !=undefined  && result[index]['Amount_DR__c'] >0 ){
+            	   AELinesDebit =   AELinesDebit + result[index]['Amount_DR__c'] ;
+               }
+                if(result[index]['Amount_CR__c'] !=undefined && result[index]['Amount_CR__c'] >0){
+            		AELinesCredit =   AELinesCredit + result[index]['Amount_CR__c'] ;
+                }
+                 AELinesData.push(result[index]);
+           }
+        };
+  
+       var chunkCallBackInterCoReceipt = function(result, event) {
+           KenandyErp.CleanNamespace(result, NameSpaceUU);
+           for (index = 0; index < result.length; ++index) {
+            	result[index]['normalizeDateTransaction_Date__c'] = normalizeDate(result[index]['Transaction_Date__c']);
+
+            	InterCoReceiptAmount =   InterCoReceiptAmount + result[index]['Payment_Amount__c'] ;
+            	InterCoReceiptData.push(result[index]);
+            	if(UnclearedDeposits_SameCurrency && (result[index]['Currency__c'].localeCompare("{!Bank_Account__c.Currency__c}") != 0)) {
+					UnclearedDeposits_SameCurrency = false;
+				}
+            }
+
+       };
+      var chunkCallBackInterCoPayment = function(result, event) {
+          KenandyErp.CleanNamespace(result, NameSpaceUU);
+           for (index = 0; index < result.length; ++index) {
+            	result[index]['normalizeDateTransaction_Date__c'] = normalizeDate(result[index]['Transaction_Date__c']);
+
+            	InterCoPaymentAmount =   InterCoPaymentAmount + result[index]['Payment_Amount__c'] ;
+            	InterCoPaymentData.push(result[index]);
+
+            	if(PandC_SameCurrency && (result[index]['Currency__c'].localeCompare("{!Bank_Account__c.Currency__c}") != 0)) {
+					 PandC_SameCurrency = false;
+				 }
+            }
+
+      };
+
+  
+    
+  
+    var completeCallbackBankMatch = function(uniqueId) {
+        isComplete("BankMatch");
+    };
+    
+
+    
+
+     var completeCallbackBankMatchApproved = function(uniqueId) {
+      		isComplete("BankMatchApproved");
+	 };
+    
+     var completeCallbackSuppPayments = function(uniqueId) {
+        //console.log('all chunks complete completeCallbackSuppPayments: ' + uniqueId); 
+            totalPandC = SuppPayments +    JELinesCredit + RefundAmount + InterCoPaymentAmount;
+           //console.log("totalPandC of completeCallbackSuppPayments = "+totalPandC);
+         //Increment the counter
+         isComplete("PaymentCredits");
+     };
+    
+   //this is the function that QueryChunk.component will call back to when all chunks are complete.
+    //we are defining it here and passing it into the component
+    var completeCallbackCustReceipt = function(uniqueId) {
+       // console.log('all chunks complete *******: ' + uniqueId);
+      var  totalDandA=CRAmount +JELinesDebit + InterCoReceiptAmount;
+        UnclearedDeposits =totalDandA;
+        totalPandC = SuppPayments + JELinesCredit + RefundAmount + InterCoPaymentAmount;
+        isComplete("Deposits and Credits");
+    };
+    
+    var completeCallbackJELines = function(uniqueId) {
+        //console.log('all chunks complete completeCallbackJELines: ' + uniqueId); 
+          var  totalDandA=CRAmount +JELinesDebit + InterCoReceiptAmount;
+           UnclearedDeposits =totalDandA;
+		//console.log("completeCallbackJELines = "+UnclearedDeposits);
+         totalPandC = SuppPayments + JELinesCredit + RefundAmount + InterCoPaymentAmount;
+         //console.log("totalPandC of completeCallbackJELines = "+totalPandC);
+
+		isComplete("JELines");
+    };
+    
+     var completeCallbackAELines = function(uniqueId) {
+        //console.log('all chunks complete completeCallbackAELines: ' + uniqueId);  
+        //console.log("AELinesCredit = "+AELinesCredit);
+       isComplete("AELINES");
+         
+    };
+
+    var  completeCallBackInterCoReceipt = function(uniqueId) {
+        var  totalDandA=CRAmount +JELinesDebit + InterCoReceiptAmount;
+         UnclearedDeposits =totalDandA;
+         isComplete("InterCoReceipt");
+    };
+
+    var completeCallBackInterCoPayment = function(uniqueId) {
+      	totalPandC = SuppPayments +    JELinesCredit + RefundAmount + InterCoPaymentAmount;
+      	isComplete("InterCoPayment")
+    };
+    //Do not Change the following methods
+    var updateStatus = function (msgLocation, statusMsg) {
+		if (msgLocation == 2) {
+			window.setTimeout(function(){
+				$("#status-message2").text(statusMsg);
+			});
+		} else {
+			window.setTimeout(function(){
+				$("#status-message1").text(statusMsg);
+			});
+		}
+	};
+    var checkErrors = function (event) { 
+	if (event.status) {            
+		} else if (event.type === 'exception') {
+			errors.push(event.message + ' : ' + event.type);
+		} else {
+			errors.push(event.message);
+		}
+		if (errors.length == 0) {
+		} else {
+			//console.log('***errors***');
+			//console.log(errors);
+     	}
+	};
+
+  var  normalizeDate= function (value){
+	  //KNDY-15576
+	  console.log('normalize');
+	  console.log(value);
+	  console.log(KenandyErp.ParseSFDCDateTime(value));
+	  console.log(KenandyErp.ParseSFDCDateTime(value).toLocaleDateString());
+	  //return moment(value).tz(KenandyErp.TimeZone).format('M/D/YYYY');
+	  return KenandyErp.ParseSFDCDateTime(value).toLocaleDateString();
+  }
+ 
+      </script>
+
+
+
+
+
+	<c:QLPKChunk completeCallback="OnCompleteQLPK" chunkSize="4000" />
+	<c:QueryChunk uniqueId="BankMatch" />
+	<c:QueryChunk uniqueId="BankMatchApproved" />
+	<c:QueryChunk uniqueId="SuppPayments" />
+	<c:QueryChunk uniqueId="JELines" />
+	<c:QueryChunk uniqueId="AELines" />
+	<c:QueryChunk uniqueId="CustRcpt" />
+	<c:QueryChunk uniqueId="InterCoReceipt" />
+	<c:QueryChunk uniqueId="InterCoPayment" />
+
+
+</apex:page>

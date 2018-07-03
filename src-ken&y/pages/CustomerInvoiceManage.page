@@ -1,0 +1,942 @@
+<apex:page standardController="Customer_Invoice__c" docType="html-5.0"  extensions="CustomerInvoiceManageExt" title ="{!$ObjectType.Customer_Invoice__c.label}">
+  <c:KendoResources />
+	<style type="text/css">
+        .line-errors {
+            cursor: pointer;
+         }
+         
+        .line-total {
+            border: 2px dashed !important;
+            font-weight: bold;
+            width: 100px;
+            text-align: right;
+        }
+        
+        .text-red { border-color: red !important; }
+        .text-green { border-color: green !important; }
+        
+        .invoiced-amount {
+            padding: .3em .4em !important;
+        }
+
+        .button-text-bold{
+          font-weight: bold;
+        }
+
+        .column-label {
+            vertical-align: middle !important;
+            width: 15%;
+        }
+        
+        .column-field {
+            vertical-align: middle !important;
+            width: 85%;
+        }
+        
+        div.individualPalette.lookupHoverDetail[id^='lookup'] .pbButton input.btn:nth-child(2) {
+            display: none;
+        }
+        
+        body .bPageBlock .pbBody .kndy-pbHeader .pbSubheader{
+            background-color:#428bca;
+        }
+        
+        .disab {
+			 opacity: 0.4;
+             cursor: default; 
+             pointer-events: none;
+           }
+        
+    </style>
+  
+    <c:busyWait includescripts="false"/>
+ 
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+  <apex:form >
+        <div class="page-container">
+                <apex:outputPanel layout="block" id="CustomerInvoiceManageForm">
+            <apex:sectionHeader title="{!pageTitle}" subtitle="{!pageSubTitle}" >  
+                 <apex:inputHidden value="{!pgError}"  id="pger"/>
+                    <apex:inputHidden value="{!custInvoice.Finalized__c}" id="fin" />
+                <script>
+                if(typeof InvoiceUtils!="undefined"){
+                   InvoiceUtils.pgError="{!pgError}";
+                    if(InvoiceUtils.isCloneRequest){
+                        InvoiceUtils.AmountFieldList= null;
+                        InvoiceUtils.AddressFieldList=null;
+                        }else{
+                   InvoiceUtils.AddressFieldList=  JSON.parse('{!JSENCODE(CustomerInvoiceAddressFieldList)}');
+                   InvoiceUtils.AmountFieldList= JSON.parse('{!JSENCODE(CustomerInvoiceAmountFieldList)}');
+                    }
+                    InvoiceUtils.HeaderFieldList= JSON.parse('{!JSENCODE(CustomerInvoiceHeaderFieldList)}');
+                    InvoiceUtils.LinesFieldList  =JSONUtils.Parse('{!CustomerInvoiceLinesFieldList}');
+                   InvoiceUtils.RenderInvoiceHeaderDetailList();
+                   InvoiceUtils.RenderInoviceLines();
+                    }
+                </script>
+                    </apex:sectionHeader>  
+                </apex:outputPanel>
+            <div class="page-message"></div>
+            <apex:pageMessages id="msgs"/>
+            
+            <apex:pageBlock id="InvoiceHeaderDetailBlock" >  
+                <div id="HiddenFields" style="display:none;">
+                    <apex:outputText value="{!Customer_Invoice__c.name}" />
+                </div>
+                <apex:pageBlockSection columns="1">
+                    <apex:outputPanel id="invHeader">
+                    <div id="InvoiceHeaderDetailList">
+                        
+                    </div>
+                        </apex:outputPanel>
+                   
+                </apex:pageBlockSection>
+    
+                <apex:pageBlockButtons location="top" >
+                      <a href="{!ReturnUrl}" style="text-decoration: none;"><input type="button" value="{!$Label.Go_Back}" class="k-button kndy-btn cancel-command button-text-bold" /></a>
+                    <apex:outputPanel layout="none"  >
+                        <button id="saveButton" class ="k-button kndy-btn save-command" type="button" accesskey="s">{!$Label.Save}</button>
+					</apex:outputPanel>
+                    <apex:actionFunction name="setCIName" action="{!setCIName}" reRender="CustomerInvoiceManageForm,msgs">
+                        <apex:param name="parm1" assignTo="{!CustInvId}" value=""></apex:param>
+           			    <apex:param name="parm2" assignTo="{!isCloneRequest}" value=""></apex:param>
+                    </apex:actionFunction>
+                    <Script>console.log('returnUrl-->'+'{!ReturnUrl}');</Script>
+                      <button id="actionButton" class ="k-button kndy-btn" type="button">{!$Label.Actions}</button>
+                </apex:pageBlockButtons>
+
+                <div class="customLinks">
+                    <span ><table class="customLinks"><tbody><tr class="first"><td>
+                        <div id="generateaccounting">
+                            <apex:outputLabel>{!$Label.Custom_Links}
+                                <a id="genAccountingURL"  target="_self" onmouseover="this.style.cursor='pointer';" style="text-decoration:underline">{!$Label.Generate_Accounting_Entry}</a>  
+                </apex:outputLabel>
+                            </div>
+                    </td></tr ></tbody></table></span>
+                </div>
+            </apex:pageBlock>
+            <apex:pageBlock title="">  
+                <apex:outputPanel styleClass="kndy-pbHeader" layout="block">          
+                    <apex:pageBlockSection columns="1" collapsible="true" title="Invoice Lines" id="pbsInvoiceLInes" >                   
+                        <div class="grid-container">
+		                    <div class="grid-message"> </div>
+		                    <div id="InvoiceLinesGrid"></div>
+                             <div id="InvoiceLinesGrid2"></div>
+		                </div>
+                        
+		             </apex:pageBlockSection>                                
+                </apex:outputPanel>   
+            </apex:pageBlock>
+  
+               
+	       
+	         
+        </div>
+
+      
+     <script>
+      
+    $(document).on('KenandyErpReady', function(e) {
+        InvoiceUtils.invid= '{!CustInvId}';
+        ///'{!custInvoice.id}';
+         InvoiceUtils.invName= '{!Customer_Invoice__c.name}';
+         InvoiceUtils.pgError  ="{!pgError}";
+         InvoiceUtils.AddressFieldList=  JSON.parse('{!JSENCODE(CustomerInvoiceAddressFieldList)}');
+         InvoiceUtils.AmountFieldList= JSON.parse('{!JSENCODE(CustomerInvoiceAmountFieldList)}');
+         InvoiceUtils.AdditionalInfo = JSON.parse('{!JSENCODE(CustomerInvoiceAdditionalInfoList)}');
+         InvoiceUtils.TaxInfo = JSON.parse('{!JSENCODE(CustomerInvoiceTaxFieldList)}');
+         InvoiceUtils.HeaderFieldList = JSON.parse('{!JSENCODE(CustomerInvoiceHeaderFieldList)}');
+         InvoiceUtils.LinesFieldList  =JSONUtils.Parse('{!CustomerInvoiceLinesFieldList}');
+         InvoiceUtils.RenderSaveListDropdown();
+         InvoiceUtils.RenderActionListDropdown();
+        
+         InvoiceUtils.RenderInvoiceHeaderDetailList();
+         InvoiceUtils.RenderInoviceLines();
+         InvoiceUtils.ValidateRender();  
+         InvoiceUtils.invoiceType = '{!JSENCODE(custInvoice.Invoice_Type__c)}';
+         InvoiceUtils.invoiceFinalized = {!(custInvoice.Finalized__c)}; 
+       
+    });
+      
+    var messageNoAction = "Action not allowed. Please save the record and try again.";  
+    var InvoiceUtils = new function(){
+    return { 
+           isCloneRequest :false,
+           invid : null,
+           clonedFromInvid :null,
+           pgError: null,
+           invName: '',
+           AddressFieldList:null,
+           AmountFieldList: null,
+           AdditionalInfo:null,
+           TaxInfo:null,
+            HeaderFieldList:null,
+           currency:null,
+           
+           onCompanyChange: function(e) {
+               //var currency = null;
+               console.log('comapny change ');
+                    var self = this;
+                    var companyId = e ? $(e.target).val() : '{!custInvoice.company__c}';
+                    console.log('companyId');
+                    console.log(companyId);
+                    
+                    //KNDY-16263
+					InvoiceUtils.InvoiceHeaderDetailList.data.set('Bill_To_Customer__c', '') ;
+               		InvoiceUtils.InvoiceHeaderDetailList.data.set('Bill_To_Customer__r', {Id: '', Name: ''});               		
+	                InvoiceUtils.InvoiceHeaderDetailList.data.set('Sold_To_Customer__c', '') ;
+	               	InvoiceUtils.InvoiceHeaderDetailList.data.set('Sold_To_Customer__r', {Id: '', Name: ''});	
+	                InvoiceUtils.InvoiceHeaderDetailList.data.set('Ship_To__c', '') ;
+	               	InvoiceUtils.InvoiceHeaderDetailList.data.set('Ship_To__r', {Id: '', Name: ''});
+	               	if (!companyId) {
+	               		//KNDY-16841
+						InvoiceUtils.UpdateFiltersForLookups (e,'bill-to','Company__c',null,'Bill_To',InvoiceUtils.billtoLookup);
+                        return;
+                    } 
+                    KenandyErp.BlockUI();
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.CustomerInvoiceManageExt.getCompanyDetails}',
+                        companyId,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();
+                            messageElement =$("grid-message");
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                
+                                if (result.success) {
+                                    if (result.records && result.records.length > 0) {
+                                        var company = result.records[0];   
+                                        var transactionCurrencyDefault = (company.Default_Transaction_Currency__c != null) ? company.Default_Transaction_Currency__c : null;
+                                        if(InvoiceUtils.currency == null){  
+                                            InvoiceUtils.InvoiceHeaderDetailList.data.set('Currency__r.Name', company.Default_Transaction_Currency__r.Name);
+                                            InvoiceUtils.InvoiceHeaderDetailList.data.set('Currency__c', transactionCurrencyDefault);
+                                            InvoiceUtils.currency = transactionCurrencyDefault;  
+                                        }
+                                    }
+                                }
+								//KNDY-16263
+								InvoiceUtils.UpdateFiltersForLookups (e,'bill-to','Company__c',company.Id,'Bill_To',InvoiceUtils.billtoLookup);
+                            }
+                        },
+                        {escape: false}
+                    );
+                },
+        InvoiceGrid: null,
+        InvoiceHeaderDetailList:  null,    
+        invoiceType: null,
+        invoiceFinalized : null, 
+        
+        getCIData: function(){
+           var deferred = $.Deferred();
+           var invoiceId =(InvoiceUtils.invid=='' )? '{!CustInvId}' : InvoiceUtils.invid;
+            if(InvoiceUtils.isCloneRequest){
+                invoiceId= clonedFromInvid;
+                 console.log('clonedFromInvid- InvoiceUtils.invid: '+clonedFromInvid + '-' + InvoiceUtils.invid);
+                }
+            console.log('getting invoice data for invoiceId' + invoiceId);
+                        if (invoiceId) { //if you have a invoiceId query the data and load the detail list
+                            Visualforce.remoting.Manager.invokeAction(
+                                '{!$RemoteAction.CustomerInvoiceManageExt.getInvoice}',
+                                invoiceId,
+                                InvoiceUtils.isCloneRequest,
+                                function (result, event) {
+                                    deferred.resolve(result, event);
+                                },
+                                {escape: false}
+                            );
+                        }
+                        else { //just UI gimmick to show a progress bar. 
+                             var records = [];
+                                headerData =JSON.parse('{!JSENCODE(CustInvoiceJson)}');
+                            delete headerData['attributes'] ;
+                            records.push(headerData);
+                            setTimeout(function() {
+                                deferred.resolve({ records: records, success: true, total: 1 }, { statusCode: 200 });
+                            }, 100);
+                        }
+                        return deferred.promise();
+            },   
+        getInvoiceLineData:function(){
+           var records =[];
+           var deferred = $.Deferred();
+           var invoiceId =(InvoiceUtils.invid=='')? '{!CustInvId}' : InvoiceUtils.invid;
+           if(InvoiceUtils.isCloneRequest){
+                invoiceId= clonedFromInvid;
+                 console.log('clonedFromInvid- InvoiceUtils.invid: '+clonedFromInvid + '-' + InvoiceUtils.invid);
+           }
+                        if (invoiceId) { //if you have a invoiceId query the data and load the detail list
+                            Visualforce.remoting.Manager.invokeAction(
+                                '{!$RemoteAction.CustomerInvoiceManageExt.getCustomerInvoiceLines}',
+                                invoiceId,
+                                InvoiceUtils.isCloneRequest,
+                                function (result, event) {
+                                   deferred.resolve(result, event);
+                                   InvoiceUtils.ValidateRender();  
+                                },
+                                {escape: false}
+                            );
+                        }
+                        else { //just UI gimmick to show a progress bar. 
+                           
+                            setTimeout(function() {
+                                deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+                            }, 100);
+                        }
+                        
+                        
+                        return deferred.promise();
+            }, 
+        ValidateRender: function(){
+
+            	var fieldList = JSONUtils.Parse(InvoiceUtils.LinesFieldList);
+        		var dateFields = KenandyErp.KendoGridOptions.GetDateFields(fieldList);
+
+                $('.save-command,.save-new-command, .save-return-command').off().on("click",
+                $.proxy(InvoiceUtils.Save, { grid: InvoiceUtils.InvoiceGrid, options: {dateFields : dateFields} })
+                );
+
+                if(InvoiceUtils.isCloneRequest){
+                 console.log('it is a clone request - in Validate Render');
+                 // InvoiceUtils.isCloneRequest= false;
+                }
+        },  
+        RenderInvoiceHeaderDetailList: function() {         
+                	var lookupSearchFilters = [];         
+                    // Destroy InvoiceHeaderDetailList
+                    if (this.InvoiceHeaderDetailList) { 
+                        this.InvoiceHeaderDetailList.destroy();
+                        $('#InvoiceHeaderDetailList').empty();
+                    }
+                    lookupSearchFilters.push({ field: "Customer__c", filter: "RecordType.DeveloperName in (\'Corporate_Parent\')" });
+                    //KNDY-14524
+					//filterText= "RecordType.DeveloperName = \'Bill_To\' and Status__c =\'Approved\'"; 
+					//lookupSearchFilters.push({ field: "Bill_To_Customer__c", referenceTo: "Customer__c",filter: filterText });
+                    
+                    this.InvoiceHeaderDetailList = $('#InvoiceHeaderDetailList').kendoDetailList({
+                        namespace: '{!NamespaceUU}', 
+				        autoExpandSections: true, 
+                        sections: [   
+                            
+                            {
+                                fields: InvoiceUtils.HeaderFieldList,
+                            },
+                             {   title: '{!$Label.Additional_Information}',
+                                name: 'invoice-additional-info',
+                                fields: InvoiceUtils.AdditionalInfo,
+                             
+                                
+                            },
+                            {   title: '{!$Label.Tax}',
+                                name: 'invoice-tax-info',
+                                fields: InvoiceUtils.TaxInfo,
+                             
+                                
+                            },
+                            {   title: '{!$Label.Address_Information}',
+                                name: 'invoice-address-info',
+                                fields: InvoiceUtils.AddressFieldList,
+                             
+                                
+                            },
+                            {   title: '{!$Label.Invoice_Amount}',
+                                name: 'Invoice-Amount',
+                                fields: InvoiceUtils.AmountFieldList,
+                                
+                            },
+                            
+                      ],
+                        lookupSearchAction: '{!$RemoteAction.CustomerInvoiceManageExt.lookupSearchFilter}',
+                        lookupSearchFilters: lookupSearchFilters,
+                        getDetailListFunction: InvoiceUtils.getCIData
+                    }).data('kendoDetailList');
+       this.InvoiceHeaderDetailList.element.bind('OnReadSuccess', this.OnInvoiceHeaderDetailListReadSuccess);
+				
+			},			
+            //KNDY-16263
+            //UpdateFiltersForLookups (e,'bill-to/ship-to/sold-to','Company__c','4897hdefhkahfksh','Bill_To',InvoiceUtils.billtoLookup)
+            UpdateFiltersForLookups: function(e,filterOnText,filterOnField, filterOnId, recordTypeValue ,setLookupOn){
+            	var filterTextArray = [];
+            	var filterText = '';
+            	if (filterOnText == 'bill-to'){
+            		filterTextArray.push("(Status__c = \'Approved\'");
+            	 	filterTextArray.push("RecordType.DeveloperName = \'" + recordTypeValue +"\'");
+            	 	//KNDY-16841 - check for filterid if null only add one condition 
+            	 	if (filterOnId != null){
+            	 	filterText = "("+ filterTextArray.join(' and ') + " and " +  filterOnField + "= \'"+filterOnId+"\') or ";
+            	 	filterText = filterText + filterTextArray.join(' and ') +("and " +  filterOnField + " = null ))");            	 	
+            	 	}else{
+            	 		filterTextArray.push(filterOnField + "= null)");
+            	 		filterText = filterTextArray.join(' and ') ;
+            	 	}
+            	 	           	 	
+            	}else if (filterOnText == 'sold-to' || filterOnText == 'ship-to'){
+            		filterTextArray.push("Status__c = \'Approved\'");
+            	 	filterTextArray.push("RecordType.DeveloperName = \'" + recordTypeValue +"\'");
+            	 	filterTextArray.push(filterOnField + " = \'"+ filterOnId + "\'");
+            	 	filterText =  filterTextArray.join(' and ') ;
+            	}else{
+            		filterTextArray.push("RecordType.DeveloperName = \'" + recordTypeValue +"\'");
+            	 	filterTextArray.push(filterOnField + " = \'"+ filterOnId + "\'");
+            	 	filterText =  filterTextArray.join(' and ') ;
+            	}            	
+            	if ($(setLookupOn).data('kendoLookup') != null){
+            	 	$(setLookupOn).data('kendoLookup').options.criteria = filterText;
+            	 } 
+                },
+                //KNDY-14524
+        onBillToCustomerChange: function(e) {  
+        
+                   console.log('onBillToCustomerChange change ');
+                var self = this;
+                    var billToCustomerId = e ? $(e.target).val() : '{!custInvoice.Bill_To_Customer__c}';
+                    console.log('billToCustomerId');
+                    console.log(billToCustomerId);
+                    if (!billToCustomerId) {
+                           return;
+                    }
+                    //KNDY-16263 
+				$(InvoiceUtils.shiptoLookup).data('kendoLookup').value (  '' );
+                InvoiceUtils.InvoiceHeaderDetailList.data.set('Sold_To_Customer__c', '') ;
+               	InvoiceUtils.InvoiceHeaderDetailList.data.set('Sold_To_Customer__r', {Id: '', Name: ''});	
+                InvoiceUtils.InvoiceHeaderDetailList.data.set('Ship_To__c', '') ;
+               	InvoiceUtils.InvoiceHeaderDetailList.data.set('Ship_To__r', {Id: '', Name: ''});
+               	
+                   KenandyErp.BlockUI();
+                   Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.CustomerInvoiceManageExt.getCustomerInfo}',
+                        billToCustomerId,
+
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();
+                            messageElement =$("grid-message");
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                
+                                if (result.success) {
+                                    if (result.records && result.records.length > 0) {
+                                        var billtocustomer = result.records[0];   
+                                        var corporateCustomer = (billtocustomer.Parent_Customer__c) ? billtocustomer.Parent_Customer__c : null;
+                                        var corporateCustomerName = (billtocustomer.Parent_Customer__r.Name) ? billtocustomer.Parent_Customer__r.Name : null;
+                                        var paymentTerm = (billtocustomer.Payment_Term__c) ? billtocustomer.Payment_Term__c : null;
+									var paymentTermName;
+                                        
+                                        if(corporateCustomer != null){  
+                                            InvoiceUtils.InvoiceHeaderDetailList.data.set('Customer__c', corporateCustomer);   
+                                        }
+                                        if(paymentTerm != null){  
+											paymentTermName = (billtocustomer.Payment_Term__r.Name) ? billtocustomer.Payment_Term__r.Name : null;
+                                            InvoiceUtils.InvoiceHeaderDetailList.data.set('Payment_Term__c', paymentTerm);        
+                                            InvoiceUtils.InvoiceHeaderDetailList.data.set('Payment_Term__r.Name', paymentTermName);     
+                                            InvoiceUtils.InvoiceHeaderDetailList.data.set('Payment_Term__r.Id', paymentTerm);                             
+                                        }
+                                        
+                                        if(InvoiceUtils.currency == null){ // in the edit mode
+                                           InvoiceUtils.currency = document.getElementById('Currency__c').value;
+                                        }
+										if(InvoiceUtils.currency != null && result.records[0].Currency__c != null && InvoiceUtils.currency != result.records[0].Currency__c){ 
+											var currencyName = ( typeof result.records[0].Currency__r != "undefined" ) ? result.records[0].Currency__r.Name : (result.records[0].Company__c != undefined ? result.records[0].Company__r.Default_Transaction_Currency__r.Name : '');
+											var currencyId = ( typeof result.records[0].Currency__c != "undefined" ) ? result.records[0].Currency__c : (result.records[0].Company__c != undefined ?  result.records[0].Company__r.Default_Transaction_Currency__c : '');
+                                            InvoiceUtils.InvoiceHeaderDetailList.data.set('Currency__r.Name', currencyName);  
+                                            InvoiceUtils.InvoiceHeaderDetailList.data.set('Currency__c', currencyId);  
+                                            InvoiceUtils.currency = currencyId;  
+                                        }
+									//KNDY-16263
+									InvoiceUtils.UpdateFiltersForLookups (e,'sold-to','Parent_Customer__c',billToCustomerId,'Sold_To',InvoiceUtils.soldtoLookup);
+                                    }
+                                }
+                            }
+                        },
+                        {escape: false}
+                    ); 
+        },
+			 //KNDY-16707, 16263 refine filters for sold to customers depending on bill to customers change
+            OnSoldToCustomerChange: function(e){
+            	var soldToCustomerId = e ? $(e.target).val() : '{!custInvoice.Sold_To_Customer__c}';
+               	InvoiceUtils.UpdateFiltersForLookups (e,'ship-to','Parent_Customer__c',soldToCustomerId,'Ship_To',InvoiceUtils.shiptoLookup);
+              
+				$(InvoiceUtils.shiptoLookup).data('kendoLookup').value (  '' );
+                 	
+                InvoiceUtils.InvoiceHeaderDetailList.data.set('Ship_To__c', '') ;
+               	InvoiceUtils.InvoiceHeaderDetailList.data.set('Ship_To__r', {Id: '', Name: ''});
+	
+            },
+        RenderInoviceLines: function(){
+            var fieldList = InvoiceUtils.LinesFieldList;
+            var dateFields = KenandyErp.KendoGridOptions.GetDateFields(fieldList);
+            //KNDY-15392 - applied filters for product field
+            var lookupSearchFilters = [];
+            var filterText = "(Item__r.Source__c = \'Miscellaneous\')" ; 
+            lookupSearchFilters.push({ field: "shiLine.Product__c", filter: filterText});
+            lookupSearchFilters.push({ field: "segments.GL_Account__c", filter: "Active__c = true" });  //KNDY-15441
+               if (this.InvoiceGrid) { 
+                        this.InvoiceGrid.destroy();
+                        $('#InvoiceLinesGrid2').empty();
+                    }
+            
+            this.InvoiceGrid  = $('#InvoiceLinesGrid2').kendoGridActionList({
+            namespace: '{!NamespaceUU}',   
+            config: '{!GridConfigJson}',   
+            fieldList: JSON.stringify(fieldList),
+            showIconButtons: true,     
+            lookupSearchAction: '{!$RemoteAction.CustomerInvoiceManageExt.lookupSearchFilter}', 
+            lookupSearchFilters: lookupSearchFilters,//KNDY-15392
+            getActionListFunction: InvoiceUtils.getInvoiceLineData,
+            modelIdField: 'shiLine.Id', //since we are using a wrapper we need to pass the full path to the id here
+            filterable: true,
+           
+        	}).data('kendoGridActionList'); 
+            
+            this.InvoiceGrid.element.bind('OnReadSuccess', this.ManageInvoiceLinesActions);
+        },
+                
+      	RenderWidgets : function(){
+    			this.RenderInvoiceHeaderDetailList();
+                this.RenderInoviceLines();
+    		},
+            	
+        RenderSaveListDropdown: function() {        
+                 $('#saveButton').kendoDropDownButton({
+	                type: 'splitButton',
+	                items: [
+	                    {
+	                        text: "Save and Return",
+	                        cssClass: "save-return-command"
+	                    },
+	                    {
+	                        text: "Save and New",
+	                        cssClass: "save-new-command"
+	                    }
+	                ]
+	            });
+	        },  
+	    
+	    ManageInvoiceLinesActions: function(){
+
+	        // disable/enable the add/delete lines and clone lines icon
+            if ((InvoiceUtils.invoiceType == 'Manual' || InvoiceUtils.invoiceType == "") && InvoiceUtils.invoiceFinalized == false){
+                $('.grid-create-command').css('pointer-events','');
+                $('.grid-clone-command').css('pointer-events','');
+                $('.grid-mass-delete-command').css('pointer-events','');
+            }
+            else{
+                $('.grid-create-command').css({ "opacity": "0.4", "cursor": "default" , "pointer-events":"none"});
+                $('.grid-clone-command').css({ "opacity": "0.4", "cursor": "default" , "pointer-events":"none"}); 
+                $('.grid-mass-delete-command').css({ "opacity": "0.4", "cursor": "default" , "pointer-events":"none"});
+            }
+	    },
+	        
+        RenderActionListDropdown: function() {
+           var returnURL = encodeURIComponent( ( InvoiceUtils.invid? '/apex/CustomerInvoiceManage' + '?id=' +InvoiceUtils.invid+'&retURL='+'{!ReturnURL}' :'{!ReturnURL}' ) );
+           console.log('returnURL-->'+returnURL);
+           
+                var abItems = [
+                            {
+                                text: "Clone",                                
+                                cssClass: "clone-command",                                 
+                                click: function(e) {
+                                  dirtyFlagCheckBeforeNavigate(function(){
+                                    if(InvoiceUtils.invid){
+                                       InvoiceUtils.isCloneRequest =true;
+                                        clonedFromInvid=InvoiceUtils.invid;
+                                       
+                                        KenandyErp.ClearMessage();
+                                        setCIName(InvoiceUtils.invid,true);
+                                        
+                                        InvoiceUtils.invid='';
+                                        ChangeUrl(window.location.href,removeURLParameter(window.location.href,'id'));
+                                        
+                                     }else{KenandyErp.Message(messageNoAction); return;}
+                                   });
+                                } 
+                            },
+                            {
+                                text: "Write Off ",                               
+                                cssClass: "writeoff-command",                              
+                                click: function(e) {
+                                  dirtyFlagCheckBeforeNavigate(function(){    
+                                    if(InvoiceUtils.invid==''){KenandyErp.Message(messageNoAction); return;}
+                                    KenandyErp.NavigateToURL('/apex/CustomerInvoiceWriteOff' + '?id=' + InvoiceUtils.invid+'&retURL='+ returnURL, true);
+                                  }); 
+                                 }
+                            },
+                            {
+                                text: "Settle Against Claims",                               
+                                cssClass: "settleagainstclaims-command",                              
+                                click: function(e) {
+                                    dirtyFlagCheckBeforeNavigate(function(){
+                                     if(InvoiceUtils.invid==''){KenandyErp.Message(messageNoAction); return;}
+                                        KenandyErp.NavigateToURL('/apex/CustomerInvoiceSettleAgainstClaims' + '?id=' + InvoiceUtils.invid+'&retURL='+ returnURL, true);
+                                    });
+                                 }
+                            },
+                            {
+                                text: "Unfinalize",                               
+                                cssClass: "unfinalize-command",                               
+                                click: function(e) {
+                                   dirtyFlagCheckBeforeNavigate(function(){
+                                     if(InvoiceUtils.invid==''){KenandyErp.Message(messageNoAction); return;}
+                                    KenandyErp.NavigateToURL('/apex/sourcedocumentunfinalize' + '?id=' + InvoiceUtils.invid+'&retURL='+ returnURL, true);
+                                    });  
+                                 }
+                            },
+                            {
+                                text: "Void",                               
+                                cssClass: "void-command",                               
+                                click: function(e) {
+                                   dirtyFlagCheckBeforeNavigate(function(){
+                                     if(InvoiceUtils.invid==''){KenandyErp.Message(messageNoAction); return;}
+                                    KenandyErp.NavigateToURL('/apex/CustomerInvoiceVoid' + '?id=' + InvoiceUtils.invid+'&retURL='+ returnURL, true);
+                            	   });
+                                 }
+                            },
+                             {
+                                text: "Cancel",                               
+                                cssClass: "cancelCI-command",                               
+                                click: function(e) {
+                                  dirtyFlagCheckBeforeNavigate(function(){
+                                     if(InvoiceUtils.invid==''){KenandyErp.Message(messageNoAction); return;}
+                                    KenandyErp.NavigateToURL('/apex/CustomerInvoiceCancel' + '?id=' + InvoiceUtils.invid+'&retURL='+ returnURL, true);
+                                  });
+                                 }
+                            },
+                            {
+                                text: "Refund Credit", 
+                                cssClass: "refund-credit-command",                              
+                                click: function(e) {
+                                  dirtyFlagCheckBeforeNavigate(function(){
+                                     if(InvoiceUtils.invid==''){KenandyErp.Message(messageNoAction); return;}
+                                    KenandyErp.NavigateToURL('/apex/RefundCreditInvoiceLaunchingPage' + '?id=' + InvoiceUtils.invid+'&retURL='+ returnURL, true);
+                                  });
+                                 }
+                            },
+                            {
+                                    text: "Get Tax",                               
+                                 cssClass: "get-tax-command",                              
+                                    click: function(e) {
+                                        if($('.k-dirty').length>0){
+                                            KenandyErp.Message("You must save the invoice before calculating tax.");
+                                        }else{
+                                            KenandyErp.BlockUI();
+                                            Visualforce.remoting.Manager.invokeAction(
+                                                '{!$RemoteAction.CustomerInvoiceManageExt.getTaxAction}', 
+                                                InvoiceUtils.invid, //InvoiceUtils.InvoiceHeaderDetailList.data,//InvoiceUtils.invid, InvoiceUtils.InvoiceHeaderDetailList.data.Company__c,
+                                                function (result, event) {
+                                                    if(result != null){
+                                                    if(result.success == true){
+                                                        setCIName(InvoiceUtils.invid,false);
+                                                        ChangeUrl(window.location.href,replaceQueryParam('id', InvoiceUtils.invid, window.location.href));
+                                                    }
+
+                                                    KenandyErp.Messages(result.messages);
+                                                }
+                                                    KenandyErp.UnBlockUI();
+                                                }
+                                            );
+                                        }
+                                  }
+                                }
+                        ];
+
+
+                    $('#actionButton').kendoDropDownButton({
+                        items: abItems 
+                    });
+                },
+        billtoLookup:null,
+        shiptoLookup:null,
+        OnInvoiceHeaderDetailListReadSuccess : function(){
+           $('input[name="Company__c"]').bind('change',
+                        InvoiceUtils.onCompanyChange
+                  );
+                  //KNDY-14524
+                  $('input[name="Bill_To_Customer__c"]').bind('change',
+                       InvoiceUtils.onBillToCustomerChange
+                  );
+				//KNDY-16707
+				$('input[name="Sold_To_Customer__c"]').bind('change',
+					InvoiceUtils.OnSoldToCustomerChange
+				);
+                  
+                  
+    			//Bind Type change event
+                $.each($(".k-autocomplete input"), function(){
+                    $(this).data("kendoLookup").options.minLength = 1;
+					if(this.id=='Bill_To_Customer__r.Name'){
+						InvoiceUtils.billtoLookup=this;
+					}
+					if(this.id=='Ship_To__r.Name'){
+						InvoiceUtils.shiptoLookup=this;
+					}
+					//KNDY16707,16263
+					if(this.id=='Sold_To_Customer__r.Name'){
+						InvoiceUtils.soldtoLookup=this;
+					}
+                });
+
+              if(InvoiceUtils.invid=='' ){
+        		    console.log('invoice id is null');
+                    if(InvoiceUtils.isCloneRequest==false){
+                    var companyRef = ('{!custInvoice.company__c}') ? '{!custInvoice.company__r}' : { Id: null, Name: null };
+                        if(InvoiceUtils.InvoiceHeaderDetailList.data){
+                    InvoiceUtils.InvoiceHeaderDetailList.data.set('Company__r.Id', '{!custInvoice.company__c}');
+                    InvoiceUtils.InvoiceHeaderDetailList.data.set('Company__r.Name', '{!custInvoice.company__r.Name}');
+         		    InvoiceUtils.InvoiceHeaderDetailList.data.set('Company__c', '{!custInvoice.company__c}');
+                        InvoiceUtils.InvoiceHeaderDetailList.data.set('Invoice_Type__c', 'Manual');
+                    console.log('{!custInvoice.company__r.Name}');
+                        InvoiceUtils.onCompanyChange();
+                        }
+                    InvoiceUtils.InvoiceHeaderDetailList.data.set('Date_Invoiced__c', new Date());
+                    InvoiceUtils.InvoiceHeaderDetailList.data.set('Transaction_Date__c', new Date());
+                    }
+                }else{
+                  $( "#genAccountingURL" ).bind( "click",function(){ dirtyFlagCheckBeforeNavigate(function(){KenandyErp.NavigateToURL('/apex/CustomerInvoiceAEPreview' + '?id=' + InvoiceUtils.invid+'&retURL='+ '{!ReturnUrl}', true);})
+					});          
+               }
+				//KNDY-16263 
+				InvoiceUtils.UpdateFiltersForLookups (null,'bill-to','Company__c','{!custInvoice.Company__c}','Bill_To',InvoiceUtils.billtoLookup);                           
+				if ('{!custInvoice.Bill_To_Customer__c}' != null){
+			    	InvoiceUtils.UpdateFiltersForLookups (null,'sold-to','Parent_Customer__c','{!custInvoice.Bill_To_Customer__c}','Sold_To',InvoiceUtils.soldtoLookup);
+			    }
+			    if ('{!custInvoice.Sold_To_Customer__c}' != null){
+			    	InvoiceUtils.UpdateFiltersForLookups (null,'ship-to','Parent_Customer__c','{!custInvoice.Sold_To_Customer__c}','Ship_To',InvoiceUtils.shiptoLookup);
+			    }
+              if(InvoiceUtils.isCloneRequest){
+                  $('.grid-new-custom-command, .grid-delete-custom-command, .save-command, .save-return-command,.save-new-command').removeClass("disab");;
+              	  $('#InvoiceHeaderDetailList input, .k-i-calendar').removeClass("disab");   
+                  $('#InvoiceLinesGrid2 tr > td').removeClass("disab"); 
+                  $('table .kndy-table .k-dropdown').removeClass("disab"); 
+                  console.log('InvoiceUtils.isCloneRequest ' + InvoiceUtils.isCloneRequest);
+                  InvoiceUtils.ValidateRender();
+            }               
+                            
+                            
+                  if(InvoiceUtils.invid==''){
+                     $('#generateaccounting').hide();
+                  }else{
+                     $('#generateaccounting').show();
+                  }
+                   
+                   var parseActions = JSON.parse('{!JSENCODE(actionsMap)}');
+                   var ci = InvoiceUtils.InvoiceHeaderDetailList.data;
+                   
+                   //Disable or Enable 'Clone' Action
+                   $('.clone-command').addClass("disab");
+                   if (ci.get('Id') && parseActions != null &&  parseActions.Clone) {   
+                         $('.clone-command').removeClass("disab"); 
+                   }
+                   
+                   //Disable or Enable 'Write Off' Action
+                   $('.writeoff-command').addClass("disab");
+                   if (ci.get('Id') && parseActions != null && parseActions.Write_Off) {   
+                         $('.writeoff-command').removeClass("disab"); 
+                   }
+                   
+                   //Disable or Enable 'Settle Against Claims' Action
+                   $('.settleagainstclaims-command').addClass("disab");
+                   if (ci.get('Id') && parseActions != null && parseActions.Settle_Against_Claims) { 
+                         $('.settleagainstclaims-command').removeClass("disab"); 
+                   }
+                   
+                   //Disable or Enable 'Unfinalize' Action
+                   $('.unfinalize-command').addClass("disab");
+                   if (ci.get('Id') && parseActions != null && parseActions.Unfinalize) { 
+                         $('.unfinalize-command').removeClass("disab"); 
+                   }
+                   
+                   //Disable or Enable 'Void' Action
+                   $('.void-command').addClass("disab");
+                   if (ci.get('Id') && parseActions != null && parseActions.Void) { 
+                         $('.void-command').removeClass("disab"); 
+                   }
+                   
+                   //Disable or Enable 'Cancel' Action
+                   $('.cancelCI-command').addClass("disab");
+                   if (ci.get('Id') && parseActions != null && parseActions.Cancel) { 
+                         $('.cancelCI-command').removeClass("disab"); 
+                   }
+                            
+                   //Disable or Enable 'Refund Credit' Action
+                   $('.refund-credit-command').addClass("disab");
+                   if (ci.get('Id') && parseActions != null && parseActions.Refund_Credit) { 
+                      if ((ci.get('Status__c') != "Cancelled" && ci.get('Status__c') != "Closed" && ci.get('Status__c') != "Void") && ci.get('Total_Amount__c') < 0 &&  
+                          ci.get('Finalized__c') == true && ci.get('Void__c') == false){
+
+                         $('.refund-credit-command').removeClass("disab");
+                      }
+                   }
+                            
+                   //Disable or Enable 'Get Tax' Action
+                   $('.get-tax-command').addClass("disab");
+                   if({!hasTaxService} == false){
+                        $('.get-tax-command').hide();
+                   }else if (ci.get('Id') && {!hasTaxService} == true && parseActions != null && parseActions.Get_Tax) { 
+                         $('.get-tax-command').removeClass("disab"); 
+                   }
+    		},
+        Save: function(e) {
+             console.log('saving...');
+	        	var self = this;
+                var grid = self.grid;
+                var detailList = InvoiceUtils.InvoiceHeaderDetailList;
+                var options = self.options;
+                var modelIdField = grid.dataSource.options.schema.model.idField;
+                
+                var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                            //  var isNewInvoice = (!detailList.data.get('Id')) ? true : false;
+                var isNewInvoice = (InvoiceUtils.invid=='') ? true : false;
+                var returnUrl = '{!ReturnURL}';
+			        	
+                KenandyErp.ClearMessage();
+
+                if(!detailList.validate()){
+                	//has errors
+                	KenandyErp.Message("Please fix the following errors.");
+                    e.preventDefault();
+					return false;
+                }
+
+
+
+                var headerDateFields = detailList.getDateFields();
+                var headerRowsList = [];
+                var headerRows = [];
+                
+                headerRowsList.push(detailList.data);
+                
+                headerRows = $.map(headerRowsList, function(item, index) {
+                    item = item.toJSON();
+                    item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+                    
+                    return item;
+                });
+                
+                if (headerRows.length > 0) {
+                    headerRows = Serializer.ParameterMap(headerRows);
+                }
+                
+                var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields, isDml: false });
+                var updatedRows = [];
+                var newRows = [];
+                var deletedRows = [];
+                
+                newRows = gridUtils.NewRows();
+				updatedRows = gridUtils.UpdatedRows();
+				deletedRows = gridUtils.DeletedRows(); 
+                KenandyErp.BlockUI();
+
+                headerDateFields = headerDateFields ? _.pluck(headerDateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+                var dateFields = self.options.dateFields ? _.pluck(self.options.dateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null; 
+             
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.CustomerInvoiceManageExt.saveAction}', 
+                    headerRows[0], 
+                    headerDateFields,           
+                    updatedRows,
+                    newRows,
+                    deletedRows,
+                    dateFields,
+                    
+                    function (result, event) {
+                        KenandyErp.UnBlockUI();
+                        if (event.type == 'exception') {
+                            KenandyErp.Message(event.message);
+                    	}else{
+                    		KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                    		if(result.success){
+                                InvoiceUtils.isCloneRequest=false;
+                    			if ($(e.target.parentElement).hasClass('save-return-command') ) {
+                                    KenandyErp.back(true, returnUrl);
+                                }
+                                if ($(e.target.parentElement).hasClass('save-new-command') ) {
+                                         KenandyErp.NavigateToURL('/apex/CustomerInvoiceManage' + '?retURL='+returnUrl, true);
+                            } 
+                            if ( $(e.target).hasClass('save-command') ) {
+                                	// refresh widgets
+                                    var id = (result.records && result.records[0].Id) ? result.records[0].Id : null;
+                                    InvoiceUtils.invid = (result.records && result.records[0].Id) ? result.records[0].Id : null;
+                                    if(InvoiceUtils.invid){
+                                        InvoiceUtils.invName =result.records[0].Name;
+                                        console.log('setting invoice' + InvoiceUtils.invid);
+                                        setCIName(InvoiceUtils.invid,false);
+                                        ChangeUrl(window.location.href,replaceQueryParam('id', InvoiceUtils.invid, window.location.href));
+                                    }
+                                    var invoiceType = (result.records && result.records[0].Type__c) ? result.records[0].Type__c : null;
+                               
+                                    KenandyErp.Messages(result.messages);
+                                
+                    		}
+                             InvoiceUtils.ValidateRender();
+                            }else{
+                    			// hilite rows with invalid segment validations
+                            	var invalidRowGuids = result.records;
+                            	if (invalidRowGuids) {
+                            		grid.tbody.find("tr").removeClass("kndy-error");
+                            		for (var guid in invalidRowGuids) {
+                                        grid.tbody.find("tr[data-uid='" + invalidRowGuids[guid] + "']").addClass("kndy-error");
+                            		}
+                            	}
+                                KenandyErp.Messages(result.messages);
+                    		}
+                    	}
+                    },
+                    {escape: false}
+				);
+
+
+	        },
+       }
+    }      
+    
+    function ChangeUrl(page, url) {
+        if (typeof (history.pushState) != "undefined") {
+            var obj = {Page: page, Url: url};
+            history.pushState(obj, obj.Page, obj.Url);
+        } else {
+            KenandyErp.NavigateToURL('/home/home.jsp', true);
+        }
+    }
+    function removeURLParameter(url, parameter) {
+        //prefer to use l.search if you have a location/link object
+        var urlparts= url.split('?');   
+        if (urlparts.length>=2) {
+    
+            var prefix= encodeURIComponent(parameter)+'=';
+            var pars= urlparts[1].split(/[&;]/g);
+   
+            //reverse iteration as may be destructive
+            for (var i= pars.length; i-- > 0;) {    
+                //idiom for string.startsWith
+                if (pars[i].lastIndexOf(prefix, 0) !== -1) {  
+                    pars.splice(i, 1);
+                }
+            }
+    
+            url= urlparts[0]+'?'+pars.join('&');
+            return url;
+        } else {
+            return url;
+        }
+    }
+    function replaceQueryParam(param, newval, search) {
+    var regex = new RegExp("([?;&])" + param + "[^&;]*[;&]?");
+    var query = search.replace(regex, "$1").replace(/&$/, '');
+    return (query.length > 2 ? query + "&" : "?") + (newval ? param + "=" + newval : '');
+    }
+    function dirtyFlagCheckBeforeNavigate(yescallback){
+        if($('.k-dirty').length>0){
+            KenandyErp.Confirmation('You will loose any unsaved changes on this page, Do you wish to continue ?', yescallback);
+        }else {
+            yescallback();
+            }
+    }
+     </script>
+     
+    </apex:form>
+    <div id="responseErrors" ></div>
+   
+    
+</apex:page>

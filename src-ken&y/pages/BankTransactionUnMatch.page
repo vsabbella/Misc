@@ -1,0 +1,16 @@
+<apex:page standardController="Bank_Transaction_Match__c" extensions="BankTransactionUnMatchExt" action="{!validate}" docType="html-5.0" title="Unmatching">
+
+	<apex:sectionHeader title="{!$ObjectType.Bank_Transaction_Match__c.Label} {!Bank_Transaction_Match__c.Name}" subtitle="Un Match"/>
+	<apex:form id="form">
+		<apex:pageMessages />
+		<c:busyWait />
+		<apex:outputpanel id="mainPanel">
+			<apex:pageBlock >
+				<apex:pageBlockButtons location="top">
+					<apex:commandButton value="{!$Label.Go_Back}" action="{!cancel}" status="actionStatus" reRender="form"/>
+					<apex:commandButton value="{!$Label.Confirm}" action="{!unMatch}" status="actionStatus" reRender="form"/>
+				</apex:pageBlockButtons>
+			</apex:pageBlock>
+		</apex:outputpanel>
+	</apex:form>
+</apex:page>

@@ -1,0 +1,19 @@
+<apex:page standardController="Task" action="{!IF(Task.Type =='Exception',null,URLFOR($Action.Task.Close,Task.Id,['retURL'='/'+Task.whatId],true))}" extensions="NewEditCloneDeleteExt" title="Close Task"> 
+	<apex:form >
+        <apex:pageMessage summary="{!$Label.Cannot_Close_Exception_Tasks}" severity="error" strength="3" />
+        <apex:pageMessages />
+        <apex:inputHidden value="{!Task.Type}" id="typeHiddenId"/>
+        <apex:inputHidden value="{!Task.whatId}" id="theHiddenInput"/>
+        <apex:pageBlock >
+       		<apex:pageBlockButtons location="top">
+       			<apex:commandButton value="Override"  action="{!overrideTask}"/>
+       			<apex:commandButton action="{!cancel}"  value="{!$Label.Go_Back}" />
+       		</apex:pageBlockButtons>
+       		<apex:pageBlockSection >
+       			<apex:repeat value="{!$Objecttype.Task.Fieldsets.Exception_Tasks}" var="f">
+						<apex:outputField value="{!Task[f]}" />
+					</apex:repeat>
+       		</apex:pageBlockSection>
+       	</apex:pageBlock>
+    </apex:form>
+</apex:page>

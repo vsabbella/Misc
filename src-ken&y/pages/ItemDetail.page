@@ -1,0 +1,412 @@
+<apex:page standardController="Item__c" extensions="ManageItemExt" readonly="true">
+
+<style type="text/css">
+        .column-label {
+            vertical-align: middle !important;
+            width: 30%;
+        }
+        
+        .column-field {
+            vertical-align: middle !important;
+            width: 60%;
+        }
+        
+        .filter-operator {
+            
+        }
+        
+        .custom-filter-options {
+            width: 30%;
+        }
+        
+        .custom-filter-fields {
+            width: 95%;
+        }
+    </style>
+    
+    <c:KendoResources />
+
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+    
+    <apex:form id="ItemInfoForm">
+    
+	        <div class="page-container">
+	            
+	            <apex:pageBlock id="itemHeaderDetailBlock">                  
+	                        
+	            <div id="itemHeaderDetailList">
+	            </div>
+	                       
+	           </apex:pageBlock>  
+	        </div>
+                           
+            <div id="tabstrip">
+
+	                <ul id="tabListId">
+	                   
+	                        <apex:repeat value="{!tabs}" var="tab">
+	
+	                        <li>
+	
+	                            {!tab}
+	
+	                        </li>
+	
+	                     </apex:repeat>
+	                        
+	                </ul>   
+	                
+	                
+	                <apex:repeat value="{!tabs}" var="tab">
+	                
+	                    <div>
+	                        
+	                        <outputPanel rendered="{!hasHeaderMap[tab]}">
+	                        <apex:pageBlock id="DetailBlock">
+	                            <div class="grid-message"></div>
+	                            <div id="{!tab}DetailList"></div>
+	                        </apex:pageBlock>
+	                        </outputPanel>
+	                        
+	                        
+	                        <apex:outputPanel rendered="{!hasDetailMap[tab]}">
+	                            <apex:pageBlock id="GridContainer">    
+	                                <div class="grid-container k-block k-info-colored">
+	                                    <div class="grid-message"></div>
+	                                    <div id="{!tab}Grid" ></div>
+	                                </div>
+	                            </apex:pageBlock>
+	                        </apex:outputPanel>
+	                    
+	                    </div>
+	                    
+	                </apex:repeat>
+                 
+            </div>
+    
+    </apex:form>
+    
+    
+    <script type="text/javascript">
+        
+       
+       	var allDateFields = [];
+       	var allGridDateFields = [];
+       	
+       	function removeProperty(obj, key) {
+		    for (var i in obj) {
+			       if (obj[i] != null && obj[i] != '' && obj[i].attributes) {
+			      	 delete obj[i].attributes;
+			       }
+		    }
+		    return obj;
+		}
+        
+        //Remoting Actions
+        
+         var getitemData = function(readOptions) {
+            var deferred = $.Deferred();
+            
+            setTimeout(function() {
+                var records = [];
+                if(ManageItemUtils.itemDetailData['attributes'])
+                    delete ManageItemUtils.itemDetailData['attributes'];
+                
+                records.push(ManageItemUtils.itemDetailData);
+                deferred.resolve({ records: records, success: true, total: records.total }, { statusCode: 200 });
+            }, 100);
+            
+            return deferred.promise();
+            
+        };
+        
+        
+         var getGridData = function() {
+        
+          var deferred = $.Deferred();  
+             
+          var messageElement = $(".page-message");
+               
+          Visualforce.remoting.Manager.invokeAction(
+              '{!$RemoteAction.ManageItemExt.getGridLines}',
+               this.config,
+               ManageItemUtils.itemId,
+               function (result, event) {
+               		if (event.type == 'exception') {
+                        KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                    }
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+          
+             );
+            
+            return deferred.promise();
+        };
+         
+        
+        $(document).ready(function() { 
+            ManageItemUtils.Init({
+                itemId: '{!JSENCODE(item.Id)}',
+                itemHeaderFieldList: '{!JSENCODE(itemHeaderROFieldList)}',
+                itemDetailData: '{!JSENCODE(itemDetailJson)}',
+            });
+                        
+        });
+        
+         var ManageItemUtils = function() {
+                
+                return { 
+                            
+                            itemId:null,
+                            itemHeaderFieldList: null,
+                            inventoryfieldlist:null,
+                            purchasingfieldlist:null,
+                            planningfieldlist:null,
+                            orderdetailfieldlist:null,
+                            gridConfig:null,
+                            gridFieldList:null,
+                            itemDetailData:null,
+                            detailGrid:null,
+                            tabfieldlist:[],
+                            tabnames: '{!tabs}',
+                            
+                             
+                            Init: function(args) {
+                                this.itemId = args.itemId;
+                                this.itemHeaderFieldList = JSON.parse(args.itemHeaderFieldList);
+                                this.itemDetailData = JSON.parse(args.itemDetailData);
+                                var tabStrip;
+                        
+                                if({!tabView}){
+            
+                                    tabStrip = $("#tabstrip").kendoTabStrip({
+                                                
+                                                animation: false,
+                    
+                                                contentUrls: [ , , , , , , ]
+                    
+                                                }).data("kendoTabStrip").select(0);
+            
+                                 }
+                                 
+                                  if( !{!tabView} ){
+            
+                                    jQuery('#tabListId').css("display","none");
+            
+                                  }
+                        
+                                if({!errorOnPageLoad}){
+                                    KenandyErp.UnBlockUI($("#tabstrip"));
+                                    $("#tabstrip").find('input[type=button]').prop("disabled",true).removeClass('btn').addClass('btnDisabled');
+                                   
+                                }
+                                
+                                this.RenderItemHeaderDetail();
+                                this.GetAllFieldSet();
+                                this.UpdatePkgUOMNames();
+                                        
+                            },
+                       
+                            RenderItemHeaderDetail: function() {
+                                            
+                                        
+                                            // Show header detail list
+                                            var headerLookupSearchFilters = [];
+                                            var itemHeaderDateFields = KenandyErp.KendoGridOptions.GetDateFields(ManageItemUtils.itemHeaderFieldList);
+                                            allDateFields = _.union(allDateFields, itemHeaderDateFields); //Add Item Header Date fields.
+                                            //allDateFields.push(itemHeaderDateFields);
+                                            // Destroy itemHeaderDetailList
+                                            if (this.itemHeaderDetailList) {
+                                                this.itemHeaderDetailList.destroy();
+                                                $('#itemHeaderDetailList').empty();
+                                            }
+                        
+                                            this.itemHeaderDetailList = $('#itemHeaderDetailList').kendoDetailList({
+                                                namespace: '{!NamespaceUU}',  
+                                                sections: [
+                                                    {
+                                                        fields: ManageItemUtils.itemHeaderFieldList
+                                                    },
+                                                    
+                                                ],
+                                                lookupSearchAction: '{!$RemoteAction.ManageItemExt.lookupSearchFilter}',
+                                                lookupSearchFilters: headerLookupSearchFilters,
+                                                getDetailListFunction: getitemData                    
+                                             }).data('kendoDetailList'); 
+                                             
+                           },
+                          
+                         
+                           GetAllFieldSet:function(){
+                            
+                                KenandyErp.ClearMessage();                    
+                                var str = ManageItemUtils.tabnames.replace(/[\[\]']+/g,'');
+                                var tabarray = str.split(",");
+                                var messageElement = $(".page-message");
+                                if(tabarray.length == 0){
+	                                return;
+	                            }
+                                var detailDateFields;
+                                var itemHeaderDateFields = KenandyErp.KendoGridOptions.GetDateFields(ManageItemUtils.itemHeaderFieldList);
+                               	allDateFields = _.union(allDateFields, itemHeaderDateFields); //Add Item Header Date fields.
+                                Visualforce.remoting.Manager.invokeAction(
+                                        '{!$RemoteAction.ManageItemExt.getTabsFieldList}',
+                                        true,
+                                        function (result, event) { 
+                                        
+                                           if (event.type == 'exception') {
+						                        KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+						                        return;
+						                   }
+                                           
+                                           for(i=0;i<tabarray.length;i++)
+                                           {    
+	                                             var headerfieldlist = result[tabarray[i].trim(' ')][0];
+	                                             
+	                                             var detailfieldlist='';
+	                                             if(result[tabarray[i].trim(' ')].length >1){
+	                                                detailfieldlist = result[tabarray[i].trim(' ')][1];
+	                                             }
+	                                             if(headerfieldlist != ' '){
+	                                             	
+	                                             	detailDateFields = KenandyErp.KendoGridOptions.GetDateFields(JSON.parse(headerfieldlist));
+	                                          
+	                                          		allDateFields = _.union(allDateFields, detailDateFields);
+	                                          		//allDateFields.push(detailDateFields);
+	                                                ManageItemUtils.RenderTabDetailList(tabarray[i].trim(' '), headerfieldlist, detailfieldlist);
+	                                                 
+	                                             }
+	                                             
+	                                             if(detailfieldlist != '')
+	                                                 ManageItemUtils.GridInit(tabarray[i].trim(' '),detailfieldlist);
+                                            }
+                                            
+                                        },
+                                        {escape: false}
+                                    );
+                         
+                           },
+                         
+                           RenderTabDetailList: function(tab, headerfieldlist, detailfieldlist){
+                                                
+                                            var rdfieldList = JSON.parse(headerfieldlist);
+                                            
+                                            // Show item header detail list
+                                            var headerLookupSearchFilters = [];
+                                            var fieldsetName = tab;
+                                            var detailList = tab+"DetailList";
+                        
+                                            var renderedDetailList = $("[id='" + detailList + "']").kendoDetailList({
+                                                namespace: '{!NamespaceUU}',  
+                                                sections: [
+                                                    {
+                                                        fields: rdfieldList
+                                                    },
+                                                    
+                                                ],
+                                                lookupSearchAction: '{!$RemoteAction.ManageItemExt.lookupSearchFilter}',
+                                                lookupSearchFilters: headerLookupSearchFilters,
+                                                getDetailListFunction: getitemData                     
+                                            }).data('kendoDetailList'); 
+                                            
+                                            
+                         },
+                            
+                         GridInit: function(tab,detailfieldlist) {
+                                             
+                                            KenandyErp.ClearMessage();  
+                                            var messageElement = $(".page-message"); 
+                                            
+                                                Visualforce.remoting.Manager.invokeAction(
+                                                    '{!$RemoteAction.ManageItemExt.getGridConfig}',
+                                                     tab,
+                                                    function (result, event) {                    
+                                                       	if (event.type == 'exception') {
+								                        	KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+								                        	return;
+					                   					}
+					                   					else{
+                                                           	ManageItemUtils.gridConfig = result.config;
+                                                           	ManageItemUtils.RenderTabGrid(tab,detailfieldlist, result.config);
+                                                           }
+                                                       
+                                                    },
+                                                    {escape: false}
+                                                );
+                                            
+                       
+                         },
+                         
+                         RenderTabGrid: function(tab,detailfieldlist, gconfig) {
+                            
+                            var fieldList = JSON.parse(detailfieldlist);
+                            var dateFields = KenandyErp.KendoGridOptions.GetDateFields(fieldList);
+                            allGridDateFields = _.union(allGridDateFields, dateFields);
+                            var configOptions = JSON.parse(gconfig);
+                            configOptions.dateFields = allGridDateFields;
+                            configOptions.buttons = null;
+                            configOptions.actionColumnButtons = "Details";
+                            
+                            var detailGrid = tab+"Grid";
+                            var grid = $("[id='" + detailGrid + "']").data('kendoGridActionList');  
+                            $("[id='" + detailGrid + "']").show();
+                            
+                                this.tabGrid = $("[id='" + detailGrid + "']").kendoGridActionList({ 
+                                    namespace: '{!NamespaceUU}', 
+                                    config: configOptions,
+                                    fieldList: fieldList,
+                                    editable:false, 
+                                    lookupSearchAction: '{!$RemoteAction.ManageItemExt.lookupSearchFilter}',
+                                    getActionListFunction: $.proxy(getGridData, {config: gconfig})
+                                    
+                                }).data('kendoGridActionList');
+                                
+                                this.tabGrid.hideColumn(0);
+                                this.tabGrid.wrapper.on("click", ".grid-details-custom-command", $.proxy(ManageItemUtils.ShowDetail, { grid: this.tabGrid }));
+                         },
+                         
+                         ShowDetail: function(e){
+                         
+                            var self = this;
+                            var grid = self.grid;
+                            var buttons = [];
+                            
+                            var row = $(e.target).closest("tr"); //get the row
+                            var dataItem = grid.dataItem(row); // get the row data
+                            
+                            var returnUrl = window.location.href.replace(window.location.pathname,'');
+                            returnUrl = returnUrl.substring(0,returnUrl.lastIndexOf('?')) + '/' + dataItem.Id; 
+                            window.open(returnUrl, '_blank');
+                         }, 
+                         
+                         UpdatePkgUOMNames: function(){
+                	    	
+		                	var self = this;
+		                	var deferred = $.Deferred();
+		                	
+		                	
+                   			KenandyErp.CleanNamespace(ManageItemUtils.itemDetailData, '{!NamespaceUU}');
+		                	
+		                	var UOMValues = ManageItemUtils.itemDetailData.Packaging_UOM__c; 
+							
+		                	Visualforce.remoting.Manager.invokeAction(
+		                			'{!$RemoteAction.ManageItemExt.getPackagingUOMNames}',
+		                			UOMValues,
+		                			function (result, event) {
+		                				result = result.replace("\"", "");//replaceAll   
+		                				result = result.replace("\"", "");            
+		                              	ManageItemUtils.itemDetailData['Packaging_UOM__c'] =  result;
+		                            },
+		                            {escape: false}
+		                        );
+		                       return deferred.promise(); 
+		                }
+                         
+                };
+         }();
+         </script>
+         
+         
+
+</apex:page>

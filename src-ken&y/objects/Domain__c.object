@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customSettingsType>List</customSettingsType>
+    <description>Stores various domain addresses such as the salesforce org, punchout receiver force.com site etc.</description>
+    <enableEnhancedLookup>false</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <fields>
+        <fullName>Domain_URL__c</fullName>
+        <description>Represents the domain address of the site. For example: https://login.salesforce.com</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Please fill the domain address of the site. For example: https://login.salesforce.com</inlineHelpText>
+        <label>Domain URL</label>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Url</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <label>Domains</label>
+    <visibility>Public</visibility>
+</CustomObject>

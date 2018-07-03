@@ -1,0 +1,267 @@
+<apex:page standardController="Journal_Entry__c"
+					extensions="JournalEntryCloneExt"  >
+    <apex:sectionHeader subtitle="{!$Label.Clone_Journal_Entry}" title="{!$Label.Clone_Journal_Entry}" />
+    <script>
+        function setFocusOnLoad() {} 
+        onload = setFocusOnLoad;
+        
+        function goback(){
+		if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+			sforce.one.back(true);
+		} else {
+			window.location.href = '/{!Journal_Entry__c.Id}';
+		}
+	  }
+    </script>
+    <c:busyWait />
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+    <apex:form id="form">
+	    <apex:pageMessages escape="false" />
+	      <div id="MessagesBlock">  
+	                   <apex:pagemessages id="Messages" />
+	                    <div class="page-message"></div>
+	    </div>
+		<div id="tab" >
+   		<apex:pageBlock >
+	        <apex:pageBlockButtons id="button" >
+		        <apex:commandButton value="{!$Label.Save} " action="{!navigateToClone}" status="actionStatus" rerender="form"  rendered="{!(NumberOfLines <= 500)}" accessKey="s"/>
+		        <apex:commandButton value="{!$Label.Save} " action="{!prepareJEClone}" rerender="jsPanel" oncomplete="showProgressBar();" rendered="{!(NumberOfLines > 500)}" accessKey="s" />
+		        <apex:commandButton value="{!$Label.Cancel} " onClick="goback();return false;" status="actionStatus" rerender="form"/>
+	        </apex:pageBlockButtons>
+	        
+	   		
+		        <apex:pageBlockSection title="{!$Label.Journal_Entry_Information}" columns="2" collapsible="false">
+		            <!-- When implementing multi-company, you will neeed to remove the outputField as well as the rendered portion of the inputField-->
+		<!--             <apex:outputField value="{!Sales_Order__c.Company__c}" />  -->
+		            <apex:repeat value="{!$ObjectType.Journal_Entry__c.FieldSets.clone}" var="f" > 
+		                <apex:inputField value="{!Journal_Entry__c[f]}" required="{!OR(f.required, f.dbrequired)}" rendered="{!f.fieldpath != 'Company__c'}"/>
+		            </apex:repeat>            
+		        </apex:pageBlockSection>
+		        
+		        <apex:pageBlockSection title="{!$Label.Source_Documents}" columns="2" collapsible="false">   
+		            <apex:repeat value="{!$ObjectType.Journal_Entry__c.FieldSets.Source_Documents}" var="f" > 
+		            <apex:inputField value="{!Journal_Entry__c[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+		            </apex:repeat> 
+		        </apex:pageBlockSection>  
+    	</apex:pageBlock>
+	    	</div>
+	        <table class="kndy-table">
+	        	<tr>
+	        		<td align="center">
+	        			<div id="ProgressBar" ></div>
+	        		</td>
+	        	</tr>
+	        </table>
+    </apex:form>  
+    <div id="responseErrors" style="display:none;">
+       <apex:outputText value="{!Journal_Entry__c.Company__c}" />
+       <apex:outputText value="{!Journal_Entry__c.Type__c}" /> //pxp added so Adjusment SO Type gets cloned to support KNDY-5071
+   	</div>
+    <script>
+       Visualforce.remoting.timeout = 120000; // Set timeout at page level
+       
+       var namespace = '{!namespace}';
+   	   var cloneChunks = '';
+       var clonedJEId='';
+ 	   var JEToCloneId = '';
+       var cloneSize='';
+    	var RemoteDeferredReverse = [];
+    	var pb;
+    	var JELineCount;
+    	var deferredReverse = $.Deferred();
+    	var Progress = 0;
+    	var numberOfRetries=1;
+        var realtimeRetriesClone=new Array();
+
+	      /*Do a retry for the failed chunk in case of transaction timeouts*/
+	   	function checkRetry(event) {
+	        var doRetry = false;
+	        if (event.type === 'exception') {
+	        	if ((event.message.indexOf("timeout") > -1) ||
+	        		(event.message.indexOf("Remoting request invalid for your session") > -1) || 
+	        		(event.message.indexOf("Logged in") > -1)) {
+	        		doRetry = true;	
+	        	}	
+	        }  
+	        return doRetry;  	
+		}      
+    
+
+    	function showProgressBar() {
+            debugger;
+               
+            $('#tab').hide();
+            var largemsg='The Source Document is being cloned.Please do not refresh page or press Back button of browser';                                                     
+            KenandyErp.Message(largemsg, KenandyErp.MessageType.Info);                                              
+            progressbar(0, JELineCount);
+            cloneJE(0);
+    	}
+    	
+        function cloneJE(chunkIndex)
+        { debugger;
+             
+                $('#ProgressBar').show();
+                var RemoteDeferredItemReverse= $.Deferred();
+                var currchunkIndex = chunkIndex;
+                var chunkItem=cloneChunks[currchunkIndex];
+                var max=chunkItem['max']; 
+                var min=chunkItem['min']; 
+                RemoteDeferredReverse.push(RemoteDeferredItemReverse);  
+                console.log('chunks here');
+                console.log(cloneChunks);
+                console.log('currchunkIndex');
+                console.log(currchunkIndex);
+            
+                Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.JournalEntryCloneExt.cloneJE}',
+							JEToCloneId,
+                            clonedJEId, 
+                            currchunkIndex,
+                            cloneSize,
+                            min,
+                            max,
+                            function (result, event) {
+                                
+                                console.log('Entered VF Reverse');   
+                                console.log('Remote result ');
+                                console.log(result);                             
+                                //console.log('Remote event');      
+                                //console.log(event);                            
+                               
+                                EventObj=Object.create(event);
+                                //console.log('My eventObj');      
+                                //console.log(EventObj);
+                                if(event.status==true)
+                                {
+                                    if(!result.AllDone)
+                                    {
+                                        Progress=result.Progress;
+                                        if(Progress!=-1)
+                                            {
+                                               if(result.ChunkJEL==true)
+                                                    {                                                                                            
+                                                        cloneJE(result.NextChunkIndex);
+                                                        console.log('Progress'+result.Progress);                                        
+                                                    }
+                                                else
+                                                    {
+                                                        //some error deleting current current chunk .Displayed in messages.  
+                                                    }  
+                                            }
+                                        else
+                                            {
+                                                //Some Error 
+                                            }
+                                         RemoteDeferredItemReverse.resolve(result, event);                                    
+                                    }
+                                    else if(result.AllDone)
+                                    {
+							            $('#tab').show();
+							            var largemsg='This Source Document is cloned.';                                                     
+							            KenandyErp.Message(largemsg, KenandyErp.MessageType.Info);                                              
+                                        KenandyErp.NavigateToSObject(clonedJEId);
+                                    }                           
+                                }
+                                else  //Remoting failure
+                                    {
+                                                                        
+                                        var isTimeout=checkRetry(event);
+						                if(isTimeout)
+						                {
+											if (currchunkIndex in realtimeRetriesClone) 
+											{
+												realtimeRetriesClone[currchunkIndex]++;
+											} 
+											else 
+											{
+												realtimeRetriesClone[currchunkIndex] = 1;
+											}
+											
+											if (realtimeRetriesClone[currchunkIndex] <= numberOfRetries) {
+											
+                                                RemoteDeferredItemReverse.resolve(result, event);						
+												cloneJE(currchunkIndex);
+												
+											} 
+											else {
+												//we hit our number of retries, time to fail
+                                                KenandyErp.Message(event.message, KenandyErp.MessageType.Fatal);
+                                                $('#tab').show();
+                                                $('#ProgressBar').hide();  
+											}
+						                
+						                }
+						                else
+						                {
+						                Visualforce.remoting.Manager.invokeAction(
+						                            '{!$RemoteAction.JournalEntryCloneExt.deleteClonedJE}',
+						                            clonedJEId, 
+						                            function (result, event) {
+						                                
+						                                if(event.status==true)
+						                                {
+														if(result.AllDone)
+						                                    {
+													            $('#tab').show();
+													            var largemsg='This Source Document is not cloned.';                                                     
+													            KenandyErp.Message(largemsg, KenandyErp.MessageType.Info);                                              
+						                                    }                           
+						                                }
+						                                else {                                                                                                                
+				                                                KenandyErp.Message(event.message, KenandyErp.MessageType.Fatal);
+				                                                $('#tab').show();
+				                                                $('#ProgressBar').hide();  
+						
+						                                	 }
+						    
+						                            },
+						                            {escape: false});
+						                }
+
+                                }
+    
+                            },
+                            {escape: false});
+                progressbar(Progress,JELineCount);
+                return RemoteDeferredItemReverse.promise();
+			                                 			
+        } 
+        
+        function progressbar(progressCount,LineCount)
+            {
+                var exp=LineCount;
+                var curr=progressCount;
+
+                if (pb) {
+                    pb.value(curr);
+                }
+                else {
+                    pb = $("#ProgressBar").kendoProgressBar({
+                        type: "percent",
+                        min: 0,
+                        max: exp,
+                        value: curr,
+                        animation: {
+                            duration: 200
+                        }
+                    }).data("kendoProgressBar");
+                }
+            }
+    </script>
+    <apex:outputPanel id="jsPanel">
+    
+    <script>
+   		cloneChunks = JSONUtils.Parse('{!cloneChunkMap}');
+   		clonedJEId  = "{!clonedJEId}";
+		JEToCloneId = "{!JEToCloneId}"
+   		cloneSize   = "{!cloneSize}";
+   		JELineCount = "{!JELineCount}";
+		numberOfRetries='{!NumberOfRetries}';
+   		console.log('inside JSPanel');
+        console.log('chunks');
+        console.log('cloneChunks');
+        console.log(cloneChunks);
+    </script>
+	</apex:outputPanel> 
+</apex:page>

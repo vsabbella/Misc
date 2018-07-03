@@ -1,0 +1,171 @@
+<apex:page standardController="Agreement_Line__c" extensions="AddChildProductsCon" showHeader="false">
+    <apex:sectionHeader title="{!Agreement_Line__c.Product__r.name}" />
+    <!-- -->
+  <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+    <c:busyWait includeScripts="false"/> 
+    <apex:pageBlock >
+     <apex:outputPanel >
+         <label class="company-label" for="companyFilter">Search:</label>
+         <input id="Searchbox" class="kendoWidgetSelector" type="String"/>
+         <input id="searchBtn" class="kendoWidgetSelector" type="Button" value="Search"  onclick="Search();"/>
+     </apex:outputPanel>
+     
+<div class="grid-container"  >
+    <div class="grid-message"></div>
+    <div id="Gridi">
+        
+    </div>
+</div>
+    </apex:pageBlock>
+<script>
+    function checkAll(cb)
+    {
+        var inputElem = document.getElementsByTagName("input");
+        for(var i=0; i<inputElem.length; i++)
+            
+        {
+            if(inputElem[i].id.indexOf("checkedone")!=-1)
+                inputElem[i].checked = cb.checked;
+        }
+    }  
+    var isSuccess = '{!isSuccess}';                                                   
+    var errorMsg = '{!errorMsg}';
+    function closeModalWindow(result) {
+            var win = window.parent.$("#addChildProductswindow").data("kendoWindow");
+            if ( win) { 
+                win.close(); 
+            }
+        }
+        
+        function onConfirmComplete(errorMsg) { debugger;
+                KenandyErp.Message(errorMsg, KenandyErp.MessageType.Success, window.parent.$('.page-message'));
+                closeModalWindow();
+        }
+    
+
+    
+    function Search(){
+        cGrid.dataSource._destroyed = [];
+                                cGrid.dataSource.read({
+                                    readOptions: {
+                                        searchName: document.getElementById('Searchbox').value
+                                    }
+                                });
+        }
+    var getIData = function(readOptions) { 
+        var searchName = (readOptions && readOptions.searchName) ? readOptions.searchName : '{!searchName}';
+        var deferred = $.Deferred();
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.AddChildProductsCon.searchProd}',
+            searchName,
+            function (result, event) {
+                deferred.resolve(result, event);
+            },
+            {escape: false}
+        );
+        
+        return deferred.promise();
+    }
+    
+    var confirm = function(e){
+        
+          var self = this;
+                var grid = self.grid;
+                var selectedRows = [];
+                var gridDataSource = grid.dataSource;
+                
+                var options = self.options;
+                var columns = grid.columns;
+                // var modelIdField = grid.dataSource.options.schema.model.idField;
+                var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                
+                var allocatedRows = [];
+                
+                selectedRows = $.map(grid.dataSource.data(), function(item, index) {
+                    if (item.IsSelected__custom) {
+                        return item;
+                    }
+                });
+        
+        
+         var updatedRows = [];
+                if(selectedRows.length==0){
+                    KenandyErp.Message("No records selected.", KenandyErp.MessageType.Info, messageElement);
+                    return;
+                }
+                $.each(selectedRows, function(index, item) {
+                    
+                    item = item.toJSON();
+                    // item = Serializer.ConvertToSFDCDate(item, { dateFields: dateFields });
+                    // Remove the extra attributes Kendo Grid creates for supporting wrapper classes
+                    for (var i = 0; i < columns.length; i++) {
+                        var name = columns[i].field;
+                        if (name && name.indexOf('.') != -1) {
+                            delete item[name];
+                        }
+                    }
+                    updatedRows.push(item);
+                    
+                    
+                });
+                
+                if (updatedRows.length > 0) {
+                    allRows = Serializer.ParameterMap(updatedRows);
+                }
+        
+
+        
+        Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.AddChildProductsCon.createProducts}',
+                    allRows,
+                    "{!agreementLineId}", 
+                    function (result, event) {
+                        KenandyErp.UnBlockUI(grid.element);
+                        if (event.type == 'exception') {
+                            KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                        } else {
+                            if ( result.success ) {
+                                    onConfirmComplete(result.message);
+                                } else {
+                                    KenandyErp.Messages( result.messages, messageElement );
+                                }
+                            
+                        }
+                    },
+                    {escape: false}
+                );
+        
+        }
+    
+     var fieldList = JSONUtils.Parse('{!iFieldList}');
+     var cGrid = $('#Gridi').kendoGridActionList({
+            namespace: '{!NamespaceUU}', 
+            config: '{!iGridConfigJson}', 
+            fieldList: JSON.stringify(fieldList),
+         //    saveAction: saveActions,
+            lookupSearchAction: '{!$RemoteAction.AddChildProductsCon.lookupSearchFilter}', 
+            getActionListFunction: getIData,
+           //modelIdField: '', //
+            filterable: true,
+            toolbarButtons: [ 
+                { name: "grid-save-custom-command", text:"", template: "<input type='button' value='Confirm' class='btn grid-save-custom-command' />" }, //OUR SAVE METHOD
+                 { name: "grid-cancel-custom-command", text:"", template: "<input type='button' value='Cancel' class='btn grid-cancel-custom-command' />" },
+            ] 
+                
+                
+        }).data('kendoGridActionList');
+            cGrid.wrapper.on("click", ".grid-save-custom-command", $.proxy(confirm, { grid: cGrid, options: { } }));
+            cGrid.wrapper.on("click", ".grid-cancel-custom-command", $.proxy(closeModalWindow, { grid: cGrid, options: { } }));
+    
+    </script>
+    
+    <apex:form id="form">
+        <script>
+            isSuccess = '{!isSuccess}';                                                   
+            errorMsg = '{!errorMsg}';
+        </script>
+        <apex:pageMessages />
+   
+      </apex:form>  
+</apex:page>

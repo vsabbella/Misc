@@ -1,0 +1,830 @@
+<apex:page showHeader="true" sidebar="true" extensions="RequisitionAddManageExt" standardController="Requisition__c" tabStyle="Requisition__c" docType="html-5.0">
+    <style type="text/css">
+        .line-total {
+            border: 2px dashed !important;
+            font-weight: bold;
+            width: 100px;
+            text-align: right;
+        }
+        
+        .text-red { border-color: red !important; }
+        .text-green { border-color: green !important; }
+        
+        .invoiced-amount {
+            padding: .3em .4em !important;
+        }
+
+        .column-label {
+            vertical-align: middle !important;
+            width: 15%;
+        }
+        
+        .column-field {
+            vertical-align: middle !important;
+            width: 85%;
+        }
+     </style>
+    
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+
+    <apex:form id="RequisitionAddManageForm">
+        <div class="page-container">
+            <apex:sectionHeader title="{!pageTitle}" />
+            
+            <div class="page-message"></div>
+            <apex:pageMessages id="msgs"/>
+            
+            <apex:pageBlock id="RequisitionHeaderDetailBlock">  
+
+                <div id="RequisitionHeaderDetailList">
+                </div>
+                
+                <apex:pageBlockButtons location="top">
+                    <apex:outputPanel layout="none">
+                    <!--
+                        <input type="button" value="Save" class="btn save-command" />
+                        <input type="button" value="Save & New" class="btn save-new-command" />
+                        <input type="button" value="Save & Return" class="btn save-return-command" 
+                    -->
+                        <button id="saveButton" class ="kndy-btn save-command" type="button" accesskey="s">Save</button>
+                        <a href="{!ReturnUrl}" style="text-decoration: none;"><input type="button" value="Cancel" class="k-button kndy-btn cancel-command" /></a>
+                        <button id="actionButton" class ="kndy-btn" type="button">Actions</button>
+                    </apex:outputPanel>
+                </apex:pageBlockButtons>
+            </apex:pageBlock>
+            
+           
+            <apex:pageBlock title="Requisition Lines">    
+                <div class="grid-container">
+                    <div class="grid-message"></div>
+                    <div id="RequisitionLinesGrid"></div>
+                </div>
+            </apex:pageBlock>
+        </div>
+        <apex:inputHidden value="{!Requisition__c.Name}" />
+    </apex:form>
+
+    <script type="text/javascript">
+		var requisitionHeaderData = function(readOptions) {
+			var deferred = $.Deferred();
+            var requisitionId = RequisitionManageUtil.RequisitionId;
+
+            if (!requisitionId) {
+                setTimeout(function() {
+                	var records = [];
+                	
+                	delete RequisitionManageUtil.RequisitionHeaderData['attributes'];
+					records.push(RequisitionManageUtil.RequisitionHeaderData);
+               
+                    deferred.resolve({ records: records, success: true, total: records.total }, { statusCode: 200 });
+                }, 100);
+            }
+            else {
+	            Visualforce.remoting.Manager.invokeAction(
+	                    '{!$RemoteAction.RequisitionAddManageExt.getRequisitionDetails}',
+	                    requisitionId,
+	                    function (result, event) {
+	                        deferred.resolve(result, event);
+	                        if(event.status){
+	                        	$('span').attr('data-bind','text: Source__c').each(function(){
+								    if($(this).text() == 'Drop Ship' || $(this).text() == 'Cancelled' || $(this).text() == 'Closed'){
+								            $('.grid-create-command').css({ "opacity": "0.4", "cursor": "default" , "pointer-events":"none"});
+								            $('.grid-clone-command').css({ "opacity": "0.4", "cursor": "default" , "pointer-events":"none"});
+								    }
+								})
+								
+	                        }
+	                    },
+	                    {escape: false}
+	                );
+			}
+			
+            return deferred.promise();
+		};
+		
+        var requisitionLinesData = function(readOptions) {
+            var deferred = $.Deferred();
+            var config = RequisitionManageUtil.RequisitionLinesConfigJson;
+
+            if (!config.parentRecord.Id) {
+                setTimeout(function() {
+                    deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+                }, 100);
+            }
+            else {
+                var remoteArgs = config;
+                var allFields = {!AllFields};
+                // The stuff returned from Salesforce has extra properties like "attributes"
+                // which couldn't be deserialised back
+                remoteArgs.parentRecord = { Id: remoteArgs.parentRecord.Id };
+                
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.RequisitionAddManageExt.getRequisitionLines}',
+                    remoteArgs,
+                    allFields,
+                    function (result, event) {
+                        deferred.resolve(result, event);
+                    },
+                    {escape: false}
+                );
+            }
+            
+            return deferred.promise();
+        };
+                
+        $(document).on('KenandyErpReady', function(e) {
+            KenandyErp.KendoGridOptions.DefaultPageSize = KenandyErp.KendoGridOptions.PageSizes[0];
+               				
+            RequisitionManageUtil.Init({
+                requisitionId: '{!JSENCODE(requisition.Id)}',
+                requisitionHeaderData: '{!JSENCODE(RequisitionJson)}',
+                requisitionHeaderFieldList: '{!JSENCODE(requisitionHeaderFieldList)}',
+                requisitionAddlHeaderFieldList: '{!JSENCODE(requisitionAddlHeaderFieldList)}',
+                requisitionLinesConfigJson: '{!JSENCODE(requisitionLinesConfigJson)}',                
+                requisitionLinesFieldList: '{!JSENCODE(requisitionLinesFieldList)}',              
+                customViews: '{!JSENCODE(CustomViews)}',
+                customViewFields: '{!JSENCODE(CustomViewFields)}',
+                requisitionHeaderActions: {
+                    'Approve': '{!$RemoteAction.RequisitionAddManageExt.approve}',
+                    'Cancel': '{!$RemoteAction.RequisitionAddManageExt.cancel}',
+                    'Close': '{!$RemoteAction.RequisitionAddManageExt.close}',
+                    'Delete': '{!$RemoteAction.RequisitionAddManageExt.deletereq}',
+                    'Clone': '{!$RemoteAction.RequisitionAddManageExt.clone}',
+                },
+                maxLineNumber: '{!max_line_number}'
+            });
+		});
+        $(document).keydown(function(e) {
+
+            if (e.shiftKey && e.altKey) {
+                switch(e.keyCode) {
+                    case 78: // alt + shift + N
+                        $('.grid-create-command').trigger('click');
+                        break;
+                    case 83: // alt + shift + S
+                        $('.grid-save-command').trigger('click');
+                        break;
+                    default:
+                        break;
+                }
+            }
+            
+        });
+                
+        var RequisitionManageUtil = function() {
+            
+            return {
+                RequisitionId: null,
+                RequisitionHeaderDetailList: null,
+                RequisitionLinesGrid: null,
+                RequisitionHeaderData: null,
+                RequisitionHeaderFieldList: null,
+                RequisitionAddlHeaderFieldList: null,
+                RequisitionLinesConfigJson: null,
+                RequisitionLinesFieldList: null,                           
+                RequisitionLinesFields: null,
+                CustomViews: null,
+                CustomViewFields: null,
+                RequisitionHeaderActions: null,
+                maxLineNumber: null,
+
+                Init: function(args) {
+					// initialize defaults
+                   	this.RequisitionId = args.requisitionId;
+                   	this.RequisitionHeaderData = JSON.parse(args.requisitionHeaderData);
+                   	this.RequisitionHeaderFieldList = JSON.parse(args.requisitionHeaderFieldList);
+                   	this.RequisitionAddlHeaderFieldList = JSONUtils.Parse(args.requisitionAddlHeaderFieldList);
+                   	this.RequisitionLinesConfigJson = JSON.parse(args.requisitionLinesConfigJson);                  
+                   	this.RequisitionLinesFieldList = JSON.parse(args.requisitionLinesFieldList);                
+					this.RequisitionLinesFields = _.pluck(RequisitionManageUtil.RequisitionLinesFieldList, 'field');
+                   	this.CustomViews = JSON.parse(args.customViews);
+                   	this.CustomViewFields = JSON.parse(args.customViewFields);
+					this.RequisitionHeaderActions = args.requisitionHeaderActions;
+                    this.maxLineNumber = args.maxLineNumber;
+					
+                   	if (this.RequisitionLinesFields.length > 0) {
+                   		this.RequisitionLinesFields.shift();
+                   	}
+                   
+                    this.RenderActionListDropdown();
+                    this.RenderSaveListDropdown();
+					this.RenderWidgets();
+                },
+                
+                RenderActionListDropdown: function() {
+                    $('#actionButton').kendoDropDownButton({
+                        items: [
+                            {
+                                text: "Approve",
+                                click: function(e) {
+                                    RequisitionManageUtil.ExecuteAction('Approve');
+                                } 
+                            },
+                            {
+                                text: "Cancel ",
+                                click: function(e) {
+                                    RequisitionManageUtil.ExecuteAction('Cancel');
+                                } 
+                            },
+                            {
+                                text: "Close ",
+                                click: function(e) {
+                                    RequisitionManageUtil.ExecuteAction('Close');
+                                } 
+                            }, 
+                            {
+                                separator: true
+                            },
+                            {
+                                text: "Clone ",
+                                click: function(e) {
+                                    RequisitionManageUtil.ExecuteAction('Clone');
+                                } 
+                            },
+                            {
+                                text: "Delete ",
+                                click: function(e) {
+                                    RequisitionManageUtil.ExecuteAction('Delete');
+                                } 
+                            }
+                        ]
+                    });
+                },
+                
+                RenderSaveListDropdown: function() {
+                    $('#saveButton').kendoDropDownButton({
+                        type: 'splitButton',
+                        items: [
+                            {
+                                text: "Save and Return",
+                                cssClass: "save-return-command"
+                            },
+                            {
+                                text: "Save and New",
+                                cssClass: "save-new-command"
+                            }
+                        ]
+                    });
+                },
+                
+                RenderWidgets: function() {
+                    // Show requisition header detail list
+                    var headerLookupSearchFilters = [];
+                    var companyId = (typeof e === 'undefined') ? '{!JSENCODE(requisition.Company__c)}' : e.companyId;
+                    headerLookupSearchFilters.push({ field: "Supplier__c", filter: "Type__c = \'Purchasing\' and Status__c = \'Active\' and Hold_Purchasing__c = false and Company__c = \'" + companyId + "\' " });
+                	
+                    // Destroy RequisitionHeaderDetailList
+                    if (this.RequisitionHeaderDetailList) {
+                        this.RequisitionHeaderDetailList.destroy();
+                        $('#RequisitionHeaderDetailList').empty();
+                    }
+
+                    this.RequisitionHeaderDetailList = $('#RequisitionHeaderDetailList').kendoDetailList({
+						namespace: '{!NamespaceUU}', 
+						highlightFirst: true,
+                        sections: [
+                            {
+                                fields: RequisitionManageUtil.RequisitionHeaderFieldList
+                            },
+                            {
+                                name: 'requisition-header-addl-info',
+                                title: 'Additional Information',
+                                fields: RequisitionManageUtil.RequisitionAddlHeaderFieldList
+                            }
+                        ],
+                        lookupSearchAction: '{!$RemoteAction.RequisitionAddManageExt.lookupSearchFilter}',
+                        lookupSearchFilters: headerLookupSearchFilters,
+                        getDetailListFunction: requisitionHeaderData                   
+                    }).data('kendoDetailList');
+                                        
+                    // Show requisition lines grid
+                    var configOptions = RequisitionManageUtil.RequisitionLinesConfigJson;
+                	var linesLookupSearchFilters = [];
+                	var dateFields = KenandyErp.KendoGridOptions.GetDateFields(RequisitionManageUtil.RequisitionLinesFieldList);
+                    var cancelAction = '{!$RemoteAction.RequisitionAddManageExt.cancelLines}';
+                    var closeAction = '{!$RemoteAction.RequisitionAddManageExt.closeLines}';
+                	
+                    // Destroy RequisitionLinesGrid
+                    if (this.RequisitionLinesGrid) {
+                        this.RequisitionLinesGrid.destroy();
+                        $('#RequisitionLinesGrid').empty();
+                    }
+                    
+                    this.RequisitionLinesGrid = $('#RequisitionLinesGrid').kendoGridActionList({
+                    	namespace: '{!NamespaceUU}', 
+                        config: configOptions, 
+                        fieldList: RequisitionManageUtil.RequisitionLinesFieldList,
+                        lookupSearchAction: '{!$RemoteAction.RequisitionAddManageExt.lookupSearchFilter}', 
+                        getActionListFunction: requisitionLinesData,
+                        showIconButtons: true,
+			highlightFirst: true,
+                        toolbarButtons: [ 
+                        	{ template: "<input class='grid-view-options' />" },
+                            { name: "grid-cancel-custom-command", text:"", template: "<input type='button' value='Cancel' class='k-button grid-cancel-custom-command' />" },
+                            { name: "grid-close-custom-command", text:"", template: "<input type='button' value='Close' class='k-button grid-close-custom-command' />" }
+                        ],
+                        beforeEdit: function(e) {
+                            // disable read only fields
+                            RequisitionManageUtil.RequisitionLinesGridBeforeEdit.call(this, e);
+                        },
+                        lookupSearchFilters: linesLookupSearchFilters
+
+                    }).data('kendoGridActionList');
+                    
+                    // unbind and bind the add line button click events
+       			    this.RequisitionLinesGrid.wrapper.off("click", ".grid-create-command", $.proxy(RequisitionManageUtil.AddLine, { detailList: this.RequisitionHeaderDetailList, grid: this.RequisitionLinesGrid, options: { config: configOptions, dateFields: dateFields } }));
+        			this.RequisitionLinesGrid.wrapper.on("click", ".grid-create-command", $.proxy(RequisitionManageUtil.AddLine, { detailList: this.RequisitionHeaderDetailList, grid: this.RequisitionLinesGrid, options: { config: configOptions, dateFields: dateFields } }));
+        
+                    linesLookupSearchFilters.push({ field: "Facility__c", filter: "Company__c = \'{!requisition.Company__c}\'" });
+                    linesLookupSearchFilters.push({ field: "Item__c", filter: "Company__c = \'{!requisition.Company__c}\'" });
+					linesLookupSearchFilters.push({ field: "Supplier__c", filter: "Type__c = \'Purchasing\' and Status__c = \'Active\' and Hold_Purchasing__c = false and Company__c = \'{!requisition.Company__c}\' " });
+
+                    this.RequisitionLinesGrid.bind('edit', $.proxy(RequisitionManageUtil.RequisitionLinesGridEdit, { grid: this.RequisitionLinesGrid }));
+
+                    this.RequisitionLinesGrid.element.bind('OnReadSuccess', this.OnReqLinesGridReadSuccess);
+
+                    // unbind and bind the save, save & new, save & return button click events
+	                $('.save-command, .save-new-command, .save-return-command').off("click",
+	                    $.proxy(RequisitionManageUtil.Save, { detailList: this.RequisitionHeaderDetailList, grid: this.RequisitionLinesGrid, options: { config: configOptions, dateFields: dateFields } })
+	                );
+	                
+	                $('.save-command, .save-new-command, .save-return-command').on("click",
+	                    $.proxy(RequisitionManageUtil.Save, { detailList: this.RequisitionHeaderDetailList, grid: this.RequisitionLinesGrid, options: { config: configOptions, dateFields: dateFields } })
+	                );
+	                
+                    // Bind grid edit event to attach Need date validation - to be only current date and above
+                    this.RequisitionLinesGrid.bind('edit', function(e){
+                        if ( $(e.container).find('input[name="Need_Date__c"]').data('kendoDatePicker')) {
+                            $(e.container).find('input[name="Need_Date__c"]').data('kendoDatePicker').min(new Date());
+                        }
+                    });
+
+                    // bind grid cancel & close agreement line events
+                    this.RequisitionLinesGrid.wrapper.on("click", ".grid-cancel-custom-command", $.proxy(RequisitionManageUtil.CloseCancelLines, { grid: this.RequisitionLinesGrid, options: { CloseCancelLinesAction: cancelAction } }));
+                    this.RequisitionLinesGrid.wrapper.on("click", ".grid-close-custom-command", $.proxy(RequisitionManageUtil.CloseCancelLines, { grid: this.RequisitionLinesGrid, options: { CloseCancelLinesAction: closeAction } }));
+
+                    $(".grid-view-options").kendoDropDownList({
+                        index: 0,
+                        dataTextField: "text",
+                        dataValueField: "value",
+                        dataSource: RequisitionManageUtil.CustomViews,
+                        change: function(e) {
+
+                            var fieldNames = RequisitionManageUtil.RequisitionLinesFields;
+                            for (var fld in fieldNames) {
+                                if(fieldNames[fld] != ''){
+                                    RequisitionManageUtil.RequisitionLinesGrid.hideColumn(fieldNames[fld]);
+                                }
+                            }
+
+                            if (this.value() != '') {
+                                fieldNames = _.values(_.pick(RequisitionManageUtil.CustomViewFields, this.value()))[0];
+                                RequisitionManageUtil.DisplayViewFields(fieldNames);
+                            }
+                        },
+
+                        dataBound: function(e) {
+                            var fieldNames = RequisitionManageUtil.RequisitionLinesFields;
+                            for (var fld in fieldNames) {
+                                if(fieldNames[fld] != ''){
+                                    RequisitionManageUtil.RequisitionLinesGrid.hideColumn(fieldNames[fld]);
+                                }
+                            }
+                            fieldNames = _.values(_.pick(RequisitionManageUtil.CustomViewFields, this.value()))[0];
+                            RequisitionManageUtil.DisplayViewFields(fieldNames);
+                        }
+                    });
+                },
+                GetColumnIndexFromName: function (grid, fieldName) {
+                    var index = -1;
+                    var columns = grid.columns;
+                    if (columns.length > 0) {
+                        for (var i = 0; i < columns.length; i++) {
+                            if (columns[i].field == fieldName) { // columns[i].title -- You can also use title property here but for this you have to assign title for all columns
+                                index = i;
+                                break;
+                            }
+                        }
+                    }
+                    return index;
+                },
+                AddLine: function(e) {
+                    var self = this;
+                    var grid = self.grid; 
+                    var detailList = self.detailList;
+                    var row = $(e.target).closest("tr"); //get the row
+                    var dataItem = grid.dataItem(row); // get the row data
+                    var deliveryFacility = (detailList.data.get('Delivery_Facility__c')) ? detailList.data.get('Delivery_Facility__c'): null;
+                    var deliveryFacilityRef = (detailList.data.get('Delivery_Facility__r')) ? detailList.data.get('Delivery_Facility__r') : null;
+                    var supplier = (detailList.data.get('Supplier__c')) ? detailList.data.get('Supplier__c'): null;
+                    var supplierRef = (detailList.data.get('Supplier__r')) ? detailList.data.get('Supplier__r') : null;
+                    
+                    if (deliveryFacility){
+                        dataItem.set('Facility__c', deliveryFacility);
+                        dataItem.set('Facility__r', deliveryFacilityRef);
+                    }
+                    if (supplier){
+                        dataItem.set('Supplier__c', supplier);
+                        dataItem.set('Supplier__r', supplierRef);
+                    }
+                    grid.refresh();
+                },
+                CloseCancelLines: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    var options = self.options;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                    
+                    var gridUtils = new KendoGridUtils(grid);
+                    var selectedRows = gridUtils.SelectedRows();
+                    var modelIdField = grid.dataSource.options.schema.model.idField;
+                      
+                    if (selectedRows.length == 0) {
+                        KenandyErp.Message("No records selected.", KenandyErp.MessageType.Info, messageElement);
+                        return;
+                    }
+
+                    KenandyErp.BlockUI(grid.element);
+                         
+                    Visualforce.remoting.Manager.invokeAction(
+                        options.CloseCancelLinesAction,              
+                        selectedRows,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI(grid.element);
+                                        
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message);
+                            } 
+                            else {
+                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                if (result.success) {
+                                    RequisitionManageUtil.RenderWidgets();  // To refresh the header grid too   
+                                }                                 
+                                else {
+                                    KenandyErp.Messages(result.messages);
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                },
+
+                ExecuteAction: function(actionType){
+                    var deferred = $.Deferred();
+                    var returnUrl = '{!DeleteUrl}';
+
+                    if (actionType == 'Delete'){
+                        var r = confirm("Are you sure?");
+                        if (r == false){
+                            return;
+                        }
+                    }
+
+                     Visualforce.remoting.Manager.invokeAction(
+                        RequisitionManageUtil.RequisitionHeaderActions[actionType],
+                        '{!requisition.id}',
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();          
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message);
+                            } 
+                            else {
+                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                if (result.success) {
+
+                                    if (actionType == "Delete") {
+                                        KenandyErp.NavigateToURL(returnUrl, true);
+                                    }
+                                    else if (actionType == "Clone"){
+                                        KenandyErp.NavigateToSObject(result.records[0].Id);
+                                    }
+                                    else{
+                                        // refresh widgets
+                                        var id = (result.records && result.records[0].Id) ? result.records[0].Id : null;
+                                        RequisitionManageUtil.RenderWidgets();
+                                        KenandyErp.Messages(result.messages);
+                                    }
+                                }
+                                else {
+                                    KenandyErp.Messages(result.messages);
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                },
+
+                OnReqLinesGridReadSuccess: function(e) {
+                    var hasReqLines = (e.event && e.event.result && e.event.result.total > 0);
+                                        
+                    if (RequisitionManageUtil.RequisitionHeaderDetailList.data.get('Id')) {
+                        RequisitionManageUtil.DisableHeaderFields({
+                            hasReqLines: true
+                        });
+                    }
+                },
+
+                DisableHeaderFields: function(options) {
+                    var hasReqLines = (options.hasReqLines) ? options.hasReqLines : false;
+                    var isEnabled = !hasReqLines;
+                    var enabledFields = [];
+                    var disabledFields = [];
+                    var disabledHeaderFields = [];
+                    
+                    if (hasReqLines && RequisitionManageUtil.RequisitionHeaderDetailList.data.get('Id')) {
+                        disabledFields = ['Company__c' ];
+                        
+                        var headerFields = RequisitionManageUtil.RequisitionHeaderDetailList.getFieldList();
+                        
+                        for (var i = 0; i < headerFields.length; i++) {
+                            var field = headerFields[i].field;
+                            
+                            if (_.contains(enabledFields, field) && _.contains(disabledFields, field)) {
+                                disabledHeaderFields.push(field);
+                            }
+                        }                        
+                        disabledHeaderFields = _.union(disabledFields, disabledHeaderFields);
+                    }
+                    
+                    // Disable Header Fields
+                    if (this.RequisitionHeaderDetailList) {
+                        this.RequisitionHeaderDetailList.enable(isEnabled, { 
+                            disabledFields: disabledHeaderFields 
+                        });
+                    }
+                },
+                
+                DisplayViewFields: function(fieldNames){
+                    var grid = this.RequisitionLinesGrid;
+                    var i = 1;//Starting index of View columns(After checkbox,  and id)
+                    for (fld = 0; fld < fieldNames.length; fld++) { 
+                        i = i + 1;
+                        //Get column index for field name
+                        var colIndex = RequisitionManageUtil.GetColumnIndexFromName(grid, fieldNames[fld]);
+
+                        //Show columns
+                        if(colIndex >= 1){
+                            if(fieldNames[fld] != ''){
+                                //Re-order columns based on the field set order
+                                grid.reorderColumn(i, grid.columns[colIndex]);
+                                grid.showColumn(i);
+                            }
+                        }
+                    }
+
+                },
+                
+                RequisitionLinesGridBeforeEdit: function(e) {
+                    var grid = this;
+                    var columnIndex = grid.cellIndex(e.container);
+                    var fieldName = grid.thead.find("th").eq(columnIndex).data("field");
+                    var isDefaultPrevented = false;
+                    if ( (fieldName == 'Purchasing_UOM__c' || fieldName == 'Item__c')
+                            && e.model.Approved__c){
+                            isDefaultPrevented = true; //KNDY-10903
+                    }
+                    if (isDefaultPrevented) {
+                        e.preventDefault();
+                    }
+                },
+                
+                RequisitionLinesGridEdit: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    
+                    if (e.model.isNew() && !e.model.dirty) {
+                        // set defaults
+                        if (e.model.Line__c == 0){
+                            RequisitionManageUtil.maxLineNumber++;
+                            e.model.Line__c = RequisitionManageUtil.maxLineNumber;
+                            grid.refresh();
+                        }
+                    }
+                    
+                    //KNDY-10903 Get Item Details
+                    $(e.container).find('input[name="Item__c"]').bind('blur', 
+                        $.proxy(RequisitionManageUtil.OnItemChange, { grid: grid })
+                    );
+                    
+                },
+                
+                OnItemChange: function(e) { //KNDY-10903
+                        var isSubmitClicked = $('.save-command, .save-new-command, .save-return-command').data('mouseDown');
+                        
+                        if ($(e.target).val() == $(e.target).data('default_value')) {
+                            return;
+                        }
+                        
+                        var self = this;
+                        var grid = this.grid;
+                        var messageElement = grid.element.closest("div.grid-container").find("div.grid-message");
+                        var cell = grid.editable.element;
+                        var row = $(e.target).closest("tr"); //get the row
+                        var dataItem = grid.dataItem(row); // get the row data
+                        var itemId = dataItem.get('Item__c');
+                        
+                        if (!itemId)
+                        {
+                            dataItem.set('Purchasing_UOM__c', null);
+                            return;
+                        }
+    
+                        if (isSubmitClicked) {
+                            $('.grid-save-command').data("isOnBlurExecuting", true);
+                        }
+                        
+                        KenandyErp.BlockUI(grid.element);
+                                    
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.RequisitionAddManageExt.getItemDetails}',
+                            itemId,
+                            function (result, event) {
+                                KenandyErp.UnBlockUI(grid.element);
+                                
+                                if (event.type == 'exception') {
+                                    KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                                } else {
+                                    KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                    
+                                    if (result.success) {
+                                        if (result.records && result.records.length > 0) {
+                                            var item = result.records[0];   
+                                            var itemRef = item;
+                                            var uom = (item.Purchasing_UOM__c) ? item.Purchasing_UOM__c : null;
+                                            var uomRef = (item.Purchasing_UOM__r) ? item.Purchasing_UOM__r : null;
+                                            var uomName = (uomRef && uomRef.Name) ? uomRef.Name : null;
+                                            
+                                            dataItem.set('Purchasing_UOM__c', uom); 
+                                            dataItem.set('Purchasing_UOM__r', uomRef);
+                                            dataItem.set('Item__r', item); 
+                                        }
+                                    }
+                                }
+                                
+                                if (isSubmitClicked) {
+                                    $('.grid-save-command').data("isOnBlurExecuting", false);
+                                    $('.grid-save-command').data("mouseDown", false);
+                                    $('.grid-save-command').trigger('click');
+                                }
+                            },
+                            {escape: false}
+                        );
+                },
+                    
+                Save: function(e) {
+                    var self = this;
+                    var detailList = self.detailList;
+                    var grid = self.grid;
+                    var options = self.options;
+                    var modelIdField = grid.dataSource.options.schema.model.idField;
+                    
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                    var isNewRequisition = (!detailList.data.Id) ? true : false;
+                    var returnUrl = '{!ReturnUrl}';
+                    
+                    KenandyErp.ClearMessage();
+                    
+                    if (!detailList.validate()) {
+                        KenandyErp.Message("Please fix the following errors.");
+                        e.preventDefault();
+                        return false;
+                    }
+
+					var headerDateFields = detailList.getDateFields(); 
+					var headerRowsList = [];
+                    var headerRows = [];
+                    
+                    headerRowsList.push(detailList.data);
+                    
+                    headerRows = $.map(headerRowsList, function(item, index) {
+                    	item = item.toJSON();
+                        item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+                        
+                        return item;
+                    });
+                    
+                    if (headerRows.length > 0) {
+                        headerRows = Serializer.ParameterMap(headerRows);
+                    }
+                    
+                    var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields, isDml: false });
+                    var updatedRows = [];
+                    var newRows = [];
+                    var deletedRows = [];
+                    
+                    newRows = gridUtils.NewRows();
+					updatedRows = gridUtils.UpdatedRows();
+					deletedRows = gridUtils.DeletedRows(); 
+					
+					var reqlineWithoutRequestorNotes = '';
+                    var lineNumbersWithoutUOM = ''; //KNDY-10599
+                    $.map(updatedRows, function(line, index) {
+                            if (!line.Purchasing_UOM__c  && line.Item__c &&
+                                (line.Item__r.Source__c == 'Purchased' ||
+                                line.Item__r.Source__c == 'Miscellaneous' ||
+                                line.Item__r.Source__c == 'Expense' ||
+                                line.Item__r.Source__c == 'Outside Processing')){
+                                    lineNumbersWithoutUOM += line.Line__c +',';
+                            }
+                        	
+                    });
+                    $.map(newRows, function(line, index) {
+                            if (!line.Purchasing_UOM__c  && line.Item__c &&
+                                (line.Item__r.Source__c == 'Purchased' ||
+                                line.Item__r.Source__c == 'Miscellaneous' ||
+                                line.Item__r.Source__c == 'Expense' ||
+                                line.Item__r.Source__c == 'Outside Processing')){
+                                    lineNumbersWithoutUOM += line.Line__c +',';
+                            }
+                            
+                    });
+                    if (lineNumbersWithoutUOM){
+                            KenandyErp.Message("Purchase UOM is required. Lines - " + lineNumbersWithoutUOM);
+                            e.preventDefault();
+                            return false;
+                    }
+                        
+                    $.each(newRows, function(index,elem){
+                         if(typeof elem['Item__c'] == "undefined" || elem['Item__c'] == null){
+                              if(elem['Requester_Notes__c'] == "" || typeof elem['Requester_Notes__c'] == "undefined" || elem['Requester_Notes__c'] == null){
+                                reqlineWithoutRequestorNotes += elem.Line__c +',';
+                              }    
+                         }
+                    });
+                    
+                    $.each(updatedRows, function(index,elem){
+                         if(typeof elem['Item__c'] == "undefined" || elem['Item__c'] == null){
+                              if(elem['Requester_Notes__c'] == "" || typeof elem['Requester_Notes__c'] == "undefined" || elem['Requester_Notes__c'] == null){
+                                reqlineWithoutRequestorNotes += elem.Line__c +',';
+                              }    
+                         }
+                    });
+                    
+                    if (reqlineWithoutRequestorNotes){
+                        KenandyErp.Message('Requisition Lines require Item or Requestor Notes. Line/s - '+ reqlineWithoutRequestorNotes);
+                            e.preventDefault();
+                            return false;
+                    }
+                        
+                    if (newRows.length > 0){
+                            newRows = Serializer.ParameterMap(newRows);
+                    }
+                    if (updatedRows.length > 0){
+                            updatedRows = Serializer.ParameterMap(updatedRows);
+                    }
+                    if (deletedRows.length > 0){
+                            deletedRows = Serializer.ParameterMap(deletedRows);
+                    }
+                    KenandyErp.BlockUI();
+                    
+                    headerDateFields = headerDateFields ? _.pluck(headerDateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+                    var dateFields = self.options.dateFields ? _.pluck(self.options.dateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;          
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.RequisitionAddManageExt.saveAction}', 
+                        headerRows[0], 
+                        headerDateFields,           
+                        updatedRows,
+                        newRows,
+                        deletedRows,
+                        dateFields,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();
+                                        
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message);
+                            } else {
+                            	KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                            	
+                                if (result.success) {
+                                	if ($(e.target.parentElement).hasClass('save-return-command')) {
+                                        KenandyErp.NavigateToURL(returnUrl, true);
+                                    }
+                                    else if ($(e.target.parentElement).hasClass('save-new-command')) {
+                                        KenandyErp.NavigateToURL('{!$Page.RequisitionAddManage}', true);
+                                    }
+                                    else if (isNewRequisition && $(e.target).hasClass('save-command')) {
+                                        KenandyErp.NavigateToURL('{!$Page.RequisitionAddManage}' + '?id=' + result.records[0].Id + '&',true);
+                                    }
+                                    else {
+                                        // refresh widgets
+                                        var id = (result.records && result.records[0].Id) ? result.records[0].Id : null;
+
+										RequisitionManageUtil.RenderWidgets();
+                                        
+                                        KenandyErp.Messages(result.messages);
+                                    }
+                                }
+                                else {
+                                    KenandyErp.Messages(result.messages);
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                }
+            };
+        }();
+    </script>
+    
+</apex:page>

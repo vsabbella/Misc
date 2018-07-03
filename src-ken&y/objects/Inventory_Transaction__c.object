@@ -1,0 +1,1264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <content>InventoryTransactionNewEditCloneDelete</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <content>InventoryTransactionNewEditCloneDelete</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <content>InventoryTransactionNewEditCloneDelete</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <content>InventoryTransactionNewEditCloneDelete</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpInventoryTransaction</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>This object records the movements of items caused by WIP and inventory transactions</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableEnhancedLookup>true</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>ConfirmPick_RO</fullName>
+        <description>SOConfirmPick.page</description>
+        <displayedFields>
+            <field>To_SKID__r.Lot__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>From_SKID__r.Bin__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>To_SKID__r.Expiration_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>From_Location__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>To_Location__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item__r.Stocking_UOM__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>ConfirmPick_RO</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>ConfirmShipRONew</fullName>
+        <description>SalesOrderConfirmShip.page</description>
+        <displayedFields>
+            <field>Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item__r.Stocking_UOM__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>ConfirmShipRONew</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>ConfirmShip_RO</fullName>
+        <description>SOConfirmShip.page</description>
+        <displayedFields>
+            <field>To_SKID__r.Lot__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>To_SKID__r.Expiration_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>ConfirmShip_RO</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Finalize</fullName>
+        <description>Finalize Validations</description>
+        <displayedFields>
+            <field>Extended_Cost__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>From_Facility__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>From_Location__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Inventory_Change__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Lot__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Line_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Work_Order__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Subtransaction_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Finalize</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Inventory_History_Lines</fullName>
+        <description>LotMasterHistory.page</description>
+        <displayedFields>
+            <field>Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>From_Location__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>To_Location__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Net_Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Transaction_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Lot__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Inventory_History_Lines</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>OrderLinesConfirmShipRONew</fullName>
+        <description>OrderLinesAddManage.page</description>
+        <displayedFields>
+            <field>Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item__r.Stocking_UOM__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>OrderLinesConfirmShipRONew</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Purchase_Order_Receiving_WR</fullName>
+        <description>PurchaseOrderReceipt.page</description>
+        <displayedFields>
+            <field>Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Purchase_Order_Receiving_WR</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>PutawayReceipts</fullName>
+        <description>PutawayReceipts.page</description>
+        <displayedFields>
+            <field>Transaction_Unit_Cost__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>PutawayReceipts</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>ShipmentPick</fullName>
+        <description>ShipmentManagePicklist.page</description>
+        <displayedFields>
+            <field>From_Location__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>To_Location__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>ShipmentPick</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>shipment_confirm</fullName>
+        <description>shipmentShipConfirm.page</description>
+        <displayedFields>
+            <field>Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>shipment_confirm</label>
+    </fieldSets>
+    <fields>
+        <fullName>ASN_Line__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>ASN Line</label>
+        <referenceTo>ASN_Line__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Accounted__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Accounted flag is set to true when the accounting entries for record are completed</description>
+        <externalId>false</externalId>
+        <label>Accounted</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Assembly_Packaging_UOM__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Assembly Packaging UOM</label>
+        <referenceTo>UOM__c</referenceTo>
+        <relationshipLabel>Inventory Transactions (Assembly Packaging UOM)</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Autonumber__c</fullName>
+        <displayFormat>{0000000000}</displayFormat>
+        <externalId>false</externalId>
+        <label>Autonumber</label>
+        <trackTrending>false</trackTrending>
+        <type>AutoNumber</type>
+    </fields>
+    <fields>
+        <fullName>Bin__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Bin of the ToSkid.</description>
+        <externalId>false</externalId>
+        <label>Bin</label>
+        <referenceTo>Bin__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions_del</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Book_Value_of_Related_Fixed_Asset__c</fullName>
+        <externalId>false</externalId>
+        <label>Book Value of Related Fixed Asset</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Consigned_Owner__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>owner of the consigned goods.</description>
+        <externalId>false</externalId>
+        <label>Consigned Owner</label>
+        <referenceTo>Supplier__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Container_Item__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Container Item</label>
+        <referenceTo>Item__c</referenceTo>
+        <relationshipLabel>Inventory Transactions (Container Item)</relationshipLabel>
+        <relationshipName>Container_Item_Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Customer__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Customer</label>
+        <referenceTo>Customer__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Date_Received__c</fullName>
+        <description>the date this inventory is received on.</description>
+        <externalId>false</externalId>
+        <label>Date Received</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Expiration_Date__c</fullName>
+        <description>Expiration Date of the ToSkid.</description>
+        <externalId>false</externalId>
+        <label>Expiration Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Extended_Cost__c</fullName>
+        <externalId>false</externalId>
+        <label>Extended Cost</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Finalized__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Finalized Flag is set to true when the record is ready for accounting</description>
+        <externalId>false</externalId>
+        <label>Finalized</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>From_Bin__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The bin, the item used to belong to.</description>
+        <externalId>false</externalId>
+        <label>From Bin</label>
+        <referenceTo>Bin__c</referenceTo>
+        <relationshipLabel>Inventory Transactions (From Bin)</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>From_Container_Item__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>From Container Item</label>
+        <referenceTo>Item__c</referenceTo>
+        <relationshipLabel>Inventory Transactions (From Container Item)</relationshipLabel>
+        <relationshipName>Inventory_Transactions1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>From_Facility__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>the facility from which this quantity is being moved.</description>
+        <externalId>false</externalId>
+        <label>From Facility</label>
+        <referenceTo>Facility__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>From_License_Plate_Number__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>From License Plate Number</label>
+        <referenceTo>LPN__c</referenceTo>
+        <relationshipLabel>Inventory Transactions (From License Plate Number)</relationshipLabel>
+        <relationshipName>Inventory_Transactions1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>From_Location__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to From Location</description>
+        <externalId>false</externalId>
+        <label>From Location</label>
+        <referenceTo>Location__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>From_Lot__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The lot number the item used to be.</description>
+        <externalId>false</externalId>
+        <label>From Lot</label>
+        <referenceTo>Lot__c</referenceTo>
+        <relationshipLabel>Inventory Transactions (From Lot)</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>From_Packaging_UOM__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>From Packaging UOM</label>
+        <referenceTo>UOM__c</referenceTo>
+        <relationshipLabel>Inventory Transactions (From Packaging UOM)</relationshipLabel>
+        <relationshipName>PackagingUOM_Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>From_SKID_Identifier__c</fullName>
+        <externalId>false</externalId>
+        <label>From SKID Identifier</label>
+        <length>100</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>From_SKID__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>SKID inventory came from</description>
+        <externalId>false</externalId>
+        <label>From SKID</label>
+        <referenceTo>SKID__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>From_Standard_Cost__c</fullName>
+        <externalId>false</externalId>
+        <label>From Standard Cost</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Historical__c</fullName>
+        <externalId>false</externalId>
+        <formula>Inventory_Change__r.Historical__c || Work_Order__r.Historical__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Historical</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Inventory_Change__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to inventory change record</description>
+        <externalId>false</externalId>
+        <label>Inventory Change</label>
+        <referenceTo>Inventory_Change__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Item__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Item used in this transaction</description>
+        <externalId>false</externalId>
+        <label>Item</label>
+        <referenceTo>Item__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>License_Plate_Number__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>License Plate Number</label>
+        <referenceTo>LPN__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Line_Type__c</fullName>
+        <externalId>false</externalId>
+        <label>Line Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Standard</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Increase</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Decrease</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Lot__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lot of the ToSkid.</description>
+        <externalId>false</externalId>
+        <label>Lot</label>
+        <referenceTo>Lot__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions_del</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Master_Id__c</fullName>
+        <description>external id field to be used in the process of creating serial transactions.</description>
+        <externalId>true</externalId>
+        <inlineHelpText>Please do not add this field to the layout.</inlineHelpText>
+        <label>Master Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Material_Tracking__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Material Tracking</label>
+        <referenceTo>Material_Tracking__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Mixed_Palletized__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Mixed Palletized</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Net_Quantity__c</fullName>
+        <description>Change in Quantity on Hand</description>
+        <externalId>false</externalId>
+        <formula>IF(
+		OR(
+			ISPICKVAL(Type__c, &quot;Adjustment Decrease&quot;),
+			ISPICKVAL(Type__c, &quot;Adjustment Increase&quot;),
+			ISPICKVAL(Type__c, &quot;Cycle Count&quot;),
+			ISPICKVAL(Type__c, &quot;Purchase Order Receipt&quot;),
+			ISPICKVAL(Type__c, &quot;Logical Purchase Order Receipt&quot;),
+	        ISPICKVAL( Type__c, &quot;RMA Receipt&quot;),
+                ISPICKVAL( Type__c, &quot;RMA Scrap&quot;),
+	        ISPICKVAL( Type__c, &quot;RMA Receipt For Repair&quot;),
+            ISPICKVAL( Type__c, &quot;Logical RMA Receipt&quot;), 
+			ISPICKVAL(Type__c, &quot;Transfer Order Receipt&quot;),
+			ISPICKVAL(Type__c, &quot;QA Sample&quot;),
+			ISPICKVAL(Type__c, &quot;Sales Order Undo Shipment&quot;),
+            ISPICKVAL(Type__c, &quot;Logical Sales Order Undo Shipment&quot;),
+			ISPICKVAL(Type__c, &quot;Transfer Order Undo Shipment&quot;),
+			ISPICKVAL(Type__c, &quot;Work Order Assembly Completion&quot;),
+			ISPICKVAL(Type__c, &quot;Work Order Assembly Scrap&quot;),
+			ISPICKVAL(Type__c, &quot;Work Order Repair Assembly Completion&quot;),
+			ISPICKVAL(Type__c, &quot;Work Order Repair Assembly Scrap&quot;),
+			ISPICKVAL(Type__c, &quot;Work Order Return To WIP&quot;),
+			ISPICKVAL(Type__c, &quot;Work Order Repair Return To WIP&quot;),
+			ISPICKVAL(Type__c, &quot;By-product&quot;),
+			ISPICKVAL(Type__c, &quot;Void - Purchase Order Return&quot;),
+            ISPICKVAL(Type__c, &quot;Void - Logical Purchase Order Return&quot;),
+			ISPICKVAL(Type__c, &quot;Miscellaneous Receipt&quot;), 
+			ISPICKVAL(Type__c, &quot;Return Receipt&quot;),
+			ISPICKVAL(Type__c, &quot;Transfer Receipt&quot;)
+		),
+		Quantity_Stocking_UOM__c,
+		IF(
+			OR(
+				ISPICKVAL(Type__c, &quot;Work Order Issue From WIP&quot;),
+				ISPICKVAL(Type__c, &quot;Work Order Repair Issue From WIP&quot;),
+				ISPICKVAL(Type__c, &quot;Sales Order Shipment&quot;),
+				ISPICKVAL(Type__c, &quot;Logical Sales Order Shipment&quot;),
+				ISPICKVAL(Type__c, &quot;Transfer Order Shipment&quot;),
+				ISPICKVAL(Type__c, &quot;Work Order Assembly Uncompletion&quot;),
+				ISPICKVAL(Type__c, &quot;Work Order Repair Assembly Uncompletion&quot;),
+				ISPICKVAL(Type__c, &quot;By-product Uncompletion&quot;),
+				ISPICKVAL(Type__c, &quot;Void - Transfer Order Receipt&quot;),
+				ISPICKVAL(Type__c, &quot;Void - Purchase Order Receipt&quot;),
+				ISPICKVAL(Type__c, &quot;Void - In-Transit Purchase Order Receipt&quot;),
+                ISPICKVAL(Type__c, &quot;Void - Logical Purchase Order Receipt&quot;),
+                ISPICKVAL(Type__c, &quot;Void - RMA Receipt&quot;),
+                ISPICKVAL(Type__c, &quot;Void - RMA Receipt For Repair&quot;),
+                ISPICKVAL(Type__c, &quot;Void - Logical RMA Receipt&quot;),
+				ISPICKVAL(Type__c, &quot;Void - Miscellaneous Receipt&quot;),
+				ISPICKVAL(Type__c, &quot;Void - Return Receipt&quot;),
+				ISPICKVAL(Type__c, &quot;Purchase Order Return&quot;),
+				ISPICKVAL( Type__c, &quot;Logical Purchase Order Return&quot;),
+				ISPICKVAL( Type__c, &quot;Transfer Shipment&quot;)
+			),
+			-Quantity_Stocking_UOM__c,
+			0.0
+		)
+)</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Net Quantity</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Non_Inventory__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Non Inventory</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Operation_Tracking__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Operation Tracking</label>
+        <referenceTo>Operation_Tracking__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Order_Line__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Order Line</label>
+        <referenceTo>Order_Line__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Packaging_UOM__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Packaging UOM</label>
+        <referenceTo>UOM__c</referenceTo>
+        <relationshipLabel>Inventory Transactions (To Packaging UOM)</relationshipLabel>
+        <relationshipName>Inventory_Transactions_To_PackagingUOM</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Purchase_Order_Line__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Purchase Order Line</description>
+        <externalId>false</externalId>
+        <label>Purchase Order Line</label>
+        <referenceTo>Purchase_Order_Line__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Quantity_Stocking_UOM__c</fullName>
+        <description>Quantity represented in Stocking UOM</description>
+        <externalId>false</externalId>
+        <label>Quantity (Stocking UOM)</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Quantity__c</fullName>
+        <description>Transaction quantity</description>
+        <externalId>false</externalId>
+        <label>Quantity (Packaging UOM)</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Receipt_Line__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Receipt_Line</description>
+        <externalId>false</externalId>
+        <label>Receipt Line</label>
+        <referenceTo>Receipt_Line__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Rental__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Rental</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Reversed__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Indicates that this transaction has been reversed by another transaction. This applies to transactions of type &apos;Sales Order Pick&apos; and &apos;Sales Order Allocation&apos; so that they cannot be packed.</description>
+        <externalId>false</externalId>
+        <label>Reversed</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Sales_Order_Line__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Sales Order Line</description>
+        <externalId>false</externalId>
+        <label>Sales Order Line</label>
+        <referenceTo>Sales_Order_Line__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Shipment_Line__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Shipment Line</description>
+        <externalId>false</externalId>
+        <label>Shipment Line</label>
+        <referenceTo>Shipment_Line__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Standard_Cost__c</fullName>
+        <description>Standard cost of the item when the transaction occured</description>
+        <externalId>false</externalId>
+        <label>Standard Cost</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Stocking_UOM__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Stocking UOM</label>
+        <referenceTo>UOM__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>StockingUOM_Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Subtransaction_Type__c</fullName>
+        <externalId>false</externalId>
+        <label>Subtransaction Type</label>
+        <length>100</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>To_Facility__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>the facility to which this quantity is being moved.</description>
+        <externalId>false</externalId>
+        <label>To Facility</label>
+        <referenceTo>Facility__c</referenceTo>
+        <relationshipLabel>Inventory Transactions (To Facility)</relationshipLabel>
+        <relationshipName>Inventory_Transactions1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>To_Location__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to To Location</description>
+        <externalId>false</externalId>
+        <label>To Location</label>
+        <referenceTo>Location__c</referenceTo>
+        <relationshipLabel>Inventory Transactions (To Location)</relationshipLabel>
+        <relationshipName>Inventory_Transactions1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>To_SKID_Identifier__c</fullName>
+        <externalId>false</externalId>
+        <label>To SKID Identifier</label>
+        <length>100</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>To_SKID__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>SKID inventory was moved to</description>
+        <externalId>false</externalId>
+        <label>To SKID</label>
+        <referenceTo>SKID__c</referenceTo>
+        <relationshipLabel>Inventory Transactions (To SKID)</relationshipLabel>
+        <relationshipName>Inventory_Transactions1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>To_Standard_Cost__c</fullName>
+        <externalId>false</externalId>
+        <label>To Standard Cost</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Extended_Price__c</fullName>
+        <externalId>false</externalId>
+        <label>Extended Price</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>2</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Transaction_Date__c</fullName>
+        <description>Date transaction occured</description>
+        <externalId>false</externalId>
+        <label>Transaction Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Transaction_Unit_Cost__c</fullName>
+        <externalId>false</externalId>
+        <label>Transaction Unit Cost</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Type__c</fullName>
+        <description>The reason this transaction occured</description>
+        <externalId>false</externalId>
+        <label>Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>None</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Activate Proposed Costs</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Transfer</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Sales Order Allocation</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Sales Order Pick</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Transfer Order Allocation</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Transfer Order Pick</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Adjustment Decrease</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Adjustment Increase</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Cycle Count</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Purchase Order Receipt</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Transfer Order Receipt</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>QA Sample</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Sales Order Undo Shipment</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Work Order Assembly Completion</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Work Order Assembly Scrap</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Work Order Component Return</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Work Order Component Scrap</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Work Order Return To WIP</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Work Order Issue From WIP</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>By-product</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Work Order Component Issue</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Sales Order Shipment</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Transfer Order Shipment</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Work Order Assembly Uncompletion</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>By-product Uncompletion</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Void - Transfer Order Receipt</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Void - Purchase Order Receipt</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Transfer Order Undo Shipment</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Transfer Order Unallocation</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Transfer Order Undo Pick</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Sales Order Unallocation</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Sales Order Undo Pick</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Purchase Order Return</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Sales Order Pick Transfer</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Transfer Order Pick Transfer</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Used__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Used</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Work_Order__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Work Order if this is a work order transaction</description>
+        <externalId>false</externalId>
+        <label>Work Order</label>
+        <referenceTo>Work_Order__c</referenceTo>
+        <relationshipLabel>Inventory Transactions</relationshipLabel>
+        <relationshipName>Inventory_Transactions</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>isFinalized__c</fullName>
+        <externalId>false</externalId>
+        <formula>Work_Order__r.Finalized__c || Inventory_Change__r.Finalized__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Finalized</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <label>Inventory Transaction</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Item__c</columns>
+        <columns>Quantity__c</columns>
+        <columns>Type__c</columns>
+        <columns>Net_Quantity__c</columns>
+        <columns>From_SKID__c</columns>
+        <columns>To_SKID__c</columns>
+        <columns>Transaction_Date__c</columns>
+        <columns>Finalized__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Inventory Transaction</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Inventory Transactions</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Item__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Quantity__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Type__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Net_Quantity__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Transaction_Date__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>From_SKID__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>To_SKID__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Standard_Cost__c</customTabListAdditionalFields>
+        <excludedStandardButtons>New</excludedStandardButtons>
+        <excludedStandardButtons>ChangeOwner</excludedStandardButtons>
+        <excludedStandardButtons>Accept</excludedStandardButtons>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>Company_must_be_populated</fullName>
+        <active>true</active>
+        <description>Company must be populated on the skid</description>
+        <errorConditionFormula>ISBLANK(Company__c) || ISNULL(Company__c)</errorConditionFormula>
+        <errorDisplayField>Company__c</errorDisplayField>
+        <errorMessage>Company value must be populated.</errorMessage>
+    </validationRules>
+</CustomObject>

@@ -1,0 +1,1006 @@
+<apex:page standardController="Order__c" sidebar="false" extensions="OrderLinesAddManageExt" id="page" docType="html-5.0">
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+
+    <apex:form id="formId">
+        <c:busyWait includeScripts="false" />
+        
+        <div class="page-container">
+            <apex:sectionHeader subtitle="{!Order__c.Name}" title="{!$Label.Order_Lines_Add_Manage}"/>
+        
+            <apex:commandButton value="{!$Label.Go_Back}" immediate="true" style="margin-left:40%;margin-bottom:15px;" action="{!Cancel}"  reRender="formID"  status="actionStatus" />
+        
+            <div class="page-message"></div>
+            <apex:pageMessages id="msgs"/>
+
+            <div id="tabstrip">
+                <ul id="tabListId" style="">
+                    <apex:repeat value="{!tabs}" var="tab">
+                        <li id="{!SUBSTITUTE(tab,'/','')}">
+                            {!tab}
+                        </li>
+                    </apex:repeat>
+                </ul>
+
+                <div>
+                    <apex:pageBlock id="DraftLines" title="{!$Label.Manage_Lines}" rendered="true" >
+                        <apex:outputPanel styleClass="DraftPanel">
+                            <apex:facet name="header"></apex:facet>
+
+                            <div class="grid-container">
+                                <div class="grid-message"></div>
+                                <div id="{!config.uniqueId}"></div>
+                            </div>
+                        </apex:outputPanel>
+                    </apex:pageBlock>
+                </div>
+
+                <div>
+                    <apex:pageBlock title="{!$Label.Lines_With_Exceptions}" rendered="true" >
+                        <apex:facet name="header"></apex:facet>
+
+                        <div class="grid-container">
+                            <div class="grid-message"></div>
+                            <div id="{!exceptionGridId}"></div>
+                        </div>
+                    </apex:pageBlock>
+                </div>
+
+                <div>
+                    <apex:pageBlock title="{!$Label.Closed_Cancelled} Lines" rendered="true" >
+                        <apex:facet name="header"></apex:facet>
+
+                        <div class="grid-container">
+                            <div class="grid-message"></div>
+                            <div id="{!closedGridId}"></div>
+                        </div>
+                    </apex:pageBlock>
+                </div>
+            </div>
+        </div>
+    </apex:form>
+
+    
+
+    <script type="text/javascript">
+
+
+        function OnAddManageGridReadSuccess(e) { 
+
+            var errorSeverity = e.event.result.reason;
+    
+            
+    
+            if (errorSeverity == KenandyErp.MessageType.Fatal) {
+    
+                var messageElement = $('#{!config.uniqueId}').closest("div.grid-container").find("div.grid-message");
+    
+                    KenandyErp.Messages(e.event.result.messages, messageElement);
+    
+                $('#{!config.uniqueId}').find('input[type=button]').attr('disabled', 'disabled');
+    
+                $('#{!config.uniqueId}').find('input[type=button]').removeClass('btn').addClass('btnDisabled');
+    
+            }
+
+        }
+
+        var orderLinesCount = {!orderLinesCount};
+
+        var addManageGrid;
+
+        var addManageGridConfig = '{!configJsonGrid1}';
+
+        var addManageGridConfigOptions = (addManageGridConfig) ? JSON.parse(addManageGridConfig) : '';
+
+        var addManageGridFieldList = '{!fieldList}';
+        
+        var closedGrid;
+
+        var closedGridConfig = '{!configJsonClosedGrid}';
+
+        var closedGridConfigOptions = (closedGridConfig) ? JSON.parse(closedGridConfig) : '';
+
+        var closedGridFieldList = '{!closedFieldList}';
+
+        
+
+        var exceptionsGrid;
+
+        var exceptionsGridConfig = '{!configJsonExceptionsGrid}';
+
+        var exceptionsGridConfigOptions = (exceptionsGridConfig) ? JSON.parse(exceptionsGridConfig) : '';
+
+        var exceptionsGridFieldList = '{!exceptionsFieldList}';
+
+
+        var receiveGrid;
+        
+        function loadRelatedData () {
+
+            var deferred = $.Deferred();
+
+            var remoteArgs = JSON.parse('{!configJsonGrid1}');
+
+            Visualforce.remoting.Manager.invokeAction(
+
+                '{!$RemoteAction.OrderLinesAddManageExt.getLinesForAddManage}',
+
+                '{!Order__c.Id}',
+
+                function (result, event) {
+
+                    deferred.resolve(result, event);
+
+                },
+
+                {escape: false}
+
+            );
+
+            return deferred.promise();
+
+        }
+
+        function loadClosedRelatedData () {
+
+            var deferred = $.Deferred();
+
+            var remoteArgs = JSON.parse('{!configJsonClosedGrid}');
+
+			Visualforce.remoting.Manager.invokeAction(
+
+                '{!$RemoteAction.OrderLinesAddManageExt.getClosedLines}',
+
+                '{!Order__c.Id}', 
+
+                function (result, event) {
+
+                    deferred.resolve(result, event);
+
+                },
+
+                {escape: false}
+
+            );
+            return deferred.promise();
+
+        }
+
+        function loadExceptionsRelatedData () {
+
+            var deferred = $.Deferred();
+
+            var remoteArgs = JSON.parse('{!configJsonExceptionsGrid}');
+
+            Visualforce.remoting.Manager.invokeAction(
+
+                '{!$RemoteAction.OrderLinesAddManageExt.getExceptionLines}',
+
+                '{!Order__c.Id}', 
+
+                function (result, event) {
+
+                    deferred.resolve(result, event);
+
+                },
+
+                {escape: false}
+
+            );
+            return deferred.promise();
+
+        }
+        
+        $(document).on('KenandyErpReady', function(e) {
+            
+
+            var tabStrip = $("#tabstrip").kendoTabStrip({
+                animation: false,
+                contentUrls: [ , , , , , , ]
+            }).data("kendoTabStrip").select(0);
+            
+            if({!errorOnPageLoad}){
+                KenandyErp.UnBlockUI($("#tabstrip"));
+                $("#tabstrip").find('input[type=button]').prop("disabled",true).removeClass('btn').addClass('btnDisabled');
+               
+            }
+           
+        if($('#{!config.uniqueId}').length != 0){
+
+            var addManageLookupSearchFilters = [];
+
+            addManageLookupSearchFilters.push({ field: "order.Ship_From_Location__c", filter: "Facility__c = \'#=order.Ship_From_Facility__c#\'" });
+
+            addManageLookupSearchFilters.push({ field: "order.Deliver_To_Location__c", filter: "Facility__c = \'#=order.Deliver_To_Facility__c#\'" });
+
+            addManageLookupSearchFilters.push({ field: "order.Ship_From_Facility__c", filter: "Company__c = \'#=order.Shipping_Company__c#\'" });
+
+            addManageLookupSearchFilters.push({ field: "order.Deliver_To_Facility__c", filter: "Company__c = \'#=order.Receiving_Company__c#\'" });
+
+            addManageLookupSearchFilters.push({ field: "order.Shipping_Item__c", filter: "Company__c = \'#=order.Shipping_Company__c#\'" });
+
+            addManageLookupSearchFilters.push({ field: "order.Receiving_Item__c", filter: "Company__c = \'#=order.Receiving_Company__c#\'" });
+
+				addManageGrid = $('#{!config.uniqueId}').kendoGridActionList({
+					namespace: '{!NamespaceUU}', 
+					config: addManageGridConfig, 
+					fieldList: addManageGridFieldList, 
+					lookupSearchAction: '{!$RemoteAction.OrderLinesAddManageExt.lookupSearchFilter}', 
+					getActionListFunction: loadRelatedData,
+					lookupSearchFilters: addManageLookupSearchFilters, 
+					modelIdField: 'order.Id',
+					validateLookupOnBlur: "Promise",
+					toolbarButtons: [
+                        { name: "grid-undo-release-custom-command", text:"", template: "<input type='button' value='Undo Release All Lines' class='btn grid-undo-release-custom-command' />" },
+                        { name: "grid-cancel-lines-custom-command", text:"", template: "<input type='button' value='Cancel Lines' class='btn grid-cancel-lines-custom-command' />" }
+                    ],
+				}).data('kendoGridActionList');
+
+            addManageGrid.element.bind('OnReadSuccess', OnAddManageGridReadSuccess);
+
+        }
+
+        if($('#{!closedConfig.uniqueId}').length != 0){
+
+           closedGrid = $.fn.GridRelatedList($('#{!closedConfig.uniqueId}'), { namespace: '{!NamespaceUU}', config: closedGridConfig, fieldList: closedGridFieldList, lookupSearchAction: '{!$RemoteAction.OrderLinesAddManageExt.lookupSearchFilter}', getRelatedListFunction: loadClosedRelatedData, editable: false }); 
+
+        }
+
+        if($('#{!exceptionsConfig.uniqueId}').length != 0){
+
+           exceptionsGrid = $.fn.GridRelatedList($('#{!exceptionsConfig.uniqueId}'), { namespace: '{!NamespaceUU}', config: exceptionsGridConfig, fieldList: exceptionsGridFieldList, lookupSearchAction: '{!$RemoteAction.OrderLinesAddManageExt.lookupSearchFilter}', getRelatedListFunction: loadExceptionsRelatedData, editable: false }); 
+
+        }
+        });
+        
+        $( document ).ready(function() {
+            var addManageGridDateFields = (addManageGridFieldList) ? KenandyErp.KendoGridOptions.GetDateFields(JSON.parse(addManageGridFieldList)) : [];
+
+            addManageGrid.wrapper.off("click", ".grid-save-command");
+
+            addManageGrid.wrapper.on("click", ".grid-save-command",
+                $.proxy(GridOrderActions.Save, { grid: addManageGrid, options: { saveAction: '{!$RemoteAction.OrderLinesAddManageExt.saveList}', config: addManageGridConfigOptions, dateFields: addManageGridDateFields, gridsToRefresh: [] } })
+            );
+
+            
+
+            addManageGrid.bind('edit', $.proxy(GridOrderActions.Edit, { grid: addManageGrid }));
+
+            addManageGrid.bind('dataBound', $.proxy(GridOrderActions.dataBoundAction, { grid: addManageGrid, tabName:'{!$Label.Manage}' }));
+
+    
+
+            addManageGrid.wrapper.on("click", ".grid-release-all-lines-custom-command",
+                $.proxy(GridOrderActions.Release, { grid: addManageGrid, options: { saveAction: '{!$RemoteAction.OrderLinesAddManageExt.saveList}', customAction:  '{!$RemoteAction.OrderLinesAddManageExt.releaseList}', config: addManageGridConfigOptions, masterDateFields: addManageGridDateFields, gridsToRefresh: [addManageGrid,closedGrid], nextTabName: '{!$Label.Manage}' } })
+                
+            );
+
+            addManageGrid.wrapper.on('click', '.grid-undo-release-custom-command', $.proxy(GridOrderActions.Release, { grid: addManageGrid, options: { saveAction: '{!$RemoteAction.OrderLinesAddManageExt.saveList}', customAction: '{!$RemoteAction.OrderLinesAddManageExt.UndoRelease}', config: addManageGridConfigOptions, masterDateFields: addManageGridDateFields, gridsToRefresh: [addManageGrid,closedGrid], nextTabName: '{!$Label.Manage}' }}));
+
+            
+            // bind grid cancel lines events
+	            addManageGrid.wrapper.on("click", ".grid-cancel-lines-custom-command", $.proxy(GridOrderActions.CancelLines, { grid: addManageGrid, options: { cancelLinesAction: '{!$RemoteAction.OrderLinesAddManageExt.cancelLines}',dateFields: addManageGridDateFields, gridsToRefresh: [addManageGrid,closedGrid] } }));
+
+        });
+
+        $(document).on('KenandyErpReady', function(e) {
+            closedGrid.bind('dataBound', $.proxy(GridOrderActions.dataBoundAction, { grid: closedGrid, tabName:'Closed/Cancelled' }));
+            exceptionsGrid.bind('dataBound', $.proxy(GridOrderActions.dataBoundAction, { grid: exceptionsGrid, tabName:'Exceptions' }));
+        });
+
+        var GridOrderActions = function() {
+
+            return {
+                Edit: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    if ( (e.model.isNew() || e.model.order.Id == null ) && !e.model.dirty) {
+                        var orderHeaderNeedDate = '{!orderHeader.Need_Date__c}';
+                        
+                        e.model.set('order.Shipping_Company__c', '{!orderHeader.Shipping_Company__c}');
+                        e.model.set('order.Receiving_Company__c', '{!orderHeader.Receiving_Company__c}');
+                        
+                        if (orderHeaderNeedDate) {
+                        	e.model.set('order.Required_Date__c', KenandyErp.ParseSFDCDate(orderHeaderNeedDate));
+                        }
+                        e.model.set('order.Ship_From_Facility__r',{});
+                        e.model.set('order.Deliver_To_Facility__r',{});
+                        e.model.set('order.Ship_From_Location__r',{}); 
+                        e.model.set('order.Deliver_To_Location__r',{});
+                        
+                        e.model.set('order.Ship_From_Facility__r.Id', '{!orderHeader.Ship_From_Facility__c}');
+                        e.model.set('order.Deliver_To_Facility__r.Id', '{!orderHeader.Deliver_To_Facility__c}');
+                        e.model.set('order.Ship_From_Location__r.Id', '{!orderHeader.Ship_From_Location__c}');
+                        e.model.set('order.Deliver_To_Location__r.Id', '{!orderHeader.Deliver_To_Location__c}');
+                        
+                        e.model.set('order.Ship_From_Facility__r.Name', "{!orderHeader.Ship_From_Facility__r.Name}");
+                        e.model.set('order.Deliver_To_Facility__r.Name', "{!orderHeader.Deliver_To_Facility__r.Name}");
+                        e.model.set('order.Ship_From_Location__r.Name', "{!orderHeader.Ship_From_Location__r.Name}");
+                        e.model.set('order.Deliver_To_Location__r.Name', "{!orderHeader.Deliver_To_Location__r.Name}");
+
+                        e.model.set('order.Ship_From_Facility__r.Facility_Identifier__c', "{!orderHeader.Ship_From_Facility__r.Facility_Identifier__c}");
+                        e.model.set('order.Deliver_To_Facility__r.Facility_Identifier__c', "{!orderHeader.Deliver_To_Facility__r.Facility_Identifier__c}");
+
+                        e.model.set('order.Ship_From_Facility__c', '{!orderHeader.Ship_From_Facility__c}');
+                        e.model.set('order.Deliver_To_Facility__c', '{!orderHeader.Deliver_To_Facility__c}');
+                        e.model.set('order.Ship_From_Location__c', '{!orderHeader.Ship_From_Location__c}');
+                        e.model.set('order.Deliver_To_Location__c', '{!orderHeader.Deliver_To_Location__c}');
+                       
+                    }
+                    
+                    $(e.container).find('input[name="order.Shipping_Item__c"]').bind('blur',
+                        $.proxy(GridOrderActions.FindToItem, { grid: grid })
+                    );
+                    
+                    var shipFromFacility = $(e.container).find('input[name="order.Ship_From_Facility__c"]');
+                    
+                    shipFromFacility.on('focus', function() {
+                         $(this).data('default_value', $(this).val());
+                    });
+                    shipFromFacility.focus();
+                    
+                    shipFromFacility.on('blur',
+                        $.proxy(GridOrderActions.ClearShipFromLoc, { grid: grid })
+                    );
+                    
+                    var deliverToFacility = $(e.container).find('input[name="order.Deliver_To_Facility__c"]');
+                    deliverToFacility.on('focus', function() {
+                         $(this).data('default_value', $(this).val());
+                    });
+                    deliverToFacility.focus();
+                    
+                    deliverToFacility.on('blur',
+                        $.proxy(GridOrderActions.ClearDeliverToLoc, { grid: grid })
+                    );                  
+                },
+
+                
+
+                FindToItem: function(e) {
+
+                    var grid = this.grid;
+
+                    var cell = grid.editable.element;
+
+					var row = $(e.target).closest("tr"); //get the row
+
+          			var dataItem = grid.dataItem(row); // get the row data
+
+           			if( (dataItem.get('order.Shipping_Company__c') == dataItem.get('order.Receiving_Company__c')) && dataItem.get('order.Shipping_Item__r.Id')){
+                          
+                        dataItem.set('order.Receiving_Item__r', { Id: dataItem.get('order.Shipping_Item__r.Id'), Name: dataItem.get('order.Shipping_Item__r.Name') });
+
+                        dataItem.set('order.Receiving_Item__c', dataItem.get('order.Shipping_Item__c'));
+                    }
+                },
+
+                ClearShipFromLoc: function(e) {
+                    if ($(e.target).val() == $(e.target).data('default_value')) {
+                        return;
+                    }
+                    
+                    var grid = this.grid;
+                    var cell = grid.editable.element;
+                    var row = $(e.target).closest("tr"); //get the row
+                    var dataItem = grid.dataItem(row); // get the row data
+                    var value = dataItem.get('order.Ship_From_Facility__c');        
+                     
+                    dataItem.set('order.Ship_From_Location__r', { Id: null, Name: null });
+                    dataItem.set('order.Ship_From_Location__c', null);
+                },
+                
+                ClearDeliverToLoc: function(e) {
+                    if ($(e.target).val() == $(e.target).data('default_value')) {
+                        return;
+                    }
+                    
+                    var grid = this.grid;
+                    var cell = grid.editable.element;
+                    var row = $(e.target).closest("tr"); //get the row
+                    var dataItem = grid.dataItem(row); // get the row data
+                    var value = dataItem.get('order.Deliver_To_Facility__c');        
+                     
+                    dataItem.set('order.Deliver_To_Location__r', { Id: null, Name: null });
+                    dataItem.set('order.Deliver_To_Location__c', null);
+                },
+
+                dataBoundAction: function(e) {
+
+                    var self = this;
+
+  					var grid = self.grid;
+
+  					var tabName = self.tabName;
+
+   
+
+				  	var gridId = grid.wrapper.context.id
+				  	var linesCount = grid.dataSource.total();
+
+                    // Comments By LK On 11/21
+                    // Using dataSource total to return the row count
+                    /*var linesCount = $("#"+gridId).find('tbody').find('>tr.k-master-row').length;
+
+				    if( linesCount == 0 ){
+				
+				      linesCount = $("#"+gridId).find('tbody').find('tr').length;
+		
+				    }*/
+				    
+                    $("#"+tabName.replace('/','')).children(".k-link").text(tabName+ " ("+linesCount+"/"+orderLinesCount+")");
+
+
+
+                },
+
+                Save: function(e) { 
+
+                    var self = this;
+
+                    var grid = self.grid;
+
+                    var options = self.options;
+
+                    var gridsToRefresh = options.gridsToRefresh;
+
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+
+                    if (grid.editable && !grid.editable.validatable.validate()) {
+
+                        e.preventDefault();
+
+                        return false;
+
+                    }
+
+                    KenandyErp.ClearMessage(messageElement);
+                    
+                    var currentData = grid.dataSource.data();
+
+					var updatedRows = [];
+					
+					var newRows = [];
+					
+					var columns = grid.columns;
+					
+					var modelIdField = grid.dataSource.options.schema.model.idField;
+
+                                    
+
+                    $.each(currentData, function(index, item) {
+
+
+                        if (item.get('order.Id') == '' || item.dirty) {
+
+                        	var isNewRow = (item.get('order.Id') == '' || item.get('order.Id') == null );
+
+                            item = item.toJSON();
+
+                            item = Serializer.ConvertToSFDCDate(item, { dateFields: options.dateFields });
+
+                            
+
+                            for (var i = 0; i < columns.length; i++) {
+
+                                var name = columns[i].field;
+
+                                
+
+                                delete item[name];
+
+                            }
+
+                            
+
+                            if (isNewRow) {
+
+	                            delete item.Id;
+	
+	                            delete item.order.Id;
+	
+								item.order.sObjectType = options.config.objectName;
+
+								newRows.push(item);
+
+                            }
+                            else {
+
+                            	updatedRows.push(item);
+
+                            }
+
+                        }
+
+                    });
+
+                    
+
+                    var deletedRows = $.map(grid.dataSource._destroyed, function(item, index) {
+
+                    	if (item.get(modelIdField)) {
+
+							item = item.toJSON();
+
+        					item = Serializer.ConvertToSFDCDate(item, { dateFields: options.dateFields });
+
+        					for (var i = 0; i < columns.length; i++) {
+
+                            	var name = columns[i].field;
+
+                            	delete item[name];
+
+                        	}
+
+							return item;
+
+						}
+
+					});
+                      
+
+                    if (newRows.length == 0 && updatedRows.length == 0 && deletedRows.length == 0) {
+
+                        KenandyErp.Message("No records changed.", KenandyErp.MessageType.Info, messageElement);
+
+                        return;
+
+                    }
+
+                    if (updatedRows.length > 0) {
+
+                        updatedRows = Serializer.ParameterMap(updatedRows);
+
+                    }
+
+                    
+
+                    if (newRows.length > 0) {
+
+		                newRows = Serializer.ParameterMap(newRows);
+		
+					}
+
+
+                    if (deletedRows.length > 0) {
+
+           				deletedRows = Serializer.ParameterMap(deletedRows);
+
+					}
+
+                    
+
+                    var dateFields = options.dateFields ? _.pluck(options.dateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+
+                    
+
+                    KenandyErp.BlockUI(grid.element);
+
+                         
+
+                    Visualforce.remoting.Manager.invokeAction(
+
+                        options.saveAction,
+
+                        '{!Order__c.Id}',
+
+                        updatedRows,
+
+                        newRows,
+
+                        deletedRows,
+
+                        dateFields,
+
+                        function (result, event) {
+
+                            KenandyErp.UnBlockUI(grid.element);
+
+                            if (event.type == 'exception') {
+
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+
+                            } 
+                            else {
+
+                                if (result.success) {
+
+                                    //refresh the grid
+                                    grid.dataSource._destroyed = [];
+                                    grid.dataSource.read();
+                                    for( var i = 0; i < gridsToRefresh.length; i++ ){
+                                        gridsToRefresh[i].dataSource._destroyed = [];
+                                        gridsToRefresh[i].dataSource.read();
+                                    }
+                                    
+                                }
+                                else {
+
+                                    if (result.reason == 'FATAL') {
+
+                                         var currentGridId = grid.wrapper.context.id
+
+                                         $("#"+currentGridId).find('input[type=button]').attr('disabled', 'disabled');
+
+                                         $("#"+currentGridId).find('input[type=button]').removeClass('btn').addClass('btnDisabled');
+
+                                    }
+
+                                }
+                                
+                                orderLinesCount = result.total;
+                                GridOrderActions.dataBoundAction.call({grid: addManageGrid, tabName:'{!$Label.Manage}'});
+                                GridOrderActions.dataBoundAction.call({grid: closedGrid, tabName:'{!$Label.Closed_Cancelled}'});
+                                GridOrderActions.dataBoundAction.call({grid: exceptionsGrid, tabName:'{!$Label.Exceptions}'});
+
+                                KenandyErp.Messages(result.messages, messageElement);
+
+                            }
+
+                        },
+
+                        {escape: false}
+
+                    );
+
+                },
+
+                
+
+                Release: function(e) { 
+
+                    var self = this;
+
+                    var grid = self.grid;
+
+                    var options = self.options;
+
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+
+                    var gridsToRefresh = options.gridsToRefresh;
+
+                    var nextTabName = options.nextTabName;
+
+                    var type = (options.type)?options.type:'';
+
+                    var hasErrors = false;
+
+                    var gridId = grid.element.attr('id');
+
+                    KenandyErp.ClearMessage(messageElement);
+
+                    if (grid.editable && !grid.editable.validatable.validate()) {
+
+                        e.preventDefault();
+
+                        return false;
+
+                    }
+                    
+                    var currentData = grid.dataSource.data();
+
+                    var updatedRows = [];
+                    
+                    var columns = grid.columns;
+                    
+                    
+                    $.each(currentData, function(index, item)
+                    {
+                            
+                          item = item.toJSON();
+    
+                          item = Serializer.ConvertToSFDCDate(item, { dateFields: options.masterDateFields });
+                          
+    
+                            if( (item.order) && ( !item.order.Id ) ){
+                        		KenandyErp.Message("{!$Label.Save_changes_before_releasing_lines}", KenandyErp.MessageType.Error, messageElement);
+                                hasErrors = true;
+                                return;
+                            } 
+    
+                            for (var i = 0; i < columns.length; i++) {
+    
+                                var name = columns[i].field;
+    
+                                delete item[name];
+    
+                            }
+    
+                            if( item.order && item.order.SKIDs__r ){
+    
+                                delete item.order.SKIDs__r;
+    
+                            }
+    
+                            if( item.rl && item.rl.SKIDs__r ){
+    
+                                delete item.rl.SKIDs__r;
+    
+                            }
+    
+                            if( item.order && item.order.Inventory_Transactions__r ){
+    
+                                delete item.order.Inventory_Transactions__r;
+    
+                            }
+    
+                            updatedRows.push(item);
+
+                    });
+                    
+
+                    if( hasErrors ){
+
+                        return;
+
+                    }
+
+                    if (updatedRows.length == 0) {
+                    	KenandyErp.Message("{!$Label.No_records_changed}", KenandyErp.MessageType.Info, messageElement);
+                        return;
+                    }
+
+                    if (updatedRows.length > 0) {
+
+                        updatedRows = Serializer.ParameterMap(updatedRows, { isDml: false });
+
+                    }
+                    
+                    var dateFields = options.masterDateFields ? _.pluck(options.masterDateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+
+                    var detailDateFields = options.detailDateFields ? _.pluck(options.detailDateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+
+					// Remove the prefix for the date fields
+					if (dateFields) {
+			        	dateFields = $.map(dateFields, function(item, index) {
+							if (item.indexOf('.') != -1) {
+								item = item.split('.')[1];
+							}
+							
+							return item;
+						});
+					}
+					
+					// Remove the prefix for the detail date fields
+		        	if (detailDateFields) {
+			        	detailDateFields = $.map(detailDateFields, function(item, index) {
+							if (item.indexOf('.') != -1) {
+								item = item.split('.')[1];
+							}
+							
+							return item;
+						});
+					}
+
+                    KenandyErp.BlockUI(grid.element);
+
+                    if ($(e.currentTarget).hasClass('grid-release-all-lines-custom-command')) {
+                    	KenandyErp.BlockUI();
+                    	
+                    	var releaseAllLines = function() {
+                            Visualforce.remoting.Manager.invokeAction(
+                            	options.customAction,
+                            	'{!Order__c.Id}',
+                            	function (result, event) {
+                            		KenandyErp.UnBlockUI(grid.element);
+                            		if (event.type == 'exception') {
+                            			KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            		} else {
+                            			if (result.success) {
+                            				for( var i = 0; i < gridsToRefresh.length; i++ ){
+                            					gridsToRefresh[i].dataSource._destroyed = [];
+                            					gridsToRefresh[i].dataSource.read();
+                            				}
+                            				
+                            				$('#tabListId').find("a:contains("+nextTabName.replace('/','')+")").trigger('click');
+                            				
+                            				KenandyErp.Messages(result.messages, messageElement);
+                            			} else {
+                            				if (result.reason == 'FATAL') {
+                            					var currentGridId = grid.wrapper.context.id;
+                            					$("#"+currentGridId).find('input[type=button]').attr('disabled', 'disabled');
+                            					$("#"+currentGridId).find('input[type=button]').removeClass('btn').addClass('btnDisabled');
+                            				}
+    
+                                            KenandyErp.Messages(result.messages, messageElement);
+                                        }
+                                    }
+                                },
+                                {escape: false}
+                            );
+                        };
+                    	
+                    	Visualforce.remoting.Manager.invokeAction(
+                    		'{!$RemoteAction.OrderLinesAddManageExt.ShipmentExist}',
+                    		updatedRows,
+                    		function (result, event) {
+                    			if (event.type == 'exception') {
+                                    KenandyErp.UnBlockUI();
+                                    KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                    			} else {
+                    				if (result) {
+                                        KenandyErp.UnBlockUI();
+                                        GridOrderActions.ShowReleaseWindow();
+                    				} else {
+                    					releaseAllLines();
+                    				}
+                    			}
+                    		},
+                    		{escape: false}
+                    	);
+                    } else {   
+                        Visualforce.remoting.Manager.invokeAction(
+                        	options.customAction,
+                        	updatedRows,
+                        	dateFields,
+                        	detailDateFields,
+                        	function (result, event) {
+                        		KenandyErp.UnBlockUI(grid.element);
+                        		
+                        		if (event.type == 'exception') {
+                        			KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                        		}  else {
+                        			if (result.success) {
+                        				//refresh the grid
+                        				for( var i = 0; i < gridsToRefresh.length; i++ ){
+                        					gridsToRefresh[i].dataSource._destroyed = [];
+                        					gridsToRefresh[i].dataSource.read();
+                        				}
+                        				
+                        				$('#tabListId').find("a:contains("+nextTabName.replace('/','')+")").trigger('click');
+                        				
+                        				KenandyErp.Messages(result.messages, messageElement);
+                        			} else {
+                        				if (result.reason == 'FATAL') {
+                        					var currentGridId = grid.wrapper.context.id;
+                        					$("#"+currentGridId).find('input[type=button]').attr('disabled', 'disabled');
+                        					$("#"+currentGridId).find('input[type=button]').removeClass('btn').addClass('btnDisabled');
+                        				}
+                        				
+                        				KenandyErp.Messages(result.messages, messageElement);
+                        			}
+                        		}
+                        	},
+                        	{escape: false}
+                        );
+                    }
+                },
+
+                ShowReleaseWindow: function() {
+                    InitializePopup();
+                	this.ReleaseWindow = $('#releaseWindow');
+                	
+                	if (!this.ReleaseWindow.data('kendoWindow')) {
+	                	this.ReleaseWindow.kendoWindow({
+	                            title: "Release Transfer Order",
+	                            modal: true,
+	                            height: "450px",
+	                            width: "80%"
+	                        });
+                    }
+                    
+                    this.ReleaseWindow.data('kendoWindow').center().open();
+                },
+                
+                HideReleaseWindow: function() {
+                	this.ReleaseWindow.data('kendoWindow').close();
+                },
+                
+                OnAddToShipmentComplete: function() {
+                    var nextTabName = 'Allocate';
+                    
+                    this.HideReleaseWindow();
+                    
+                    $('#tabListId').find("a:contains("+nextTabName.replace('/','')+")").trigger('click');
+                    
+                    $("#{!config.uniqueId}").data("kendoGrid").dataSource.read();
+                },
+                
+                CancelLines: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    var options = self.options;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                    var gridsToRefresh = options.gridsToRefresh;
+                    var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields });
+                    var selectedRows = gridUtils.SelectedRows();
+                    var modelIdField = grid.dataSource.options.schema.model.idField;
+                    var columns = grid.columns;
+                    
+                    KenandyErp.ClearMessage(messageElement);
+                    
+                    if (selectedRows.length == 0) {
+                        KenandyErp.Message("No records selected.", KenandyErp.MessageType.Info, messageElement);
+                        return;
+                    }
+                    
+                    var yesCallback = function(){
+                    
+                        KenandyErp.BlockUI(grid.element);
+                              
+                        Visualforce.remoting.Manager.invokeAction(
+                            options.cancelLinesAction,              
+                            selectedRows,
+                            options.dateFields,
+                            function (result, event) {
+                                KenandyErp.UnBlockUI(grid.element);
+                                            
+                                if (event.type == 'exception') {
+                                    KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                                } else {
+                                    if (result.success) {
+
+                                        grid.dataSource._destroyed = [];
+                                        grid.dataSource.read();
+                                        for( var i = 0; i < gridsToRefresh.length; i++ ){
+                                            gridsToRefresh[i].dataSource._destroyed = [];
+                                            gridsToRefresh[i].dataSource.read();
+                                        }
+                                        KenandyErp.Messages(result.messages, messageElement);
+                                    }
+                                    else {
+
+                                        KenandyErp.Messages(result.messages, messageElement);
+                                    }
+                                }
+                            },
+                            {escape: false}
+                        );
+                    
+                    }
+                    
+                    KenandyErp.Confirmation('Do you wish to cancel the ' + selectedRows.length + ' selected Lines?', yesCallback);
+                }
+            };
+
+        }();
+
+    </script>
+
+    <script type="text/x-kendo-template" id="detailTemplate">
+
+        <div class="grid-container k-block k-info-colored">
+
+            <div class="grid-message"></div>
+
+            <div class="grid-allocation-skids"></div>
+
+        </div>
+
+    </script>
+    
+    
+    <!--SRI-LAKSHMAN CODE DEC192014 -->
+    <style type="text/css">
+	    .col1 {width:50%;}
+	    .col2 {width:50%;}
+	</style>
+
+    <div id="releaseWindow" class="kndy-hidden">	           
+	
+	<apex:form id="mainFormID">
+	<c:busyWait includeScripts="false" />
+	    <apex:actionFunction action="{!Initialize}" name="InitializePopup" rerender="pbModal"  status="actionStatus" ></apex:actionFunction>
+		<apex:pageBlock id="pbModal">
+			
+			<apex:outputPanel rendered="{!shipmentOptions.size > 0}"> 
+				<apex:pageBlockSection title="Create a new shipment" columns="1">
+	        		<apex:outputPanel layout="block">
+	        			<apex:commandButton style="margin-left:40%;" value="Create New Shipment" action="{!release}" disabled="true"  reRender="mainFormID"  status="actionStatus"/>
+		        	</apex:outputPanel>
+	        	</apex:pageBlockSection>
+		        <apex:pageBlockSection title="Add to an existing shipment" columns="1">
+		        	<apex:outputPanel layout="block">
+	        			<apex:commandButton style="margin-left:40%;" value="Add to Shipment" action="{!Release}"   oncomplete="GridOrderActions.OnAddToShipmentComplete();"  reRender="mainFormID"  status="actionStatus"/>
+	        		</apex:outputPanel>
+					<apex:selectRadio value="{!selectedShipment}" layout="pageDirection" legendText="Select a shipment: ">
+		            	<apex:selectOptions value="{!shipmentOptions}"/>
+		            </apex:selectRadio>
+				</apex:pageBlockSection>
+			</apex:outputPanel>
+		</apex:pageBlock>
+	</apex:form>
+    </div>
+</apex:page>
+<!--SRI-LAKSHMAN CODE DEC192014 -->

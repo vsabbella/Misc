@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpExchangeRates</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Record the time snap shot of currency exchange rate that will be used for new records created.  Serves as a historical record of past rates</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableEnhancedLookup>true</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fields>
+        <fullName>Active__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Checkbox Active to perform check if the currency exchange rate is active or not</description>
+        <externalId>false</externalId>
+        <label>Active</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Autonumber__c</fullName>
+        <displayFormat>{0000000000}</displayFormat>
+        <externalId>false</externalId>
+        <label>Autonumber</label>
+        <trackTrending>false</trackTrending>
+        <type>AutoNumber</type>
+    </fields>
+    <fields>
+        <fullName>Budget_Tax__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Check this box if the conversion rate to be used for the budgeting / tax purposes</description>
+        <externalId>false</externalId>
+        <inlineHelpText>A checkmark indicates that the exchange rate is used for budgeting and/or tax purposes.</inlineHelpText>
+        <label>Budget/Tax</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Currency_From__c</fullName>
+        <description>Currency converted from</description>
+        <externalId>false</externalId>
+        <label>Currency From</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>EUR</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>GBP</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>INR</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>SGD</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>USD</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>AUD</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>CAD</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Currency_To__c</fullName>
+        <description>Currency converted To</description>
+        <externalId>false</externalId>
+        <label>Currency To</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>USD</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>GBP</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>EUR</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>INR</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>SGD</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>AUD</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>CAD</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Daily_Monthly__c</fullName>
+        <description>To distinguish the Daily rate and Monthly rate</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Specifies whether the rate is used daily or monthly.</inlineHelpText>
+        <label>Frequency</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Daily</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Monthly</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Exchange_Rate_Type__c</fullName>
+        <description>Exchange rate type</description>
+        <externalId>false</externalId>
+        <label>Exchange Rate Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Corporate</fullName>
+                    <default>true</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>From_Currency__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>From Currency</label>
+        <referenceTo>Currency__c</referenceTo>
+        <relationshipLabel>Exchange Rates</relationshipLabel>
+        <relationshipName>Exchange_Rates</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Multiplier_Exchange_Rate__c</fullName>
+        <description>Multiplier exchange rate ex. Currency From = USD and Currency to = EUR and multiplier exchange rate = 0.7714 10 USD = 10 *  0.7714 = 7.7143 USD</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The multiplier value that determines of the &quot;To&quot; currency.  For example, Currency From = USD, Currency To = EUR, and multiplier exchange rate = 0.7714. So, 10 USD = 10 * 0.7714 = 7.7143 EUR.</inlineHelpText>
+        <label>Multiplier Exchange Rate</label>
+        <precision>18</precision>
+        <required>true</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Rate_End_DateTime__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>Date and time the rate expires.</inlineHelpText>
+        <label>Rate End DateTime</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Rate_Start_DateTime__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>Date and time the rate takes effect.</inlineHelpText>
+        <label>Rate Start DateTime</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>To_Currency__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>To Currency</label>
+        <referenceTo>Currency__c</referenceTo>
+        <relationshipLabel>Exchange Rates (To Currency)</relationshipLabel>
+        <relationshipName>Exchange_Rates1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <label>Exchange Rate</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Active__c</columns>
+        <columns>Currency_From__c</columns>
+        <columns>Currency_To__c</columns>
+        <columns>Daily_Monthly__c</columns>
+        <columns>Multiplier_Exchange_Rate__c</columns>
+        <columns>Rate_Start_DateTime__c</columns>
+        <columns>Rate_End_DateTime__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Exchange Rate</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Exchange Rates</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>From_Currency__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>To_Currency__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Multiplier_Exchange_Rate__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Daily_Monthly__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Exchange_Rate_Type__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Active__c</customTabListAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>Monthly_exchange_rates_are_not_supported</fullName>
+        <active>true</active>
+        <errorConditionFormula>ISPICKVAL(Daily_Monthly__c, &apos;Monthly&apos;)</errorConditionFormula>
+        <errorDisplayField>Daily_Monthly__c</errorDisplayField>
+        <errorMessage>Monthly exchange rates are not supported.</errorMessage>
+    </validationRules>
+</CustomObject>

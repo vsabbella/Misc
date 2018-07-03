@@ -1,0 +1,449 @@
+<apex:page standardController="Supplier_Invoice__c" extensions="SupplierInvoiceVoidCancelExt">
+    <apex:sectionHeader title="Void/Cancel" subtitle="{!Supplier_Invoice__c.Name}"/>
+    <c:busyWait /> 
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+    <apex:form id="form">
+    <div id="MessagesBlock">  
+      <apex:pagemessages id="Messages" />
+      <div class="page-message"></div>
+    </div>
+
+    <apex:pageBlock >
+    	<apex:pageBlockButtons location="top">
+    	<apex:commandButton value="Return to {!Supplier_Invoice__c.Name}" onClick="goback();return false;"  rerender="form" status="actionStatus"/>
+            <apex:commandButton id="voidBtn" value="Void {!Supplier_Invoice__c.Name}" disabled="{!disableVoid || AlreadyVoided}" action="{!prepreVoid}" rerender="jsPanel" oncomplete="showProgressBar();"  onclick="KenandyErp.BlockUI();" />
+            <apex:commandButton value="Cancel {!Supplier_Invoice__c.Name}" disabled="{!disableCancel}" action="{!cancelDocs}" rerender="form" status="actionStatus"/>
+        </apex:pageBlockButtons>
+        <apex:pageBlockSection >
+            <apex:repeat value="{!$ObjectType.Supplier_Invoice__c.FieldSets.Void}" var="v">
+                <apex:outputField value="{!Supplier_Invoice__c[v]}" rendered="{!v.fieldpath != namespace+'Void_Date__c'}"/>
+            </apex:repeat> 
+            <apex:inputField value="{!Supplier_Invoice__c.Void_Date__c}" id="voidDateEdit" required="true" rendered="{!Not(disableVoid || AlreadyVoided)}"/>
+            <apex:outputField value="{!Supplier_Invoice__c.Void_Date__c}" rendered="{!disableVoid || AlreadyVoided}" id="voidDateOutput"/>
+        </apex:pageBlockSection>
+ 	   <div id="tab" >
+        <apex:pageBlockSection >
+        	<apex:pageBlockSection title="Void Details" columns="1">
+        		<apex:pageBlockTable value="{!voidCancelDetails.voidMessages}" var="msg">
+        			<apex:column >
+        				<apex:outputText value="{!msg}"/>
+        			</apex:column>
+        		</apex:pageBlockTable>
+        	</apex:pageBlockSection>
+       		<apex:pageBlockSection title="Cancel Details" columns="1">
+       			<apex:pageBlockTable value="{!voidCancelDetails.cancelMessages}" var="msg">
+	       			<apex:column >
+	       				<apex:outputText value="{!msg}"/>
+	       			</apex:column>
+       			</apex:pageBlockTable>
+        	</apex:pageBlockSection>
+        </apex:pageBlockSection>	
+        </div>
+        <table class="kndy-table">
+        	<tr>
+        		<td align="center">
+        			<div id="ProgressBar" ></div>
+        		</td>
+        	</tr>
+        </table>
+    </apex:pageBlock>
+    </apex:form>
+    
+    <div style="display:none;">
+    	<apex:outputField value="{!Supplier_Invoice__c.Historical__c}"/>
+    </div>
+    <script>
+       Visualforce.remoting.timeout = 120000; // Set timeout at page level
+
+       function goback(){
+		if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+			sforce.one.back(true);
+		} else {
+			window.location.href = '/{!Supplier_Invoice__c.Id}';
+		}
+	  }
+       var namespace = '{!namespace}';
+       var headerDateFields = [
+       		{ field: "Transaction_Date__c", fieldtype: "datetime"},
+       		{ field: "Finalized_Date__c", fieldtype: "datetime"},
+       		{ field: "Posting_Date__c", fieldtype: "datetime"},
+       		{ field: "Void_Date__c", fieldtype: "datetime"}
+       	];
+   	   var revChunks = '';//serialized map of the AutoNumReverseChunks
+       var voidAEId='';
+       var doVoid = true;
+       var revSize='';
+    	var RemoteDeferredReverse = [];
+    	var pb;
+    	var AELineCount;
+    	var deferredReverse = $.Deferred();
+    	var Progress = 0;
+    	var voidSI = [];
+    	var guid= '';
+    	var AlreadyVoided = false;
+    	var numberOfRetries=1;
+        var realtimeRetriesReversal=new Array();
+        var voidDateTime;
+        var tranDateTime;  
+        
+        function unblockUi(){
+            KenandyErp.UnBlockUI();
+            $("[id$='voidBtn']").toggleClass('btnDisabled', true).attr('disabled', 'disabled');        
+            $("[id$='voidDateEdit']").toggleClass('btnDisabled', true).attr('disabled', 'disabled');        
+        }
+
+	      /*Do a retry for the failed chunk in case of transaction timeouts*/
+	   	function checkRetry(event) {
+	        var doRetry = false;
+	        if (event.type === 'exception') {
+	        	if ((event.message.indexOf("timeout") > -1) ||
+	        		(event.message.indexOf("Remoting request invalid for your session") > -1) || 
+	        		(event.message.indexOf("Logged in") > -1)) {
+	        		doRetry = true;	
+	        	}	
+	        }  
+	        return doRetry;  	
+		}      
+    
+
+    	function showProgressBar() {
+    	    var vd = KenandyErp.IsValidDateTime($('input[id$="voidDateEdit"]').val());
+            KenandyErp.BlockUI();
+		    if(AlreadyVoided == "true"){
+            	KenandyErp.Message('Document Already Voided.', KenandyErp.MessageType.Info);
+            	unblockUi();
+                $('span[id$="Messages"]').css('display','none');
+            }else if(vd == false){  
+                KenandyErp.Message('The Void date format is invalid.', KenandyErp.MessageType.Error);
+            	KenandyErp.UnBlockUI();
+                $('span[id$="Messages"]').css('display','none');
+            }else {
+                if(revSize == 0){
+                    Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.SupplierInvoiceVoidCancelExt.VoidWithoutAEL}',
+                     voidAEId,
+                     guid,
+                     function (result, event) {
+                         if (result.AllDone==true){
+                            var headerRowsList = [];
+                            var headerRows = [];
+                             
+                            headerRowsList.push(voidSI);
+                             
+                            headerRows = $.map(headerRowsList, function(item, index) {
+                                delete item['attributes'];                      
+                                item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+                                 
+                                return item;
+                            });
+                             
+                            if (headerRows.length > 0) {
+                                headerRows = Serializer.ParameterMap(headerRows);
+                            }
+                             
+                            Visualforce.remoting.Manager.invokeAction(
+                                 '{!$RemoteAction.SupplierInvoiceVoidCancelExt.ActualVoidSD}',
+                                 headerRows, 
+                                 guid,
+                                 function (result, event) {
+                                     if (result.AllDone==true){
+                                         KenandyErp.Message('Document Successfully Voided.', KenandyErp.MessageType.Info);
+                                         $('span[id$="Messages"]').css('display','none');
+                                         unblockUi();
+                                     }
+                                     else{
+                                         KenandyErp.Message(result.Messages, KenandyErp.MessageType.Error);
+                                     }
+                                     KenandyErp.UnBlockUI();
+                             });
+                        }
+                        else{
+                            KenandyErp.Message(result.Messages, KenandyErp.MessageType.Info);
+                            unblockUi();
+                        }
+                     });
+                                                     
+                }
+                else{
+                    $('#tab').hide();
+                    var largemsg='The Source Document is being Voided.Please do not refresh page or press Back button of browser';                                                     
+                    KenandyErp.Message(largemsg, KenandyErp.MessageType.Info);                                              
+                    progressbar(0, AELineCount);
+                    reverseAE(0);
+                }
+        	}
+    	}
+    	
+        function reverseAE(chunkIndex)
+        { 
+             
+                $('#ProgressBar').show();
+                var RemoteDeferredItemReverse= $.Deferred();
+                var currchunkIndex = chunkIndex;
+                var chunkItem=revChunks[currchunkIndex];
+                var max=chunkItem['max']; 
+                var min=chunkItem['min']; 
+                voidDateTime = new Date($('input[id$="voidDateEdit"]').val());
+                tranDateTime = new Date("{!Supplier_Invoice__c.Transaction_Date__c}");
+                
+                RemoteDeferredReverse.push(RemoteDeferredItemReverse);  
+                console.log('chunks here');
+                console.log(revChunks);
+                console.log('currchunkIndex');
+                console.log(currchunkIndex);
+            
+                Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.SupplierInvoiceVoidCancelExt.reverseAEWithDates}',
+                            voidAEId, 
+                            currchunkIndex,
+                            revSize,
+                            min,
+                            max,
+                            doVoid,
+                            guid,
+                            voidDateTime,
+                            tranDateTime,
+                            function (result, event) {
+                                
+                                console.log('Entered VF Reverse');   
+                                console.log('Remote result ');
+                                console.log(result);                             
+                                EventObj=Object.create(event);
+                                if(event.status==true)
+                                {
+                                    if(!result.AllDone)
+                                    {
+                                        Progress=result.Progress;
+                                        if(Progress!=-1)
+                                            {
+                                               if(result.ChunkReverse==true)
+                                                    {                                                                                            
+                                                        reverseAE(result.NextChunkIndex);
+                                                        console.log('Progress'+result.Progress);                                        
+                                                    }
+                                                else
+                                                    {
+                                                        KenandyErp.Message(result.Messages, KenandyErp.MessageType.Error);
+                                                        KenandyErp.UnBlockUI();
+                                                        $('span[id$="Messages"]').css('display','none');  
+                                                        $('#tab').show();
+                                                        $('#ProgressBar').hide();
+                                                        //some error deleting current current chunk .Displayed in messages.  
+                                                    }  
+                                            }
+                                        else
+                                            {
+                                                //Some Error 
+                                            }
+                                         RemoteDeferredItemReverse.resolve(result, event);                                    
+                                    }
+                                    else if(result.AllDone)
+                                    {
+                                        Progress=AELineCount-1;
+                                        console.log('Reverse Complete');                                         
+                                        RemoteDeferredItemReverse.resolve(result, event);      
+                                        $.when.apply($, RemoteDeferredReverse).done( function (obj1,obj2)
+                 						
+                                        {                                                      
+                                            deferredReverse.resolve(obj1,obj2);                                              
+                                            console.log('deferredDelResolve');                                        
+                                            console.log('RemoteDeferredReverse Array');                                              
+                                            console.log(RemoteDeferredReverse); 
+                                            if(result.ChunkReverse==true)
+                                            {
+                                               var headerRowsList = [];
+                                               var headerRows = [];
+                                                
+                                               headerRowsList.push(voidSI);
+                                                
+                                                headerRows = $.map(headerRowsList, function(item, index) {
+                                                    delete item['attributes'];                      
+                                                    item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+                                                    
+                                                    return item;
+                                                });
+                                                
+                                                if (headerRows.length > 0) {
+                                                    headerRows = Serializer.ParameterMap(headerRows);
+                                                }
+                                               
+                                                Visualforce.remoting.Manager.invokeAction(
+                                                   '{!$RemoteAction.SupplierInvoiceVoidCancelExt.ActualVoidSDWithDates}',
+                                                    headerRows,
+                                                    guid, 
+                                                    voidDateTime,
+                                                    function (result, event) {
+                                                       if(event.status==true){
+                                                        
+	                                                        if (result.AllDone==true){
+	                                                            $('#tab').show();
+	                                                            $('#ProgressBar').hide();  
+	                                                            $('#voidDateEdit').hide(); 
+	                                                            KenandyErp.Message('Document Successfully Voided.', KenandyErp.MessageType.Info);
+	                                                            unblockUi();
+                                                                $('span[id$="Messages"]').css('display','none');
+	                                                        }
+	                                                        else{
+	                                                            KenandyErp.Message(result.Messages, KenandyErp.MessageType.Error);
+	                                                            $('#tab').show();
+	                                                            $('#ProgressBar').hide();  
+	                                                            KenandyErp.UnBlockUI(); 
+	                                                        }
+                                                        }
+										                else
+										                {
+					                                        var isTimeout=checkRetry(event);
+											                if(isTimeout)
+											                {	
+											                	for(var i=1; i<=numberOfRetries;i++){
+											                	var ckeckBreak = false;
+					                                                Visualforce.remoting.Manager.invokeAction(
+					                                                   '{!$RemoteAction.SupplierInvoiceVoidCancelExt.getstopRetry}',
+					                                                    voidAEId, 
+					                                                    function (result, event) {
+					                                                    	if(event.status==true){
+					                                                    		if(result == true){
+																					KenandyErp.Message('Document Successfully Voided.', KenandyErp.MessageType.Info);
+						                                                            $('#tab').show();
+						                                                            $('#ProgressBar').hide();  
+														                			ckeckBreak = true;
+														                			unblockUi();
+											                					}
+											                				}
+											                			}
+											                		);
+					                                                
+					                                                if(ckeckBreak == true){
+			                                                            $('#tab').show();
+			                                                            $('#ProgressBar').hide();  
+			                                                            KenandyErp.Message('Document Successfully Voided.', KenandyErp.MessageType.Info);
+			                                                            unblockUi();
+														            	break;
+					                                                }   													                		
+					                                                Visualforce.remoting.Manager.invokeAction(
+					                                                   '{!$RemoteAction.SupplierInvoiceVoidCancelExt.ActualVoidSD}',
+					                                                    headerRows,
+					                                                    guid, 
+					                                                    function (result, event) {
+					                                                        if(event.status==true){
+					                                                        
+						                                                        if (result.AllDone==true){
+						                                                            $('#tab').show();
+						                                                            $('#ProgressBar').hide();  
+						                                                            KenandyErp.Message('Document Successfully Voided.', KenandyErp.MessageType.Info);
+						                                                            unblockUi();
+                                                                                    $('span[id$="Messages"]').css('display','none');
+						                                                        }
+						                                                        else{
+						                                                            KenandyErp.Message(result.Messages, KenandyErp.MessageType.Error);
+						                                                            $('#tab').show();
+						                                                            $('#ProgressBar').hide();  
+						                                                            KenandyErp.UnBlockUI();  
+						                                                        }
+						                                                    }
+						                                				  }						
+					                                                );											                													                												                												                	
+											                	}
+											                }	
+											            }
+                                                        
+                                                    }
+                                                );
+                                                 
+                                              } else {
+                                                     KenandyErp.Message(event.message, KenandyErp.MessageType.Fatal);
+                                                     unblockUi();
+    
+                                              }
+                                        });                                                                     
+                                    }                           
+                                }
+                                else  //Remoting failure
+                                    {
+                                                                        
+                                        var isTimeout=checkRetry(event);
+						                if(isTimeout)
+						                {
+											if (currchunkIndex in realtimeRetriesReversal) 
+											{
+												realtimeRetriesReversal[currchunkIndex]++;
+											} 
+											else 
+											{
+												realtimeRetriesReversal[currchunkIndex] = 1;
+											}
+											
+											if (realtimeRetriesReversal[currchunkIndex] <= numberOfRetries) {
+											
+												console.log('Inside Void -'+' Current Retry Count:'+realtimeRetriesReversal[currchunkIndex]+', currchunkIndex: '+currchunkIndex+', max:'+ max+', min :'+ min +', curr time: ' + new Date());
+                                                RemoteDeferredItemReverse.resolve(result, event);						
+												reverseAE(currchunkIndex);
+												
+											} 
+											else {
+												//we hit our number of retries, time to fail
+                                                KenandyErp.Message(event.message, KenandyErp.MessageType.Fatal);
+                                                $('#tab').show();
+                                                $('#ProgressBar').hide();  
+                                                unblockUi(); 
+											}
+						                
+						                }
+						                else
+						                {
+		                                      KenandyErp.Message(event.message, KenandyErp.MessageType.Fatal);
+                                              $('#tab').show();
+                                              $('#ProgressBar').hide();  
+                                              KenandyErp.UnBlockUI();   
+						                }
+
+                                }
+    
+                            },
+                            {escape: false});
+                progressbar(Progress,AELineCount);
+                return RemoteDeferredItemReverse.promise();
+			                                 			
+        } 
+        
+        function progressbar(progressCount,LineCount)
+            {
+                var exp=LineCount;
+                var curr=progressCount;
+
+                if (pb) {
+                    pb.value(curr);
+                }
+                else {
+                    pb = $("#ProgressBar").kendoProgressBar({
+                        type: "percent",
+                        min: 0,
+                        max: exp,
+                        value: curr,
+                        animation: {
+                            duration: 200
+                        }
+                    }).data("kendoProgressBar");
+                }
+            }
+    </script>
+    <apex:outputPanel id="jsPanel">
+    
+    <script>
+   		revChunks = JSONUtils.Parse('{!reverseChunkMap}');
+   		voidAEId  = "{!voidAEId}";
+   		revSize   = "{!reverseSize}";
+   		AELineCount = "{!AELineCount}";
+   		voidSI = JSONUtils.Parse('{!voidSISer}');
+   		guid = "{!guid}";
+		numberOfRetries='{!NumberOfRetries}';
+   		if (voidSI.length > 0) {
+   			voidSI = voidSI[0];
+   			KenandyErp.CleanNamespace(voidSI, namespace);
+   			Serializer.ConvertFromSFDCDate(voidSI, { dateFields: headerDateFields });
+   		}
+		AlreadyVoided = "{!AlreadyVoided}";
+     </script>
+     </apex:outputPanel>
+</apex:page>

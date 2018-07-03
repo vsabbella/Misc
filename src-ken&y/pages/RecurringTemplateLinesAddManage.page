@@ -1,0 +1,30 @@
+<apex:page standardcontroller="Recurring_Template__c" extensions="RecurringTemplateLinesAddManageExt" doctype="html-5.0" action="{!validateRecord}">
+
+<apex:sectionHeader title="{!$ObjectType.Recurring_Template__c.Label} {!Recurring_Template__c.Name}" />
+	<apex:form id="form">
+		<apex:pageMessages />
+		<c:busyWait />
+		<apex:pageBlock >
+			<apex:pageBlockButtons location="top">
+				<apex:commandButton value="{!$Label.Go_Back}" action="{!cancel}"/>
+			</apex:pageBlockButtons>
+		</apex:pageBlock>
+		<apex:outputPanel rendered="{!!disableAction}">
+			<c:GridRelatedList uniqueId="Grid{!Recurring_Template__c.Id}" 
+					title="{!$Label.Manage_Lines}"
+					parentRecord="{!Recurring_Template__c}"
+					objectName="Recurring_Template_Line__c"  
+					fieldset="Manage" 
+					parentField="Recurring_Template__c"
+					sortField="Name" 
+					readOnlyFields="Name, Company__c"
+					buttons="create, save, cancel, delete, search"/>
+    		</apex:outputPanel>	
+	</apex:form>
+
+	<!-- <apex:outputpanel rendered="false">
+		{!Claim__c.Status__c}
+		{!Claim__c.Resolution_Code__c}
+	</apex:outputpanel> -->
+
+</apex:page>

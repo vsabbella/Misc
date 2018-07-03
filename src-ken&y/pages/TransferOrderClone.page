@@ -1,0 +1,37 @@
+<apex:page standardController="Order__c" extensions="TransferOrderCloneExt">
+    <apex:form id="theForm">
+    <c:busyWait />
+        <apex:sectionHeader subtitle="{!$Label.Clone_Transfer_Order}" title="{!$Label.Clone_Transfer_Order}" />
+        <apex:pagemessages ></apex:pagemessages>
+    <apex:pageBlock >
+        <apex:pageBlockButtons >
+        <apex:commandButton value="{!$Label.Save} " action="{!save}"  onComplete="navigateToSObject('{!redirectToRecordId}')"  accessKey="s"/>
+        <apex:commandButton value="{!$Label.Cancel} " onClick="goback()"   reRender="theForm"   status="actionStatus"/>
+        </apex:pageBlockButtons>
+        
+        <apex:pageBlockSection title="{!$Label.Transfer_Order_Information}" columns="2" collapsible="false">
+            <apex:repeat value="{!$ObjectType.Order__c.FieldSets.Clone}" var="f" > 
+            <apex:inputField value="{!Order__c[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+            </apex:repeat>            
+        </apex:pageBlockSection>
+       
+    </apex:pageBlock>
+    </apex:form>
+    <script>
+        function goback() {
+            if (typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+                sforce.one.back(true);
+            } else {
+                window.history.back();
+            }
+        }
+        function navigateToSObject(recordId) {
+            console.log(recordId);
+            if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+                sforce.one.navigateToSObject(recordId, 'detail');
+            } else {
+                window.location.href = "/" + recordId;
+            }
+        }
+    </script>
+</apex:page>

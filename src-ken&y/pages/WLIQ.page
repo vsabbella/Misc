@@ -1,0 +1,316 @@
+<apex:page standardController="Item__c" 
+    extensions="WLIQExtension" 
+    sidebar="false" tabStyle="SKID__c"
+    showHeader="false" >
+	<c:KendoResources />
+	<apex:includeScript value="{!$Resource.GridActionListJS}" />
+
+        	<div class="page-container">
+            	
+            
+            <div class="page-message"></div>
+			<apex:pagemessages /> 
+
+	<apex:pageBlock id="itemInvViewGridContainer">    
+        
+        <div class="grid-container">
+            <div class="grid-message" />
+            <div id="InventorybyFacilityGrid" />
+        </div>
+        
+    </apex:pageBlock>
+</div>
+    <script type="text/javascript">
+    
+    var InventorybyFacilityGrid;
+    var defaultItemId = '{!defaultItemId}';
+    var detailData = [];
+    var expandedRows = [];
+    var invLinesdata='';
+    var facilityIDs;
+    var locationIDs;
+    var skidFields = JSON.parse('{!JSENCODE(skidFieldsJson)}');
+    var detailFields = JSON.parse('{!JSENCODE(skiddetailFieldsJson)}');
+    
+    var getInventoryDatabyFacility = function() { 
+    	
+	     var deferred = $.Deferred();  
+	             
+	          var messageElement = $(".page-message");
+	               
+	          Visualforce.remoting.Manager.invokeAction(
+	              '{!$RemoteAction.WLIQExtension.getSkidsbyFacility}',
+	               facilityIDs!=''?facilityIDs:[],
+	               defaultItemId,
+	               function (result, event) {
+	               		if (event.type == 'exception') {
+	                        KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+	                    }
+	                    deferred.resolve(result, event);
+	                },
+	                {escape: false}
+	          
+	             );
+	            
+	            return deferred.promise();
+	};
+	
+	var getInventoryDatabyLoc = function(e,masterDataItem) {
+    
+	     var deferred = $.Deferred();  
+	             
+	          var messageElement = $(".page-message");
+	               
+	          Visualforce.remoting.Manager.invokeAction(
+	              '{!$RemoteAction.WLIQExtension.getSkidsbyLoc}',
+	               locationIDs,
+	               masterDataItem.Facility2__c,
+	               defaultItemId,
+	               function (result, event) {
+	               		if (event.type == 'exception') {
+	                        KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+	                    }
+	                    KenandyErp.CleanNamespace(result.records, '{!namespaceUU}');
+	                    deferred.resolve(result, event);
+	                    
+	                    invLinesdata = result.records;
+	                    
+	                    InvQtyViewUtils.RenderLocGrid(e);
+	                    
+	                },
+	                {escape: false}
+	          
+	             );
+	            
+	            return deferred.promise();
+	};
+	
+	$(document).on('KenandyErpReady', function(e) {
+	    
+	    InvQtyViewUtils.Init();
+	    
+	});
+	
+	var InvQtyViewUtils = function() {
+        
+        return { 
+            
+            	
+            Init: function(args) {
+            
+            	this.GetLocandFacilityIds();
+            },
+            
+            GetLocandFacilityIds: function() {
+            
+            	
+                KenandyErp.ClearMessage();       
+            	Visualforce.remoting.Manager.invokeAction(
+            			'{!$RemoteAction.WLIQExtension.getLocandFacilityIds}',
+            			 defaultItemId,
+            			function (result, event) {           
+                            locationIDs = result.records;
+                            if(result.additionalInfo !=null)
+                            	facilityIDs = JSON.parse(result.additionalInfo);
+                            else
+                            	facilityIDs = '';
+                            
+                            InvQtyViewUtils.RenderGrid();
+                        },
+                        {escape: false}
+                    );
+                   
+            },
+            
+            
+            RenderGrid:function(){
+            		
+            		var masterFieldList = this.masterFieldList;
+            		var detailFieldList = this.detailFields;
+                    var mtDateFields = KenandyErp.KendoGridOptions.GetDateFields(JSONUtils.Parse(skidFields));
+                    
+                    var skidDateFields = KenandyErp.KendoGridOptions.GetDateFields(skidFields);
+                    var gridConfig = '{!JSENCODE(invGridConfigJson)}';
+                    if (this.InventorybyFacilityGrid) {
+                		$('#InventorybyFacilityGrid').data("kendoGridActionList").destroy();
+                		$('#InventorybyFacilityGrid').off();
+                		$('#InventorybyFacilityGrid').empty();
+                		this.InventorybyFacilityGrid = null;
+                	}
+                    InventorybyFacilityGrid = $('#InventorybyFacilityGrid').kendoGridActionList({
+                        namespace: '{!NamespaceUU}', 
+                        config: gridConfig,
+                        fieldList: skidFields,
+                        getActionListFunction: getInventoryDatabyFacility,
+                        modelIdField: 'material.Id',
+                        showIconButtons: false,
+                        detailTemplate: kendo.template($("#detailTemplate").html())
+                    }).data('kendoGridActionList');
+                    
+                    
+                    InventorybyFacilityGrid.hideColumn("IsSelected__custom");
+                    InventorybyFacilityGrid.wrapper.on("click",".grid-expand-all-custom-command",$.proxy(this.ExpandRows,{ grid: InventorybyFacilityGrid }));
+                    InventorybyFacilityGrid.wrapper.on("click",".grid-collapse-all-custom-command",$.proxy(this.CollapseRows,{ grid: InventorybyFacilityGrid }));
+                    
+                    InventorybyFacilityGrid.bind("detailExpand",$.proxy(this.DetailExpand,{ grid: InventorybyFacilityGrid }));
+                    InventorybyFacilityGrid.bind("detailCollapse",$.proxy(this.DetailCollapse,{ grid: InventorybyFacilityGrid }));
+                    
+                    InventorybyFacilityGrid.bind("detailInit",$.proxy(InvQtyViewUtils.InventorybyLocationGrid,{ 
+                        grid: InventorybyFacilityGrid
+                    }));
+                    
+                    InventorybyFacilityGrid.refresh();
+            },
+            
+            ExpandCollapseRow: function() {
+                var grid = $('#InventorybyFacilityGrid').data('kendoGrid');
+                var invGridData = $('#InventorybyFacilityGrid').data('kendoGrid').dataSource.data();
+                
+                // Collapse and expand the row if the row is already expanded
+                $.each( invGridData, function(indx,valu) { 
+                    if (_.contains(expandedRows, valu.uid)) {
+                        var row = grid.tbody.find("tr[data-uid='" + valu.uid + "']");
+                        grid.collapseRow(row);
+                        grid.expandRow(row); 
+                    }
+                });
+            },
+            
+            ExpandRows: function() {
+                expandedRows = [ ];
+                var grid = this.grid;
+                grid.expandRow(grid.tbody.find("tr.k-master-row"));
+            },
+            
+            CollapseRows: function() {
+                expandedRows = [ ];
+                var grid = this.grid;
+                grid.collapseRow(grid.tbody.find("tr.k-master-row"));
+            },
+            
+            DetailExpand: function(e) {
+                var self = this;
+                var grid = self.grid;
+                var masterDataItem = grid.dataItem(e.masterRow);
+                
+                e.detailRow.find($('#InventorybyFacilityGrid')).show();
+                
+                    
+                // add row uid to the expandedRows list
+                expandedRows.push(masterDataItem.uid);
+            },
+            
+            DetailCollapse: function(e) {
+                var self = this;
+                var grid = self.grid;
+                var masterDataItem = grid.dataItem(e.masterRow);
+                
+                // remove row uid to the expandedRows list
+                expandedRows.pop(masterDataItem.uid);
+            },
+            
+            RenderLocGrid: function(e){
+            		var detailButtons =[];
+            		var lookupSearchFilters = [];  
+            		var detailReferenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(detailFields); // get the list of reference fields for the detail grid
+					var detailDateFields = KenandyErp.KendoGridOptions.GetDateFields(detailFields); // get the list of date fields for the detail grid
+                    
+                    var detailMessageElement = e.sender.element.closest("div.grid-container").find("div.grid-inventory-message");
+                    
+                    var getDetailModel = function() {
+                        var fields = KenandyErp.KendoGridOptions.GetFields(detailFields); 
+                        var model = kendo.data.Model.define({ id: "Id", fields: fields });
+                                
+                        return model;
+                    };
+                    
+                    var getDetailToolbarButtons = function() {
+                        return KenandyErp.KendoGridOptions.GetToolbarButtons(detailButtons);
+                    };
+                            
+                    var getDetailColumns = function() {
+                        return KenandyErp.KendoGridOptions.GetColumns(detailFields, { lookupSearchAction: this.lookupSearchAction, buttons: detailButtons, lookupSearchFilters: lookupSearchFilters });
+                    };
+                    
+                    var getDetailDataSource = function() {
+                        var dataSource = new kendo.data.DataSource({
+                            data: invLinesdata, 
+                            batch: true,
+                            schema: {
+                                model: getDetailModel()
+                            }
+                        });
+            			
+                        return dataSource;
+                    };
+                    var onDataBound = function(e){
+		                 if (e.sender.dataSource.total() == 0) {
+		                     var colCount = e.sender.columns.length;
+		                     
+		                     $(e.sender.wrapper)
+		                         .find('.k-grid-content tbody')
+		                         .append('<tr class="kndy-grid-empty"><td colspan="' + colCount + '" class="kndy-grid-empty-message">No records to display</td></tr>');
+		                 }
+		             };
+
+					
+                    detailGrid = e.detailRow.find(".grid-inventory-details").kendoGrid({
+                        dataSource: getDetailDataSource(), 
+                        navigatable: true,
+                        columns: getDetailColumns(),
+                        sortable: false,
+                        filterable: true,
+                        resizable: true,
+                        toolbar: getDetailToolbarButtons(),
+                        editable: true,
+                        lookupSearchAction: '{!$RemoteAction.WLIQExtension.lookupSearchFilter}',
+                        dataBound: onDataBound,
+                        edit: function(e){
+                            var input = e.container.find(".k-input");
+                            
+                            if (e.container.find('.k-numerictextbox').length > 0) {
+                                input.addClass("kndy-text-right");
+                                input.on('focus',function() {
+                                    var that = $(this);
+                                    setTimeout(function() {
+                                        if (!kendo.support.browser.safari) {
+                                            that.select();
+                                        }
+                                    });
+                                });
+                                input.focus();
+                            }
+                        
+                            $.proxy(KenandyErp.KendoGridActions.Edit,{ referenceFields: detailReferenceFields });
+                        }
+                    }).data('kendoGrid');
+            },
+            
+            InventorybyLocationGrid: function(e) {
+                    var grid = this.grid;
+                    var detaildata = e.data;
+                    var detailGrid = e.detailRow.find('div.grid-inventory-details').data('kendoGrid');
+                    var type = this.type;
+                    var detailRow = e.detailRow;
+                    var uid = e.data.uid;
+                    
+                    var parentGrid = $('#InventorybyFacilityGrid').data('kendoGridActionList');
+                    var masterDataItem = grid.dataItem(e.masterRow);
+                     
+    				var masterRowDataItem = parentGrid.dataItem(e.sender.element.closest('tr.k-detail-row').prev());
+    				getInventoryDatabyLoc(e,masterDataItem);
+                },
+            
+            
+        };
+    }();
+	
+	
+    </script>
+    <script type="text/x-kendo-template" id="detailTemplate">
+        <div class="grid-container grid-detail-container k-block k-info-colored">
+            <div class="grid-inventory-message" />
+            <div class="grid-inventory-details" />
+        </div>
+    </script>
+</apex:page>

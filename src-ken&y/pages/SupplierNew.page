@@ -1,0 +1,154 @@
+<apex:page sidebar="false" standardController="Supplier__c" extensions="SupplierExt" tabStyle="Supplier__c">
+    <apex:form id="mainForm">
+    <c:busyWait />
+    <div style="display:none;">
+    	<apex:repeat value="{!supplierStringFields}" var="f">
+    		<apex:outputField value="{!Supplier__c[f]}" />
+    	</apex:repeat>
+    </div>
+    	<apex:sectionHeader subtitle="{!$ObjectType.Supplier__c.label}" title="{!IF(Supplier__c.id!=null,$Label.edit,$Label.Create)}" />
+        <apex:pageMessages />
+        <apex:pageBlock mode="edit">
+            <apex:pageBlockButtons >
+                <apex:commandButton value="{!$Label.Save}" action="{!save}" status="actionStatus" reRender="mainForm" accessKey="s"/>
+                <apex:commandButton value="{!$Label.Cancel}" action="{!cancel}" status="actionStatus" reRender="mainForm"/>
+            </apex:pageBlockButtons>
+            
+            <apex:outputPanel id="details">
+            <apex:actionRegion >
+	            <apex:pageBlockSection title="{!$Label.Supplier_Details}" columns="2" collapsible="false" rendered="{!recordTypeName=='Purchase_From'}">
+	            	 <apex:repeat value="{!$ObjectType.Supplier__c.FieldSets.New_Purchase_From}" var="f">
+	            	 <apex:pageBlockSectionItem rendered="{!AND(f.fieldPath!=Namespace+'Type__c',OR(f.required, f.dbrequired))}">
+	                     <apex:outputLabel value="{!f.Label}" />
+	                     <apex:outputPanel >
+	                    	 <div class="requiredInput">
+		                         <div class="requiredBlock"></div>
+		                         <apex:inputField value="{!Supplier__c[f.fieldPath]}" required="false" >
+			                         <apex:outputPanel rendered="{!OR(f.required, f.dbrequired) && OR(ISNULL(Supplier__c[f.fieldPath]), ISBLANK(Supplier__c[f.fieldPath])) && pageSubmitted}">
+							        	<div class="errorMsg"><strong>{!$Label.Error}</strong>&nbsp;{!$Label.Enter_a_value}</div>
+							        </apex:outputPanel>
+			                     </apex:inputField>
+	                    	 </div>
+	                    </apex:outputPanel>
+					</apex:pageBlockSectionItem>
+					<apex:inputField value="{!Supplier__c[f.fieldPath]}" required="false" rendered="{!AND(f.fieldPath!=Namespace+'Type__c',!f.required,!f.dbrequired)}">
+                        <apex:outputPanel rendered="{!OR(f.required, f.dbrequired) && OR(ISNULL(Supplier__c[f.fieldPath]), ISBLANK(Supplier__c[f.fieldPath])) && pageSubmitted}">
+				        	<div class="errorMsg"><strong>{!$Label.Error}</strong>&nbsp;{!$Label.Enter_a_value}</div>
+				        </apex:outputPanel>
+                    </apex:inputField>
+					<apex:inputField value="{!Supplier__c[f.fieldPath]}" required="{!OR(f.required, f.dbrequired)}" rendered="{!AND(f.fieldPath==Namespace+'Type__c',!f.required, !f.dbrequired)}" >
+						<apex:outputPanel rendered="{!OR(f.required, f.dbrequired) && OR(ISNULL(Supplier__c[f.fieldPath]), ISBLANK(Supplier__c[f.fieldPath])) && pageSubmitted}">
+				        	<div class="errorMsg"><strong>{!$Label.Error}</strong>&nbsp;{!$Label.Enter_a_value}</div>
+				        </apex:outputPanel>
+					</apex:inputField>
+	                </apex:repeat>
+	            </apex:pageBlockSection>
+	           
+	            
+	            
+	            <apex:pageBlockSection title="{!$Label.Supplier_Details}" columns="2" collapsible="false" rendered="{!recordTypeName=='Remit_To'}">
+	            	<apex:repeat value="{!$ObjectType.Supplier__c.FieldSets.New_Remit_To}" var="f">
+	            	<apex:pageBlockSectionItem rendered="{!AND(f.fieldPath!=Namespace+'Type__c',OR(f.required, f.dbrequired))}">
+	                     <apex:outputLabel value="{!f.Label}" />
+	                     <apex:outputPanel >
+	                    	 <div class="requiredInput">
+		                         <div class="requiredBlock"></div>
+		                         <apex:inputField value="{!Supplier__c[f.fieldPath]}" required="false" >
+			                         <apex:outputPanel rendered="{!OR(f.required, f.dbrequired) && OR(ISNULL(Supplier__c[f.fieldPath]), ISBLANK(Supplier__c[f.fieldPath])) && pageSubmitted}">
+							        	<div class="errorMsg"><strong>{!$Label.Error}</strong>&nbsp;{!$Label.Enter_a_value}</div>
+							        </apex:outputPanel>
+			                     </apex:inputField>
+	                    	 </div>
+	                    </apex:outputPanel>
+	                    
+					</apex:pageBlockSectionItem>
+					<apex:inputField value="{!Supplier__c[f.fieldPath]}" required="false" rendered="{!AND(f.fieldPath!=Namespace+'Type__c',!f.required,!f.dbrequired)}">
+                        <apex:outputPanel rendered="{!OR(f.required, f.dbrequired) && OR(ISNULL(Supplier__c[f.fieldPath]), ISBLANK(Supplier__c[f.fieldPath])) && pageSubmitted}">
+				        	<div class="errorMsg"><strong>{!$Label.Error}</strong>&nbsp;{!$Label.Enter_a_value}</div>
+				        </apex:outputPanel>
+                    </apex:inputField>
+					<apex:inputField value="{!Supplier__c[f.fieldPath]}" required="{!OR(f.required, f.dbrequired)}" rendered="{!AND(f.fieldPath==Namespace+'Type__c',!f.required, !f.dbrequired)}" >
+						<apex:outputPanel rendered="{!OR(f.required, f.dbrequired) && OR(ISNULL(Supplier__c[f.fieldPath]), ISBLANK(Supplier__c[f.fieldPath])) && pageSubmitted}">
+				        	<div class="errorMsg"><strong>{!$Label.Error}</strong>&nbsp;{!$Label.Enter_a_value}</div>
+				        </apex:outputPanel>
+					</apex:inputField>
+	                </apex:repeat>
+	            </apex:pageBlockSection>
+	            
+	            <apex:pageBlockSection title="{!$Label.Supplier_Details}" columns="2" collapsible="false" rendered="{!AND(recordTypeName!='Purchase_From',recordTypeName!='Remit_To')}">
+	            	 <apex:repeat value="{!$ObjectType.Supplier__c.FieldSets.New}" var="f">
+	            	 <apex:pageBlockSectionItem rendered="{!AND(f.fieldPath!=Namespace+'Type__c',OR(f.required, f.dbrequired))}">
+	                     <apex:outputLabel value="{!f.Label}" />
+	                     <apex:outputPanel >
+	                    	 <div class="requiredInput">
+		                         <div class="requiredBlock"></div>
+		                         <apex:inputField value="{!Supplier__c[f.fieldPath]}" required="false" >
+			                         <apex:outputPanel rendered="{!OR(f.required, f.dbrequired) && OR(ISNULL(Supplier__c[f.fieldPath]), ISBLANK(Supplier__c[f.fieldPath])) && pageSubmitted}">
+							        	<div class="errorMsg"><strong>{!$Label.Error}</strong>&nbsp;{!$Label.Enter_a_value}</div>
+							        </apex:outputPanel>
+			                     </apex:inputField>
+	                    	 </div>
+	                    </apex:outputPanel>
+					</apex:pageBlockSectionItem>
+					<apex:inputField value="{!Supplier__c[f.fieldPath]}" required="false" rendered="{!AND(f.fieldPath!=Namespace+'Type__c',!f.required,!f.dbrequired)}">
+                        <apex:outputPanel rendered="{!OR(f.required, f.dbrequired) && OR(ISNULL(Supplier__c[f.fieldPath]), ISBLANK(Supplier__c[f.fieldPath])) && pageSubmitted}">
+				        	<div class="errorMsg"><strong>{!$Label.Error}</strong>&nbsp;{!$Label.Enter_a_value}</div>
+				        </apex:outputPanel>
+                    </apex:inputField>
+					<apex:inputField value="{!Supplier__c[f.fieldPath]}" required="{!OR(f.required, f.dbrequired)}" rendered="{!AND(f.fieldPath==Namespace+'Type__c',!f.required, !f.dbrequired)}" >
+						<apex:outputPanel rendered="{!OR(f.required, f.dbrequired) && OR(ISNULL(Supplier__c[f.fieldPath]), ISBLANK(Supplier__c[f.fieldPath])) && pageSubmitted}">
+				        	<div class="errorMsg"><strong>{!$Label.Error}</strong>&nbsp;{!$Label.Enter_a_value}</div>
+				        </apex:outputPanel>
+					</apex:inputField>
+	                </apex:repeat>
+	            </apex:pageBlockSection>
+	            
+	        </apex:actionRegion>
+            </apex:outputPanel>
+            <apex:pageBlockSection title="{!$ObjectType.Supplier__c.Fields.Address__c.Label}" columns="2" collapsible="false">
+                <apex:inputField label="{!$ObjectType.Facility__c.Fields.Street_Address__c.Label}" value="{!Supplier__c.Supplier_Street__c}" />
+                <apex:inputField label="{!$ObjectType.Supplier__c.Fields.State__c.Label}" value="{!Supplier__c.Supplier_State__c}" />
+                <apex:inputField label="{!$ObjectType.Supplier__c.Fields.Street_1__c.Label}" value="{!Supplier__c.Street_1__c}" />
+                <apex:inputField label="{!$ObjectType.Facility__c.Fields.Zip_Postal_Code__c.Label}" value="{!Supplier__c.Supplier_Zip_Code__c}" />
+                <apex:inputField label="{!$ObjectType.Supplier__c.Fields.Street_2__c.Label}" value="{!Supplier__c.Street_2__c}" />
+                <apex:inputField label="{!$ObjectType.Supplier__c.Fields.Country__c.Label}" value="{!Supplier__c.Supplier_Country__c}" />
+                <apex:inputField label="{!$ObjectType.Supplier__c.Fields.City__c.Label}" value="{!Supplier__c.Supplier_City__c}" />
+            </apex:pageBlockSection>
+            <apex:pageBlockSection title="{!$Label.Contact_Information}" columns="2" collapsible="false">
+                <apex:repeat value="{! $ObjectType.Supplier__c.FieldSets.Contact_Information }" var="f">
+                    <apex:inputField value="{!Supplier__c[f.fieldPath ]}" required="{!OR(f.required, f.dbrequired)}" />
+                </apex:repeat>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection title="{!$Label.Tax_Information}" columns="2" collapsible="false">
+                <apex:repeat value="{! $ObjectType.Supplier__c.FieldSets.Tax_Info }" var="f">
+                    <apex:inputField value="{!Supplier__c[f.fieldPath]}" required="{!OR(f.required, f.dbrequired)}" />
+                </apex:repeat>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection title="{!$Label.Order_Preferences}" columns="2" collapsible="false">
+                <apex:repeat value="{! $ObjectType.Supplier__c.FieldSets.Order_Preferences }" var="f">
+                    <apex:inputField value="{!Supplier__c[f.fieldPath]}" required="{!OR(f.required, f.dbrequired)}" />
+                </apex:repeat>
+            </apex:pageBlockSection>
+            <apex:outputPanel id="procurementPref">
+	            <apex:pageBlockSection title="{!$Label.Procurement_Preferences}" columns="2" collapsible="false" rendered="{!recordTypeName=='Purchase_From'}" >
+	                <apex:repeat value="{! $ObjectType.Supplier__c.FieldSets.Procurement_Preferences }" var="f">
+	                    <apex:inputField value="{!Supplier__c[f.fieldPath]}" required="{!OR(f.required, f.dbrequired)}" />
+	                </apex:repeat>
+	            </apex:pageBlockSection>
+            </apex:outputPanel>
+            <apex:outputPanel id="remittancePref">
+	            <apex:pageBlockSection title="{!$Label.Remittance_Preferences}" columns="2" collapsible="false" rendered="{!recordTypeName=='Remit_To'}">
+	                <apex:repeat value="{! $ObjectType.Supplier__c.FieldSets.Remittance_Preferences }" var="f">
+	                    <apex:inputField value="{!Supplier__c[f.fieldPath]}" required="{!OR(f.required, f.dbrequired)}" />
+	                </apex:repeat>
+	            </apex:pageBlockSection>
+            </apex:outputPanel>
+            <apex:pageBlockSection title="{!$Label.Consignment_Information}" columns="2" collapsible="false">
+                <apex:repeat value="{! $ObjectType.Supplier__c.FieldSets.Consignment_Information }" var="f">
+                    <apex:inputField value="{!Supplier__c[f.fieldPath]}" required="{!OR(f.required, f.dbrequired)}" />
+                </apex:repeat>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+
+</apex:page>

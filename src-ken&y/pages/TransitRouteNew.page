@@ -1,0 +1,27 @@
+<apex:page standardController="Transit_Route__c" extensions="TransitRouteNewExt">
+    <apex:form >
+        <apex:sectionHeader subtitle="{!$Label.New} {!$ObjectType.Transit_Route__c.Label}" title="{!$Label.New} {!$ObjectType.Transit_Route__c.Label}"/>
+        <apex:pagemessages ></apex:pagemessages>
+    <apex:pageBlock >
+        <apex:pageBlockButtons >
+        <apex:commandButton value="{!$Label.Save} " action="{!save}" accessKey="s"/>
+        <apex:commandButton value="{!$Label.Save_New}" action="{!SaveAndNew}"/>  
+        <apex:commandButton value="{!$Label.Cancel} " action="{!cancel}"/>
+       
+        </apex:pageBlockButtons>
+        
+        <apex:pageBlockSection title="{!$Label.Transit_Route_Information}" columns="2" collapsible="false">
+            <apex:repeat value="{!$ObjectType.Transit_Route__c.FieldSets.New_Transit_Route}" var="f" > 
+            <apex:inputField value="{!newObj[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+            </apex:repeat>            
+        </apex:pageBlockSection>
+        
+        <apex:pageBlockSection title="Freight Allowance Information" columns="2" collapsible="false">
+            <apex:repeat value="{!$ObjectType.Transit_Route__c.FieldSets.Freight_Allowances}" var="f">
+                <apex:inputField value="{!Transit_Route__c[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+            </apex:repeat>
+        </apex:pageBlockSection>
+        
+       </apex:pageBlock>
+    </apex:form>      
+</apex:page>

@@ -1,0 +1,104 @@
+<apex:page showHeader="true" sidebar="true" extensions="BracketPricingUpchargeManageExt" standardController="Company__c" docType="html-5.0" >
+    <apex:includeScript value="{!URLFOR($Resource.KendoUI, '/js/jquery.min.js')}" />
+	<style type="text/css">
+	.bracketTbl  {
+		width: 60% !important;
+	}
+	.bracketTbl td,th {
+		text-align: center;
+	}
+	.inputCell {
+		width: 150px;		
+	}
+	.errorCell {
+		border-color: red;
+	}
+	</style>
+	<apex:sectionHeader title="{!Company__c.Name}" subtitle="{!$Label.Manage_Bracket_Pricing}" />
+	<apex:form id="MainForm">
+		<c:busyWait />
+		<apex:pageBlock title="{!$Label.Upcharges}" id="pageBlockContainer">
+			<apex:pageMessages />
+
+			<apex:pageBlockButtons location="top">
+				<apex:commandButton value="{!$Label.Save}" id="saveBtn" onClick="return onSaveClick(this);return false;" accessKey="s"></apex:commandButton>
+				<apex:actionFunction name="saveAction" action="{!onSave}" status="actionStatus" rerender="pageBlockContainer"></apex:actionFunction>
+				<apex:commandButton action="{!cancel}" value="{!$Label.Cancel}" immediate="true" status="actionStatus" rerender="MainForm"></apex:commandButton>
+			</apex:pageBlockButtons>		
+			
+			<apex:pageBlockTable value="{!bracketWraps}" var="bw" width="50%" styleClass="bracketTbl" cellspacing="12" cellpadding="6">
+				<apex:column headerValue="{!$Label.Use_this_bracket}" styleClass="alignCenter">
+					<apex:inputCheckbox value="{!bw.inUse}">
+					</apex:inputCheckbox>
+				</apex:column>
+				<apex:column headerValue="{!$Label.Lower_limit_of_weight}">
+					<apex:input value="{!bw.volumeRangeBottom}" html-placeholder="5000" type="number" styleClass="alignCenter inputCell numericInput">
+					</apex:input>
+				</apex:column>
+				<apex:column headerValue="{!$Label.Upcharge}">
+					<apex:input value="{!bw.percentUpCharge}" html-placeholder="5" type="number" styleClass="inputCell alignCenter numericInput">
+					</apex:input>
+				</apex:column>
+
+				<apex:column headerValue="{!$Label.Pricebook_Line_Field}" styleClass="inputCell">
+					<apex:selectList value="{!bw.pricebookLineField}" size="1" styleClass="inputCell alignCenter">
+			            <apex:selectOption itemValue="Price__c" itemLabel="Price"/>
+			            <apex:selectOption itemValue="Price_2__c" itemLabel="Price 2"/>
+						<apex:selectOption itemValue="Price_3__c" itemLabel="Price 3"/>			            
+						<apex:selectOption itemValue="Price_4__c" itemLabel="Price 4"/>			            
+						<apex:selectOption itemValue="Price_5__c" itemLabel="Price 5"/>			            
+			        </apex:selectList> 
+				</apex:column>
+			</apex:pageBlockTable>
+		
+			<script type="text/javascript">
+			
+				function enableOrDisableLine() {
+					var tr = $(this).closest('tr');
+					var inputElems = tr.find('.inputCell');
+					inputElems.prop('disabled', !this.checked);
+					if (!this.checked) {
+						tr.find('input.numericInput').val('');
+						inputElems.removeClass('errorCell');
+					}
+				}
+				
+				function validateNumericInput() {							
+					var str = $(this).val();							
+					if ( /^\d+(\.\d+)?$/.test(str)) {								
+						$(this).removeClass('errorCell');
+					} else {
+						$(this).addClass('errorCell');
+					}
+				}
+								
+				function onSaveClick(e) {
+					var pbContainer = $('div[id$=pageBlockContainer]');
+					pbContainer.find('input.numericInput:not([disabled])').each(validateNumericInput);
+					
+					if (pbContainer.find('input.errorCell').length == 0) {
+						e.value = 'Saving...';
+						// call action function
+						saveAction();
+					}
+					return false;
+				}
+				
+				
+			
+				$(document).ready(function (){
+					var pbContainer = $('div[id$=pageBlockContainer]'); 
+					
+					// enable disable stuff on checking
+					pbContainer.find('input[type=checkbox]')
+						.click(enableOrDisableLine)
+						.each(enableOrDisableLine);
+					
+					pbContainer.find('input.numericInput').blur(validateNumericInput);
+					
+				});
+			</script>
+		</apex:pageBlock>
+
+	</apex:form>
+</apex:page>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <columns>
+        <field>CUST_NAME</field>
+    </columns>
+    <columns>
+        <field>Customer__c.Street__c</field>
+    </columns>
+    <columns>
+        <field>Customer__c.City__c</field>
+    </columns>
+    <columns>
+        <field>Customer__c.State__c</field>
+    </columns>
+    <columns>
+        <field>Customer__c.Zip_Code__c</field>
+    </columns>
+    <columns>
+        <field>Customer__c.Payment_Term__c</field>
+    </columns>
+    <description>Bill to customer without payment terms</description>
+    <filter>
+        <criteriaItems>
+            <column>CUST_RECORDTYPE</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>equals</operator>
+            <value>Customer__c.Bill_To</value>
+        </criteriaItems>
+        <criteriaItems>
+            <column>Customer__c.Payment_Term__c</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>equals</operator>
+            <value></value>
+        </criteriaItems>
+    </filter>
+    <format>Summary</format>
+    <groupingsDown>
+        <dateGranularity>Day</dateGranularity>
+        <field>Customer__c.Company__c</field>
+        <sortOrder>Asc</sortOrder>
+    </groupingsDown>
+    <name>Bill To Customers without Payment Terms</name>
+    <params>
+        <name>co</name>
+        <value>1</value>
+    </params>
+    <reportType>CustomEntity$Customer__c</reportType>
+    <scope>organization</scope>
+    <showDetails>true</showDetails>
+    <timeFrameFilter>
+        <dateColumn>Customer__c.Next_Credit_Check_Date__c</dateColumn>
+        <interval>INTERVAL_CUSTOM</interval>
+    </timeFrameFilter>
+</Report>

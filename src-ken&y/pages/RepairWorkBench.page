@@ -1,0 +1,188 @@
+<apex:page id="RepairWorkBench" showHeader="true" sidebar="true" controller="RepairWorkBenchCon" tabStyle="ASN_Line__c" readOnly="true" docType="html-5.0">
+    <c:KendoResources />
+    <c:RepairGrid elementSelector="RepairGrid" />
+
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+
+    <script>
+        var repairWorkBench = repairWorkBench || {};
+
+        (function (repairWorkBench) {
+            var lookupSearchAction = '{!$RemoteAction.RepairWorkBenchCon.lookupSearchFilter}';
+            var namespaceUU = '{!JSENCODE(NamespaceUU)}';
+            var lookupSearchFilters = [];
+            var fieldListParsed = JSONUtils.Parse(
+                    {!ibFieldList} );
+
+            repairWorkBench.loadGrid = function(){
+                $('[id$=ibSkidsGridContainer]').hide();
+
+                var tabStrip = $("#tabstrip").kendoTabStrip({
+
+                    animation: false,
+
+                    contentUrls: [ , , , , , , ]
+
+                }).data("kendoTabStrip").select(0);
+
+                var customerFilterSelector = $("#customerFilter");
+                var serialFilterSelector = $("#serialFilter");
+                var customerFilter = customerFilterSelector.data("kendoComboBox");
+                var serialFilter = serialFilterSelector.data("kendoComboBox");
+                if (!customerFilter) {
+                    $.fn.KendoComboBox(customerFilterSelector, {
+                        lookupSearchAction: '{!$RemoteAction.RepairWorkBenchCon.lookupSearchFilter}',
+                        referenceTo: 'Customer__c',
+                        title: '{!$ObjectType.Customer__c.Label}'
+                    });
+                }
+                if (!serialFilter) {
+                    $.fn.KendoComboBox(serialFilterSelector, {
+                        lookupSearchAction: '{!$RemoteAction.RepairWorkBenchCon.lookupSearchFilter}',
+                        referenceTo: 'Serial__c',
+                        title: '{!$ObjectType.Serial__c.Label}'
+                    });
+                }
+                $("#searchFilter").bind("click", function (e) {
+                    var customer = customerFilterSelector.data("kendoComboBox").value();
+                    var serial = serialFilterSelector.data("kendoComboBox").value();
+
+                    var skidSearchData = function () {
+                        var deferred = $.Deferred();
+
+                        Visualforce.remoting.Manager.invokeAction(
+                                '{!$RemoteAction.RepairWorkBenchCon.searchIBSkids}',
+                                customer,
+                                serial,
+                                function (result, event) {
+                                    deferred.resolve(result, event);
+                                },
+                                {escape: false}
+                        );
+
+                        return deferred.promise();
+                    }
+                    $('[id$=ibSkidsGridContainer]').show();
+
+                    var ibSkidsGridSelector = $('#ibSkidsGrid');
+                    if (ibSkidsGridSelector.data("kendoGridActionList")) {
+                        ibSkidsGridSelector.data("kendoGridActionList").destroy();
+                        ibSkidsGridSelector.off();
+                        ibSkidsGridSelector.empty();
+                    }
+                    var dateFields = KenandyErp.KendoGridOptions.GetDateFields(fieldListParsed);
+                    var ibSkidGrid = ibSkidsGridSelector.kendoGridActionList({
+                        namespace: namespaceUU,
+                        config: JSONUtils.Parse('{!JSEncode(configJson)}'),
+                        fieldList: fieldListParsed,
+                        lookupSearchAction: lookupSearchAction,
+                        toolbarButtons: [{
+                            name: "grid-select-warranty-custom-command",
+                            text: "",
+                            template: "<input type='button' value='Create Repair Documents' class='k-button kndy-btn grid-create-repair-custom-command' />"
+                        }],
+                        getActionListFunction: skidSearchData
+                    }).data('kendoGridActionList');
+
+                    ibSkidGrid.wrapper.on("click", ".grid-create-repair-custom-command", function (e) {
+                        var gridUtils = new KendoGridUtils(ibSkidGrid, {isDml: false});
+                        var selectedRows = gridUtils.SelectedRows();
+
+                        var messageElement = $('#ibSkidsGrid').closest("div.grid-container").find("div.grid-message:first");
+
+                        if (selectedRows.length == 0) {
+                            KenandyErp.Message("No records selected.", KenandyErp.MessageType.Info, messageElement);
+                            return;
+                        }
+						
+						var masterDateFields = KenandyErp.KendoGridOptions.GetDateFields(fieldListParsed);						
+                        var lines = [];
+                        $.map(selectedRows, function(item, index) {
+                   
+                            item = Serializer.ConvertToSFDCDate(item, { dateFields: masterDateFields });
+                            delete item.Serials__r;
+                            return item;                                                                                                          
+                        });
+                        
+                        selectedRows = Serializer.ParameterMap(selectedRows);
+                        
+                        Visualforce.remoting.Manager.invokeAction(
+                                '{!$RemoteAction.RepairWorkBenchCon.createRepairDocuments}',
+                                selectedRows,
+                                function (result, event) {                                	
+                                    repairGrid.loadGrid(result.records);
+                                    $('#tabstrip').data('kendoTabStrip').select(1);
+                                },
+                                {escape: false}
+                        );
+                    });
+                });
+                $("#clearFilter").unbind("click").bind("click", function(e) {
+                    e.preventDefault();
+                    $("#customerFilter").data("kendoComboBox").value("");
+                    $("#serialFilter").data("kendoComboBox").value("");
+                } );
+
+            }
+        } )(repairWorkBench);
+
+        $(document).on('RepairGridReady', function(e) {
+            repairWorkBench.loadGrid();
+        } );
+    </script>
+
+    <apex:form id="repairWorkbenchForm">
+        <div class="page-container">
+            <apex:sectionHeader subtitle="{!$Label.Repair_WorkBench}" />
+            <div class="page-message"></div>
+            <apex:pageMessages id="msgs"/>
+            <div id="tabstrip">
+                <ul id="tabListId">
+                    <li class = "k-state-active">Search</li>
+                    <li>Repair</li>
+                </ul>
+                <div>
+                    <apex:pageBlock title="{!$Label.Filters}" >
+                        <table class="kndy-table" >
+                            <tr>
+                                <td class="column-label">
+                                    <apex:outputLabel value="{!$ObjectType.Customer__c.Label}" for="customerFilter" />:
+                                </td>
+                                <td class="column-field">
+                                    <input id="customerFilter" class="kendoWidgetSelector" />
+                                </td>
+                                <td class="column-label">
+                                    <apex:outputLabel value="{!$ObjectType.Serial__c.Label}"  for="serialFilter" />:
+                                </td>
+                                <td class="column-field">
+                                    <input id="serialFilter" class="kendoWidgetSelector" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="1">&nbsp;</td>
+                                <td>
+                                    <input name="searchFilter" id="searchFilter" type="button" value="{!$Label.Search}" class="k-button kndy-btn" />
+                                    <input name="clearFilter" id="clearFilter" type="button" value="{!$Label.CSReset}" class="k-button kndy-btn" />
+                                </td>
+                            </tr>
+                        </table>
+                    </apex:pageBlock>
+                    <apex:pageBlock id="ibSkidsGridContainer">
+                        <div class="grid-container k-block k-info-colored">
+                            <div class="grid-message"></div>
+                            <div id="ibSkidsGrid" ></div>
+                        </div>
+                    </apex:pageBlock>
+                </div>
+                <div>
+                    <apex:pageBlock id="RepairGridContainer">
+                        <div class="grid-container">
+                            <div class="grid-message"></div>
+                            <div id="RepairGrid" ></div>
+                        </div>
+                    </apex:pageBlock>
+                </div>
+            </div>
+        </div>
+    </apex:form>
+</apex:page>

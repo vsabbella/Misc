@@ -1,0 +1,186 @@
+<apex:page standardController="Budget__c" extensions="BudgetImportCon">
+    <c:KendoResources />
+    <apex:includeScript value="{!URLFOR($Resource.PapaParse, '/PapaParse-4.1.2/papaparse.min.js')}" />
+    
+    <apex:form id="form">
+    	<apex:pageBlock title="{!Budget__c.Name}: {!SUBSTITUTE($Label.Import_Records, '{0}', $ObjectType.Budget_Line1__c.labelPlural)}" mode="detail" >
+    		<apex:pageMessages id="msgs" escape="false" />
+         
+            <apex:pageBlockButtons location="both">
+                <apex:commandButton onclick="uploadFile();" value=" {!$Label.Upload} " rerender="dummy" rendered="{!NOT(disableFileUpload)}" />&nbsp;&nbsp;
+                <apex:commandButton onclick="return window.confirm('{!$Label.ConfirmCancel}');" action="{!cancel}" value=" {!$Label.Cancel} " />
+            </apex:pageBlockButtons>
+            
+            <apex:outputPanel rendered="{!NOT(disableFileUpload)}">
+            	<div style="margin-left: 30%">
+	                <br/><br/>
+	                <b>
+		                <label for='actionsCSV'>
+			                <apex:outputText style="font-style:italic" value="{!SUBSTITUTE($Label.Please_select_a_record, '{0}', $Label.File_lowercase)}: " />
+						    &nbsp;&nbsp;&nbsp;&nbsp;
+		                </label>
+	                </b>
+	                <input style="width:50%" type='file' id='actionsFile' accept="text/csv" />
+	                <br/><br/>
+                </div>
+            </apex:outputPanel>
+            
+            <div class="page-message">
+            </div>
+            
+        </apex:pageBlock>
+    </apex:form>
+    
+    <script type="text/javascript">
+        
+        function uploadFile(){               
+            if (!window.File || !window.FileReader || !window.FileList || !window.Blob) {
+                alert("{!$Label.Browser_does_not_support_feature}");
+                return;
+            }   
+            
+            input = document.getElementById('actionsFile');
+            
+            if (!input) {
+                alert("{!$Label.Element_not_found}");
+            }
+            else if (!input.files) {
+                alert("{!$Label.Browser_does_not_support_feature}");
+            }
+            else if (!input.files[0]) {
+            	alert("{!SUBSTITUTE($Label.Please_select_a_record, '{0}', $Label.File_lowercase)}.");
+            }
+            else if(input.files[0].name.endsWith('.csv') == false){
+            	alert("{!$Label.File_must_be_in_specified_format}");
+            }
+            else {
+                file = input.files[0];
+              
+                // Parse local CSV file
+                Papa.parse(file, {
+                    dynamicTyping: true,
+                    complete: function(results) {
+                    	if(results.errors == undefined || results.errors.length == 0){
+                        	save(results.data);
+                        }else{
+                        	var errorMessage = "{!$Label.Please_review_the_following_errors} \n";
+                        	for(var i=0; i<results.errors.length; i++){
+                        		errorMessage = errorMessage + results.errors[i].message + "\n";
+                        	}
+                        	alert(errorMessage);
+                        }
+                    }
+                });
+            }
+        }
+
+        function save(dataRows) {
+            KenandyErp.BlockUI();
+            
+            var budgetLines = [];
+            var headerColumns = dataRows[0];
+            var segments = JSON.parse('{!segmentsJSON}');
+            var segmentIndexes = {};
+            
+            var headerLength = 0;
+            
+            // Find where the period columns start by looking at the values provided.
+            for(var indx=0; indx < dataRows[1].length; indx++){ 
+            	if(isNaN(dataRows[1][indx]) || dataRows[1][indx] === ''){
+            		headerLength++;
+            	}else{
+            		break;
+            	}
+            }
+            
+            var segmentLength = 0;
+            
+            for(var key in segments){
+            	segmentLength++;
+            }
+            
+            for(var indx=0; indx < segmentLength; indx++){
+                segmentIndexes[headerColumns[indx]] = indx;
+            }
+            
+            if(segmentLength > headerLength){
+	            for(var segmentLabel in segments){
+	                if(!_.has(segmentIndexes, segmentLabel)){
+	                	alert("'" + segmentLabel + "' {!$Label.Column_is_missing_from_file}" );
+	                	KenandyErp.UnBlockUI();
+	                    return false;
+	                }
+	            }
+            }
+            
+            if(segmentLength < headerLength){
+	            for(var s=0; s < headerLength; s++){
+	                if(!_.has(segments, headerColumns[s])){
+	                	alert("{!$Label.Segment_not_defined}  " + headerColumns[s] );
+	                	KenandyErp.UnBlockUI();
+	                    return false;
+	                }
+	            }
+            }
+            
+            for(var i=1; i<dataRows.length; i++){ // IGNORE THE HEADER ROW.
+                var dataColumns = dataRows[i];
+                var lineSegments = {};
+                    
+                // Populate the segments.
+                for(var label in segments){
+                    var fieldLabel = segments[label].title;
+                    var fieldName = segments[label].field;
+                    var fieldType = segments[label].fieldtype;
+                    var segmentValue = dataColumns[segmentIndexes[fieldLabel]]; // Select the correct column based on the label.
+                    
+                    if(fieldType === 'string' || fieldType === 'textarea'  || fieldType === 'picklist' 
+                        || fieldType === 'encryptedstring' || fieldType === 'reference'){
+                        
+                        segmentValue = decodeText(segmentValue);
+                    }
+                    
+                    lineSegments[fieldName] = segmentValue;
+                }
+                
+                // Populate the periods
+                for(var p = segmentLength; p < dataColumns.length; p++){ // Other than segments should be periods.
+                    var dataValue = dataColumns[p];
+                    var budgetLine = {};
+                    
+                    for(var lineSegmentField in lineSegments){
+                        var lineSegmentValue = lineSegments[lineSegmentField];
+                        budgetLine[lineSegmentField] = lineSegmentValue;
+                    }
+                    budgetLine.Period__c = headerColumns[p];
+                    budgetLine.Budget_Amount__c = decodeText(dataValue);
+                    budgetLines.push(budgetLine);
+                }
+            }
+            
+            var budgetReference = '{!Budget__c.Id}';
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.BudgetImportCon.saveBudgetLines}',
+                budgetReference,
+                headerColumns,
+                budgetLines,
+                function(result, event){
+                    if (result.success) {
+                        KenandyErp.NavigateToSObject(budgetReference);
+                    } else {
+                        KenandyErp.Messages(result.messages);
+                    }
+                    KenandyErp.UnBlockUI();
+                }, 
+                {escape: true}
+            );
+        }
+        
+        function decodeText(textValue) {
+            var txt = document.createElement("textarea");
+            txt.innerHTML = textValue;
+            return txt.value;
+        }
+    </script>
+</apex:page>

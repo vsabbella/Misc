@@ -1,0 +1,556 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpBankAccounts</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Bank Account Information</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableEnhancedLookup>true</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>Linked_Account_with_Yodlee</fullName>
+        <availableFields>
+            <field>Bank_Account_Number_2__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Yodlee_Account_Linkage_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Yodlee_Account_Site_ID__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <description>This field set is used for displaying columns for all accounts linked to yodlee</description>
+        <displayedFields>
+            <field>Yodlee_Account_Name__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Yodlee_Account_Number__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Linked Account with Yodlee</label>
+    </fieldSets>
+    <fields>
+        <fullName>Account_Type__c</fullName>
+        <description>Bank account type</description>
+        <externalId>false</externalId>
+        <label>Account Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Checking</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Savings</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Active__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Active account if selected; otherwise inactive</description>
+        <externalId>false</externalId>
+        <label>Active</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Balance_Offset__c</fullName>
+        <description>Balance offset for Bank Reconciliation.</description>
+        <externalId>false</externalId>
+        <label>Balance Offset</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>2</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Bank_Account_Number_2__c</fullName>
+        <externalId>false</externalId>
+        <label>Bank Account Number</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Bank_Account_Number__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description></description>
+        <externalId>false</externalId>
+        <label>DEPRECATED</label>
+        <length>30</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Bank_Contact__c</fullName>
+        <description>Bank manager or other contact at bank</description>
+        <externalId>false</externalId>
+        <label>Bank Contact</label>
+        <length>30</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Company associated with this bank account</description>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Bank Accounts</relationshipLabel>
+        <relationshipName>Bank_Accounts_del</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Currency__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Currency</label>
+        <referenceTo>Currency__c</referenceTo>
+        <relationshipLabel>Bank Accounts</relationshipLabel>
+        <relationshipName>Bank_Accounts</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>GL_Account_Unique__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <externalId>false</externalId>
+        <label>GL Account Unique</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>GL_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>GL account number for posting transactions for this bank account</description>
+        <externalId>false</externalId>
+        <label>GL Account</label>
+        <lookupFilter>
+            <active>false</active>
+            <filterItems>
+                <field>GL_Account__c.Report_Section__c</field>
+                <operation>equals</operation>
+                <value>Current Assets</value>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>GL_Account__c</referenceTo>
+        <relationshipLabel>Bank Accounts</relationshipLabel>
+        <relationshipName>Bank_Accounts</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Next_ACH_Number__c</fullName>
+        <defaultValue>0000</defaultValue>
+        <description>Next ACH Number to print</description>
+        <externalId>false</externalId>
+        <label>DEPRECATED</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Next_Check_Number_2__c</fullName>
+        <description>Next Check Number to Print</description>
+        <externalId>false</externalId>
+        <label>Next Check Number</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Next_Check_Number__c</fullName>
+        <defaultValue>0000</defaultValue>
+        <description>Next Check Number to Print</description>
+        <externalId>false</externalId>
+        <label>DEPRECATED</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Next_Wire_Number__c</fullName>
+        <defaultValue>0000</defaultValue>
+        <description>Next Wire Number to print</description>
+        <externalId>false</externalId>
+        <label>DEPRECATED</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Number_of_Advice_Lines_Per_Page__c</fullName>
+        <defaultValue>10</defaultValue>
+        <description>This field controls the number of advice lines to be printed per page on a check stock.</description>
+        <externalId>false</externalId>
+        <label>Number of Advice Lines per Page</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Opening_Balance_Date__c</fullName>
+        <description>Opening Balance date maintains the Date/Time when the opening balance is actually obtained. All the Source Documents(CR/SP/JEs) will not be considered for reconciliation which were transacted before this date.</description>
+        <externalId>false</externalId>
+        <label>Opening Balance Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Opening_Balance__c</fullName>
+        <description>Opening balance is used for the Bank Reconciliation.</description>
+        <externalId>false</externalId>
+        <label>Opening Balance</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>2</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Phone__c</fullName>
+        <description>Bank or contact person phone number</description>
+        <externalId>false</externalId>
+        <label>Phone</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Phone</type>
+    </fields>
+    <fields>
+        <fullName>Primary_Deposit_Payment_Method__c</fullName>
+        <description>Primary Deposit Payment Method</description>
+        <externalId>false</externalId>
+        <label>Primary Deposit Payment Method</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <restricted>true</restricted>
+            <valueSetName>Payment_Method</valueSetName>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Primary_Disbursement_Payment_Method__c</fullName>
+        <description>Primary Disbursement payment method</description>
+        <externalId>false</externalId>
+        <label>Primary Disbursement Payment Method</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <restricted>true</restricted>
+            <valueSetName>Payment_Method</valueSetName>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Routing_Number__c</fullName>
+        <description>Bank routing number</description>
+        <externalId>false</externalId>
+        <label>Routing Number</label>
+        <length>30</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Transaction_Currency__c</fullName>
+        <description>Bank Account Transaction Currency</description>
+        <externalId>false</externalId>
+        <label>Transaction Currency</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>CAD</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>EUR</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>GBP</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>USD</fullName>
+                    <default>true</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Use_Pre_Printed_Check_Stock__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>This flag indicates that the customer will be using pre-printed check stock to print checks and advices</description>
+        <externalId>false</externalId>
+        <label>Use Preprinted Check Stock</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Yodlee_Account_Linkage_Date__c</fullName>
+        <externalId>false</externalId>
+        <label>Yodlee Account Linkage Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Yodlee_Account_Name__c</fullName>
+        <externalId>false</externalId>
+        <label>Yodlee Account Name</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Yodlee_Account_Number__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <externalId>false</externalId>
+        <label>Yodlee Account Number</label>
+        <length>50</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Yodlee_Account_Site_ID__c</fullName>
+        <externalId>false</externalId>
+        <label>Yodlee Account Site ID</label>
+        <length>50</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <label>Bank Account</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Bank_Account_Number_2__c</columns>
+        <columns>Routing_Number__c</columns>
+        <columns>Account_Type__c</columns>
+        <columns>Active__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Bank Account</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Bank Accounts</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Bank_Account_Number_2__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Routing_Number__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Account_Type__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Active__c</customTabListAdditionalFields>
+        <listViewButtons>User_Registration_and_Link_Account</listViewButtons>
+        <listViewButtons>Refresh_Bank_Transaction</listViewButtons>
+        <lookupDialogsAdditionalFields>Company__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Bank_Account_Number_2__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Account_Type__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Active__c</lookupDialogsAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>Currency_is_required</fullName>
+        <active>true</active>
+        <description>Currency is required.</description>
+        <errorConditionFormula>IsBlank(Currency__c)</errorConditionFormula>
+        <errorDisplayField>Currency__c</errorDisplayField>
+        <errorMessage>Currency is required.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Next_Check_Num_Should_Only_Be_Numeric</fullName>
+        <active>true</active>
+        <description>allow only blank or numeric values into Next Check number field</description>
+        <errorConditionFormula>IF (not(isblank( Next_Check_Number_2__c )), 
+NOT(REGEX( Next_Check_Number_2__c , &quot;[0-9]*&quot;)),
+NULL)</errorConditionFormula>
+        <errorDisplayField>Next_Check_Number_2__c</errorDisplayField>
+        <errorMessage>You can enter only a numeric value in the Next Check Number field.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>No_of_Advice_Lines_is_required</fullName>
+        <active>true</active>
+        <description>no of advice lines is required for pre printed stock option</description>
+        <errorConditionFormula>AND(Use_Pre_Printed_Check_Stock__c == true  ,  OR( ISNULL(Number_of_Advice_Lines_Per_Page__c)  ,Number_of_Advice_Lines_Per_Page__c &lt;= 0)
+)</errorConditionFormula>
+        <errorDisplayField>Number_of_Advice_Lines_Per_Page__c</errorDisplayField>
+        <errorMessage>You must enter a value for the Number of Advice Lines per Page field when the Use Preprinted Check Stock field is selected.</errorMessage>
+    </validationRules>
+    <webLinks>
+        <fullName>Manage_Transactions</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <linkType>page</linkType>
+        <masterLabel>Manage Transactions</masterLabel>
+        <openType>replace</openType>
+        <page>BankTransactionMatchPage</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Refresh_Bank_Transaction</fullName>
+        <availability>online</availability>
+        <displayType>massActionButton</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Import Bank Transactions</masterLabel>
+        <openType>sidebar</openType>
+        <page>BankTransactionSearchListView</page>
+        <protected>false</protected>
+        <requireRowSelection>true</requireRowSelection>
+    </webLinks>
+    <webLinks>
+        <fullName>Un_Reconcile</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Unreconcile</masterLabel>
+        <openType>sidebar</openType>
+        <page>BankTransactionUnReconcile</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>User_Registration_and_Link_Account</fullName>
+        <availability>online</availability>
+        <displayType>massActionButton</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Manage Yodlee Account Links</masterLabel>
+        <openType>noSidebar</openType>
+        <page>YodleeUserRegistrationAndAccountLink</page>
+        <protected>false</protected>
+        <requireRowSelection>true</requireRowSelection>
+    </webLinks>
+</CustomObject>

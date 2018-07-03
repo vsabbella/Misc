@@ -1,0 +1,17 @@
+<apex:component controller="gridTileCon"  layout="none"  >
+    <apex:attribute name="sobjecttype"  description="sobject table name"  
+        type="string"  required="false"  assignTo="{!token}"  />
+    <apex:attribute name="title"  description="use a different title"  
+        type="string"  required="false"  assignTo="{!titleSTR}"   />
+    <apex:attribute name="url"  description="use a different url"  
+        type="string"  required="false"  assignTo="{!urlSTR}"   />
+         
+    <div class="span2" >    
+    <center>
+    <a  class="" href="{!hrefURL}" >
+        <img src="/s.gif"  class="{!className}"  title="{!className}" /> 
+        <div>{!labelPlural}</div></a>
+    </center>
+    </div> 
+    
+</apex:component>

@@ -1,0 +1,213 @@
+<apex:page StandardController="Customer__c" sidebar="false" showheader="false" extensions="PaymentProfileManagerExt" >
+
+	<apex:form id="form">
+		<apex:sectionHeader title="Payment Profile Manager" help="{!URLFOR($Page.HelpProcessCreditCardPayments)}" />
+		<apex:pageMessages id="pgMessages" escape="false"/>
+		<c:busyWait />
+		<div style="text-align: center;" draggable="false" >
+			<apex:commandButton value="Go Back" action="{!cancel}" rendered="{!paymentCreated == false}"/>
+		</div>
+		<apex:pageBlock id="pbCreatePmtProfile" mode="edit"  rendered="{!(pp.Id == null && isValidCustomer == true )}">
+			<apex:pageBlockSection title="Payment Profile" columns="2" collapsible="false" ><!--  -->
+				<apex:pageBlockSection columns="1">
+					<apex:inputField value="{!pp.Customer__c}" rendered="{!customerId == null}">
+						<apex:actionSupport event="onchange" action="{!updateCustomer}" rerender="form"/>
+					</apex:inputField>
+					<apex:outputField value="{!pp.Customer__c}" rendered="{!customerId != null}"/>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="First Name"/>
+						<apex:inputText value="{!ppd.creditCard.firstName}"/>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Last Name"/>
+						<apex:inputText value="{!ppd.creditCard.lastName}"/>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Company"/>
+						<apex:inputText value="{!ppd.creditCard.company}"/>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Phone"/>
+						<apex:inputText value="{!ppd.creditCard.phone}"/>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Fax"/>
+						<apex:inputText value="{!ppd.creditCard.fax}"/>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Email Address"/>
+						<apex:inputText value="{!ppd.emailAddress}"/>
+					</apex:pageBlockSectionItem>
+				</apex:pageBlockSection>
+				<apex:pageBlockSection columns="1">
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Address"/>
+						<apex:inputTextArea value="{!ppd.creditCard.address}" rows="3"/>
+					</apex:pageBlockSectionItem>
+					
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="City"/>
+						<apex:inputText value="{!ppd.creditCard.city}"/>
+					</apex:pageBlockSectionItem>
+					
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="State"/>
+						<apex:inputText value="{!ppd.creditCard.state}"/>
+					</apex:pageBlockSectionItem>
+					
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Zip Code"/>
+						<apex:inputText value="{!ppd.creditCard.zip}"/>
+					</apex:pageBlockSectionItem>
+					
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Country"/>
+						<apex:inputText value="{!ppd.creditCard.country}"/>
+					</apex:pageBlockSectionItem>
+					
+				</apex:pageBlockSection>
+				
+				
+			</apex:pageBlockSection>
+			
+			<apex:pageBlockSection title="Credit Card Information" columns="1" collapsible="false" >
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Credit Card Number"/>
+					<apex:inputText value="{!ppd.creditCard.cardNumber}"/>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Expiration Date (YYYY-MM)"/>
+					<apex:inputText value="{!ppd.creditCard.expirationDate}"/>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="CCV"/>
+					<apex:inputText value="{!ppd.creditCard.CCV}"/>
+				</apex:pageBlockSectionItem>
+				</apex:pageBlockSection>
+			<apex:pageBlockSection columns="1">
+				<apex:outputPanel >
+					<div style="text-align: center;" draggable="false" > 
+						<apex:commandButton value="Create Payment Profile" rerender="form" action="{!createPaymentProfile}" status="actionStatus"/>
+					</div>
+				</apex:outputPanel>
+			</apex:pageBlockSection>
+			
+		</apex:pageBlock>
+		
+		
+		<apex:pageBlock id="pbCreatePmt" mode="edit" rendered="{!pp.Id != null && !paymentCreated}">
+		
+			
+			>><apex:commandLink value="Show/Hide Payment Method" action="{!togglePmtMethod}" rerender="pbCreatePmt"/>
+			<apex:pageBlockSection collapsible="false" title="Payment Method" rendered="{!showAddPaymentMethod}">
+				<apex:pageBlockSection columns="1">
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="First Name"/>
+						<apex:inputText value="{!ppd.creditCard.firstName}"/>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Last Name"/>
+						<apex:inputText value="{!ppd.creditCard.lastName}"/>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Company"/>
+						<apex:inputText value="{!ppd.creditCard.company}"/>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Phone"/>
+						<apex:inputText value="{!ppd.creditCard.phone}"/>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Fax"/>
+						<apex:inputText value="{!ppd.creditCard.fax}"/>
+					</apex:pageBlockSectionItem>
+				</apex:pageBlockSection>
+				<apex:pageBlockSection columns="1">
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Address"/>
+						<apex:inputTextArea value="{!ppd.creditCard.address}" rows="3"/>
+					</apex:pageBlockSectionItem>
+					
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="City"/>
+						<apex:inputText value="{!ppd.creditCard.city}"/>
+					</apex:pageBlockSectionItem>
+					
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="State"/>
+						<apex:inputText value="{!ppd.creditCard.state}"/>
+					</apex:pageBlockSectionItem>
+					
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Zip Code"/>
+						<apex:inputText value="{!ppd.creditCard.zip}"/>
+					</apex:pageBlockSectionItem>
+					
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Country"/>
+						<apex:inputText value="{!ppd.creditCard.country}"/>
+					</apex:pageBlockSectionItem>
+				</apex:pageBlockSection>
+				
+				<apex:pageBlockSection title="Credit Card Information" columns="1" collapsible="false" >
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Credit Card Number"/>
+						<apex:inputText value="{!ppd.creditCard.cardNumber}"/>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Expiration Date (YYYY-MM)"/>
+						<apex:inputText value="{!ppd.creditCard.expirationDate}"/>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="CCV"/>
+						<apex:inputText value="{!ppd.creditCard.CCV}"/>
+					</apex:pageBlockSectionItem>
+					
+				</apex:pageBlockSection>
+			</apex:pageBlockSection>
+			<apex:outputPanel rendered="{!showAddPaymentMethod}">
+				<div style="text-align: center;" draggable="false">
+					<apex:commandButton value="Create Payment Method"  action="{!createPaymentMethod}" rerender="form" status="actionStatus"/>
+				</div>
+			</apex:outputPanel>
+			
+			<apex:pageBlockSection id="pbsPmt" collapsible="false" title="Create Payment"  columns="2">
+				<apex:pageBlockSection columns="1">
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Payment Method"/>
+					<apex:selectList value="{!selectedPaymentMethodId}" size="1">
+						<apex:selectOptions value="{!paymentMethodOptions}"/>
+					</apex:selectList>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem >
+				<apex:outputLabel value="CCV"/>
+				<apex:inputText value="{!paymentCCV}"/>
+				</apex:pageBlockSectionItem>
+				<apex:inputField value="{!crl.Amount__c}" required="false">
+					<apex:actionSupport event="onchange" action="{!validateAmount}" rerender="btnCreatePayment, pgMessages, pbsPmt"/>
+				</apex:inputField>
+				<apex:inputField value="{!crl.Customer_Invoice__c}">
+					<apex:actionSupport event="onchange" action="{!defaultAmount}" rerender="btnCreatePayment, pgMessages, pbsPmt"/>
+				</apex:inputField>
+				<apex:inputField value="{!crl.Sales_Order__c}">
+					<apex:actionSupport event="onchange" action="{!defaultAmount}" rerender="btnCreatePayment, pgMessages, pbsPmt"/>
+				</apex:inputField>
+				</apex:pageBlockSection>
+
+			</apex:pageBlockSection>
+			<apex:outputPanel >
+				<div style="text-align: center;" draggable="false">
+					<apex:commandButton id="btnCreatePayment" disabled="{!disableCreatePaymentButton}" value="Create Payment" action="{!createPayment}" rerender="form" status="actionStatus"/>
+				</div>
+			</apex:outputPanel>
+		</apex:pageBlock>
+		
+		<apex:pageBlock rendered="{!paymentCreated}">
+			<apex:pageBlockButtons location="top">
+				<apex:commandButton value="View Payment" action="{!viewPayment}"/>
+			</apex:pageBlockButtons>
+		</apex:pageBlock>
+		
+	</apex:form>
+
+</apex:page>

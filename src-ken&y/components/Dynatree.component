@@ -1,0 +1,181 @@
+<apex:component controller="Dynatree" >
+
+    <apex:attribute name="subject" 
+        description="id of the base sobject"  type="string" required="true"   />
+    <apex:attribute name="fieldsetname" 
+        description="name of the fieldset to show"  type="String" required="false"   />
+        
+    <apex:includeScript value="{!URLFOR($Resource.JQuery182)}" />
+    <apex:includeScript value="{!URLFOR($Resource.dynatree124,'/jquery/jquery-ui.custom.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.dynatree124,'/jquery/jquery.cookie.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.dynatree124,'/src/skin-vista/ui.dynatree.css')}" />
+    <apex:includeScript value="{!URLFOR($Resource.dynatree124,'/src/jquery.dynatree.js')}" />
+    <!--    our custom styling     -->
+    <apex:stylesheet value="{!URLFOR($Resource.CustomerStyle)}" />
+    <apex:stylesheet value="{!URLFOR($Resource.jquery_ui_110,'/jquery-ui-1.10.0.custom/css/cupertino/jquery-ui-1.10.0.custom.css')}" />
+    
+
+<script type="text/javascript"> 
+
+var tree, rootNode;
+var nodeCounter = 0;
+var timeStamp, totalNodeCt, startTime;
+var TIME_TRACKING = false;
+
+$(function(){
+    $("#tree").dynatree({   
+        onActivate: null ,
+         /*
+         onRender: function(node, nodeSpan) {       
+            // default on render adds a link to the record
+            $(nodeSpan).append('<a href="/'+node.data.key+'"><span class="ui-icon ui-icon-extlink" style="display:inline-block;" ></span></a>');
+        },
+        */
+       
+        onDblClick:  function(node, event) {  window.location.href='/'+node.data.key; } // go there now 
+    });
+    
+    // pages which use this comonent can set callbacks on the tree using these vars
+    rootNode = $("#tree").dynatree("getRoot");
+    tree = $("#tree").dynatree("getTree"); 
+    
+    Visualforce.remoting.Manager.invokeAction(
+       '{!$RemoteAction.Dynatree.getHierarchy}',
+       '{!subject}',
+       'Overview',
+       function(result, event){                    // load the nodes  -- result is a 'Node'
+           checkErrors( event);
+
+           totalNodeCt = result.children.length;
+           for (var i = 0; i < result.children.length; i ++){
+               totalNodeCt += result.children[i].children.length;
+               for (var j = 0; j < result.children[i].children.length; j ++){
+                   totalNodeCt += result.children[i].children[j].children.length;
+                   for (var k = 0; k < result.children[i].children[j].children.length; k ++){
+                   }
+               }
+           }
+
+           console.log(totalNodeCt);
+
+           rootNode.tree.enableUpdate(false);
+           addNode( rootNode, result);                  // recursive build of tree
+           
+           // activate the node mentioned in the URL, ensure it's visible
+           tree.activateKey( '{!CASESAFEID(subject)}' );
+
+           rootNode.tree.enableUpdate(true);
+        
+        }
+    );
+   
+    // add click handlers to operate on the tree 
+    $("#kndytree a.ExpandButton").click(function(){
+        var button_data = $(this).attr('data-vis')
+        $("#tree").dynatree("getRoot").visit(function(node){
+            if ( button_data == 'none' )            node.expand( false );
+            else if ( button_data == 'all' )        node.expand( true );     
+            // other options here ?            
+        });
+        return false;
+    });
+        
+});  // end document ready
+
+String.prototype.contains = function(it) { return this.indexOf(it) != -1; };
+String.prototype.normalizeClassName = function() {    return this.replace(/\s/g, '').toLowerCase(); };
+
+function nodeClass( result ) {
+    var ret = 'kndy';
+    if  ( result.node.RecordType != undefined && 
+          result.node.RecordType.DeveloperName != undefined) {
+        ret = result.node.RecordType.DeveloperName;
+    }
+    return ret.normalizeClassName();
+}
+
+function timeStuff(){
+
+    nodeCounter ++;
+    if (nodeCounter % 100 == 0){
+        if (timeStamp  == null) {
+            timeStamp = Date.now();
+            startTime = Date.now();
+        }
+        var diffTime = (Date.now() - timeStamp)/1000;
+        timeStamp = Date.now();
+
+        var totalTime = (Date.now() - startTime) / 1000;
+
+        var avgTime =  totalTime / nodeCounter;
+
+        console.log('Node #', nodeCounter, 'Time Diff: ', diffTime, 'Average Per Node: ', avgTime, 'Total Time: ', totalTime);
+        returnCount = 0;
+    }
+
+    if (nodeCounter == totalNodeCt){
+        console.log(Date.now() - startTime);
+    }
+}
+
+function addNode( parentNode , result )  {
+    if ( result == null || typeof(result) != "object"  ){
+        return;
+    }
+
+    if (TIME_TRACKING) timeStuff();
+
+    var childNode = parentNode.addChild({
+        title: result.node.Name,
+        key: result.node.Id,
+        href: '/'+ result.node.Id,
+        addClass: nodeClass(result) ,   // Class name added to the node's span tag.
+        activate: false,                    // Initial active status.
+        focus: false,                       // Initial focused status.
+        expand: true,                     // Initial expanded status.// NOTE this can be much slower on very large trees
+        select: false,                      // Initial selected status.
+        hideCheckbox: true,        // Suppress checkbox display for this node.
+        tooltip: result.node.Name
+    });
+
+    for ( var key in result.children ) { 
+        addNode( childNode, result.children[key] );
+    }   
+    return childNode; 
+}
+
+/* TODO this can use jquery instead of getElementById */
+function checkErrors ( event ) { 
+    if (event.status) {   ; // ok
+    } else if (event.type === 'exception') {
+            document.getElementById("responseErrors").innerHTML = event.message + "<br/>\n<pre>" + event.where + "</pre>";
+    } else {
+            document.getElementById("responseErrors").innerHTML = event.message;
+    }
+}
+function debug_object( object, element ) {
+    var output = '';
+    for (property in object) {    output += property + ': ' + object[property]+'; '; } 
+    $(element).html( output );
+}
+</script>
+
+<div id="kndytree" >
+    <p id="controls">
+        <a href="#" class="ExpandButton  "  data-vis="none">Collapse All</a> &nbsp;
+        <a href="#" class="ExpandButton  "  data-vis="all">Expand All</a>
+    </p>
+    <div id="tree"></div>
+    <div id="responseErrors"></div>
+</div>
+
+<style>
+/* fix for a bootstrap issue */
+#kndytree #tree>ul { margin: 0 0 0 2px;}
+#kndytree #controls a { text-decoration: none; font-size: 0.9em; }
+#kndytree p { 
+    font-family: Arial,Helvetica,sans-serif;  
+    margin: 0 0 2px;
+    }
+</style>
+</apex:component>

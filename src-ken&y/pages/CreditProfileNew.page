@@ -1,0 +1,39 @@
+<apex:page standardController="Company__c"  extensions="CreditProfileExt"  showHeader="true" sidebar="true"   >
+
+	<apex:sectionHeader title="{!Company__c.Name}"		subtitle="{!$Label.New_Credit_Rule}" />
+	
+	<apex:form id="mainForm" ><c:busyWait />
+		<apex:pageMessages />
+			
+		<apex:pageBlock >
+			
+			<apex:pageBlockButtons >
+				<apex:commandButton action="{!cancel}" value="{!$Label.Cancel}" status="actionStatus"  rerender="mainForm"/>
+				<apex:commandButton action="{!saveNewRule}" value="{!$Label.Save}"  status="actionStatus"  rerender="mainForm" accessKey="s"/>
+			</apex:pageBlockButtons>
+			
+			<apex:pageBlockSection title="{!$Label.New_Profile}" columns="2">
+				<apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.Credit_Profile_Rules__c.fields.Name.label}" />
+                    <apex:inputText value="{!newRule.name}" />
+				</apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.Credit_Profile_Rules__c.fields.AR_Percent_Past_Due__c.label}" />
+                    <apex:inputText value="{!newRule.AR_Percent_Past_Due}" />
+				</apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.Credit_Profile_Rules__c.fields.Days_Past_Due__c.label}" />
+                    <apex:inputText value="{!newRule.Days_Past_Due}" />
+				</apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.Credit_Profile_Rules__c.fields.Percent_Over_Credit__c.label}" />
+                    <apex:inputText value="{!newRule.Percent_Over_Credit}" />
+				</apex:pageBlockSectionItem>
+                
+			</apex:pageBlockSection>
+		</apex:pageBlock>
+	</apex:form>
+</apex:page>

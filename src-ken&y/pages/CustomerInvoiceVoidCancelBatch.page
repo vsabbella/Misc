@@ -1,0 +1,120 @@
+<apex:page standardController="Customer_Invoice__c" 
+                    tabStyle="Customer_Invoice__c" 
+                     sidebar="false" 
+                recordSetVar="invoice"
+                  extensions="CustomerInvoiceVoidCancelBatchExt"  docType="html-5.0">
+     <div class="grid-container" id="divCont"  >
+            <div class="grid-message"/>
+            <apex:pagemessages id="Messages" />
+    </div>
+    <apex:form >
+        <c:KendoResources />
+        <c:busyWait includeScripts="false"/>
+   
+         <apex:pageBlock title="Cancel/Void Customer Invoice Batch" id="pb" >
+              <apex:pageBlockSection columns="3">
+                  <apex:pageBlockSectionItem >
+              <label>    {!$Label.Batch}</label>
+                 <apex:outputPanel >
+                      <div class = "requiredInput"> 
+        			 <div class = "requiredBlock"> </div>
+                      <input id="batchnumber" />
+                     </div>  
+                      </apex:outputPanel>
+                      </apex:pageBlockSectionItem>
+                 <apex:pageBlockSectionItem >
+                   <apex:outputLabel value="{!$Label.Void_Date}" />
+                   <apex:outputPanel >
+                      <div class = "requiredInput"> 
+                      <div class = "requiredBlock"> </div>
+                        <apex:inputField value="{!Customer_Invoice__c.Void_Date__c}" id="voidDateEdit" /> 
+                     </div>  
+                   </apex:outputPanel>
+                 </apex:pageBlockSectionItem>
+               </apex:pageBlockSection> 
+              <apex:pageBlockButtons >
+                   <apex:commandButton id="CancelBatch" value="Cancel Batch" styleClass="btn" onclick="CIVCBUtils.cancel1();" />
+                   <apex:commandButton id="VoidBatch" value="Void Batch" styleClass="btn" onclick="CIVCBUtils.void();" />
+                   <apex:commandButton id="Back"   value="{!$Label.kndy4_cash__go_back}"  action="{!cancel}"/>
+             </apex:pageBlockButtons>
+            
+    </apex:pageBlock>
+<script type="text/javascript">    
+       var CIVCBUtils = function() {
+         return {
+            cancel1: function(e) {
+                 KenandyErp.BlockUI($("#pb"));
+                var messageElement = $("#divCont").find("div.grid-message:first");
+                //Reset the warning header
+                showWarningHeader = false;
+                KenandyErp.ClearMessage(messageElement);
+               
+                 var batchId=  $("#batchnumber")[0].value;               
+                var voidDate = $('input[id$="voidDateEdit"]').val();
+                var voidDate = KenandyErp.ParseSFDCDateTime(voidDate);
+                voidDate = JSON.stringify(voidDate);             
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.CustomerInvoiceVoidCancelBatchExt.cancel1}',
+                    batchId,
+                    voidDate,
+                    function (result, event) {
+                        console.log(result);
+                        console.log(batchId);
+                        if (result.success) {
+                              KenandyErp.Messages(result.messages, messageElement);
+                            document.getElementById('batchnumber').value = '';
+                        } else {
+                             KenandyErp.Messages(result.messages, messageElement);
+                            }
+                            
+                        },
+                    {escape: false}  
+                    );
+                KenandyErp.UnBlockUI($("#pb"));   
+            },
+              void: function(e) {
+                var vd = KenandyErp.IsValidDateTime($('input[id$="voidDateEdit"]').val());
+                KenandyErp.BlockUI($("#pb"));
+                  var messageElement = $("#divCont").find("div.grid-message:first");
+                //Reset the warning header
+                showWarningHeader = false;
+                KenandyErp.ClearMessage(messageElement);
+                if(vd == false){
+	                KenandyErp.Message('The Void date format is invalid.', KenandyErp.MessageType.Error);
+	                KenandyErp.UnBlockUI($("#pb"));
+	                $('span[id$="Messages"]').css('display','none');
+	            }else{
+                 var batchId=  $("#batchnumber")[0].value;               
+	                var voidDate = $('input[id$="voidDateEdit"]').val();
+	                var voidDate = KenandyErp.ParseSFDCDateTime(voidDate);
+	                voidDate = JSON.stringify(voidDate);
+	                console.log('voidDate--->'+voidDate);
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.CustomerInvoiceVoidCancelBatchExt.void}',
+                    batchId,
+                    voidDate,
+                    function (result, event) {
+                        console.log(result);
+                        console.log(batchId);
+                        if (result.success) {
+                              KenandyErp.Messages(result.messages, messageElement);
+                              document.getElementById('batchnumber').value = '';
+                        } else {
+                             KenandyErp.Messages(result.messages, messageElement);
+                            }
+                        },
+                    {escape: false}  
+                    );
+                   KenandyErp.UnBlockUI($("#pb"));    
+                 } 
+            },
+                  } 
+           
+            }();
+            
+        
+        
+        
+        </script>
+        </apex:form>
+</apex:page>

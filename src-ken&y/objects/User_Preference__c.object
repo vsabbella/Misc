@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpUserPreference</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Track individual user preferences or configurations</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>false</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>EProcurement</fullName>
+        <description>manage profile</description>
+        <displayedFields>
+            <field>Delegated_Purchaser__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Purchasing_Group__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>EProcurement</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Organization_Values</fullName>
+        <description>Defaults values to the Shopping Cart and Cart Items</description>
+        <label>Organization Values</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Planning</fullName>
+        <description>Manage Profile page</description>
+        <displayedFields>
+            <field>Default_Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Default_Facility__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Planning</label>
+    </fieldSets>
+    <fields>
+        <fullName>Accounting_Default__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Default segment values for chart of accounts values.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Default segment values for chart of accounts values.</inlineHelpText>
+        <label>Accounting Default</label>
+        <referenceTo>Accounting_Default__c</referenceTo>
+        <relationshipLabel>User Preferences</relationshipLabel>
+        <relationshipName>User_Preferences</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Allow_access_to_all_facilities__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Allow access to all facilities</description>
+        <externalId>false</externalId>
+        <label>Allow access to all facilities</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Default_Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The company that is used to default on new orders</description>
+        <externalId>false</externalId>
+        <label>Default Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>User Preferences</relationshipLabel>
+        <relationshipName>User_Preferences</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Default_Facility__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Facility</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The default company facility to which a user belongs. This controls access to inventory transfer and inventory change records.</inlineHelpText>
+        <label>Default Facility</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>Default Facility does not exist or does not match filter criteria.</errorMessage>
+            <filterItems>
+                <field>Facility__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Default_Company__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Facility__c</referenceTo>
+        <relationshipLabel>User Preferences</relationshipLabel>
+        <relationshipName>User_Preferences</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Delegated_Purchaser__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>User that is able to purchase on my behalf</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Enter the name of the Kenandy eProcurement user that you want to allow to purchase goods/services on your behalf.</inlineHelpText>
+        <label>Delegated Purchaser</label>
+        <referenceTo>User</referenceTo>
+        <relationshipName>User_Preferences</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Purchasing_Group__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Purchasing group the user belongs to.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The purchasing group to which the user belongs. Carts submitted by this user are routed to this purchasing group for processing an approval.</inlineHelpText>
+        <label>Purchasing Group</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>No matching purchasing groups exists for this company.</errorMessage>
+            <filterItems>
+                <field>Company_Group__c.Type__c</field>
+                <operation>equals</operation>
+                <value>Purchasing</value>
+            </filterItems>
+            <filterItems>
+                <field>$Source.Default_Company__c</field>
+                <operation>equals</operation>
+                <valueField>Company_Group__c.Company__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Company_Group__c</referenceTo>
+        <relationshipLabel>User Preferences</relationshipLabel>
+        <relationshipName>User_Preferences</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Transfer_Order_Deliver_to_Facility__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Transfer Order Deliver-to Facility</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>Transfer Order Deliver-to Facility does not belong to the Default Company</errorMessage>
+            <filterItems>
+                <field>Facility__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Default_Company__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Facility__c</referenceTo>
+        <relationshipLabel>User Preferences (Transfer Order Deliver-to Facility)</relationshipLabel>
+        <relationshipName>User_Preferences2</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Transfer_Order_Deliver_to_Location__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Transfer Order Deliver-to Location</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Location__c.Facility__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Transfer_Order_Deliver_to_Facility__c</valueField>
+            </filterItems>
+            <isOptional>true</isOptional>
+        </lookupFilter>
+        <referenceTo>Location__c</referenceTo>
+        <relationshipLabel>User Preferences (Transfer Order Deliver-to Location)</relationshipLabel>
+        <relationshipName>User_Preferences1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Transfer_Order_Ship_from_Facility__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Transfer Order Ship-from Facility</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>Transfer Order Ship-from Facility does not belong to the Default Company</errorMessage>
+            <filterItems>
+                <field>Facility__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Default_Company__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Facility__c</referenceTo>
+        <relationshipLabel>User Preferences (Default Transfer Order Ship-from Facilit)</relationshipLabel>
+        <relationshipName>User_Preferences1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Transfer_Order_Ship_from_Location__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Transfer Order Ship-from Location</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>Transfer Order Ship-from Location does not belong to the Transfer Order Ship-from Facility</errorMessage>
+            <filterItems>
+                <field>Location__c.Facility__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Transfer_Order_Ship_from_Facility__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Location__c</referenceTo>
+        <relationshipLabel>User Preferences</relationshipLabel>
+        <relationshipName>User_Preferences</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>User__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The user to whom this user preference applies.</description>
+        <externalId>false</externalId>
+        <label>User</label>
+        <referenceTo>User</referenceTo>
+        <relationshipName>User_Preferences2</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <label>User Preference</label>
+    <listViews>
+        <fullName>All_User_Preferences</fullName>
+        <columns>NAME</columns>
+        <columns>Accounting_Default__c</columns>
+        <columns>Default_Company__c</columns>
+        <columns>Default_Facility__c</columns>
+        <columns>Delegated_Purchaser__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All User Preferences</label>
+    </listViews>
+    <nameField>
+        <label>User Preference Name</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>User Preferences</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Default_Company__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Default_Facility__c</customTabListAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>Transfer_Order_Facilities</fullName>
+        <active>true</active>
+        <errorConditionFormula>IF(AND(AND(NOT(ISBLANK(Transfer_Order_Ship_from_Facility__c)),NOT( ISBLANK(Transfer_Order_Deliver_to_Facility__c))), Transfer_Order_Deliver_to_Facility__c =  Transfer_Order_Ship_from_Facility__c), True, False)</errorConditionFormula>
+        <errorMessage>Transfer Order Ship-From Facility cannot be the same as the Transfer Order Deliver-To Facility</errorMessage>
+    </validationRules>
+    <webLinks>
+        <fullName>Authorize_External_App</fullName>
+        <availability>online</availability>
+        <description>Kenandy Gateway Authorization</description>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Authorize External App</masterLabel>
+        <openType>sidebar</openType>
+        <page>OAuth</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Manage_Preference</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Manage Preference</masterLabel>
+        <openType>sidebar</openType>
+        <page>ManageProfile</page>
+        <protected>false</protected>
+    </webLinks>
+</CustomObject>

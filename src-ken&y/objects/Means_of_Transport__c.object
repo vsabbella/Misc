@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpMeansOfTransport</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Stores the different means of transportation and their details.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>false</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fields>
+        <fullName>Code__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>The unique code assigned to the means of transport to identify it distinctly.</description>
+        <externalId>true</externalId>
+        <inlineHelpText>The code uniquely identifies the selected means of transport.</inlineHelpText>
+        <label>Code</label>
+        <length>32</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Description__c</fullName>
+        <description>The description of the means of transport.</description>
+        <externalId>false</externalId>
+        <label>Description</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Maximum_Cube__c</fullName>
+        <description>Maximum Cube of a truck</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Maximum cubic capacity (dimensions) for this means of transport.</inlineHelpText>
+        <label>Maximum Cube</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Maximum_Weight__c</fullName>
+        <description>The maximum weight of the load that can be shipped using this means of transport.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Maximum weight limit for this means of transport.</inlineHelpText>
+        <label>Maximum Weight</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Means_of_Transport_Unique__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>Unique key to prevent duplicate values for means of transport.</description>
+        <externalId>true</externalId>
+        <inlineHelpText>The vehicle used to move goods—for example, truck, train, ship.</inlineHelpText>
+        <label>Means of Transport Unique</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Minimum_Cube__c</fullName>
+        <description>Minimum Cube of the means of transport</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Minimum cubic capacity (dimensions) required by this means of transport.</inlineHelpText>
+        <label>Minimum Cube</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Minimum_Weight__c</fullName>
+        <description>The minimum weight of the load required to ship in this means of transport.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Minimum weight required by this means of transport.</inlineHelpText>
+        <label>Minimum Weight</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Mode_of_Transport__c</fullName>
+        <description>The mode (medium) through which the means of transport travels. Ex: Air, Water, Land etc,.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Indicates how goods are transported. Options may include Road, Rail, Water, Air.</inlineHelpText>
+        <label>Mode of Transport</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Land</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Rail</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Water</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Air</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Pallet_Positions_Floor_Spots__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>Number of floor positions available for pallets.</inlineHelpText>
+        <label>Pallet Positions(Floor Spots)</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Pallet_Positions_double_stacked__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>Number of positions available  for pallets that can be double stacked.</inlineHelpText>
+        <label>Pallet Positions(double stacked)</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <label>Means of Transport</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Description__c</columns>
+        <columns>Minimum_Weight__c</columns>
+        <columns>Maximum_Weight__c</columns>
+        <columns>Minimum_Cube__c</columns>
+        <columns>Maximum_Cube__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Means of Transport</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Means of Transport</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

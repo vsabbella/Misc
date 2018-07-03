@@ -1,0 +1,685 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <content>JournalEntryLineNewEditCloneDelete</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpJournalEntry</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <enableActivities>true</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>Finalize</fullName>
+        <description>FinalizeService.cls</description>
+        <displayedFields>
+            <field>Journal_Entry__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>GL_Account__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Transaction_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Customer__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Supplier_lu__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>SubTransaction_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Source_Name__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Bank_Transaction__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Source_ID__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Source__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Reversing_Line__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Period_Name__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Mandatory_Segment_Exception__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Line_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Autonumber__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Amount_DR__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Amount_CR__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Finalize</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Journal_Entry_Line_Edit</fullName>
+        <availableFields>
+            <field>Customer__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Supplier_lu__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <description>JournalEntryLinesManage.page</description>
+        <displayedFields>
+            <field>GL_Account__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Amount_DR__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Amount_CR__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Description__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Bank_Account__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Has_Exceptions__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Journal Entry Line Edit</label>
+    </fieldSets>
+    <fields>
+        <fullName>Accounting_Code__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Accounting Code</label>
+        <referenceTo>Accounting_Code__c</referenceTo>
+        <relationshipLabel>Journal Entry Lines</relationshipLabel>
+        <relationshipName>Journal_Entry_Lines</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Amount_CR__c</fullName>
+        <defaultValue>0.00</defaultValue>
+        <description>Credit amount for this transaction</description>
+        <externalId>false</externalId>
+        <label>Amount CR</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Amount_DR__c</fullName>
+        <defaultValue>0.00</defaultValue>
+        <description>Debit amount for this transaction</description>
+        <externalId>false</externalId>
+        <label>Amount DR</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Autonumber__c</fullName>
+        <displayFormat>{0000000000}</displayFormat>
+        <externalId>false</externalId>
+        <label>Autonumber</label>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>AutoNumber</type>
+    </fields>
+    <fields>
+        <fullName>Bank_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Bank Account</label>
+        <referenceTo>Bank_Account__c</referenceTo>
+        <relationshipLabel>Journal Entry Lines</relationshipLabel>
+        <relationshipName>Journal_Entry_Lines</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Bank_Transaction__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Bank Transaction</label>
+        <referenceTo>Bank_Transaction__c</referenceTo>
+        <relationshipLabel>Journal Entry Lines</relationshipLabel>
+        <relationshipName>Journal_Entry_Lines</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Company</description>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Journal Entry Lines</relationshipLabel>
+        <relationshipName>Journal_Entry_Lines</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Currency__c</fullName>
+        <externalId>false</externalId>
+        <formula>Journal_Entry__r.Currency__r.ISO_Code__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Currency</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Customer__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Customer</label>
+        <referenceTo>Customer__c</referenceTo>
+        <relationshipLabel>Journal Entry Lines</relationshipLabel>
+        <relationshipName>Journal_Entry_Lines</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Description__c</fullName>
+        <externalId>false</externalId>
+        <label>Description</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>Error_Message__c</fullName>
+        <description>If error occurs the error message will be stored in this field</description>
+        <externalId>false</externalId>
+        <label>Error Message</label>
+        <length>32768</length>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>LongTextArea</type>
+        <visibleLines>3</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Exceptions_Count__c</fullName>
+        <externalId>false</externalId>
+        <label>Exceptions Count</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Finalized__c</fullName>
+        <externalId>false</externalId>
+        <formula>Journal_Entry__r.Finalized__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Finalized</label>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>GL_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>GL account</description>
+        <externalId>false</externalId>
+        <label>GL Account</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>GL Account must be active.</errorMessage>
+            <filterItems>
+                <field>GL_Account__c.Active__c</field>
+                <operation>equals</operation>
+                <value>True</value>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>GL_Account__c</referenceTo>
+        <relationshipLabel>Journal Entry Lines</relationshipLabel>
+        <relationshipName>Journal_Entry_Lines</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Has_Exceptions__c</fullName>
+        <externalId>false</externalId>
+        <formula>Exceptions_Count__c &gt; 0</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Has Exceptions</label>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Intercompany__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Intercompany</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Journal Entry Lines (Intercompany)</relationshipLabel>
+        <relationshipName>Interco_Journal_Entry_Lines</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Journal_Entry__c</fullName>
+        <externalId>false</externalId>
+        <label>Journal Entry</label>
+        <referenceTo>Journal_Entry__c</referenceTo>
+        <relationshipLabel>Journal Entry Lines</relationshipLabel>
+        <relationshipName>Journal_Entry_Lines</relationshipName>
+        <relationshipOrder>0</relationshipOrder>
+        <reparentableMasterDetail>false</reparentableMasterDetail>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>MasterDetail</type>
+        <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    </fields>
+    <fields>
+        <fullName>Line_Type__c</fullName>
+        <externalId>false</externalId>
+        <label>Line Type</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Standard</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Mandatory_Segment_Exception__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Mandatory Segment Exception is set to true when any of the mandatory segments are null</description>
+        <externalId>false</externalId>
+        <inlineHelpText>A checkmark indicates that one or more mandatory segments are null.</inlineHelpText>
+        <label>Mandatory Segment Exception</label>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Period_Name__c</fullName>
+        <description>Period Name</description>
+        <externalId>false</externalId>
+        <formula>Journal_Entry__r.Period__r.Name</formula>
+        <label>Period Name</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Reversing_Line__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Reversing Line</label>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Source_ID__c</fullName>
+        <description>The record ID of the related record providing the source data for this Journal entry line.</description>
+        <externalId>false</externalId>
+        <label>Source ID</label>
+        <length>100</length>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Source_Name__c</fullName>
+        <description>The record name of the related record providing the source data for this Journal entry line.</description>
+        <externalId>false</externalId>
+        <label>Source Name</label>
+        <length>255</length>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Source__c</fullName>
+        <description>A link to the source record for this Journal Entry Line</description>
+        <externalId>false</externalId>
+        <formula>HYPERLINK(&apos;/&apos; + Source_ID__c, Source_Name__c, &apos;_top&apos;)</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Source</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>SubTransaction_Type__c</fullName>
+        <description>Sub Transaction Type</description>
+        <externalId>false</externalId>
+        <label>SubTransaction Type</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Off Invoice Allowance</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Sundry Allowance</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Bill Back Allowance</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Deductions</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Earned Discount</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Unearned Discount</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Write Off</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Bank Adjustment</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Bank Interest Income</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Bank Fees</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>OverPayment</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Supplier__c</fullName>
+        <externalId>false</externalId>
+        <formula>Journal_Entry__r.Supplier__r.Name</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Supplier</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Supplier_lu__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Supplier</label>
+        <referenceTo>Supplier__c</referenceTo>
+        <relationshipLabel>Journal Entry Lines</relationshipLabel>
+        <relationshipName>Journal_Entry_Lines</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Transaction_Currency__c</fullName>
+        <externalId>false</externalId>
+        <formula>Text( Journal_Entry__r.Transaction_Currency__c )</formula>
+        <label>Transaction Currency</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Transaction_Date__c</fullName>
+        <description>Transaction Date of this Journal Entry Line</description>
+        <externalId>false</externalId>
+        <label>Transaction Date</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <label>Journal Entry Line</label>
+    <listViews>
+        <fullName>All</fullName>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Journal Entry Line</label>
+        <trackHistory>false</trackHistory>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Journal Entry Lines</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ControlledByParent</sharingModel>
+    <validationRules>
+        <fullName>BA_Not_Allowed_for_Auto_Reversal_JE</fullName>
+        <active>true</active>
+        <description>Validation rule that throws an error if Bank account on JEL is populated while the checkbox for Auto-reversal is set to true.</description>
+        <errorConditionFormula>AND(Journal_Entry__r.Auto_Reverse__c, Bank_Account__c != null)</errorConditionFormula>
+        <errorMessage>You can&apos;t enter a bank account on journal entry lines when the Auto Reverse field is selected. You must remove bank account values on all lines before you can select the Auto Reverse field.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Bank_Transaction_Currency_should_be_same</fullName>
+        <active>true</active>
+        <errorConditionFormula>NOT( ISBLANK(Bank_Transaction__c)) &amp;&amp;  Bank_Transaction__r.Currency__r.ISO_Code__c != Journal_Entry__r.Currency__r.ISO_Code__c</errorConditionFormula>
+        <errorMessage>The transaction currency on the bank transaction and journal entry must be same.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Bank_Transaction_should_be_finalized</fullName>
+        <active>true</active>
+        <errorConditionFormula>NOT( ISBLANK(Bank_Transaction__c)) &amp;&amp; ( Bank_Transaction__r.Finalized__c == false ||  Bank_Transaction__r.Bank_Transaction_Group__r.Void__c == true)</errorConditionFormula>
+        <errorMessage>Please select bank transactions that are finalized and not voided</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Bank_account_have_same_currency</fullName>
+        <active>true</active>
+        <description>Bank account must have the same currency as the Journal Entry</description>
+        <errorConditionFormula>NOT(ISBLANK( Bank_Account__c )) &amp;&amp; Currency__c != Bank_Account__r.Currency__r.ISO_Code__c</errorConditionFormula>
+        <errorMessage>You can&apos;t save this journal entry because the currency is different from the bank account currency.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>CR_DR_Check</fullName>
+        <active>true</active>
+        <errorConditionFormula>Amount_CR__c != 0 &amp;&amp; Amount_DR__c != 0</errorConditionFormula>
+        <errorMessage>Amount Debit and Amount Credit both can not be specified on the same journal entry line. Please create separate lines for Credit and Debit.</errorMessage>
+    </validationRules>
+</CustomObject>

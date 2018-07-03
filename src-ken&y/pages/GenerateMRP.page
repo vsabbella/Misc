@@ -1,0 +1,56 @@
+<apex:page standardController="Company__c" extensions="GenerateMRPExt" >
+<apex:form id="theForm" >
+<c:busyWait />
+        <apex:sectionHeader subtitle="{!$Label.MRP_for} {!Company__c.Name}" title="{!$Label.Planning_Functions}"/>
+        <apex:pagemessages ></apex:pagemessages>
+    
+    <p>
+        {!$Label.Running_your_MRP_converts_demand_into_planned_orders}
+        <br />To generate your MRP run two steps.
+        <ul>
+        <li>{!$Label.Click_the} <i>{!$Label.MRP_Item_Levels} </i> {!$Label.Button} </li>
+        <li>{!$Label.Click_the} <i>{!$Label.MRP_Generate_Plan} </i> {!$Label.Button}</li>
+        </ul>
+        {!$Label.Notified_via_email_when_first_step_completes}
+    </p>
+    
+    <apex:pageBlock rendered="{!NOT(runLeveling)}" title="{!$Label.Step_1}" >
+        <apex:pageBlockButtons >
+        <apex:commandButton value="{!$Label.MRP_Item_Levels}" 
+            action="{!generateItemLevel}"  reRender="theForm"   status="actionStatus"  />
+        <apex:commandButton value="{!$Label.Cancel} " action="{!cancel}" reRender="theForm"   status="actionStatus"  />
+        </apex:pageBlockButtons>
+        <p>
+        {!$Label.Ensure_that_each_item_in_the} <b>{!Company__c.Name}</b> {!$Label.Item_database_has_the_correct_item_level_information}
+        </p>
+    </apex:pageBlock>
+    
+    <apex:pageBlock rendered="{!NOT(runPlanning)}" title="{!$Label.Step_2}" >
+        <apex:pageBlockButtons >
+        <apex:commandButton value="{!$Label.MRP_Generate_Plan} " 
+            action="{!generatePlan}"  reRender="theForm"   status="actionStatus"   />
+        <apex:commandButton value="{!$Label.Cancel} " action="{!cancel}" reRender="theForm"   status="actionStatus"  />
+        </apex:pageBlockButtons>
+        
+        <apex:pageBlockSection columns="1" collapsible="false">
+            <apex:repeat value="{!$ObjectType.Company__c.FieldSets.MRPRun_RO}" var="f" > 
+            <apex:outputField value="{!Company__c[f]}" />
+            </apex:repeat>
+        </apex:pageBlockSection>
+        <apex:pageBlockSection columns="2" collapsible="false">
+            <apex:repeat value="{!$ObjectType.Company__c.FieldSets.MRPRun_WR}" var="f" > 
+            <apex:inputField value="{!Company__c[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+            </apex:repeat>
+        </apex:pageBlockSection>
+    </apex:pageBlock>
+    
+<!--    <apex:pageMessage rendered="{! OR(runLeveling,runPlanning)}" -->
+<!--        escape="false"  severity="info" strength="2"  -->
+<!--        summary="You may monitor your planning jobs" >-->
+<!--        <a href="/apexpages/setup/listAsyncApexJobs.apexp">Monitor Apex Jobs</a>-->
+<!--    </apex:pageMessage>-->
+  
+    <c:ApexJobs />
+
+</apex:form>  
+</apex:page>

@@ -1,0 +1,1053 @@
+<apex:page standardController="Requisition__c" extensions="RequisitionToPurchaseOrdersExt" recordSetVar="cases" tabstyle="Requisition_Fulfillment__tab">
+
+    <style type="text/css">
+        .column-label {
+            vertical-align: middle !important;
+            width: 10%;
+        }
+        .column-field {
+            vertical-align: middle !important;
+            width: 40%;
+        }
+        .filter-operator {
+        
+        }
+        .custom-filter-options {
+            width: 10%;
+        }
+        .custom-filter-fields {
+            width: 85%;
+        }
+    </style>
+    
+    <c:KendoResources /> 
+    <script src="../../soap/ajax/38.0/connection.js" type="text/javascript"> </script>
+    <c:QLPKChunk completeCallback="OnCompleteQLPK"  chunkSize="2000"  />
+    <c:QueryChunk uniqueId="PurchaseAgreementLines"/>
+
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+
+    <script type="text/javascript">
+    console.log('{!NspaceUU}');
+    var NameSpaceUU = '{!NspaceUU}';
+    var baseQueryPAL = '{!palQuery}';
+    var baseFilterPAL = "{!palQueryCondition}";
+    var finalDataArrayPAL = [];
+  
+    //QL chunks are complete, call the chunk queries
+    OnCompleteQLPK = function(type){
+          switch (type) {
+              case NameSpaceUU+'Contract_Line__c':
+                  parallelStart_PurchaseAgreementLines(baseQueryPAL, chunkList[type], chunkCallbackPAL, completeCallbackPAL, checkErrors, updateStatus,baseFilterPAL);
+                  break;
+          }
+     };                    
+      
+	//====== BEGIN QueryChunk.component methods
+    //this is the function that each chunk query from the QueryChunk.component will call back to.
+    //we are defining it here and passing it into the component
+    
+    var chunkCallbackPAL = function(result, event) {
+        
+        KenandyErp.CleanNamespace(result, NameSpaceUU);
+        for (index = 0; index < result.length; ++index) {
+            finalDataArrayPAL.push(result[index]);
+        }
+        
+    };
+    
+    var updateStatus = function (msgLocation, statusMsg) { 
+        if (msgLocation == 2) {
+            window.setTimeout(function(){
+                $("#status-message2").text(statusMsg);
+            }); 
+        } else {
+            window.setTimeout(function(){
+                $("#status-message1").text(statusMsg);
+            });     
+        } 
+    }; 
+    
+    var checkErrors = function (event) { 
+        if (event.status) {            
+        } else if (event.type === 'exception') {
+            errors.push(event.message + ' : ' + event.type);
+        } else {
+            errors.push(event.message);
+        }
+        if (errors.length == 0) {
+        } else {
+            console.log('***errors***');
+            console.log(errors);
+        }
+    };  
+
+    //this is the function that QueryChunk.component will call back to when all chunks are complete.
+    //we are defining it here and passing it into the component
+    var completeCallbackPAL = function(uniqueId) {
+        
+        console.log('all chunks complete: ' + uniqueId);
+        ReqReleaseUtils.AgrLinesGridInit();
+	};
+    </script> 
+       
+    <apex:form id="receivingWorkbenchForm">
+        <div class="page-container">
+        <apex:sectionHeader subtitle="Requisition Release"  help="{!HelpURL}"/>
+        <div class="page-message"></div>
+        <apex:pageMessages id="msgs"/>                      
+        
+        <div id="tabstrip">
+            <ul id="tabListId">
+                <li class = "k-state-active">Search</li>
+                <li>Release</li>
+            </ul>            
+            <div>
+                <apex:pageBlock title="{!$Label.Filters}" >  
+
+                    <apex:panelGrid columns="4" width="100%" styleClass="search-filters" columnClasses="column-width">
+                        <apex:outputPanel >
+                            <label class="company-label" for="companyFilter">{!$ObjectType.Company__c.Label}:</label>
+                            <input id="companyFilter" class="kendoWidgetSelector" />
+                        </apex:outputPanel>
+
+                        <apex:outputPanel >
+                            <label class="facility-label" for="facilityFilter">{!$ObjectType.Facility__c.Label}:</label>
+                            <input id="facilityFilter" class="kendoWidgetSelector" />
+                        </apex:outputPanel>
+
+                        <apex:outputPanel >
+                            <label class="source-label" for="sourceFilter">{!$ObjectType.Requisition__c.fields.Source__c.Label}:</label>
+                            <input id="sourceFilter" class="kendoWidgetSelector" />
+                        </apex:outputPanel>
+
+                        <apex:outputPanel >
+                            <label class="type-label" for="typeFilter">{!$ObjectType.Requisition__c.fields.Type__c.Label}:</label>
+                            <input id="typeFilter" class="kendoWidgetSelector" />
+                        </apex:outputPanel>
+
+                        <apex:outputPanel >
+                            <label class="req-label" for="reqFilter">{!$ObjectType.Requisition__c.Label}:</label>
+                            <input id="reqFilter" class="kendoWidgetSelector" />
+                        </apex:outputPanel>
+
+                        <apex:outputPanel >
+                            <label class="so-label" for="soFilter">{!$ObjectType.Sales_Order__c.Label}:</label>
+                            <input id="soFilter" class="kendoWidgetSelector" />
+                        </apex:outputPanel>
+
+                    </apex:panelGrid>
+
+                    <apex:pageBlockSection columns="4" title="Additional Filters">
+                        <div>
+                            <div id="addlsearchfilters"/>
+                        </div>
+                    </apex:pageBlockSection>
+
+                    <apex:pageBlockButtons location="bottom">
+                        <apex:outputPanel layout="none">
+                            <input name="searchFilter" id="searchFilter" type="button" value="{!$Label.Search}" onclick="ReqReleaseActions.Search();" class="k-button kndy-btn" />
+                        </apex:outputPanel>
+                    </apex:pageBlockButtons>
+
+                </apex:pageBlock> 
+
+                <!-- enable this section when we support both manual and automatic release process
+                TODO:
+                    1. Radio button can be changed to a list view
+                    2. Page rendering can be introduced to render appropriate sections based on the user selection
+                -->
+                <apex:pageBlock title="Build Options" rendered="false" id="buildoptions">  
+                    <apex:pageBlockSection columns="1">  
+                        <apex:selectRadio value="{!buildOption}">
+                            <apex:selectOptions value="{!buildOptions}"/>
+                        </apex:selectRadio>
+                    </apex:pageBlockSection>
+                </apex:pageBlock>
+
+                <!--
+                Requisition lines grid: Grid that is rendered when we hit Search. Search results are shown in this grid
+                -->
+                <apex:pageBlock title="{!$ObjectType.Requisition_Line__c.LabelPlural}" id="reqlinesbeforeupdate">    
+                    <div class="grid-container">
+                        <div class="grid-message"></div>
+                        <div id="{!ReqLinesConfig.uniqueId}" ></div>
+                    </div>
+                </apex:pageBlock>
+
+            </div>
+            <div>
+                <!--
+                Agreement Lines Grid: Has Agreement Lines for the req lines selected in Tab 1
+                -->
+                <apex:pageBlock title="{!$ObjectType.Contract_Line__c.LabelPlural}" id="agreementLines">    
+                    <div class="grid-container">
+                        <div class="grid-message"></div>
+                        <div id="{!AgreementLinesConfig.uniqueId}" ></div>
+                    </div>
+                </apex:pageBlock>
+                <!--
+                Requisition Wrapper Lines Grid: To enable the association between req lines and agreement lines
+                -->
+                <apex:pageBlock title="{!$ObjectType.Requisition_Line__c.LabelPlural}" id="reqlinesafterupdate">    
+                    <div class="grid-container" id="reqlinesafterupdate">
+                        <div class="grid-message"></div>
+                        <div id="{!ReqLinesUpdatedConfig.uniqueId}" ></div>
+                    </div>
+                </apex:pageBlock>
+                <!--
+                Purchase Order Lines Grid: To display po lines after release process is successful
+                -->
+                <apex:pageBlock title="{!$ObjectType.Purchase_Order_Line__c.LabelPlural}" id="polines">    
+                    <div class="grid-container">
+                        <div class="grid-message"></div>
+                        <div id="{!POLinesConfig.uniqueId}" ></div>
+                    </div>
+                </apex:pageBlock>
+            </div>    
+        </div>
+        </div>
+    </apex:form> 
+
+    <script type="text/javascript">  
+    
+    	$(window).resize(function() {
+            /** Trying to resize the grid to fit the window when the window is resized**/
+            //Formula to calculate the width the grid should resize to when the window is resized
+            //   Taking the window width and the sideBardiv width and any padding between them.
+            var x = $(window).width() - $('#sidebarDiv').width() - 100;
+            $('#{!ReqLinesConfig.uniqueId}').width(x);          
+            $('#{!AgreementLinesConfig.uniqueId}').width(x);
+            $('#{!reqLinesUpdatedConfig.uniqueId}').width(x);
+            $('#{!POLinesConfig.uniqueId}').width(x);
+            
+	});    
+    
+	function getWidth(len){
+		if(len < 12){return '120px';}
+		else{ return (len*10)+'px';}
+	}    
+
+        var POLinesFieldList = '{!POLinesFieldList}';
+        var ReqLinesFieldList = '{!ReqLinesFieldList}';
+        var isHideResults = true; 
+        var updatedReqLinesAvailable = false;
+        var releaseReqLinesAction = '{!$RemoteAction.RequisitionToPurchaseOrdersExt.releaseReqLines}';
+		var rowCollection = [];
+        var getPOLinesData = function() {
+            var deferred = $.Deferred();
+            var selectedRows = [];
+            var grid = $('#{!reqLinesConfig.uniqueId}').data('kendoGridActionList');
+            
+            if (grid) {
+                var gridUtils = new KendoGridUtils(grid);
+                selectedRows = gridUtils.SelectedRows();
+            }     
+
+            selectedRows = selectedRows.length == 0 ? rowCollection : selectedRows;
+            
+			console.log('Selected Rows: ' + selectedRows);
+            if (selectedRows.length == 0) {
+                setTimeout(function() {
+                    deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+                }, 100);
+            }   
+            else {
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.RequisitionToPurchaseOrdersExt.getPOLines}',
+                    selectedRows,
+                    function (result, event) {
+                        deferred.resolve(result, event);
+                    },
+                    {escape: false}
+                );
+                 
+                //var updatedgrid = $('#{!ReqLinesUpdatedConfig.uniqueId}').data('kendoGridActionList');
+                if(updatedReqLinesAvailable){
+                    var gridDataAfterUpdate = $("#ReqLinesUpdatedGrid").data("kendoGridActionList");
+                    var gridReleaseInfo = gridDataAfterUpdate.dataSource.data();
+                    
+                    ReqReleaseUtils.ReqLinesGridInit();
+                    if(gridReleaseInfo.length == 0){
+                       updatedReqLinesAvailable = false;
+                    } 
+                    
+                }   
+            }
+
+            return deferred.promise();
+        };
+
+        var uniqueItemIds = function GetUnique(inputArray)
+        {
+            var outputArray = [];
+            
+            for (var i = 0; i < inputArray.length; i++)
+            {
+                if ((jQuery.inArray(inputArray[i], outputArray)) == -1)
+                {
+                    outputArray.push('\''+inputArray[i]+'\'');
+                }
+            }
+           
+            return outputArray;
+        };
+
+        var getAgrLinesData = function() {
+            var deferred = $.Deferred();
+                        if(finalDataArrayPAL != undefined || finalDataArrayPAL != null ){
+                 deferred.resolve({records: finalDataArrayPAL}, {type: "none"});
+             }
+             else{
+                 console.log('finalDataArrayPAL is undefined or NULL');
+                 deferred.resolve({records: []}, {type: "none"});
+             }
+
+            return deferred.promise();
+        };
+
+        var getReqLinesWrapperData = function() {
+            var deferred = $.Deferred();
+            var selectedRows = [];    
+            var grid = ReqReleaseUtils.reqLinesGrid;
+            
+            if (grid) {
+                var gridUtils = new KendoGridUtils(grid, { isDml: false });
+                selectedRows = gridUtils.SelectedRows();
+            }  
+            
+            if (selectedRows.length == 0) {
+                setTimeout(function() {
+                    deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+                }, 100);
+            }
+            else {  
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.RequisitionToPurchaseOrdersExt.getreqWrapperLines}',
+                    selectedRows,
+                    function (result, event) {
+                        deferred.resolve(result, event);
+                    },
+                    {escape: false}
+                );
+            }
+
+            return deferred.promise();
+        };
+
+        var getReqLinesData = function() {
+
+            var deferred = $.Deferred();
+            if (isHideResults){
+               setTimeout(function() {
+                    deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+                }, 100);
+                
+            }else{
+                var filterCriteria = ReqReleaseUtils.GetFilterCriteria();
+                var addlSearchFilters = $('#addlsearchfilters').data('kendoDetailList');
+                var headerDateFields = addlSearchFilters.getDateFields();
+                var headerRowsList = [];
+                var headerRows = [];
+                var config = JSON.parse('{!JSENCODE(reqLinesConfigJson)}');
+                
+                headerRowsList.push(addlSearchFilters.data);
+                
+                headerRows = $.map(headerRowsList, function(item, index) {
+                    item = item.toJSON();
+                    item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+                    
+                    return item;
+                });
+                
+                if (headerRows.length > 0) {
+                    headerRows = Serializer.ParameterMap(headerRows);
+                }
+
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.RequisitionToPurchaseOrdersExt.getreqLines}',
+                    filterCriteria,
+                    config,
+                    headerRows[0],
+                    function (result, event) {
+                        deferred.resolve(result, event);
+                    },
+                    {escape: false}
+                );
+            }
+            return deferred.promise();
+        };
+        
+        $(document).ready(function() {  
+
+            var tabStrip;
+            if({!tabView}){
+                tabStrip = $("#tabstrip").kendoTabStrip({
+                animation: false,
+                contentUrls: [ , , , , , , ]}).data("kendoTabStrip").select(0);
+            }
+            if( !{!tabView} ){
+                jQuery('#tabListId').css("display","none");
+            }
+
+            // Initialize Company Lookup filter
+            var companyDropdown = $.fn.KendoComboBox($('#companyFilter'), { lookupSearchAction: '{!$RemoteAction.RequisitionToPurchaseOrdersExt.lookupSearchFilter}', referenceTo: 'Company__c', title: '{!$ObjectType.Company__c.Label}', value: '{!defaultCompany}' });
+            
+            // Initialize Facility Lookup filter
+            $.fn.KendoComboBox($('#facilityFilter'), { lookupSearchAction: '{!$RemoteAction.RequisitionToPurchaseOrdersExt.lookupSearchFilter}', referenceTo: 'Facility__c', title: '{!$ObjectType.Facility__c.Label}', value: '{!defaultFacility}', filterCriteria: "Company__c = \'#=Id#\'", cascadeFrom: 'companyFilter' });
+
+            // Initialize Source filter
+            var sourceDropdown = $.fn.KendoDropDownList($('#sourceFilter'), { getPicklistValuesAction: '{!$RemoteAction.RequisitionToPurchaseOrdersExt.getPicklistValues}', objectName: 'Requisition__c', fieldName: 'Source__c' });
+
+            // Initialize Type filter
+            var typeDropdown = $.fn.KendoDropDownList($('#typeFilter'), { getPicklistValuesAction: '{!$RemoteAction.RequisitionToPurchaseOrdersExt.getPicklistValues}', objectName: 'Requisition__c', fieldName: 'Type__c' });
+
+            // Initialize Requisition filter
+            var reqDropdown = $.fn.KendoComboBox($('#reqFilter'), { lookupSearchAction: '{!$RemoteAction.RequisitionToPurchaseOrdersExt.lookupSearchFilter}', referenceTo: 'Requisition__c', title: '{!$ObjectType.Requisition__c.Label}',  filterCriteria: "Company__c = \'#=Id#\'", cascadeFrom: 'companyFilter' });
+            
+            // Initialize Sales Order filter
+            var soDropdown = $.fn.KendoComboBox($('#soFilter'), { lookupSearchAction: '{!$RemoteAction.RequisitionToPurchaseOrdersExt.lookupSearchFilter}', referenceTo: 'Sales_Order__c', title: '{!$ObjectType.Sales_Order__c.Label}',  filterCriteria: "Company__c = \'#=Id#\'", cascadeFrom: 'companyFilter' });
+
+            //initialize the addl search filters
+            $('#addlsearchfilters').kendoDetailList({
+                namespace: '{!NamespaceUU}',  
+                sections: [
+                    {
+                        fields: JSONUtils.Parse('{!JSENCODE(ReqLinesFiltersFieldList)}')
+                    }],
+                lookupSearchAction: '{!$RemoteAction.RequisitionToPurchaseOrdersExt.lookupSearchFilter}',
+                lookupSearchFilters: [],
+                getDetailListFunction: function(readOptions) {
+                    var deferred = $.Deferred();
+        
+                    setTimeout(function() {
+                        deferred.resolve({ records: [], success: true, total: 1 }, { statusCode: 200 });
+                    }, 100);
+                    
+                    return deferred.promise();
+                },
+                columns: 4
+            });
+
+            $('[id$=reqlinesbeforeupdate]').hide();
+            $('[id$=reqlinesafterupdate]').hide();
+            $('[id$=agreementLines]').hide();
+            $('[id$=polines]').hide();
+
+            }); 
+
+        var ReqReleaseUtils = function() {
+            return {
+                
+                reqLinesGrid: null,
+                reqLinesupdatedGrid: null,
+                agrLinesGrid: null,
+                poLinesGrid: null, 
+
+                GetFieldList: function(fieldList) {
+                    fieldList = JSON.parse(fieldList);  
+                    return JSON.stringify(fieldList);
+                },
+                
+                GetFilterCriteria: function(){
+
+                    var filterCriteria = [];
+                    var companyFilter = $('#companyFilter').val();
+                    var facilityFilter = $('#facilityFilter').val();
+                    var sourceFilter = $('#sourceFilter').val();
+                    var typeFilter = $('#typeFilter').val(); 
+                    var reqFilter = $('#reqFilter').val(); 
+                    var soFilter = $('#soFilter').val(); 
+
+                    filterCriteria.push({ field: 'Requisition__r.Company__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: companyFilter, operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+                    filterCriteria.push({ field: 'Facility__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: facilityFilter, operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+                    filterCriteria.push({ field: 'Requisition__r.Source__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: sourceFilter, operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+                    filterCriteria.push({ field: 'Requisition__r.Type__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: typeFilter, operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+                    filterCriteria.push({ field: 'Requisition__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: reqFilter, operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+                    filterCriteria.push({ field: 'Requisition__r.Sales_Order__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: soFilter, operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+                    return filterCriteria;
+                },
+                
+                ReqLinesGridInit: function(){
+
+                    // Destroy reqLinesGrid
+                    if (this.reqLinesGrid) {
+                        $('#{!ReqLinesConfig.uniqueId}').off();
+                        this.reqLinesGrid.destroy();
+                        $('#{!ReqLinesConfig.uniqueId}').empty();
+                    }
+
+                    var reqLinesFieldListGrid =   JSON.parse(ReqReleaseUtils.GetFieldList('{!reqLinesFieldList}'));
+                    var reqLinesConfigGridWidth = $('#{!reqLinesConfig.uniqueId}').width()+'px';    
+                    
+                    $.each(reqLinesFieldListGrid, function(){
+ 						this.width = getWidth(this.title.length);
+                    });                    
+                    
+                    this.reqLinesGrid = $('#{!ReqLinesConfig.uniqueId}').width(reqLinesConfigGridWidth).kendoGridActionList({
+                        namespace: '{!NamespaceUU}', 
+                        config: '{!reqLinesConfigJson}', 
+                        fieldList: reqLinesFieldListGrid,
+                        lookupSearchAction: '{!$RemoteAction.RequisitionToPurchaseOrdersExt.lookupSearch}', 
+                        toolbarButtons: [{ name: "grid-release-custom-command", text:"", template: "<input type='button' value='Release' class='k-button kndy-btn grid-release-custom-command' />" },
+                                         { name: "grid-release-without-agreements-custom-command", text:"", template: "<input type='button' value='Release without Agreements' class='k-button kndy-btn grid-release-without-agreements-custom-command' />" }], 
+                        getActionListFunction: getReqLinesData,
+                        releaseAction: releaseReqLinesAction, 
+                    }).data('kendoGridActionList');
+
+                    this.reqLinesGrid.wrapper.on("click", ".grid-release-custom-command", $.proxy(ReqReleaseActions.ManageRelease, { grid: this.reqLinesGrid}));
+                    this.reqLinesGrid.wrapper.on("click", ".grid-release-without-agreements-custom-command", $.proxy(ReqReleaseActions.ReleaseWithoutAgreements, { grid: this.reqLinesGrid}));
+			
+			//                    __GLOBAL_GRID = this.reqLinesGrid;     
+                    //Binding an click event when a checkbox is clicked on the locked grid.
+                    /* this.reqLinesGrid.lockedTable.on('click',
+                                                    'tr td input.grid-select-one',
+                                                     $.proxy(ReqReleaseActions.UpdateSelectOne, {grid: this.reqLinesGrid})); 
+                    //Binding a click event when the 'select all' checkbox is clicked on the locked grid.
+                    $(this.reqLinesGrid.wrapper.find('table')[0]).find('thead').on('click', 'tr th input.grid-select-all', $.proxy(ReqReleaseActions.UpdateSelectAll, {grid: this.reqLinesGrid}))*/	
+                },
+                
+                ReqLinesUpdateSupplierGrid: function(){
+
+                    // Destroy reqLinesupdatedGrid
+                    if (this.reqLinesupdatedGrid) {
+                        $('#{!reqLinesUpdatedConfig.uniqueId}').off();
+                        this.reqLinesupdatedGrid.destroy();
+                        $('#{!reqLinesUpdatedConfig.uniqueId}').empty();
+                    }
+
+                    var reqLinesupdateConfigJsonGrid = {!reqLinesupdateConfigJson};
+                    reqLinesupdateConfigJsonGrid.scrollable = true;
+                    var reqLinesupdateFieldListGrid = JSON.parse(ReqReleaseUtils.GetFieldList('{!reqLinesupdateFieldList}'));
+			        var reqLinesupdatedGridWidth = $(window).width() - $('#sidebarDiv').width() - 100;                    
+                    var gridColumnLength = (reqLinesupdateFieldListGrid && reqLinesupdateFieldListGrid.length) ? (reqLinesupdateFieldListGrid.length - 1 > 0 ? reqLinesupdateFieldListGrid.length - 1 : '100px') : '100px';                      
+                    $.each(reqLinesupdateFieldListGrid, function(){
+                        //this.width = gridColumnLength === '100px' ? '100px' : reqLinesupdatedGridWidth/gridColumnLength+'px';
+                                                this.width = getWidth(this.title.length);
+                    });
+                    this.reqLinesupdatedGrid = $('#{!reqLinesUpdatedConfig.uniqueId}').width(reqLinesupdatedGridWidth).kendoGridActionList({
+                        namespace: '{!NamespaceUU}', 
+                        config: reqLinesupdateConfigJsonGrid, 
+                        modelIdField: 'reqLine.Id',
+                        fieldList: reqLinesupdateFieldListGrid, 
+                        lookupSearchAction: '{!$RemoteAction.RequisitionToPurchaseOrdersExt.lookupSearch}', 
+                        toolbarButtons: [  { name: "grid-release-custom-command", text:"", template: "<input type='button' value='Generate PO' class='k-button kndy-btn grid-release-custom-command' />" },], 
+                        getActionListFunction: getReqLinesWrapperData,
+                        releaseAction: releaseReqLinesAction, 
+                    }).data('kendoGridActionList');
+
+                    this.reqLinesupdatedGrid.wrapper.on("click", ".grid-release-custom-command", $.proxy(ReqReleaseActions.Release, { grid: this.reqLinesupdatedGrid, options: { releaseAction : releaseReqLinesAction} }));
+			 /*
+                    //Binding an click event when a checkbox is clicked on the locked grid.
+                    this.reqLinesupdatedGrid.lockedTable.on('click',
+                                                    'tr td input.grid-select-one',
+                                                     $.proxy(ReqReleaseActions.UpdateSelectOne, {grid: this.reqLinesupdatedGrid})); 
+                    //Binding a click event when the 'select all' checkbox is clicked on the locked grid.
+                                         $(this.reqLinesupdatedGrid.wrapper.find('table')[0]).find('thead').on('click', 'tr th input.grid-select-all', $.proxy(ReqReleaseActions.UpdateSelectAll, {grid: this.reqLinesupdatedGrid})) */                                        
+                    
+
+                },
+                
+                AgrLinesGridInit: function(){
+
+                    // Destroy agrLinesGrid
+                    if (this.agrLinesGrid) {
+                        $('#{!AgreementLinesConfig.uniqueId}').off();
+                        this.agrLinesGrid.destroy();
+                        $('#{!AgreementLinesConfig.uniqueId}').empty();
+                    }
+
+                    var AgrLinesConfigJsonGrid = {!AgrLinesConfigJson};
+                    AgrLinesConfigJsonGrid.scrollable = true;                  
+                    var AgrLinesFieldListGrid = JSON.parse(ReqReleaseUtils.GetFieldList('{!AgrLinesFieldList}'));
+                    var gridColumnLength = (AgrLinesFieldListGrid && AgrLinesFieldListGrid.length) ? (AgrLinesFieldListGrid.length - 1 > 0 ? AgrLinesFieldListGrid.length - 1 : '100px') : '100px';  
+					$.each(AgrLinesFieldListGrid, function(){
+                        // this.width = gridColumnLength === '100px' ? '100px' : $('#{!AgreementLinesConfig.uniqueId}').width()/gridColumnLength+'px';
+                                                this.width = getWidth(this.title.length);
+                    });                                                          
+					var agrLinesGridWidth = $('#{!AgreementLinesConfig.uniqueId}').width()+'px';
+                    this.agrLinesGrid = $('#{!AgreementLinesConfig.uniqueId}').width(agrLinesGridWidth).kendoGridActionList({
+                        namespace: '{!NamespaceUU}', 
+                        config: AgrLinesConfigJsonGrid, 
+                        fieldList: AgrLinesFieldListGrid, 
+                        allowMassDelete: false,
+                        actionColumnButtons: [{ name: "custom-update-command", text:"", template: "<input type='button' value='Apply' class='btn grid-custom-apply-command' />" },], 
+                        actionColumnWidth: '100px',                                  
+                        getActionListFunction: getAgrLinesData
+                    }).data('kendoGridActionList');
+
+                    this.agrLinesGrid.wrapper.on("click", ".grid-custom-apply-command", $.proxy(ReqReleaseActions.CopyAgreementLine, { grid: this.agrLinesGrid, reqLinesupdatedGrid: this.reqLinesupdatedGrid }));
+                    this.agrLinesGrid.hideColumn(0);
+                },
+
+                POLinesGridInit: function(){
+
+                    // Destroy poLinesGrid
+                    if (this.poLinesGrid) {
+                        $('#{!POLinesConfig.uniqueId}').off();
+                        this.poLinesGrid.destroy();
+                        $('#{!POLinesConfig.uniqueId}').empty();
+                    }
+
+                    var POLinesConfigJsonGrid = {!POLinesConfigJson};
+                    POLinesConfigJsonGrid.scrollable = true;
+                    var POLinesFieldListGrid = JSON.parse(ReqReleaseUtils.GetFieldList('{!POLinesFieldList}'));
+					var poLinesGridWidth = $(window).width() - $('#sidebarDiv').width() - 100;                                              
+                    var gridColumnLength = (POLinesFieldListGrid && POLinesFieldListGrid.length) ? (POLinesFieldListGrid.length - 1 > 0 ? POLinesFieldListGrid.length - 1 : '100px') : '100px';                                                
+                    $.each(POLinesFieldListGrid, function(){
+                                              //this.width = gridColumnLength === '100px' ? '100px' : poLinesGridWidth/gridColumnLength+'px';                      
+                        this.width = getWidth(this.title.length);                                              
+                    });
+                    this.poLinesGrid = $.fn.GridRelatedList($('#{!POLinesConfig.uniqueId}').width(poLinesGridWidth), { 
+                        namespace: '{!NamespaceUU}', 
+                        config: POLinesConfigJsonGrid, 
+                        fieldList: POLinesFieldListGrid, 
+                        getRelatedListFunction: getPOLinesData 
+                    }); 
+                }
+            };
+        }();
+
+        var ReqReleaseActions = function() {
+            
+            return { 
+		
+		/**
+                  UpdateSelectOne is a function to set the IsSelected__custom of a row its checkbox is clicked and set to true.
+                **/                
+                UpdateSelectOne: function(e){
+                        var self = this;
+                        //Get the grid object of the index selected
+                        var index      = e.target.parentElement.parentElement.rowIndex,
+                            item       = self.grid.dataSource.data()[index],
+                            isSelected = $(e.target).is(":checked"),
+                            isDirty    = item.dirty,
+                            theadCheckbox = $(self.grid.wrapper.find('table')[0]).find('thead tr th input.grid-select-all'),
+                            tbodyCheckbox = $(self.grid.wrapper.find('table')[2]).find('tbody tr td input.grid-select-one');
+                            if (!isSelected) {
+                                //If even one checkbox is unselected, uncheck the thead checkbox
+                                theadCheckbox.prop('checked', false);
+                            }
+                            else{
+								//set the thead checkbox if all the rows of the table are checked else uncheck it
+                                theadCheckbox.prop('checked', tbodyCheckbox.length > 0 && !tbodyCheckbox.is(':not(:checked)'));
+                            }
+                            item.IsSelected__custom = isSelected;
+							if (!isDirty) {
+								item.set('dirty', isDirty);
+							}                         
+                },
+				/**
+					UpdateSelectAll is a function to set the IsSelected__custom of all rows of the table when its clicked and set to true.
+				**/                
+                UpdateSelectAll: function(e){
+                        var self = this,
+                            grid = self.grid,
+                            state = $(e.target).is(":checked");
+                        $.each(grid.dataSource.view(), function(){
+                            var isDirty = this['dirty'];
+                            this['IsSelected__custom'] = state;
+                                if (!isDirty) {
+                                    this['dirty'] = isDirty;
+                                }                            
+                        });
+                        grid.refresh();                    
+                },
+                Validate: function() {
+                    KenandyErp.ClearMessage();
+                    
+                    var errorMessages = [];
+                    var company = $("#companyFilter").val().trim(); 
+                    var facility = $("#facilityFilter").val().trim(); 
+                        
+                    if (!company) {
+                        errorMessages.push({ message: 'Company is required', severity: KenandyErp.MessageType.Error });
+                    }
+                    /*
+                    if (!facility) {
+                        errorMessages.push({ message: 'Facility is required', severity: KenandyErp.MessageType.Error });
+                    }
+                    */
+                    if (errorMessages.length > 0) {
+                        KenandyErp.Messages(errorMessages);
+                        return false
+                    }
+                        
+                    return true;
+                },
+            
+                Search: function() {
+
+                    if (this.Validate()) {
+                        isHideResults = false;   
+                        $('[id$=reqlinesbeforeupdate]').show();              
+                        ReqReleaseUtils.ReqLinesGridInit();
+                    }
+                    
+                    return true;
+                },
+
+                ShowReleaseTab: function() {
+                    $('#tabstrip').data('kendoTabStrip').select(1);
+                },
+
+                //Function that lets the user to select the req lines and calls the remote action to fetch corresponding agreement lines and populate the requisition wrapper lines grid 
+                ManageRelease: function(e) {
+
+                    var grid = ReqReleaseUtils.reqLinesGrid;
+                    var companyFilter = $('#companyFilter').val();
+                    var facilityFilter = $('#facilityFilter').val();
+                    var itemUOMKeys = [];
+                    var reqlineWithoutItem = ''; 
+                    
+                    if (grid) {
+                        var gridUtils = new KendoGridUtils(grid, { isDml: false });
+                        selectedRows = gridUtils.SelectedRows();
+                        rowCollection = selectedRows ;
+                    }
+
+                    if (selectedRows.length == 0){ 
+                        var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                        KenandyErp.Message('Select atleast one requisition line to proceed', KenandyErp.MessageType.Error, messageElement);
+                    }
+                    else {
+                        
+                           $.each(selectedRows, function(index,elem){
+                               if(!elem.Item__c){
+                                   reqlineWithoutItem += elem.Name +',';
+                               }    
+                            });
+                            if (reqlineWithoutItem){
+                                KenandyErp.Message('Select the requisition lines with Item to proceed. Unselect the requisition line/s without Item - '+ reqlineWithoutItem);
+                                e.preventDefault();
+                                return false;
+                            }
+                        
+                        selectedRows = $.each(selectedRows, function(index, reqLine) {                        
+                           var itemUOMKey = '';
+                           if (reqLine.Item__c) {
+                                itemUOMKey += (reqLine.Item__c).substring(0, 15) + '/';
+                            }   
+                           if (reqLine.Purchasing_UOM__c){//KNDY-10904
+                                itemUOMKey += (reqLine.Purchasing_UOM__c).substring(0, 15);
+                           }
+                           itemUOMKeys.push(itemUOMKey);
+                        });
+                        itemUOMKeys = uniqueItemIds(itemUOMKeys);//KNDY-10904
+                        KenandyErp.ClearMessage($('#{!reqLinesConfig.uniqueId}').closest("div.grid-container").find("div.grid-message:first"));   
+                        
+                        //start of script for chunking the PAL
+                        finalDataArrayPAL = [];
+                        baseQueryPAL = '{!palQuery}';
+                        baseFilterPAL = "{!palQueryCondition}";
+                        baseFilterPAL = baseFilterPAL + ' ItemUOMKey__c in ('+itemUOMKeys+') and Contract__r.Company__c = '+ '\''+ companyFilter+'\'' + ' order by Line__c asc';
+              
+                        // Invoking the Chunking mechanism 
+                        chunkEntireDB(NameSpaceUU+'Contract_Line__c');
+                        
+                        ReqReleaseUtils.ReqLinesUpdateSupplierGrid();
+                        //ReqReleaseUtils.AgrLinesGridInit();
+                        ReqReleaseUtils.POLinesGridInit();
+                        ReqReleaseActions.ShowReleaseTab();
+
+                        $('[id$=reqlinesafterupdate]').show(); 
+                        $('[id$=agreementLines]').show();
+                        $('[id$=polines]').show();
+                    }
+
+                },
+
+                ReleaseWithoutAgreements: function(e){
+
+                    var grid = ReqReleaseUtils.reqLinesGrid;
+                    var selectedReqIds = [];
+                    var errorFlag = false;
+                    if (grid) {
+                        var gridUtils = new KendoGridUtils(grid, { isDml: false });
+                        selectedRows = gridUtils.SelectedRows();
+                    }
+					var dropShipReqSelected = false; 
+					var defaultPALinePresent = false;
+                    var currencyMissmatch = false;
+                    var supplierMismatch = false;
+                    var backToBackReqSelected = false; //KNDY-13677
+                    var soMismatch = false; //KNDY-19836
+                    
+                    if (selectedRows.length == 0){
+                        var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                        KenandyErp.Message('Select atleast one requisition line to proceed', KenandyErp.MessageType.Error, messageElement);
+                        return;
+                    }else{
+                        
+                        var currentcurrency = '';
+                        var supplier = '';
+                        var so = '';
+                        
+                        $.each(selectedRows, function(index,elem){
+                            if(elem.Requisition__r.Source__c == 'Drop Ship'){
+                                dropShipReqSelected = true;
+                            }
+                            
+                            if(elem.Default_Purchase_Agreement_Line__c != null){
+                                defaultPALinePresent = true;
+                            }
+                            if (elem.Supplier__c != null) {
+                                if (supplier == ''){
+                                    supplier = elem.Supplier__c;   
+                                }else if(supplier != elem.Supplier__c){
+                                    supplierMismatch = true;
+                                }
+                            }
+
+                            if(currentcurrency == ''){
+                                currentcurrency = elem.Requisition__r.Currency__c;
+                            }else if(currentcurrency != elem.Requisition__r.Currency__c){
+                                currencyMissmatch = true;
+                            }
+                            
+                            if(elem.Requisition__r.Source__c == 'Back To Back'){
+                                backToBackReqSelected = true;
+                            }
+                            if (elem.Requisition__r.Sales_Order__c != null) {
+                                if (so == ''){
+                                    so = elem.Requisition__r.Sales_Order__c;   
+                                }else if(so != elem.Requisition__r.Sales_Order__c){
+                                    soMismatch = true;
+                                }
+                            }
+                        });
+                        if (dropShipReqSelected && backToBackReqSelected){
+                            var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                            KenandyErp.Message('You cannot release requisition lines with a source of Drop Ship & Back To Back using this option.', KenandyErp.MessageType.Error, messageElement); 
+                            e.preventDefault();
+                            return false;
+                        }
+                        
+                        if (defaultPALinePresent){
+                            var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                            KenandyErp.Message('You cannot release requisition lines with a default purchase agreement line tagged using this option.', KenandyErp.MessageType.Error, messageElement); 
+                            e.preventDefault();
+                            return false;
+                        }
+
+                        if (supplierMismatch){
+                            var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                            KenandyErp.Message('{!$Label.Selected_lines_have_multiple_suppliers}', KenandyErp.MessageType.Error, messageElement); 
+                            e.preventDefault();
+                            return false;
+                        }
+                        
+                        if(currencyMissmatch){
+                            var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                            KenandyErp.Message('You cannot release requisition lines with different currencies.', KenandyErp.MessageType.Error, messageElement); 
+                            e.preventDefault();
+                            return false;
+                        }
+                        
+                        if(soMismatch){
+                            var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                            KenandyErp.Message('You cannot release requisition lines with different Sales Order references.', KenandyErp.MessageType.Error, messageElement); 
+                            e.preventDefault();
+                            return false;
+                        }
+                        /*if (backToBackReqSelected){ //KNDY-13677
+                            var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                            KenandyErp.Message('You cannot release requisition lines with a source of Back To Back using this option.', KenandyErp.MessageType.Error, messageElement); 
+                            e.preventDefault();
+                            return false;
+                        }*/
+                        
+                        $.each(selectedRows, function (idx, elem) {
+                           selectedReqIds.push(elem.Id);
+                        });
+                        selectedReqIds = JSON.stringify(selectedReqIds);
+                     }
+                    
+                    if (window.location.href.indexOf('RequisitiontoPurchaseOrders') != -1 && window.location.href.indexOf('reqs') == -1 
+                        && selectedReqIds != null) {
+                        var urlString = window.location.href.replace('RequisitiontoPurchaseOrders', 'PurchaseOrderManage?reqs='+encodeURIComponent(selectedReqIds));
+						KenandyErp.NavigateToURL(urlString,true);
+                    }
+                    return;
+                },
+
+                //Function that allows the user to establish the link between req line and agreement line
+                CopyAgreementLine: function(e){
+
+                    var self = this;
+                    var grid = self.grid;
+                    var reqLinesupdatedGrid = self.reqLinesupdatedGrid;
+                    var options = self.options; 
+                    var selectedRows = [];
+                    var allRows = [];
+                    var deferred = $.Deferred();
+                    var updatedRows = [];
+                    var showerror = false;
+                    var errorMsg = '';
+                    var row = $(e.target).closest("tr"); 
+                    var dataItem = grid.dataItem(row); 
+
+                    if (reqLinesupdatedGrid) {
+                        var gridUtils = new KendoGridUtils(reqLinesupdatedGrid, { isDml: false });
+                        selectedRows = gridUtils.SelectedRows();
+                        allRows = reqLinesupdatedGrid.dataSource.data();
+                    }
+
+                    if (selectedRows.length > 0) {
+                        
+                        $.each(selectedRows, function (idx, elem) {
+                            var supplierId = (elem.reqLine.Supplier__c) ? elem.reqLine.Supplier__c : dataItem.Contract__r.Supplier__c ;
+                            //check for item, UOM (KNDY-10904), supplier, facility(optional) to successfully create the wrapper records
+                            if (dataItem.Item__c == elem.reqLine.Item__c && dataItem.Purchase_UOM__c == elem.reqLine.Purchasing_UOM__c && dataItem.Contract__r.Supplier__c == supplierId && dataItem.Currency__c == elem.reqLine.Requisition__r.Currency__r.Name &&
+                                    (dataItem.Contract__r.Ship_to_Facility__c == elem.reqLine.Facility__c || dataItem.Contract__r.Ship_to_Facility__c == null ) && !showerror){
+                                //do nothing
+                                //to make sure data copy happens only if all rows are error free
+                                delete dataItem['Item__r.Description__c'];  // KNDY-18333  need to revisit and provide optimum solution 
+                            }
+                            else{
+                                showerror = true;
+
+                                if(dataItem.Currency__c != elem.reqLine.Requisition__r.Currency__r.Name){
+                                    errorMsg = 'Purchase Agreement and Requisitions must have matching currency.';
+                                }else{
+                                    errorMsg = '{!$Label.Requisition_lines_do_not_match_with_selected_agreement_lines}';
+                                }
+                            }
+                        });
+
+                        if (!showerror){
+                            KenandyErp.ClearMessage($('#{!ReqLinesUpdatedConfig.uniqueId}').closest("div.grid-container").find("div.grid-message:first"));  
+
+                            $.each(allRows, function (idx, elem) {
+                                if (elem.IsSelected__custom === true){
+                                    elem.ctLine = dataItem;
+                                    elem.IsSelected__custom = false;
+                                }
+                                updatedRows.push(elem);
+                            });
+
+                            var updatedgriddata = $("#ReqLinesUpdatedGrid").data("kendoGridActionList");
+                            updatedgriddata.dataSource.data([]);
+                            updatedgriddata.dataSource.data(updatedRows);
+                            updatedgriddata.refresh();  
+                            
+                        }
+                        else{
+                            var messageElement = reqLinesupdatedGrid.element.closest("div.grid-container").find("div.grid-message:first");
+                            KenandyErp.Message(errorMsg, KenandyErp.MessageType.Error, messageElement);
+                        }
+                    }
+                    else {
+                        KenandyErp.Alert('{!$Label.Select_a_requisition_line_and_then_click_Apply}');
+                        return;
+                    }
+                },
+
+                /*
+                Function that invokes the controller method that creates the PO
+                TODO:
+                    1. Calls to controller should be to both manual and automatic methods based on user selection in build options section
+                    2. Perform grid refresh to all the grids and have error message displayed at appropriate sections
+                */
+                Release: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    var poLinesGrid = ReqReleaseUtils.poLinesGrid;
+                    var reqLinesGrid = ReqReleaseUtils.reqLinesupdatedGrid;
+                    
+                    var options = self.options;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                    
+                    var gridUtils = new KendoGridUtils(grid,{ isDml: false });
+                    var selectedRows = gridUtils.SelectedRows();
+                    var modelIdField = grid.dataSource.options.schema.model.idField;
+                      
+                    if (selectedRows.length == 0) {
+                        KenandyErp.Message("No records selected.", KenandyErp.MessageType.Info, messageElement);
+                        return;
+                    }else{
+                        var showerror = false;
+                        $.each(selectedRows, function (idx, elem) {
+                            if (!elem.ctLine.Item__c && !elem.ctLine.name){
+                                showerror = true;
+                            }
+                            if(elem.reqLine.Item__c != elem.ctLine.Item__c ||
+                               elem.reqLine.Purchasing_UOM__c != elem.ctLine.Purchase_UOM__c){ //KNDY-10904
+                                showerror = true;
+                            }
+                        });
+                        if (showerror){
+                            KenandyErp.Message('Requisition Lines are not associated with a corresponding agreement line. Cannot create purchase order without this association', KenandyErp.MessageType.Error, messageElement);
+                            return;
+                        }
+                    }
+                    var releaseReqLinesAction = '{!$RemoteAction.RequisitionToPurchaseOrdersExt.releaseReqLines_manual}';
+                    KenandyErp.BlockUI(grid.element);
+                              
+                    Visualforce.remoting.Manager.invokeAction(
+                        releaseReqLinesAction,           
+                        selectedRows,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI(grid.element);
+                                        
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                                if (result.success) {
+                                    KenandyErp.CleanNamespace(result.records, KenandyErp.NamespacePrefix);
+                                    
+                                    if ($(e.currentTarget).hasClass('grid-delete-custom-command')) {
+                                        grid.dataSource.read();
+                                    }
+                                    else {
+                                    
+                                       var gridDataAfterUpdate = $("#ReqLinesUpdatedGrid").data("kendoGridActionList");
+                                       var gridReleaseInfo = gridDataAfterUpdate.dataSource.data();
+                                       
+                                       var tmpArr = [];
+                                       for(var i = 0 ; i < gridReleaseInfo.length ; i++){
+                                           var x = gridReleaseInfo[i];
+                                            if(x.IsSelected__custom === undefined){
+                                            //do nothing
+                                            }else if(x.IsSelected__custom === true){
+                                            //push into temporary array
+                                                 tmpArr.push(x);  
+                                            }                            
+                                        }
+                                        
+                                       //removing the selected elements from the primary array
+                                       var diff = $(gridReleaseInfo).not(tmpArr).get();
+                                       gridDataAfterUpdate.dataSource.data([]);
+                                       
+                                       for(var i = 0 ; i < diff.length ; i++){
+                                           gridDataAfterUpdate.dataSource.add(diff[i]);
+                                       } 
+                                       gridDataAfterUpdate.refresh();
+                                       grid.refresh();
+                                       
+                                       updatedReqLinesAvailable = true;
+                                       poLinesGrid.dataSource.read(); //calls getPOLinesData()
+                                       //ReqReleaseUtils.ReqLinesGridInit();
+                                    }
+                                    
+                                    KenandyErp.Messages(result.messages, messageElement);
+                                }
+                                else {
+                                    KenandyErp.Messages(result.messages, messageElement);
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                },
+                
+                ChangeFilters: function() {
+                    $('.search-filters').show();
+                    $('.display-filters').hide();
+                },
+            };
+        }();
+    </script>
+    
+</apex:page>

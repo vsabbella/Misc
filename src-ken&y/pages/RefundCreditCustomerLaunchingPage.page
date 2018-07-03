@@ -1,0 +1,13 @@
+<apex:page standardController="Customer__c" extensions="RefundCreditCustomerLaunchExt" action="{!navigateToRefundCredit}">
+
+   <apex:sectionHeader subtitle="{!CustomerName}" 
+                                        title="Refund Credit" help="{!URLFOR($Page.HelpCustomerRefunds)}"/>
+   <apex:form id="form" > <c:busyWait />
+        <apex:pagemessages />
+        <apex:pageBlock >
+          <div align="center">  
+            <apex:commandButton value="{!CustomerName}" style="text-align:right" action="{!returnToCustomer}"/>
+          </div>  
+        </apex:pageBlock> 
+   </apex:form>  
+</apex:page>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <columns>
+        <field>FK_$Location__c.Facility__c</field>
+    </columns>
+    <columns>
+        <field>FK_NAME</field>
+    </columns>
+    <columns>
+        <field>SKID__c.Bin__c</field>
+    </columns>
+    <columns>
+        <field>SKID__c.Item__c</field>
+    </columns>
+    <columns>
+        <field>SKID__c.Expiration_Date__c</field>
+    </columns>
+    <columns>
+        <field>SKID__c.Quantity__c</field>
+    </columns>
+    <columns>
+        <field>SKID__c.Item_UOM__c</field>
+    </columns>
+    <filter>
+        <criteriaItems>
+            <column>SKID__c.Expiration_Date__c</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>lessThan</operator>
+            <value>4/28/2015</value>
+        </criteriaItems>
+    </filter>
+    <format>Tabular</format>
+    <name>Expired Inventory</name>
+    <params>
+        <name>co</name>
+        <value>1</value>
+    </params>
+    <reportType>CustomEntity$SKID__c@SKID__c.Location__c</reportType>
+    <scope>organization</scope>
+    <showDetails>true</showDetails>
+    <timeFrameFilter>
+        <dateColumn>SKID__c.Expiration_Date__c</dateColumn>
+        <interval>INTERVAL_CUSTOM</interval>
+    </timeFrameFilter>
+</Report>

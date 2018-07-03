@@ -1,0 +1,90 @@
+<apex:page standardController="Purchase_Order__c"  
+                tabStyle="Purchase_Order__c" 
+                sidebar="false"
+                recordSetVar="porder" 
+                extensions="PurchaseOrderReturnToVendorExt"
+                action="{!retrievePOLines}"> 
+    
+    <style>
+    h1 { font-weight:bold;  }
+    .list .headerRow th {
+		white-space: normal;
+	}
+    </style>
+    <script>
+        function ReturnQuantityChanged( index ){
+            
+            NeedDateFunc( index );
+        }
+ 
+        function onSaveClick() {
+              $(".tohide").children().attr('disabled', 'disabled');
+              $(".tohide").children().addClass('btnDisabled');                          
+            submitForm();
+        } 
+
+    </script>
+    
+    
+    
+    <apex:sectionHeader title="{!$Label.Return_To_Vendor}"/>
+    <apex:form id="mainFormID">    <c:busyWait />
+    
+<!--    	<apex:actionFunction name="NeedDateFunc" action="{!enableNeedDate}" reRender="POLPageBlock,errorOutPanel"> -->
+<!--    	 	<apex:param name="rowNum" id="rowNo" value=""/>-->
+<!-- 		</apex:actionFunction>-->
+    
+        <apex:outputPanel id="errorOutPanel">
+            <apex:pagemessages ></apex:pagemessages>        
+        </apex:outputPanel>
+        
+        <apex:pageBlock id="POLPageBlock"  > 
+        
+            <apex:pageBlockButtons >
+                <apex:actionFunction name="submitForm" action="{!save}"></apex:actionFunction>
+                <span class='tohide'>
+                 <apex:commandButton value="{!$Label.Save}" disabled="{!subcontractPOsExist}"  onclick="onSaveClick();return false;"  rendered="{!IF(!uncaughtException, TRUE, FALSE)}" status="actionStatus" reRender="mainFormID" accessKey="s"/>
+                </span>
+                <apex:commandButton value="{!$Label.Cancel}" action="{!cancel}" status="actionStatus" reRender="mainFormID" immediate="true"/>
+            </apex:pageBlockButtons>
+            
+            <apex:PageBlockTable title="{!$Label.PO_Lines}" value="{!POLinesForDisplay}" var="pow">
+            
+            	<apex:repeat value="{!$ObjectType.Purchase_Order_Line__c.FieldSets.Return_To_Vendor}" var="f">
+            	
+            		<apex:column value="{!pow.polRecord[f]}"/>
+            	
+            	</apex:repeat>
+            	
+            	<apex:column headerValue="{!$Label.Quantity_Available_For_Return}">
+            	
+            		<apex:outputText value="{!pow.QuantityAvailable }"/>
+            	
+            	</apex:column>
+            	
+            	
+            	<apex:column headerValue="{!$Label.Quantity_To_Return_To_Supplier_For_Credit}">
+            	
+            		<apex:inputField value="{!pow.newPolRecord['Quantity_Returned_To_Supplier_For_Credit__c'] }"/>
+            	
+            	</apex:column>
+            	
+            	<apex:column headerValue="{!$Label.Quantity_to_Return_to_Supplier_for_Replacement}">
+            	
+            		<apex:inputField value="{!pow.newPolRecord['Quantity_Returned_To_Supplier__c'] }" >
+<!--            			<apex:actionSupport event="onChange" onComplete="javascript:ReturnQuantityChanged({!pow.rowIndex});" reRender="POLPageBlock,errorOutPanel"/>-->
+            		</apex:inputField>
+            	
+            	</apex:column>
+            	
+            	<apex:column headerValue="{!$Label.NeedDate}">
+            	
+            		<apex:inputField id="NeedDate" value="{!pow.newPolRecord['Need_Date__c'] }"/>
+<!--            		<script>document.getElementById('{!$Component.NeedDate}').disabled = {!pow.dateDisabled}; </script>-->
+            	</apex:column>
+            
+            </apex:PageBlockTable> 
+            
+		</apex:pageBlock>
+	</apex:form>
+</apex:page>

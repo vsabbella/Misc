@@ -1,0 +1,28 @@
+<apex:page id="CreateRepairDocuments" standardController="Receiving_Document__c" extensions="CreateRepairDocumentsExt">
+    <c:KendoResources />
+    <c:RepairGrid elementSelector="RepairGrid"/>
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+    <apex:form id="MainForm">
+        <div class="page-container">
+            <apex:sectionHeader title="{!$Label.Create_Repair_Documents}"  subtitle="{!Receiving_Document__c.Name}" help="{!HelpURL}"/>
+            <div class="page-message"></div>
+            <apex:pageMessages id="msgs"/>
+            <apex:pageBlock >
+                <apex:pageBlockButtons >
+                    <a href="/{!Receiving_Document__c.Id}" style="text-decoration: none;"><input type="button" class="btn" value="{!$Label.Go_Back}" /></a>
+                </apex:pageBlockButtons>
+                <div class="grid-container">
+                    <div class="grid-message"></div>
+                    <div id="RepairGrid"></div>
+                </div>
+            </apex:pageBlock>
+        </div>
+    </apex:form>
+
+    <script>
+        $(document).on('RepairGridReady', function(e) {
+            var data = JSON.parse('{!resultJsonString}');
+            repairGrid.loadGrid(data);
+        } );
+    </script>
+</apex:page>

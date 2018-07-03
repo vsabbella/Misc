@@ -1,0 +1,99 @@
+<apex:page standardController="Item_Specification__c" extensions="ItemSpecificationCostRollupExt,KSE"
+    readonly="true" sidebar="false">
+    <c:busyWait />
+    <style>
+        #msgPanel,
+        #start_date {
+            padding: 0.5em;
+        }
+        .hide{
+            display:none;
+        }
+         .show{
+            display:block;
+        }
+
+    </style>
+  
+    <script>
+    window.onload = function() {
+        checkYQ();
+        console.log('window data loaded');
+        $(".pbBody").css('overflow','auto');
+     }
+
+    function checkYQ() {
+        var elem = document.getElementById("YQ");
+
+        if({!hasYield}==true) {
+             elem.className ="show";
+             $(".dataCell.YQ1").show();
+        }
+        else {
+             elem.className ="hide";
+             $(".dataCell.YQ1").hide();
+
+        }
+    }
+    </script>
+    <body>
+    
+  
+    <div id="msgPanel">
+        <apex:pageMessages escape="false" />
+    </div>
+
+    <apex:form id="theForm">
+        <div id="start_date">
+            <label><b>Start Date : </b></label>
+            <apex:inputField value="{!startDate.Start_Date2__c}" />
+            <apex:commandButton value="Refresh" action="{!refresh}" status="actionStatus" rerender="theForm,pb,msgPanel"
+            />
+        </div>
+    </apex:form>
+    <apex:pageBlock id="pb" title="{!$Label.Expanded_BOM_For} {!Item_Specification__c.Name}">
+        <apex:variable var="indentationFactor" value="15" />
+        <apex:variable var="indentationSide" value="right" />
+        <table cellspacing="1" cellpadding="1" border="0" id="searchResults" class="list" style="overflow:auto;">
+            <thead class="rich-table-thead">
+                <tr class="headerRow">
+                    <th style="width:1%">{!$ObjectType.Item__c.Fields.Level__c.Label}</th>
+                    <th style="width:10%">{!$ObjectType.Component__c.Fields.Component_Item__c.Label}</th>
+                    <th>{!$ObjectType.Item_Specification__c.Fields.Name.Label}</th>
+                    <apex:repeat value="{!$ObjectType.Component__c.FieldSets.Component_BOM_FieldSet}"
+                        var="f">
+                        <th styleClass="{!f.Type}  {!f.FieldPath}">{!if(f.label == 'Quantity per Assembly', 'Quantity per Assembly (Stocking UOM)',f.label)}</th>
+                    </apex:repeat>
+                    <th>{!$Label.Total_Quantity_per_Assembly + ' (Stocking UOM)'}</th>
+                    <th id="YQ">{!$Label.Yield_Quantity}</th>
+                    <th style="width:1%">{!$ObjectType.Component__c.Fields.Component_Stocking_UOM__c.Label}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat value="{!thisBom}" var="wrappers"><apex:repeat value="{!wrappers}" var="wrapper">
+                    <tr onfocus="if (window.hiOn){hiOn(this);}" onblur="if (window.hiOff){hiOff(this);}"
+                        onmouseout="if (window.hiOff){hiOff(this);} " onmouseover="if (window.hiOn){hiOn(this);} "
+                        class="dataRow even  first">
+                        <td class="dataCell" style="display:{!if(wrapper.levelCounter!=-21,'table-cell','none')};width:1%;">
+                            {!IF(wrapper.levelCounter
+                            < 10, "0", "")}{!wrapper.levelCounter}</td>
+                        <td class="dataCell" style="text-align:left;padding-left : {! VALUE(indentationFactor) * wrapper.levelCounter }px;
+                                   display:{!if(wrapper.levelCounter!=-21,'table-cell','none')};width:10%;">
+                                    <a href='/{!wrapper.href}' target="_blank">{!wrapper.componentName}</a></td>
+                        <td class="dataCell" style="display:{!if(wrapper.levelCounter!=-21,'table-cell','none')};font-weight:bold;width:12%;">
+                                    <a href='/{!wrapper.href1}' target="_blank">{!wrapper.itemSpecName}</a></td>
+                        <apex:repeat value="{!$ObjectType.Component__c.FieldSets.Component_BOM_FieldSet}"
+                                    var="f">
+                                 <td class="dataCell" styleClass="{!f.Type}  {!f.FieldPath}">{!if(f.FieldPath==(NamespaceUU+'Yield__c'),if(AND(NOT(ISNULL(wrapper.yield)),wrapper.yield!=0),wrapper.yield,''),wrapper.compObj[f])}</td>
+                        </apex:repeat>
+                        <td class="dataCell">{!wrapper.totalQuantityPerAssembly}</td>
+                        <td class="dataCell YQ1" styleClass="double Yield_Quantity__c">{!if(AND(NOT(ISNULL(wrapper.yield)),wrapper.yield!=0,hasYield),round(wrapper.quantityPerAssembly*100/wrapper.yield,6),'')}</td>
+                        <td class="dataCell" style="display:{!if(wrapper.levelCounter!=-21,'table-cell','none')};font-weight:bold;width:12%;">{!wrapper.componentUom}</td>
+                    </tr>
+                </apex:repeat></apex:repeat>
+            </tbody>
+        </table>
+    </apex:pageBlock>
+    
+</body>
+</apex:page>

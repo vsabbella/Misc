@@ -1,0 +1,23 @@
+<apex:page standardController="Company__c" extensions="GenerateMRPExtV2">
+    <apex:form >
+        <apex:pageBlock >
+            <apex:pageMessages />
+            <apex:pageBlockButtons >
+                <apex:commandButton value="{!$Label.MRP_Generate_Plan}" action="{!generatePlan}" disabled="{!isButtonDisabled}"  />
+                <apex:commandButton value="{!$Label.Cancel}" action="{!cancel}"  />
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockSection columns="1" collapsible="false">
+                <apex:repeat value="{!$ObjectType.Company__c.FieldSets.MRPRun_RO}" var="f" > 
+                    <apex:outputField value="{!Company__c[f]}" />
+                </apex:repeat>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection columns="2" collapsible="false">
+                <apex:repeat value="{!$ObjectType.Company__c.FieldSets.MRPRun_WR}" var="f" > 
+                    <apex:inputField value="{!Company__c[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+                </apex:repeat>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+    <c:JobMonitor height="200"> </c:JobMonitor>
+</apex:page>

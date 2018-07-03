@@ -1,0 +1,72 @@
+<apex:component id="busyWait" >
+
+<apex:attribute name="includeScripts" 
+                description="If true, includes required 3rd party scripts like jQuery"
+                type="Boolean" 
+                required="false"
+                default="true" />
+
+<!-- 
+    Apply a wait div to overlay the current form on the page, attach it to an action method of id 'actionStatus' 
+     -->
+<!-- NOTE: this component can only appear once on a page due to hard coding DIV id
+-->
+        <apex:outputPanel rendered="{!includeScripts}" layout="none">
+            <apex:includeScript value="{!URLFOR($Resource.KendoUI, '/js/jquery.min.js')}" />
+        </apex:outputPanel>
+
+
+<script>
+
+    /*function busyWaitGrayOut(isVisible, shadowDivId, targetDivId){
+        var shadowDiv = document.getElementById( "ShadowDivId" );  // pull shadow div
+        
+        var targetDiv = jQuery( shadowDiv).parents('form').eq(0)[0];   // get the form div we are inside
+    
+        if (isVisible) {
+            shadowDiv.style.offsetLeft = targetDiv.offsetLeft;
+            shadowDiv.style.top = targetDiv.offsetTop+'px';
+            shadowDiv.style.width = targetDiv.offsetWidth+'px';
+            shadowDiv.style.height = targetDiv.offsetHeight+'px';
+            shadowDiv.style.MozOpacity = 0.3;
+            shadowDiv.className = "shadowDivEnableClass";
+            if(document.getElementById('loadingImage') != undefined){
+                document.getElementById('loadingImage').style.display='block';
+            }
+        } else {
+            shadowDiv.className = "shadowDivDisableClass";
+            if(document.getElementById('loadingImage') != undefined){
+                document.getElementById('loadingImage').style.display='none';
+            }
+        }
+    }*/
+    
+    function disableOnClick(){
+	$(".btn").toggleClass('btnDisabled', true).attr('disabled', 'disabled');		
+	}
+	
+	function enableOnClick(){	
+	$(".btn").toggleClass('btnDisabled', false).attr('disabled', null);	
+	}
+
+</script>
+    
+    <div id="ShadowDivId" class="shadowDivDisableClass">
+    <div id="loadingImage" style="position: absolute; left: 40%; top: 40%;display: none;z-index: 51;">
+        <apex:image value="/img/loading32.gif" width="30px" height="30px" />
+    </div></div>  
+    <apex:actionStatus id="actionStatus" onstart="disableOnClick()" onstop="enableOnClick()"  />
+
+<style>
+.shadowDivDisableClass{  display:none;}
+.shadowDivEnableClass{
+    position:absolute;
+    overflow:hidden;
+    opacity:0.3;
+    z-Index:50;
+    filter:alpha(opacity=30);
+    background-Color:#000000;
+    display:block;          
+}
+</style>       
+</apex:component>

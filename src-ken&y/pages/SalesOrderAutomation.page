@@ -1,0 +1,61 @@
+<apex:page standardController="Sales_Order__c"
+                tabStyle="Sales_Order__c" 
+                extensions="SalesOrderAutomationExt"  >
+                
+    <style type="text/css">
+	    .col1 {width:50%;}
+	    .col2 {width:50%;}
+	</style>
+	            
+	<apex:sectionHeader subtitle="{!Sales_Order__c.Name}" title="{!$ObjectType.Sales_Order__c.Label}"/>
+	
+	<script type="text/javascript">
+	  function loading(val) {
+	    if (val) {
+	      document.getElementById('contentLoading').style.display = 'block';
+	      document.getElementById('contentLoaded').style.display = 'none';
+	    }
+	    else {
+	      document.getElementById('contentLoading').style.display = 'none';
+	      document.getElementById('contentLoaded').style.display = 'block';
+	    }
+	  }
+	</script>
+
+	<apex:form id="theForm">
+    	<c:busyWait />
+
+		<apex:actionFunction name="doInit" action="{!processSO}" rerender="allPanel" status="loading"/>
+		<script>
+           window.onload=function()
+           {
+             doInit();
+           };
+        </script>
+
+		<apex:actionStatus id="loading" onstart="loading(true)" onstop="loading(false)" />
+
+		<apex:pageBlock title="Process Sales Order" id="allPanel">
+
+			<div id="contentLoading" style="display:none;">
+				<div style="text-align: center;">
+					<img src="/img/loading.gif" alt="Loading graphic" />
+					Processing Sales Order...
+				</div>
+			</div>
+
+			<div id="contentLoaded">
+			<apex:pageMessages />
+			<apex:pageBlockButtons location="bottom">
+				<apex:commandButton value="{!$Label.Go_Back}" action="{!view}" status="actionStatus" rerender="theForm" />
+			</apex:pageBlockButtons>
+			</div>
+
+		</apex:pageBlock>
+		
+		    <div id="hiddenDiv" style="display:none">
+                <apex:inputField value="{!Sales_Order__c.Company__c}" />
+            </div> 
+		
+	</apex:form>
+</apex:page>

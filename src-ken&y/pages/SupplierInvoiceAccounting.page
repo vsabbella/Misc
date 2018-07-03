@@ -1,0 +1,31 @@
+<apex:page standardController="Supplier_Invoice__c" 
+			tabStyle="Supplier_Invoice__c" 
+	        sidebar="false" 
+			recordSetVar="SupplierInvoice" 
+			extensions="SupplierInvoiceAccountingExt">
+    <apex:form id="form">
+    	<c:busyWait />
+        <apex:sectionHeader subtitle="{!$ObjectType.Supplier_Invoice__c.Label}" title="{!$Label.Generate_SupplierInvoice_Accounting}"/>
+    	<apex:pageBlock id="pblock">
+    	<apex:pageMessages id="pageMessages" ></apex:pageMessages>
+    		<apex:pageBlockTable value="{!objectList}" var="line" id="SupplierInvoicePBTableId" rendered="{!NOT(selecterror)}">
+	            <apex:repeat value="{!$ObjectType.Supplier_Invoice__c.FieldSets.Supplier_Invoice_AE_RO}" var="f" >
+	                <apex:column headerValue="{!f.label}"  styleClass="{!f.Type}  {!f.FieldPath}"  rendered="{!f.FieldPath!='Line__c'}">
+	                    <apex:outputField value="{!line[f]}" />
+	                </apex:column>
+	            </apex:repeat>                    	
+            </apex:pageBlockTable>
+            
+        	<apex:pageBlockButtons >
+        	
+        		<apex:commandButton value="Go Back" action="{!cancel}" status="actionStatus" rerender="form"/>
+        		<apex:commandButton value="{!$Label.Generate_SupplierInvoice_Accounting}" 
+        												action="{!GenerateSupplierInvAccounting}" 
+        												status="actionStatus" rerender="form"
+        												disabled="{!disableGenerate}"
+        												rendered="{!NOT(requiredFielderror)}"/>
+        	</apex:pageBlockButtons> 
+        	   
+    	</apex:pageBlock>
+    </apex:form>
+</apex:page>

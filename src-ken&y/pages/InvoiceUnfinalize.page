@@ -1,0 +1,22 @@
+<apex:page standardController="Invoice__c"  
+                    extensions="SourceDocumentUnfinalize" 
+                    action="{!validateAndnavigateToUnfinalize}">	<!-- KNDY-11086 -->
+                    <!--  action="{!navigateToUnfinalize}" -->
+   	<!-- KNDY-11086 -->
+    <apex:sectionHeader subtitle="{!SourceDocName}" 
+                        title="{!$Label.Unfinalize_the_Document}"/>
+	
+	<apex:form id="form" > <c:busyWait />
+    
+    <apex:pageBlock >
+    	<apex:pagemessages />
+		
+		<apex:pageBlockButtons location="top">
+			<apex:commandButton value="{!$Label.Go_Back}" action="{!close}"/>
+		
+		</apex:pageBlockButtons>
+		
+  
+	</apex:pageBlock> 
+    </apex:form>
+</apex:page>

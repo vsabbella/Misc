@@ -1,0 +1,559 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>Help_Financial_Reports</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>false</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>Report_Filters</fullName>
+        <availableFields>
+            <field>GL_Account__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <description>This report will be filtered by all the fields in this field set.</description>
+        <label>Report Filters</label>
+    </fieldSets>
+    <fields>
+        <fullName>Active__c</fullName>
+        <defaultValue>true</defaultValue>
+        <externalId>false</externalId>
+        <label>Active</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Chunks_Per_Request__c</fullName>
+        <description>Number of chunks per request.  Adjust this to optimize report loading time without exceeding any limits.</description>
+        <externalId>false</externalId>
+        <label>Chunks Per Request</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Set to filter this report by a company</description>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Financial Reports</relationshipLabel>
+        <relationshipName>Financial_Reports</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Compare_Periods__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Compare Periods</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Compare_Quarters__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Compare Quarters</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Display_Report_Name__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Select to show the name of the financial report in the report itself.</description>
+        <externalId>false</externalId>
+        <label>Display Report Name</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Drill_Down_Report_ID__c</fullName>
+        <externalId>false</externalId>
+        <label>Drill Down Report ID</label>
+        <length>18</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>End_Period__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>End Period</label>
+        <referenceTo>Period__c</referenceTo>
+        <relationshipLabel>Financial Reports (End Period)</relationshipLabel>
+        <relationshipName>Financial_Reports2</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Fiscal_Year__c</fullName>
+        <externalId>false</externalId>
+        <label>Fiscal Year</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>GL_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>GL Account</label>
+        <referenceTo>GL_Account__c</referenceTo>
+        <relationshipLabel>Financial Reports</relationshipLabel>
+        <relationshipName>Financial_Reports</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Introduction__c</fullName>
+        <description>Introductory text to appear at the top of the report, after the report name</description>
+        <externalId>false</externalId>
+        <label>Introduction</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>Numeric_Scale__c</fullName>
+        <defaultValue>2</defaultValue>
+        <description>show 0 , 1 or 2 decimal places</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The number of decimal places to show in the report/section/item.</inlineHelpText>
+        <label>Numeric Scale</label>
+        <precision>1</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Period_Name__c</fullName>
+        <externalId>false</externalId>
+        <label>Period Name</label>
+        <length>16</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Period_Options__c</fullName>
+        <externalId>false</externalId>
+        <label>Period Options</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Twelve Months</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Six Months</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Three Months</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Period</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Custom Dates</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Other</fullName>
+                    <default>true</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Period__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Period</label>
+        <referenceTo>Period__c</referenceTo>
+        <relationshipLabel>Financial Reports</relationshipLabel>
+        <relationshipName>Financial_Reports</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Quarters__c</fullName>
+        <externalId>false</externalId>
+        <label>Quarters</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Q1</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Q2</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Q3</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Q4</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>ReportID__c</fullName>
+        <externalId>false</externalId>
+        <label>ReportID</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Report_Columns__c</fullName>
+        <externalId>false</externalId>
+        <label>Report Columns</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>MultiselectPicklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>TC-Debits</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>TC-Credits</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>FC-Debits</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>FC-Credits</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>--None--</fullName>
+                    <default>true</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+        <visibleLines>6</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Report_End_Date__c</fullName>
+        <externalId>false</externalId>
+        <label>Report End Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Report_Object_Name__c</fullName>
+        <description>The API name of the object that is being reported on</description>
+        <externalId>false</externalId>
+        <label>Report Object Name</label>
+        <length>100</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Report_Span__c</fullName>
+        <externalId>false</externalId>
+        <label>Report Span</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>By Month</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Custom</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Report_Start_Date__c</fullName>
+        <externalId>false</externalId>
+        <label>Report Start Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Report_Styles__c</fullName>
+        <description>User supplied CSS styles to be applied to the output of this report</description>
+        <externalId>false</externalId>
+        <inlineHelpText>CSS code that allows you to customize the formatting of the report.</inlineHelpText>
+        <label>Report Styles</label>
+        <length>32768</length>
+        <trackTrending>false</trackTrending>
+        <type>LongTextArea</type>
+        <visibleLines>8</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Report_Type__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>Some report types require custom processing of the report types.</inlineHelpText>
+        <label>Report Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Income Statement</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Balance Sheet</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Trial Balance</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Cash Flow</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Budget Listing</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Other</fullName>
+                    <default>true</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Rows_Per_Request__c</fullName>
+        <description>Number of rows per request. Adjust this to optimize report loading time without exceeding any limits.</description>
+        <externalId>false</externalId>
+        <label>Rows Per Request</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Segment_Criteria__c</fullName>
+        <externalId>false</externalId>
+        <label>Segment Criteria</label>
+        <length>131072</length>
+        <trackTrending>false</trackTrending>
+        <type>LongTextArea</type>
+        <visibleLines>3</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Show_Symbols__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Display or hide currency symbols</description>
+        <externalId>false</externalId>
+        <label>Show Symbols</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Start_Period__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Start Period</label>
+        <referenceTo>Period__c</referenceTo>
+        <relationshipLabel>Financial Reports (Start Period)</relationshipLabel>
+        <relationshipName>Financial_Reports1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Symbols_First_Last__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Show Symbols on the first and last rows of a report only</description>
+        <externalId>false</externalId>
+        <label>Symbols First Last</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <label>Financial Report</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Report_Type__c</columns>
+        <columns>Company__c</columns>
+        <columns>Period_Name__c</columns>
+        <columns>Introduction__c</columns>
+        <columns>UPDATEDBY_USER</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Report Name</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Financial Reports</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Company__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Period_Name__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>CREATEDBY_USER.ALIAS</customTabListAdditionalFields>
+        <customTabListAdditionalFields>CREATED_DATE</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Introduction__c</customTabListAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>Report_ID</fullName>
+        <active>true</active>
+        <errorConditionFormula>AND(
+    NOT(ISPICKVAL(Report_Type__c, &quot;other&quot;)),
+    ISBLANK(ReportID__c)
+)</errorConditionFormula>
+        <errorDisplayField>ReportID__c</errorDisplayField>
+        <errorMessage>Report ID required</errorMessage>
+    </validationRules>
+    <webLinks>
+        <fullName>Build_Report</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Build Report</masterLabel>
+        <openType>sidebar</openType>
+        <page>ReportBuilder</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Clone_Report</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Clone Report</masterLabel>
+        <openType>sidebar</openType>
+        <page>FinancialReportClone</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Generate_Report</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <linkType>page</linkType>
+        <masterLabel>Go To Report</masterLabel>
+        <openType>replace</openType>
+        <page>FinancialReportGenerate</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>View_Report</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>View Report</masterLabel>
+        <openType>sidebar</openType>
+        <page>FinancialReportView</page>
+        <protected>false</protected>
+    </webLinks>
+</CustomObject>

@@ -1,0 +1,21 @@
+<apex:page standardController="Accounting_Entry__c" extensions="AccountingEntryVoidExt" action="{!deleteAECheck}" >
+     <apex:sectionHeader title="{!$ObjectType.Accounting_Entry__c.label}" subtitle="{!Accounting_Entry__c.Name}" />
+    <apex:form id="AccountEntryForm" >
+    <c:busyWait />
+    <apex:pageBlock title="{!$Label.Delete_Accounting_Entry}" id="PageBlock">
+           <apex:pagemessages ></apex:pagemessages>
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!deleteAccountingEntry}" value="{!$Label.Delete}" rendered="{!boolDelete}" status="actionStatus" rerender="AccountEntryForm"/>
+                <apex:commandButton action="{!docancel}" value="{!$Label.Cancel}" immediate="true" status="actionStatus" rerender="AccountEntryForm"/>
+            </apex:pageBlockButtons>
+
+            <apex:pageBlockSection columns="2" collapsible="false">
+            <apex:repeat value="{!$ObjectType.Accounting_Entry__c.FieldSets.Accounting_Entry_Void}" var="f">
+                  <apex:OutputField value="{!Accounting_Entry__c[f]}" />
+              </apex:repeat>
+
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+
+    </apex:form>
+</apex:page>

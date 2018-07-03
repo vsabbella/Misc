@@ -1,0 +1,9 @@
+<apex:page standardController="Material_Tracking__c" extensions="NewEditCloneDeleteExt" action="{!errMsg}">
+    <apex:sectionHeader title="Material Tracking" />
+    <apex:form >
+        <apex:PageMessages />
+        <apex:outputpanel style="padding:20px;">
+            <apex:outputLink value="{!$CurrentPage.parameters.retURL}" >{!$Label.Click_to_go_back}</apex:outputLink>
+        </apex:outputpanel>
+    </apex:form>
+</apex:page>

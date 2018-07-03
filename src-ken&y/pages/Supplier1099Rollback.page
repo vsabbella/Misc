@@ -1,0 +1,132 @@
+<apex:page standardcontroller="Company__c" extensions="Supplier1099RollbackExt" title="{!$Label.supplier_1099_rollback}" docType="html-5.0">
+    <c:KendoResources />
+    <c:busyWait includeScripts="false" />
+    <script src="../../soap/ajax/38.0/connection.js" type="text/javascript"/>
+    <style>
+        .disab {
+            opacity: 0.4;
+            cursor: default;
+            pointer-events: none;
+        }
+        .button-text-bold{
+           font-weight: bold;
+        }
+     </style>
+     <script>
+         var companyId = '{!companyId}';
+         var disableRollback = '{!disableRollback}';
+
+         $(document).on('KenandyErpReady', function(e) {
+             var Supplier1099RollbackUtil = function() {
+                return {
+                    DisableButtons: function() {
+                       if (disableRollback == 'true'){
+                           $('.run-batch-cls').addClass("disab");
+                       }
+                       else{
+                           $('.run-batch-cls').removeClass("disab"); 
+                       }
+                    },
+                    
+                    GoBack: function(e){
+                        e.stopPropagation();
+                        var retunUrl;
+                        if(companyId){
+                            retunUrl =  '/'+companyId;
+                        }  
+                        KenandyErp.BlockUI();
+                        window.location.href = retunUrl;
+                    },
+                    
+                    RunBatch: function (elem){
+                        var batchJobId =  document.getElementById("batchJobIdinputTxt").value;
+                        console.log('batchJobId: ' + batchJobId);
+                        KenandyErp.BlockUI();
+                        KenandyErp.ClearMessage();
+                        Visualforce.remoting.Manager.invokeAction(
+                                '{!$RemoteAction.Supplier1099RollbackExt.rollBack}', 
+                                batchJobId,
+                                '{!companyId}',
+                                function (result, event) {
+                                    KenandyErp.UnBlockUI();
+                                    if (event.type == 'exception' ) {
+                                       KenandyErp.Message(event.message + ' : ' + event.type);
+                                    }else{
+                                       KenandyErp.Messages(result.messages);
+                                       if (result.success){
+                                          // no matching 1099s exist as they were deleted
+                                          disableRollback = 'true';
+                                       }
+                                       else{
+                                          disableRollback = 'false';
+                                       }
+                                   }
+                                   Supplier1099RollbackUtil.DisableButtons();
+                                },
+                                {escape: false}
+                        );
+                        Supplier1099RollbackUtil.DisableButtons();
+                    },
+                    ValidateRollBackOnPageLoad: function (elem){
+                        Supplier1099RollbackUtil.GetSupplier1099s();
+                    },
+                    
+                    GetSupplier1099s: function(elem){
+                        var batchJobId =  document.getElementById("batchJobIdinputTxt").value;
+                        console.log('batchJobId: ' + batchJobId);
+                        KenandyErp.BlockUI();
+                        KenandyErp.ClearMessage();
+                        Visualforce.remoting.Manager.invokeAction(
+                                '{!$RemoteAction.Supplier1099RollbackExt.getSupplier1099s}', 
+                                batchJobId,
+                                '{!companyId}',
+                                function (result, event) {
+                                    KenandyErp.UnBlockUI();
+                                    if (event.type == 'exception' ) {
+                                       KenandyErp.Message(event.message + ' : ' + event.type);
+                                    }else{
+                                      KenandyErp.Messages(result.messages);
+                                      if (result.success){
+                                          disableRollback = 'false';
+                                      }
+                                      else{
+                                          disableRollback = 'true';
+                                      }
+                                   }
+                                   Supplier1099RollbackUtil.DisableButtons();
+                                },
+                                {escape: false}
+                       );
+                   }
+                }
+             }();
+             Supplier1099RollbackUtil.ValidateRollBackOnPageLoad();
+             Supplier1099RollbackUtil.DisableButtons();
+             $('#goBackBtn').on("click", $.proxy(Supplier1099RollbackUtil.GoBack));
+             $('#runBatchBtn').on("click", $.proxy(Supplier1099RollbackUtil.RunBatch));
+             $('#batchJobIdinputTxt').on("change", $.proxy(Supplier1099RollbackUtil.GetSupplier1099s));
+        });
+         
+    </script>    
+     <apex:form id="form">
+        <apex:sectionHeader title="{!$ObjectType.Company__c.Label}" subtitle="{!$Label.supplier_1099_rollback}"/>
+        <apex:pageMessages id="pgMsgs"/>
+        <div class="page-message" ></div>
+        <apex:pageBlock >
+            <apex:outputText >
+                 {!$Label.run_the_supplier_1099_rollback_batch_to_delete_unfiled_1099_records}  
+                 <br>{!$Label.specify_a_supplier_1099_batch_job_id_to_delete_supplier_1099_records}</br>
+            </apex:outputText>
+            <br/>
+            <apex:outputPanel style="position:relative;left:20%;">
+                <apex:outputLabel value="Supplier 1099 Batch Job ID"/>
+                <span style="float: left;">&nbsp;</span> 
+                <input type="text" id="batchJobIdinputTxt" class="k-textbox"/>
+            </apex:outputPanel>
+            <apex:pageBlockButtons location="top">
+                <input id="goBackBtn" type="button" value="{!$Label.Go_Back}"  class="k-button kndy-btn button-text-bold" />
+                <input id="runBatchBtn" type="button" value="{!$Label.Run_Batch}"  class="k-button kndy-btn run-batch-cls button-text-bold"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </apex:form> 
+</apex:page>

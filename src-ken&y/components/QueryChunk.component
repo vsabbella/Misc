@@ -1,0 +1,170 @@
+<apex:component controller="QueryChunkController">
+
+<apex:attribute name="uniqueId" 
+				description="namspaces the variables and functions so component can be used multiple times" 
+				type="String"
+				required="false"
+				default="" />
+
+<apex:attribute name="numSimultaneous" 
+				description="number of simultaneous connections" 
+				type="Integer"
+				required="false"
+				default="1000" />
+
+<apex:attribute name="retries" 
+				description="number of retries if a single query times out" 
+				type="Integer"
+				required="false"
+				default="15" />
+
+<apex:variable var="u" value="{!'_' + JSENCODE(uniqueId)}" />
+
+
+<script type="text/javascript">	
+		var errors = [];
+		
+    var NameSpaceUU ="{!NameSpaceUU}";
+		var numSimultaneous{!u} = {!numSimultaneous};
+		
+		var numberOfRetries{!u} = {!retries};
+		var chunkRetries{!u} = {};
+		var startTimestamp{!u} = {};		
+        
+       	var numTotal{!u} = 0;
+		var numRemainingTotal{!u} = 0;
+		var numRemainingBatch{!u} = 0;
+		
+		var model{!u} = {};
+		var chunkList{!u} = [];
+		var chunkCallback{!u};
+		var completeCallback{!u};
+		var checkErrors{!u};
+		var updateStatus{!u};
+        var queryFilter{!u};
+		
+ 		function parallelStart{!u}(model, chunkList, chunkCallback, completeCallback, checkErrors, updateStatus,qfilter) {
+ 			console.log('parallelStart');
+ 			
+ 			realtimeData = {};
+ 			
+ 			//initialize the global list with the list passed in
+ 			model{!u} = model;
+ 			chunkList{!u} = chunkList;
+ 			queryFilter{!u} =qfilter;
+ 			//initialize the global chunk and complete callback functions with what was passed in
+ 			chunkCallback{!u} = chunkCallback;
+ 			completeCallback{!u} = completeCallback;
+ 			
+ 			//initialize the global error checking function with the one passed in
+ 			checkErrors{!u} = checkErrors;
+ 			
+ 			//initialize the global status update function with the one passed in
+ 			updateStatus{!u} = updateStatus; 			
+ 			
+ 			console.log('chunkList{!u}');
+ 			console.log(chunkList{!u});
+ 			
+ 			numTotal{!u} = chunkList{!u}.length;
+ 			numRemainingTotal{!u} = numTotal{!u};
+			getNextBatch{!u}();
+ 		}		
+
+		function getNextBatch{!u}() {
+			console.log('getNextBatch ' + numRemainingTotal{!u});
+			if (numRemainingTotal{!u} == 0) {
+				parallelEnd{!u}();
+			} else {
+				var nextBatchStartIndex{!u} = numTotal{!u} - numRemainingTotal{!u};
+				
+				//get the number of simultaneous chunks, or whatever is left if it's less
+				numRemainingBatch{!u} = numSimultaneous{!u};
+				if (numRemainingTotal{!u} < numRemainingBatch{!u}) {
+					numRemainingBatch{!u} = numRemainingTotal{!u};
+				} 						
+				chunkWorker{!u}(nextBatchStartIndex{!u}, numRemainingBatch{!u});
+			}
+		}  		
+
+	    function chunkWorker{!u}(nextBatchStartIndex{!u}, numRemainingBatch{!u}) {
+			for (var i=0; i<numRemainingBatch{!u}; i++) {
+				updateStatus{!u}(1, 'Requested Realtime Data ' + (nextBatchStartIndex{!u}+i) + '/' + numTotal{!u} +  '. ');				
+				getChunk{!u}(nextBatchStartIndex{!u}+i);
+			}  		
+	    }    
+  		
+  		function chunkComplete{!u}(result, event) {
+			numRemainingBatch{!u}--;
+			numRemainingTotal{!u}--;
+			updateStatus{!u}(2, 'Received: ' + (numTotal{!u}-numRemainingTotal{!u}) + '/' + numTotal{!u} + '.');
+
+			//call the successful chunk callback function
+			chunkCallback{!u}(result, event);			
+				
+			if (numRemainingBatch{!u} == 0) {
+				getNextBatch{!u}();
+			}
+  		}     	
+
+ 		function parallelEnd{!u}() {
+ 			completeCallback{!u}('{!u}');
+ 		}	  			  
+        
+        function getChunk{!u}(startAt) {
+			var firstId = chunkList{!u}[startAt]["first"];
+			var lastId = chunkList{!u}[startAt]["last"];
+			var isLast = chunkList{!u}[startAt]["isLast"];
+			
+			startTimestamp{!u}[startAt] = new Date().getTime();
+	           
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.QueryChunkController.queryFactsChunk}',
+                model{!u}, firstId, lastId, isLast,queryFilter{!u},
+                function (result, event) {
+			        
+			        //trap any timeouts
+			        var isTimeout = false;
+			        if (event.type === 'exception') {
+			        	if (event.message.indexOf("timeout") > -1) {
+			        		isTimeout = true;	
+			        	}	
+			        }       
+	                    
+                    if (isTimeout == false) {
+                    	checkErrors{!u}(event);
+                    }
+                    
+                    if (event.status) {
+						chunkComplete{!u}(result, event);
+	                }
+
+					if (isTimeout) {
+						if (startAt in chunkRetries{!u}) {
+							chunkRetries{!u}[startAt]++;
+						} else {
+							chunkRetries{!u}[startAt] = 1;
+						}
+						
+						if (chunkRetries{!u}[startAt] <= numberOfRetries{!u}) {
+							var msExec = (new Date().getTime()) - startTimestamp{!u}[startAt];
+						
+							console.log('retry: ' + chunkRetries{!u}[startAt] + ', ' + firstId + ' - ' + lastId + ', ms: ' + msExec + ', curr time: ' + new Date());
+							getChunk{!u}(startAt);
+						} else {
+							//we hit our number of retries, time to fail
+							checkErrors{!u}(event);
+							chunkComplete{!u}();						
+						}
+						
+					}
+	                
+                },
+                {escape: false, buffer: false}
+            );	        
+        }        
+
+
+	
+</script>
+
+</apex:component>

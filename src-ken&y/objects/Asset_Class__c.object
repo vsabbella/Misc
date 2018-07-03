@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpAssetClass</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Relates fixed assets to their approriate GL Accounts and stores instructions on how to process the depreciation.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableEnhancedLookup>false</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fields>
+        <fullName>Accumulated_Depreciation_GL_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <inlineHelpText>This account stores the assets accumulated depreciation amount over the course of its useful life.</inlineHelpText>
+        <label>Accumulated Depreciation GL Account</label>
+        <lookupFilter>
+             <active>true</active>
+             <errorMessage>GL Account selected must be active</errorMessage>
+             <filterItems>
+                 <field>GL_Account__c.Active__c</field>
+                 <operation>equals</operation>
+                 <value>True</value>
+             </filterItems>
+             <isOptional>false</isOptional>
+         </lookupFilter>
+        <referenceTo>GL_Account__c</referenceTo>
+        <relationshipLabel>Asset Classes (Accumulated Depreciation GL Account)</relationshipLabel>
+        <relationshipName>Accumulated_Asset_Classes</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>Restrict</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Asset Classes</relationshipLabel>
+        <relationshipName>Asset_Classes</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Declining_Balance__c</fullName>
+        <externalId>false</externalId>
+        <label>Declining Balance</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <controllingField>Depreciation_Method__c</controllingField>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>200%</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>150%</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Straight Line</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+            <valueSettings>
+                <controllingFieldValue>Declining Balance</controllingFieldValue>
+                <controllingFieldValue>MACRS</controllingFieldValue>
+                <valueName>200%</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Declining Balance</controllingFieldValue>
+                <controllingFieldValue>MACRS</controllingFieldValue>
+                <valueName>150%</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>MACRS</controllingFieldValue>
+                <valueName>Straight Line</valueName>
+            </valueSettings>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Depreciated_GL_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Default disposition GL Account used when asset is retired or scrapped.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The account used to record the gain/loss on the asset when sold or retired.</inlineHelpText>
+        <label>Disposition GL Account</label>
+         <lookupFilter>
+             <active>true</active>
+             <errorMessage>GL Account selected must be active</errorMessage>
+             <filterItems>
+                 <field>GL_Account__c.Active__c</field>
+                 <operation>equals</operation>
+                 <value>True</value>
+             </filterItems>
+             <isOptional>false</isOptional>
+         </lookupFilter>
+        <referenceTo>GL_Account__c</referenceTo>
+        <relationshipLabel>Asset Classes (Depreciated GL Account)</relationshipLabel>
+        <relationshipName>Depreciated_Asset_Classes</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Depreciation_Convention__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>Fixed assets are not always acquired or disposed of on the first or last day of the year. The depreciation convention is used to average the depreciation in the first and last year of the asset’s life. Depends on the depreciation period.</inlineHelpText>
+        <label>Depreciation Convention</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <controllingField>Depreciation_Period__c</controllingField>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Mid Month</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Full Month</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Mid Quarter</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Full Quarter</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Half Year</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Full Year</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+            <valueSettings>
+                <controllingFieldValue>Monthly</controllingFieldValue>
+                <valueName>Mid Month</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Monthly</controllingFieldValue>
+                <valueName>Full Month</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Quarterly</controllingFieldValue>
+                <valueName>Mid Quarter</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Quarterly</controllingFieldValue>
+                <valueName>Full Quarter</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Annually</controllingFieldValue>
+                <valueName>Half Year</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Annually</controllingFieldValue>
+                <valueName>Full Year</valueName>
+            </valueSettings>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Depreciation_Method__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>The depreciation method used for assets assigned to this class. Options include “Straight Line”, “Declining Balance”, “Sum of Years”, or “MARCS”.</inlineHelpText>
+        <label>Depreciation Method</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Straight Line</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Declining Balance</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Sum of Years</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>MACRS</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Depreciation_Period__c</fullName>
+        <externalId>false</externalId>
+        <label>Depreciation Period</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Monthly</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Quarterly</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Annually</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Expense_GL_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Expense GL Account - The depreciated value of the asset will be debited from this GL account at each depreciation cycle. Note: The Accumulated Depreciation GL account is defined in the accounting rules.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The expense GL account is debited after each depreciation cycle.</inlineHelpText>
+        <label>Expense GL Account</label>
+        <lookupFilter>
+             <active>true</active>
+             <errorMessage>GL Account selected must be active</errorMessage>
+             <filterItems>
+                 <field>GL_Account__c.Active__c</field>
+                 <operation>equals</operation>
+                 <value>True</value>
+             </filterItems>
+             <isOptional>false</isOptional>
+         </lookupFilter>
+        <referenceTo>GL_Account__c</referenceTo>
+        <relationshipLabel>Asset Classes (Expense GL Account)</relationshipLabel>
+        <relationshipName>Expense_Asset_Classes</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>GL_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Fixed Asset GL Account - The full acquisition cost of the asset will be debited from this GL account when the asset is first activated.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The full acquisition cost is debited from this account.</inlineHelpText>
+        <label>Fixed Asset GL Account</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>GL Account selected must be active</errorMessage>
+            <filterItems>
+                <field>GL_Account__c.Active__c</field>
+                <operation>equals</operation>
+                <value>True</value>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>GL_Account__c</referenceTo>
+        <relationshipLabel>Asset Classes</relationshipLabel>
+        <relationshipName>Asset_Classes</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Life_in_Months__c</fullName>
+        <description>The default life in months for assets related to this Asset Class.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The default value for assets assigned to this class. You can change the number for a specific asset.</inlineHelpText>
+        <label>Life in Months</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <label>Asset Class</label>
+    <listViews>
+        <fullName>All</fullName>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Asset Class Name</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Asset Classes</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Depreciation_Method__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Depreciation_Convention__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Declining_Balance__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Depreciation_Period__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Life_in_Months__c</customTabListAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <startsWith>Vowel</startsWith>
+    <validationRules>
+        <fullName>Company_Required_On_Asset_Class</fullName>
+        <active>true</active>
+        <description>Company Required on Asset Class</description>
+        <errorConditionFormula>ISNULL(Company__c)</errorConditionFormula>
+        <errorMessage>Please select a company for this Asset Class.</errorMessage>
+    </validationRules>
+</CustomObject>

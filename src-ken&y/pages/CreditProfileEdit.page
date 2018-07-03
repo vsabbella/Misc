@@ -1,0 +1,87 @@
+<apex:page standardController="Company__c" extensions="CreditProfileExt"
+	showHeader="true" sidebar="true" docType="html-5.0">
+
+	<apex:includeScript value="{!URLFOR($Resource.KendoUI, '/js/jquery.min.js')}" />
+
+	<apex:sectionHeader title="{!Company__c.Name}"		subtitle="{!$Label.Edit_Credit_Rules}" />
+
+	<apex:form id="form"><c:busyWait includeScripts="false" />
+		<apex:pageMessages />
+
+		<apex:pageBlock >
+
+			<apex:pageBlockButtons >
+				<apex:commandButton action="{!saveSSCon}" value="{!$Label.Save}"  status="actionStatus"  rerender="form" accessKey="s"/>
+				<apex:commandButton action="{!URLFOR($Page.CreditProfileNew)}"  value="{!$Label.New}" status="actionStatus"  rerender="form"/>
+				<apex:commandButton action="{!cancel}"	value="{!$Label.Cancel}" status="actionStatus"  rerender="form"/>
+			</apex:pageBlockButtons>
+
+			<apex:pageBlockTable value="{!rules}" var="a"> 
+				<apex:column headerValue="{!$ObjectType.Credit_Profile_Rules__c.fields.Name.label}">
+					<apex:inputText value="{!a.Name}" />
+				</apex:column>
+
+				<apex:column >
+					<apex:facet name="header">
+						<apex:outputText value="{!$ObjectType.Credit_Profile_Rules__c.fields.AR_Percent_Past_Due__c.label}"
+							title="{!$ObjectType.Credit_Profile_Rules__c.fields.AR_Percent_Past_Due__c.inlineHelpText}" />
+					</apex:facet>
+
+					<apex:inputText value="{!a.AR_Percent_Past_Due}" />
+				</apex:column>
+
+
+				<apex:column >
+					<apex:facet name="header">
+						<apex:outputText value="{!$ObjectType.Credit_Profile_Rules__c.fields.Days_Past_Due__c.label}"
+							title="{!$ObjectType.Credit_Profile_Rules__c.fields.Days_Past_Due__c.inlineHelpText}" />
+					</apex:facet>
+
+					<apex:inputText value="{!a.Days_Past_Due}" />
+				</apex:column>
+
+
+				<apex:column >
+					<apex:facet name="header">
+						<apex:outputText value="{!$ObjectType.Credit_Profile_Rules__c.fields.Percent_Over_Credit__c.label}"
+							title="{!$ObjectType.Credit_Profile_Rules__c.fields.Percent_Over_Credit__c.inlineHelpText}" />
+					</apex:facet>
+
+					<apex:inputText value="{!a.Percent_Over_Credit}" />
+				</apex:column>
+
+				<apex:column headerValue="{!$Label.Action}">
+					
+					<apex:commandLink value="{!$Label.Delete}" action="{!deleteRef}"	rerender="form" status="actionStatus"  >
+						<apex:param name="recId" assignTo="{!recId}" value="{!a.Id}" />
+					</apex:commandLink>
+					
+				</apex:column>
+				
+			</apex:pageBlockTable>
+		</apex:pageBlock>
+	</apex:form>
+
+	<style>
+.helpOrb2 {
+	background-image: url(/img/help/helpOrbs.gif);
+	width: 20px;
+	height: 15px;
+}
+
+.helpOrb2 {
+	background-position: top left;
+}
+
+.helpOrb2:hover {
+	background-position: top right;
+}
+</style>
+
+	<script>
+ $(function () { 
+ 	$('th.headerRow div span').append('<img src="/s.gif" alt="" class="helpOrb2" />')  
+ } );
+</script>
+
+</apex:page>

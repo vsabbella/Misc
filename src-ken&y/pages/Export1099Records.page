@@ -1,0 +1,294 @@
+<apex:page standardController="Supplier_1099__c" recordSetVar = "Supplier 1099s" tabStyle="Supplier_1099__c" showHeader="true" title="{!$Label.Export_1099_Records}"  extensions="Export1099RecordsExt">
+    <c:KendoResources /> 
+    <script src="../../soap/ajax/38.0/connection.js" type="text/javascript"> </script>
+    <apex:includeScript value="{!URLFOR($Resource.PapaParse, '/PapaParse-4.1.2/papaparse.min.js')}" />
+    <apex:includeScript value="{!$Resource.FileServiceJS}" />
+    <apex:sectionHeader title="{!$ObjectType.Supplier_1099__c.Label}" subtitle="{!$Label.Export_1099_Records}"/>
+    <style>
+        .disab {
+            opacity: 0.4;
+            cursor: default;
+            pointer-events: none;
+        }
+        
+        .button-text-bold{
+           font-weight: bold;
+        }
+        
+        .k-tooltip{
+           left: 0;
+           top: 100%;
+        }
+        
+        span.k-tooltip{
+           position: absolute;
+        }
+        
+        div.k-header, .k-multiselect-wrap .k-multiselect{
+            width: 200px;
+        }
+        
+        .messageText a {  
+            color:#333;
+            font-size:91%;
+            margin: 4px !important;
+            margin-right: 0px !important;
+        } 
+    </style>
+    <apex:form id="form">
+
+        <apex:pageBlock >  
+            <div >
+                    <apex:pageMessages />
+                    <div class="page-message" ></div>
+                    <table>
+                        <tr>
+                            <td class="column-label">
+                                {!$ObjectType.Company__c.Label}&nbsp;
+                            </td>
+                            <td class="column-field">
+                                <select id="companySelector" class="kendoWidgetSelector"></select>
+                            </td>
+                        </tr>
+                   </table>
+                    &nbsp; &nbsp;
+                    <div>
+                        <span class="">Year </span>
+                        &nbsp;
+                        <div style="display: inline;" class="kndy-required-input">
+                            <div class="kndy-required-block"></div>
+                            <input id="yearPicker" required="true"/>
+                            <span class="k-invalid-msg" data-for="yearPicker"></span>   
+                        </div>
+                    </div>
+                   <br/>
+                   <br/>
+                   <div style="display: inline;">
+                        Attach to Company Record
+                        <input type="checkbox" id="attachtoCompanyCheckBox"/>
+                   </div>
+            </div>
+            <apex:pageBlockButtons location="top" ><!-- style="text-align: center;" -->
+                  <button id="goBackBtn" type="button" class="k-button kndy-btn button-text-bold" >{!$Label.Go_Back}</button>
+                  <button id="exportCSVBtn" type="button" class="k-button kndy-btn button-text-bold export-csv-btn-cls" >{!$Label.Export_CSV}</button>
+            </apex:pageBlockButtons>            
+        </apex:pageBlock>
+    </apex:form>
+    <script>
+      var s1099Fields =  JSON.parse('{!JSEncode(s1099Fields)}');
+      
+      var Export1099RecordsUtil = function(){
+          return {
+              GoBack: function(e){
+                    var cnfrm = window.confirm('{!$Label.ConfirmGoBack} ');
+                    if(cnfrm){
+                        KenandyErp.BlockUI();
+                        window.location.href = '{!JSEncode(returnUrl)}';
+                    }
+              },
+              ValidateYear: function(){
+                  var dateVal = $('#yearPicker').data('kendoDatePicker').element[0].value;
+                  var validYear = true;
+                  if (!dateVal ){
+                      validYear = false;
+                  }
+                  else{
+                      var yearVal = parseInt(dateVal);
+                      if( isNaN(dateVal) || !yearVal || yearVal < 0){
+                          validYear =  false
+                      }
+                  }
+                  return validYear;
+              },
+              DisableButtons: function() {
+                   var isValidYear = Export1099RecordsUtil.ValidateYear();
+                   if (!isValidYear){
+                       $('.export-csv-btn-cls').addClass("disab");
+                   }
+                   else{
+                       $('.export-csv-btn-cls').removeClass("disab"); 
+                   }
+             },
+             
+             GetCSVHeaderRow: function(e){
+                var headerRow = [];
+                for (var i = 0; i < s1099Fields.length; i++) {
+                    headerRow.push(s1099Fields[i].title);
+                }
+                return headerRow;
+             },
+            
+             CreateCSVFileData: function (fileName, s1099records){
+                console.log(s1099records);
+                var data = [];
+                var headerRow = Export1099RecordsUtil.GetCSVHeaderRow();
+                data.push(headerRow);
+                
+                $.each(s1099records, function(index, item) {
+                    var dataRow = [];
+                    for (var i = 0; i < s1099Fields.length; i++) {
+                          var dataValue;
+                          var column = s1099Fields[i];
+                          var field =  column.field;
+                          if (field.endsWith('__c')){
+                              field = '{!JSEncode(NamespaceUU)}'+ column.field;
+                          }
+                          
+                          if (column.fieldtype == "reference") {
+                              var relationshipField = field;
+                              if (relationshipField.endsWith('__c')) {
+                                   relationshipField = relationshipField.replace(/__c/, '__r');
+                              }
+                              dataValue = (item[field] && item[relationshipField]) ? item[relationshipField]["Name"] : '';
+                          }
+                          else if (column.type == "date" || column.type == "number") {
+                              var format = column.format;
+                              dataValue = (item[field]) ? kendo.toString(item[field], format) : '';
+                          }
+                          else if (column.type == "boolean") {
+                              dataValue = (item[field]) ? item[field] : '';
+                          }
+                          else {
+                              // Strip HTML characters
+                              var value = (item[field]) ? item[field] : '';
+                              dataValue = value;
+                          }
+                          dataRow.push(dataValue);
+                      }
+                      data.push(dataRow)
+                 });
+                 return data;
+             },
+             
+             Export: function(e) {
+                var self = this;
+                var selectedYear = $('#yearPicker').data('kendoDatePicker').element[0].value;
+                var companySelector = $("#companySelector").data("kendoMultiSelect").value();
+                var attachToCompany = $('#attachtoCompanyCheckBox').is(':checked');
+                var fileNames;
+               
+                KenandyErp.ClearMessage();
+                KenandyErp.BlockUI();
+                Visualforce.remoting.Manager.invokeAction(
+                        "{!$RemoteAction.Export1099RecordsExt.getSupplier1099Records}",              
+                        companySelector,
+                        selectedYear, 
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error);
+                            } else {
+                                KenandyErp.Messages(result.messages);
+                                if (result.success) {
+                                     //result.records = list of Map<fileName, list of 1099 records per company>
+                                     var mapfileName1099Recs = result.records[0];
+                                     fileNames = Object.keys(mapfileName1099Recs);
+                                     var resultObjects = [];
+                                     console.log('Export mapfileName1099Recs:');
+                                     console.log(mapfileName1099Recs);
+                                     $.each(fileNames, function(index, fileName) {
+                                         var records = mapfileName1099Recs[fileName];
+                                         var fileData = Export1099RecordsUtil.CreateCSVFileData(fileName, records);
+                                         var papaCSVContent = Papa.unparse(fileData);
+                                         
+                                         // download as utf8
+                                        var papaCSVUTF8Content = "data:text/csv;charset=utf-8," + papaCSVContent;
+                                        var encodedUri = encodeURI(papaCSVUTF8Content);
+                                        var link = document.createElement("a");
+                                        link.setAttribute("href", encodedUri);
+                                        link.setAttribute("download", fileName+'.csv');
+                                        document.body.appendChild(link); // Required for FF
+                                        link.click(); // This will download the data file
+                                        
+                                        // Create File in SF
+                                        if (attachToCompany){
+                                           //success callback
+                                            var onUploadFileSuccess = function(successObj){
+                                                console.log( 'onUploadFileSuccess');
+                                                console.log(successObj);
+                                                resultObjects.push(successObj);
+                                                if(resultObjects.length == fileNames.length){ //Files for all companies have been created
+                                                     Export1099RecordsUtil.OnFileUploadComplete(resultObjects);
+                                                }
+                                            }
+                                            //Failure callback
+                                            var onUploadFileFailure = function(error){
+                                                console.log( 'onUploadFileFailure');
+                                                console.log(error);
+                                                KenandyErp.Message(error, KenandyErp.MessageType.Error);
+                                            }
+                                            FileServiceUtil.UploadContentVersion('{!JSEncode($Api.Session_ID)}',papaCSVContent, false, fileName+".csv", records[0]['{!JSEncode(NamespaceUU)}' + 'Company__c'], "V", null, onUploadFileSuccess,onUploadFileFailure);
+                                        }
+                                   });
+                                }
+                            }
+                        },
+                        {escape: false}
+               );
+            },
+            
+            OnFileUploadComplete: function(resultObjects){
+               var newFileMessage = '{!$Label.Your_export_file_was_created}';
+               var updateFileMessage = '{!$Label.A_new_version_of_your_export_file_was_created}';
+               var newFileLinks = '';
+               var updateFileLinks = '';
+               console.log('>>> OnFileUploadComplete resultObjects');
+               console.log(resultObjects);
+               $.each(resultObjects, function(ix, resultObject) {
+                   var fileLink = '<a href=\"/' + resultObject.fileId + '\">' + resultObject.fileName +'</a>';
+                   if (resultObject.firstVersion){
+                       newFileLinks += fileLink +',';
+                   }
+                   else{
+                       updateFileLinks += fileLink + ',';
+                   }
+               });
+               var messages = [];
+               if (newFileLinks){
+                   newFileLinks = newFileLinks.substring(0, newFileLinks.length-1);
+                   newFileMessage +=  newFileLinks;
+                   messages.push({message:newFileMessage, severity:'INFO'});
+               }
+               if (updateFileLinks){
+                   updateFileLinks = updateFileLinks.substring(0, updateFileLinks.length-1);
+                   updateFileMessage += updateFileLinks;
+                   messages.push({message:updateFileMessage, severity:'INFO'});
+               }
+               KenandyErp.Messages(messages);
+            },
+         }
+      }();
+      
+      $(document).on('KenandyErpReady', function(e) {
+      
+          $.fn.KendoMultiSelect($('#companySelector'), { lookupSearchAction: '{!$RemoteAction.Export1099RecordsExt.lookupSearchFilter}', referenceTo: 'Company__c', title: '{!JSENCODE($ObjectType.Company__c.Label)}'});
+
+
+          $('#yearPicker').kendoDatePicker({
+             start: "decade",
+             depth: "decade",
+             format: 'yyyy',
+             dateFormat : 'yyyy',
+             value: new Date()
+          }); 
+          
+        // Year validation messages, disable/enable buttons whenever validator runs
+        var validator = $('#yearPicker').kendoValidator({
+            rules: {
+                correctYearFormat: function (e) {
+                   var validYear = Export1099RecordsUtil.ValidateYear();
+                   Export1099RecordsUtil.DisableButtons();
+                   return validYear;
+                }
+            },
+            messages: {
+                required: 'Year is required',
+                correctYearFormat: "Invalid year"
+            }
+         }).data("kendoValidator");
+         $('#goBackBtn').on("click", $.proxy(Export1099RecordsUtil.GoBack));
+         $('#exportCSVBtn').on("click", $.proxy(Export1099RecordsUtil.Export));
+         $('#yearPicker').on("change", $.proxy(Export1099RecordsUtil.DisableButtons));
+      });
+    </script>
+</apex:page>

@@ -1,0 +1,984 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpGLAccount</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Table of acceptable General Ledger Numbers or Names with associated Cross Reference Information</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableEnhancedLookup>true</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>HierarchyView</fullName>
+        <description>This is used in GL Accounts manage Hierarchy view page.</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>GL_Account_Number__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>GL_Account_Name__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Description__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>SubAccount_of__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>GL_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Active__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>CreatedDate</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>LastModifiedDate</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>HierarchyView</label>
+    </fieldSets>
+    <fields>
+        <fullName>Account_Range_From__c</fullName>
+        <externalId>false</externalId>
+        <formula>GL_Type__r.Account_Range_From__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Account Range From</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Account_Range_To__c</fullName>
+        <externalId>false</externalId>
+        <formula>GL_Type__r.Account_Range_To__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Account Range To</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Active__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Select box if GL account is active</description>
+        <externalId>false</externalId>
+        <label>Active</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Cash_Flow_Report_Cash__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Cash Flow Report Cash</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Cash_Flow_Report_Financing_Activity__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>Cash Flow Report Financing Activity</inlineHelpText>
+        <label>Cash Flow Financing</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Short-term Loan From Bank Increase/(Decrease)</fullName>
+                    <default>false</default>
+                    <label>Short-term Loan From Bank Increase/(Decrease)</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Cash_Flow_Report_Investing_Activity__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>Cash Flow Report Investing Activity</inlineHelpText>
+        <label>Cash Flow Investing</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Investment from Parent Company Increase/(Decrease)</fullName>
+                    <default>false</default>
+                    <label>Investment from Parent Company Increase/(Decrease)</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Cash_Flow_Report_Operating_Activity__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>Cash Flow Report Operating Activity</inlineHelpText>
+        <label>Cash Flow Operating</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Accounts Receivable Decrease/(Increase)</fullName>
+                    <default>false</default>
+                    <label>Accounts Receivable Decrease/(Increase)</label>
+                </value>
+                <value>
+                    <fullName>Accounts Payable Decrease/(Increase)</fullName>
+                    <default>false</default>
+                    <label>Accounts Payable Decrease/(Increase)</label>
+                </value>
+                <value>
+                    <fullName>Inventory Decrease/(Increase)</fullName>
+                    <default>false</default>
+                    <label>Inventory Decrease/(Increase)</label>
+                </value>
+                <value>
+                    <fullName>Loss on Sale of Equipment (Current Period)</fullName>
+                    <default>false</default>
+                    <label>Loss on Sale of Equipment (Current Period)</label>
+                </value>
+                <value>
+                    <fullName>Depreciation Expense (Current Period)</fullName>
+                    <default>false</default>
+                    <label>Depreciation Expense (Current Period)</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Cash_Flow_Report_Section_Grouping__c</fullName>
+        <description>Drives the report section grouping on cash flow statement financial reports.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The report section grouping on cash flow statement financial reports in which this GL account displays.</inlineHelpText>
+        <label>Cash Flow Section</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Operating Activities</fullName>
+                    <default>false</default>
+                    <label>Operating Activities</label>
+                </value>
+                <value>
+                    <fullName>Investing Activities</fullName>
+                    <default>false</default>
+                    <label>Investing Activities</label>
+                </value>
+                <value>
+                    <fullName>Financing Activities</fullName>
+                    <default>false</default>
+                    <label>Financing Activities</label>
+                </value>
+                <value>
+                    <fullName>Cash</fullName>
+                    <default>false</default>
+                    <label>Cash</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Cash_Flow_Subsection__c</fullName>
+        <externalId>false</externalId>
+        <label>Cash Flow Subsection</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <controllingField>Cash_Flow_Report_Section_Grouping__c</controllingField>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Amortization Expense</fullName>
+                    <default>false</default>
+                    <label>Amortization Expense</label>
+                </value>
+                <value>
+                    <fullName>Accounts Payable</fullName>
+                    <default>false</default>
+                    <label>Accounts Payable</label>
+                </value>
+                <value>
+                    <fullName>Depreciation Expense</fullName>
+                    <default>false</default>
+                    <label>Depreciation Expense</label>
+                </value>
+                <value>
+                    <fullName>Other</fullName>
+                    <default>false</default>
+                    <label>Other</label>
+                </value>
+                <value>
+                    <fullName>Prepaid</fullName>
+                    <default>false</default>
+                    <label>Prepaid</label>
+                </value>
+                <value>
+                    <fullName>Accounts Receivable</fullName>
+                    <default>false</default>
+                    <label>Accounts Receivable</label>
+                </value>
+                <value>
+                    <fullName>Inventory</fullName>
+                    <default>false</default>
+                    <label>Inventory</label>
+                </value>
+                <value>
+                    <fullName>Capital Expenditure</fullName>
+                    <default>false</default>
+                    <label>Capital Expenditure</label>
+                </value>
+                <value>
+                    <fullName>Interco Investing</fullName>
+                    <default>false</default>
+                    <label>Interco Investing</label>
+                </value>
+                <value>
+                    <fullName>Short Term</fullName>
+                    <default>false</default>
+                    <label>Short Term</label>
+                </value>
+                <value>
+                    <fullName>Long Term Loan</fullName>
+                    <default>false</default>
+                    <label>Long Term Loan</label>
+                </value>
+                <value>
+                    <fullName>Short Term Loan</fullName>
+                    <default>false</default>
+                    <label>Short Term Loan</label>
+                </value>
+                <value>
+                    <fullName>Stock</fullName>
+                    <default>false</default>
+                    <label>Stock</label>
+                </value>
+            </valueSetDefinition>
+            <valueSettings>
+                <controllingFieldValue>Operating Activities</controllingFieldValue>
+                <valueName>Amortization Expense</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Operating Activities</controllingFieldValue>
+                <valueName>Accounts Payable</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Operating Activities</controllingFieldValue>
+                <valueName>Depreciation Expense</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Operating Activities</controllingFieldValue>
+                <valueName>Other</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Operating Activities</controllingFieldValue>
+                <valueName>Prepaid</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Operating Activities</controllingFieldValue>
+                <valueName>Accounts Receivable</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Operating Activities</controllingFieldValue>
+                <valueName>Inventory</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Investing Activities</controllingFieldValue>
+                <valueName>Capital Expenditure</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Investing Activities</controllingFieldValue>
+                <valueName>Interco Investing</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Investing Activities</controllingFieldValue>
+                <valueName>Short Term</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Financing Activities</controllingFieldValue>
+                <valueName>Long Term Loan</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Financing Activities</controllingFieldValue>
+                <valueName>Short Term Loan</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Financing Activities</controllingFieldValue>
+                <valueName>Stock</valueName>
+            </valueSettings>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Contra_Account__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Contra Account</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Description__c</fullName>
+        <description>Description or reference information for GL account</description>
+        <externalId>false</externalId>
+        <label>Description</label>
+        <length>200</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>FX_Type__c</fullName>
+        <externalId>false</externalId>
+        <label>FX Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Monetary Cash</fullName>
+                    <default>false</default>
+                    <label>Monetary Cash</label>
+                </value>
+                <value>
+                    <fullName>Monetary Non-cash</fullName>
+                    <default>false</default>
+                    <label>Monetary Non-cash</label>
+                </value>
+                <value>
+                    <fullName>Non-monetary</fullName>
+                    <default>false</default>
+                    <label>Non-monetary</label>
+                </value>
+                <value>
+                    <fullName>P/L Monetary</fullName>
+                    <default>false</default>
+                    <label>P/L Monetary</label>
+                </value>
+                <value>
+                    <fullName>P/L Non-monetary</fullName>
+                    <default>false</default>
+                    <label>P/L Non-monetary</label>
+                </value>
+                <value>
+                    <fullName>Historical</fullName>
+                    <default>false</default>
+                    <label>Historical</label>
+                </value>
+                <value>
+                    <fullName>Statistical</fullName>
+                    <default>false</default>
+                    <label>Statistical</label>
+                </value>
+                <value>
+                    <fullName>RFX</fullName>
+                    <default>false</default>
+                    <label>RFX</label>
+                </value>
+                <value>
+                    <fullName>UFX</fullName>
+                    <default>false</default>
+                    <label>UFX</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>GL_Account_Name__c</fullName>
+        <externalId>false</externalId>
+        <label>GL Account Name</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>GL_Account_Number__c</fullName>
+        <externalId>false</externalId>
+        <label>GL Account Number</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>GL_Account_Unique__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>Unique key to prevent duplicate GL Accounts with the same name.</description>
+        <externalId>true</externalId>
+        <inlineHelpText>Unique key to prevent duplicate GL accounts with the same name.</inlineHelpText>
+        <label>GL Account Unique</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>GL_Group__c</fullName>
+        <externalId>false</externalId>
+        <formula>BLANKVALUE(SubAccount_of__r.Name, Name)</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>GL Group</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>GL_Type_Code__c</fullName>
+        <externalId>false</externalId>
+        <label>GL Type Code</label>
+        <length>32</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>GL_Type__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>GL Type</label>
+        <referenceTo>GL_Type__c</referenceTo>
+        <relationshipLabel>GL Accounts</relationshipLabel>
+        <relationshipName>GL_Accounts</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Include_in_Budgets__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Include in Budgets</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Income_Statement_Report_Section_Grouping__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>Income Statement Report Section Grouping</inlineHelpText>
+        <label>Income Statement Section</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Revenue</fullName>
+                    <default>false</default>
+                    <label>Revenue</label>
+                </value>
+                <value>
+                    <fullName>Less</fullName>
+                    <default>false</default>
+                    <label>Less</label>
+                </value>
+                <value>
+                    <fullName>Cost of Goods Sold</fullName>
+                    <default>false</default>
+                    <label>Cost of Goods Sold</label>
+                </value>
+                <value>
+                    <fullName>Operating Expenses</fullName>
+                    <default>false</default>
+                    <label>Operating Expenses</label>
+                </value>
+                <value>
+                    <fullName>General &amp; Administrative Expenses</fullName>
+                    <default>false</default>
+                    <label>General &amp; Administrative Expenses</label>
+                </value>
+                <value>
+                    <fullName>Other Revenue &amp; Expenses</fullName>
+                    <default>false</default>
+                    <label>Other Revenue &amp; Expenses</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Non_Cash__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Indicates whether this is a Non Cash GL Account</description>
+        <externalId>false</externalId>
+        <label>Non Cash</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Normal_Balance__c</fullName>
+        <description>Select Credit or Debit if this account usually has a credit or debit balance</description>
+        <externalId>false</externalId>
+        <inlineHelpText>&quot;Credit&quot; or &quot;Debit&quot;, depending if this account usually has a credit or debit balance.</inlineHelpText>
+        <label>Normal Balance</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Credit</fullName>
+                    <default>false</default>
+                    <label>Credit</label>
+                </value>
+                <value>
+                    <fullName>Debit</fullName>
+                    <default>false</default>
+                    <label>Debit</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Order__c</fullName>
+        <externalId>false</externalId>
+        <label>Order</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Parent_GL_Account_Number__c</fullName>
+        <externalId>false</externalId>
+        <formula>SubAccount_of__r.GL_Account_Number__c</formula>
+        <label>Parent GL Account Number</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Report_Section_Grouping__c</fullName>
+        <description>Provides grouping of report sections on financial reports</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The report section grouping on balance sheet statement financial reports in which this GL account displays.</inlineHelpText>
+        <label>Balance Sheet Report Section Grouping</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Current Assets</fullName>
+                    <default>false</default>
+                    <label>Current Assets</label>
+                </value>
+                <value>
+                    <fullName>Non-Current Assets</fullName>
+                    <default>false</default>
+                    <label>Non-Current Assets</label>
+                </value>
+                <value>
+                    <fullName>Current Liabilities</fullName>
+                    <default>false</default>
+                    <label>Current Liabilities</label>
+                </value>
+                <value>
+                    <fullName>Non-Current Liabilities</fullName>
+                    <default>false</default>
+                    <label>Non-Current Liabilities</label>
+                </value>
+                <value>
+                    <fullName>Shareholder Equity</fullName>
+                    <default>false</default>
+                    <label>Shareholder Equity</label>
+                </value>
+                <value>
+                    <fullName>Revenue</fullName>
+                    <default>false</default>
+                    <label>Revenue</label>
+                </value>
+                <value>
+                    <fullName>Cost of Goods Sold</fullName>
+                    <default>false</default>
+                    <label>Cost of Goods Sold</label>
+                </value>
+                <value>
+                    <fullName>Operating Expense</fullName>
+                    <default>false</default>
+                    <label>Operating Expense</label>
+                </value>
+                <value>
+                    <fullName>Other Expense</fullName>
+                    <default>false</default>
+                    <label>Other Expense</label>
+                </value>
+                <value>
+                    <fullName>Interest and Tax Expenses</fullName>
+                    <default>false</default>
+                    <label>Interest and Tax Expenses</label>
+                </value>
+                <value>
+                    <fullName>Gross Income</fullName>
+                    <default>false</default>
+                    <label>Gross Income</label>
+                </value>
+                <value>
+                    <fullName>Equity</fullName>
+                    <default>false</default>
+                    <label>Equity</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Report_Section__c</fullName>
+        <description>Please select the section of the financial report that this GL account will eventually show up under.</description>
+        <externalId>false</externalId>
+        <label>Report Section</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Current Assets</fullName>
+                    <default>false</default>
+                    <label>Current Assets</label>
+                </value>
+                <value>
+                    <fullName>Long Term Assets</fullName>
+                    <default>false</default>
+                    <label>Long Term Assets</label>
+                </value>
+                <value>
+                    <fullName>Current Liabilities</fullName>
+                    <default>false</default>
+                    <label>Current Liabilities</label>
+                </value>
+                <value>
+                    <fullName>Long-Term Liabilities</fullName>
+                    <default>false</default>
+                    <label>Long-Term Liabilities</label>
+                </value>
+                <value>
+                    <fullName>Shareholder Equity</fullName>
+                    <default>false</default>
+                    <label>Shareholder Equity</label>
+                </value>
+                <value>
+                    <fullName>Revenue</fullName>
+                    <default>false</default>
+                    <label>Revenue</label>
+                </value>
+                <value>
+                    <fullName>Cost of Goods Sold</fullName>
+                    <default>false</default>
+                    <label>Cost of Goods Sold</label>
+                </value>
+                <value>
+                    <fullName>Operating Expense</fullName>
+                    <default>false</default>
+                    <label>Operating Expense</label>
+                </value>
+                <value>
+                    <fullName>Other Expense</fullName>
+                    <default>false</default>
+                    <label>Other Expense</label>
+                </value>
+                <value>
+                    <fullName>Interest and Tax Expenses</fullName>
+                    <default>false</default>
+                    <label>Interest and Tax Expenses</label>
+                </value>
+                <value>
+                    <fullName>Gross Income</fullName>
+                    <default>false</default>
+                    <label>Gross Income</label>
+                </value>
+                <value>
+                    <fullName>Assets</fullName>
+                    <default>false</default>
+                    <label>Assets</label>
+                </value>
+                <value>
+                    <fullName>Liabilities &amp; Equity</fullName>
+                    <default>false</default>
+                    <label>Liabilities &amp; Equity</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Report_Sub_Section__c</fullName>
+        <externalId>false</externalId>
+        <label>Report Sub Section</label>
+        <length>80</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Reports__c</fullName>
+        <externalId>false</externalId>
+        <label>Reports</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>MultiselectPicklist</type>
+        <valueSet>
+            <restricted>true</restricted>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>AP/AR Aging</fullName>
+                    <default>false</default>
+                    <label>AP/AR Aging</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+        <visibleLines>4</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Statement_Type__c</fullName>
+        <description>Select Income Statement, Balance Sheet, or None, depending on the statement type</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The statement type for this GL account. Can be either &quot;Income Statement&quot;, &quot;Balance Sheet&quot;, or &quot;None&apos;&quot;.</inlineHelpText>
+        <label>Statement Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Income Statement</fullName>
+                    <default>false</default>
+                    <label>Income Statement</label>
+                </value>
+                <value>
+                    <fullName>Balance Sheet</fullName>
+                    <default>false</default>
+                    <label>Balance Sheet</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>SubAccount_of__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>This account is the subaccount of this parent account. If left blank, there is no parent account.</description>
+        <externalId>false</externalId>
+        <label>SubAccount of</label>
+        <referenceTo>GL_Account__c</referenceTo>
+        <relationshipLabel>GL Account</relationshipLabel>
+        <relationshipName>GL_Accounts</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Type__c</fullName>
+        <externalId>false</externalId>
+        <label>Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Revenue</fullName>
+                    <default>false</default>
+                    <label>Revenue</label>
+                </value>
+                <value>
+                    <fullName>Expense</fullName>
+                    <default>false</default>
+                    <label>Expense</label>
+                </value>
+                <value>
+                    <fullName>Asset</fullName>
+                    <default>false</default>
+                    <label>Asset</label>
+                </value>
+                <value>
+                    <fullName>Liability</fullName>
+                    <default>false</default>
+                    <label>Liability</label>
+                </value>
+                <value>
+                    <fullName>Equity</fullName>
+                    <default>false</default>
+                    <label>Equity</label>
+                </value>
+                <value>
+                    <fullName>--None--</fullName>
+                    <default>false</default>
+                    <label>--None--</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <label>GL Account</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>GL_Type__c</columns>
+        <columns>SubAccount_of__c</columns>
+        <columns>Description__c</columns>
+        <columns>Active__c</columns>
+        <columns>Order__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>GL Account</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>GL Accounts</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>GL_Type__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>SubAccount_of__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Description__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Active__c</customTabListAdditionalFields>
+        <excludedStandardButtons>Accept</excludedStandardButtons>
+        <excludedStandardButtons>ChangeOwner</excludedStandardButtons>
+        <listViewButtons>View_GL_Hierarchy</listViewButtons>
+        <lookupDialogsAdditionalFields>Description__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Normal_Balance__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Active__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Report_Section__c</lookupDialogsAdditionalFields>
+        <searchFilterFields>NAME</searchFilterFields>
+        <searchFilterFields>Report_Section__c</searchFilterFields>
+        <searchFilterFields>Description__c</searchFilterFields>
+        <searchFilterFields>Active__c</searchFilterFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>GL_Account_Number</fullName>
+        <active>true</active>
+        <errorConditionFormula>GL_Account_Number__c    &lt;&gt;   null  &amp;&amp;  GL_Type__c  = null</errorConditionFormula>
+        <errorMessage>This GL Account cannot have GL Account Number filled when there is no GL Type associated with it.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>GL_Type_Missing_Check</fullName>
+        <active>true</active>
+        <errorConditionFormula>ISBLANK(GL_Type__c)</errorConditionFormula>
+        <errorMessage>GL Type can not be blank.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>GL_Type_Validation</fullName>
+        <active>true</active>
+        <description>Validate that GL Type on Parent and Child is same</description>
+        <errorConditionFormula>NOT(ISBLANK(SubAccount_of__c)) &amp;&amp;
+GL_Type__c !=  SubAccount_of__r.GL_Type__c</errorConditionFormula>
+        <errorMessage>GL Type must match the Parent&apos;s GL Type</errorMessage>
+    </validationRules>
+    <visibility>Public</visibility>
+    <webLinks>
+        <fullName>View_GL_Hierarchy</fullName>
+        <availability>online</availability>
+        <description>View list of GL Accounts in Parent-Child Tree View</description>
+        <displayType>massActionButton</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>View GL Hierarchy</masterLabel>
+        <openType>sidebar</openType>
+        <page>GLAcctsManageHierarchy</page>
+        <protected>false</protected>
+        <requireRowSelection>true</requireRowSelection>
+    </webLinks>
+</CustomObject>

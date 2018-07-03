@@ -1,0 +1,165 @@
+<apex:page standardController="Substitution__c" extensions="SubstitutionExt" tabStyle="Substitution__c" docType="html-5.0">
+
+    <style type="text/css">
+		.column-width {
+        	width: 25%;
+        }
+        .filterLabel {
+        	font-weight: bold;
+        	font-size: 110%;
+        }
+	</style>
+	
+    <c:KendoResources />
+
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+	
+	<apex:sectionHeader subtitle="{!$Label.Manage_Substitutions}" />
+<!--    
+    // KNDY-3461 : The below link was throwing the error in an installed org. Disabling it for now.
+    <apex:outputLink style="text-decoration:none;color:#015ba7" value="/{!Substitution__c.Id}"> &lt;&lt; Return to Substitution: {!Substitution__c.Name}</apex:outputLink>
+	<br/><br/>
+-->	
+    <div class="page-message"></div>
+    
+    <apex:pageBlock mode="maindetail">		
+    	<apex:pageBlockSection title="{!$Label.Filters}" columns="1">	
+    		<apex:panelGrid columns="7" cellspacing="4" width="100%" styleClass="search-filters" >
+    		    <apex:outputLabel value="{!$ObjectType.Product__c.Label}" styleClass="filterLabel" />
+    			<apex:outputLabel value="{!$ObjectType.Substitution__c.Fields.UPC__c.Label}" styleClass="filterLabel" />
+    			<apex:outputLabel value="{!$ObjectType.Substitution__c.Fields.Primary__c.Label}" styleClass="filterLabel" />
+    			<apex:outputLabel value="{!$ObjectType.Substitution__c.Fields.Customer__c.Label}" styleClass="filterLabel" />
+    			<apex:outputLabel value="{!$ObjectType.Substitution__c.Fields.Facility__c.Label}" styleClass="filterLabel" />
+    			<apex:outputLabel value="{!$ObjectType.Substitution__c.Fields.Start_Date__c.Label}" styleClass="filterLabel" />
+    			<apex:outputLabel value="{!$ObjectType.Substitution__c.Fields.End_Date__c.Label}" styleClass="filterLabel" />
+    			<apex:outputLabel value="{!$Label.Action}" styleClass="filterLabel" rendered="false"/>
+    			
+    			<apex:outputPanel layout="block"> 
+    				<input id="productFilter" class="kendoWidgetSelector" /> 					
+    			</apex:outputPanel>
+    
+    			<apex:outputPanel layout="block">
+    				<input id="upcFilter" class="k-textbox kendoWidgetSelector" />
+    			</apex:outputPanel>
+    			
+    			<apex:outputPanel layout="block">
+    				<input id="primaryFilter" type="checkbox" class="kendoWidgetSelector" />
+    			</apex:outputPanel>
+    
+    			<apex:outputPanel layout="block">
+    				<input id="customerFilter" class="kendoWidgetSelector" />
+    			</apex:outputPanel>
+    
+    			<apex:outputPanel layout="block">
+    				<input id="facilityFilter" class="kendoWidgetSelector" />
+    			</apex:outputPanel>
+    
+    			<apex:outputPanel layout="block">
+    				<input id="startDateFilter" type="date" class="kendoWidgetSelector" />
+    			</apex:outputPanel>
+    
+    			<apex:outputPanel layout="block">
+    				<input id="endDateFilter" type="date" class="kendoWidgetSelector" />
+    			</apex:outputPanel>
+    			
+    	    </apex:panelGrid>
+    	    <apex:outputPanel style="text-align:center;" layout="block" >
+    	        <br/>
+                <input name="searchFilter" style="left-margin: 40%;" id="searchFilter" type="button" value="{!$Label.Apply_Filters}" onclick="SubstitutionsManageActions.Search();" class="btn" />
+                <br/>
+            </apex:outputPanel>	
+    	</apex:pageBlockSection>
+    	
+        <apex:pageBlockSection title="{!$ObjectType.Substitution__c.LabelPlural}" columns="1" collapsible="false" >    
+    		<div class="grid-container">
+        		<div class="grid-message"></div>
+            	<div id="{!substitutionsConfig.uniqueId}" ></div>
+            </div>
+        </apex:pageBlockSection>
+    </apex:pageBlock>	
+    
+    <script type="text/javascript">  
+        
+		var getSubstitutionsData = function() {
+            var deferred = $.Deferred();
+            
+            var upcFilter = $('#upcFilter')[0].value;
+			var productFilter = $('#productFilter').data('kendoComboBox').value();
+			var primaryFilter = $('#primaryFilter')[0].checked;
+			var customerFilter = $('#customerFilter').data('kendoComboBox').value();
+			var facilityFilter = $('#facilityFilter').data('kendoComboBox').value();
+			var startDateFilter = $('#startDateFilter')[0].value;
+            var endDateFilter = $('#endDateFilter')[0].value;
+			
+			Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.SubstitutionExt.getSubstitutions}',
+                upcFilter, 
+                productFilter,
+                primaryFilter,
+                customerFilter,
+                facilityFilter,
+                startDateFilter,
+                endDateFilter,
+                function (result, event) {
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+            );
+
+            return deferred.promise();
+        }
+        
+        $(document).ready(function() {
+        	
+        	// Initialize Product Lookup
+        	$.fn.KendoComboBox($('#productFilter'), { lookupSearchAction: '{!$RemoteAction.SubstitutionExt.lookupSearchFilter}', referenceTo: 'Product__c', title: '{!$ObjectType.Product__c.Label}', value: '' });
+        	
+        	// Initialize Customer Lookup
+        	$.fn.KendoComboBox($('#customerFilter'), { lookupSearchAction: '{!$RemoteAction.SubstitutionExt.lookupSearchFilter}', referenceTo: 'Customer__c', title: '{!$ObjectType.Substitution__c.Fields.Customer__c.Label}', value: '' });
+        	
+        	// Initialize Facility Lookup
+        	$.fn.KendoComboBox($('#facilityFilter'), { lookupSearchAction: '{!$RemoteAction.SubstitutionExt.lookupSearchFilter}', referenceTo: 'Facility__c', title: '{!$ObjectType.Substitution__c.Fields.Facility__c.Label}', value: '{!defaultFacility}' });
+        	
+        	// Initialize Effective Date Filter
+        	$('#startDateFilter').kendoDatePicker();
+        	
+        	// Initialize End Date Filter
+        	$('#endDateFilter').kendoDatePicker();
+        	
+        	// Initialize Substitutions Grid
+            var SubstitutionsGrid = $.fn.GridRelatedList($('#{!SubstitutionsConfig.uniqueId}'), { 
+                                        namespace: '{!NamespaceUU}', 
+                                        config: '{!SubstitutionsConfigJson}', 
+                                        fieldList: SubstitutionsManageUtils.GetFieldList('{!SubstitutionsFieldList}'), 
+                                        lookupSearchAction: '{!$RemoteAction.SubstitutionExt.lookupSearchFilter}', 
+                                        saveRelatedListAction: '{!$RemoteAction.SubstitutionExt.saveList}',
+                                        getRelatedListFunction: getSubstitutionsData 
+                                    });
+            
+            // Bind Grid Events
+			$('.add-command').on("click", $.proxy(SubstitutionsManageActions.Add, { grid: SubstitutionsGrid }));
+
+        });
+		
+        var SubstitutionsManageUtils = function() {
+        	return {
+        		GetFieldList: function(fieldList) {
+        			fieldList = JSON.parse(fieldList);
+        			return JSON.stringify(fieldList);
+        		}
+        	};
+		}();
+		
+        var SubstitutionsManageActions = function() {
+			return { 
+        		Search: function() {
+        			KenandyErp.ClearMessage();
+        			$('#{!SubstitutionsConfig.uniqueId}').data('kendoGrid').dataSource.read();
+        			return true;
+        		}
+		   	};
+		}();
+		
+    </script>
+
+</apex:page>

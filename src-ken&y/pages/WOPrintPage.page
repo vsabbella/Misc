@@ -1,0 +1,185 @@
+<apex:page controller="WOPrintPageExt" sidebar="false" showHeader="false">
+    <apex:includeScript value="{!URLFOR($Resource.jquery_ui_110,'/jquery-ui-1.10.0.custom/js/jquery-1.9.0.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.jquery_ui_110,'/jquery-ui-1.10.0.custom/js/jquery-ui-1.10.0.custom.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.KenandyStyles)}" />
+
+    <style>
+        .showPrint {
+            display: none;
+        }
+    </style>
+    
+    <script type="text/javascript">
+        $(document).ready(function() { 
+            $('a').contents().unwrap();
+        });
+
+        function printPage() {
+            $('.showPrint').show();
+            window.print();
+            $('.showPrint').hide();
+        }
+    </script>
+    <apex:pageMessages />
+    <div class="printPageLayout" style="margin-top:2%; margin-left:3%;">
+        <apex:outputPanel rendered="{!NOT(disable)}">
+            <table style="width:85%" border="0">
+                <tr>
+                    <td style="width:10%">
+                        <apex:outputLabel value="{!$ObjectType.Work_Order__c.Label}" />
+                    </td>
+                    <td style="width:1%">:</td>
+                    <td style="width:10%">
+                        <apex:outputLabel value="{!wo.Name}" />
+                    </td>    
+                    <td>&nbsp;&nbsp;</td>
+                    <td></td>
+                    <td></td>
+                    <td align="right" class="noPrint">
+                        <button onClick="printPage()">{!$Label.PrintThisPage}</button>
+                        <button onclick="javascript:window.close();">{!$Label.Close}</button>
+                    </td>       
+                </tr>
+                <tr>
+                    <td style="width:10%">
+                        <apex:outputLabel value="{!$ObjectType.Work_Order__c.Fields.Assembly_Item_Specification__c.Label}" />
+                    </td>
+                    <td style="width:1%">:</td>
+                    <td style="width:10%">
+                        <apex:outputLabel value="{!wo.Assembly_Item_Specification__r.Name}" />
+                    </td>
+                    <td>&nbsp;&nbsp;</td>
+                    <td style="width:10%">
+                        <apex:outputLabel value="{!$ObjectType.Work_Order__c.Fields.Need_Date2__c.Label}" />
+                    </td>
+                    <td style="width:1%">:</td>
+                    <td>
+                        <apex:outputText value="{0,date,MM/dd/yyyy}">
+                            <apex:param value="{!wo.Need_Date2__c}"/>
+                        </apex:outputText>             
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:10%">
+                        <apex:outputLabel value="{!$ObjectType.Work_Order__c.Fields.Assembly_Revision__c.Label}" />
+                    </td>
+                    <td style="width:1%">:</td>
+                    <td style="width:10%">
+                        <apex:outputLabel value="{!wo.Assembly_Revision__c}" />
+                    </td>
+                    <td>&nbsp;&nbsp;</td>
+                    <td style="width:10%">
+                        <apex:outputLabel value="{!$ObjectType.Work_Order__c.Fields.Start_Date2__c.Label}" />
+                    </td>
+                    <td style="width:1%">:</td>
+                    <td>
+                        <apex:outputText value="{0,date,MM/dd/yyyy}">
+                            <apex:param value="{!wo.Start_Date2__c}"/>
+                        </apex:outputText>            
+                    </td>       
+                </tr>
+                <tr> 
+                    <td style="width:10%">
+                        <apex:outputLabel value="{!$ObjectType.SKID__c.Fields.Quantity__c.Label}" />
+                    </td>
+                    <td style="width:1%">:</td>
+                    <td style="width:10%">
+                        <apex:outputLabel value="{!wo.Order_Quantity__c}"></apex:outputLabel>
+                    </td>      
+                    <td>&nbsp;&nbsp;</td>
+                    <td style="width:10%">
+                        <apex:outputLabel value="{!$ObjectType.Work_Order__c.Fields.Earliest_Completion_Date2__c.Label}"></apex:outputLabel>
+                    </td>
+                    <td style="width:1%">:</td>
+                    <td>
+                        <apex:outputText value="{0,date,MM/dd/yyyy}">
+                            <apex:param value="{!wo.Earliest_Completion_Date2__c}"/>
+                        </apex:outputText>            
+                    </td>
+                </tr>
+            </table>
+            <div class="bGeneratedReport">
+                <div class="bPageBlock">
+                    <div class="pbHeader" />
+                    <div class="pbBody" style="padding:0px;">
+                        <div class="pbSubblock">
+                            <div class="pbSubbody" style="padding:0px;">                  
+                                <div class="reportOutput">
+                                    <div id="fchArea">
+                                        <table id="tableId" width="85%" cellspacing="0" cellpadding="0" border="1" class="">
+                                            <tr bgcolor="#D5DDF3">
+                                                <td style="font-size:12px;"><b>{!$Label.ComponentItem}</b></td>
+                                                <td style="font-size:12px;"><b>{!$Label.SCDescription}</b></td>
+                                                <td style="font-size:12px;"><b>{!$ObjectType.UOM__c.Label}</b></td>
+                                                <td style="font-size:12px;"><b>{!$ObjectType.SKID__c.Fields.Quantity_Required__c.Label}</b></td>
+                                                <td style="font-size:12px;"><b>{!$ObjectType.Work_Order__c.Fields.Facility__c.Label}</b></td>
+                                                <apex:repeat value="{!attributesForDisplay}" var="f" >
+                                                    <td style="font-size:12px;"><b><apex:outputText value="{!$ObjectType.SKID__c.fields[f].Label}" /></b></td>
+                                                </apex:repeat>
+                                                <td style="font-size:12px;"><b>{!$Label.Nettable_Quantity}</b></td>
+                                                <td style="font-size:12px;"><b>{!$Label.Quantity_Pulled}</b></td>
+                                                <td style="font-size:12px;"><b>{!$ObjectType.SKID__c.Fields.Quantity_Short__c.Label}</b></td>
+                                                <td style="font-size:12px;"><b>Lot Tracked</b></td>
+                                                <td style="font-size:12px;"><b>Serial Tracked</b></td>
+                                                <td class="showPrint" style="font-size:12px;"><b>Signature</b></td>
+                                                <td class="showPrint" style="font-size:12px;"><b>Date</b></td>   
+                                            </tr>
+                                            <apex:repeat value="{!skids}" id="bomPageBlockId" var="skid">
+                                                <tr class="even" valign="top" style="line-height:15px;">
+                                                    <td class="rowWithLine">
+                                                        <apex:outputField value="{!skid.Item__c}" />
+                                                    </td>                                             
+                                                    <td class="rowWithLine">
+                                                        <apex:outputText value="{!skid.Item__r.Description__c}" rendered="{!skid.Item__r.Description__c != null}" />
+                                                    </td> 
+                                                    <td class="rowWithLine">
+                                                        <apex:outputField value="{!skid.Item__r.Stocking_UOM__c}" rendered="{!skid.Item__r.Stocking_UOM__c != null}" />
+                                                    </td>                                            
+                                                    <td class="rowWithLine">
+                                                       <div align="right">
+                                                            <apex:outputText value="{!ROUND((skid.Quantity_Required__c),3)+0.000}" style="text-align:right;" rendered="{!skid.Quantity_Required__c != null}" />
+                                                        </div>
+                                                    </td>                                                
+                                                    <td class="rowWithLine">
+                                                         <apex:outputField value="{!skid.Location__r.Facility__c}" rendered="{!skid.Location__r.Facility__c != null}" />
+                                                    </td>
+                                                    <apex:repeat value="{!attributesForDisplay}" var="f">
+                                                        <td class="rowWithLine">
+                                                            <div align="right">
+                                                                <apex:outputField value="{!skid[f]}" style="text-align:right;" />
+                                                            </div>
+                                                        </td>                                               
+                                                    </apex:repeat>
+                                                    <td class="rowWithLine">
+                                                        <div align="right">
+                                                            <apex:outputText value="{!ROUND((skid.Quantity__c),3)+0.000}" style="text-align:right;" rendered="{!skid.Quantity__c != null}" />
+                                                        </div>
+                                                    </td>
+                                                    <td class="rowWithLine"></td>
+                                                    <td class="rowWithLine">
+                                                        <div align="right">
+                                                            <apex:outputText value="{!ROUND((skid.Quantity_Short__c),3)+0.000}" style="text-align:right;" rendered="{!skid.Quantity_Short__c != null}" />
+                                                        </div>
+                                                    </td>
+                                                    <td class="rowWithLine">
+                                                        <apex:outputText value="{!IF(AND(skid.Item__r.Item_Attribute__c != null, skid.Item__r.Item_Attribute__r.Lot_Number__c == true), 'Y', 'N')}" />
+                                                    </td>
+                                                    <td class="rowWithLine">
+                                                        <apex:outputText value="{!IF(AND(skid.Item__r.Item_Attribute__c != null, skid.Item__r.Item_Attribute__r.Serial_Number__c == true), 'Y', 'N')}" />
+                                                    </td>
+                                                    <td class="rowWithLine showPrint"></td>
+                                                    <td class="rowWithLine showPrint"></td>
+                                                </tr>
+                                            </apex:repeat>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br/>
+        </apex:outputPanel>
+    </div>
+</apex:page>

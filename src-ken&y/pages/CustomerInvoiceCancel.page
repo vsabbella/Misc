@@ -1,0 +1,39 @@
+<apex:page standardController="Customer_Invoice__c" extensions="CustomerInvoiceVoidCancelExt" action="{!cancelDetails}"  title="Cancel {!Customer_Invoice__c.Name}" >
+	<apex:form id="form">
+        <c:busyWait />
+        <apex:pageMessages escape="false"/>
+        <apex:pageBlock >
+        	<apex:pageBlockButtons location="top">
+                <apex:commandButton value="Cancel" action="{!cancelDocs}" disabled="{!DisableCancel}" reRender="form" status="actionStatus" />
+                <apex:commandButton value="Return" reRender="form" status="actionStatus" onClick="goback();return false;"/>
+            
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection >
+            	 <apex:outputField value="{!Customer_Invoice__c.Name}"/>
+                <apex:outputField value="{!Customer_Invoice__c.Company__c}"/>
+                <apex:outputField value="{!Customer_Invoice__c.Finalized__c}"/>
+                <apex:outputField value="{!Customer_Invoice__c.Transaction_Date__c}"/>
+                <apex:outputField value="{!Customer_Invoice__c.Finalized_Date__c}"/>
+                <apex:outputField value="{!Customer_Invoice__c.Posting_Date__c}"/>
+                <apex:outputField value="{!Customer_Invoice__c.Status__c}"/>
+                <apex:outputField value="{!Customer_Invoice__c.Void__c}"/>
+                <apex:outputField value="{!Customer_Invoice__c.Historical__c}"/>
+                <apex:outputText value=""/>
+                <apex:outputField value="{!Customer_Invoice__c.Void_Date__c}"/>
+            
+            </apex:pageBlockSection>
+        
+        </apex:pageBlock>
+    </apex:form>
+    <script>
+
+       function goback(){
+		if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+			sforce.one.back(true);
+		} else {
+			window.location.href = '/{!Customer_Invoice__c.Id}';
+		}
+	  }
+
+    </script>
+</apex:page>

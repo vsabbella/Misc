@@ -1,0 +1,1388 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <content>JournalEntryCloneWithLines</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <content>JournalEntryLinesManage</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <content>JournalEntryLinesManage</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <content>JournalEntryDetailOverride</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpJournalEntry</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <enableActivities>true</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>Finalize</fullName>
+        <description>FinalizeService.cls</description>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Work_Order__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Transaction_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Transaction_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Total_Debit__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Total_Credit__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Supplier_Payment__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Supplier_Invoice__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Supplier_Credit_Memo__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Source_Document_Object_Name__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Shipment__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Receiving_Document__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Purchase_Order__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Period__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Inventory_Change__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>GL_Date_Time__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Fixed_Asset_Depreciation__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Fixed_Asset_Adjustment__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Customer_Receipt__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Customer_Invoice__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Customer_Credit_Memo__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Customer__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Claim__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Auto_Reverse__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Autonumber__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Finalize</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Journal_Entry_AE_RO</fullName>
+        <description>JournalEntryAccounting.page</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Finalized__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Finalized_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Transaction_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Journal Entry AE RO</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Journal_Entry_Additional_Info</fullName>
+        <description>Used in JournalEntryLinesManage</description>
+        <displayedFields>
+            <field>Has_Exceptions__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Void__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>CreatedDate</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Void_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>LastModifiedDate</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Journal Entry Additional Info</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Journal_Entry_Header</fullName>
+        <availableFields>
+            <field>Customer__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <description>Used in JournalEntryLinesManage page.</description>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Status__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Period__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Transaction_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Description__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Posting_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Total_Debit__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Auto_Reverse__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Total_Credit__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Finalized__c</field>
+            <isFieldManaged>false</isFieldManaged> 
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Journal Entry Header</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Journal_Entry_Void</fullName>
+        <description>JournalEntryVoid.page</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Transaction_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Void__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Period__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Journal Entry Void</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Source_Documents</fullName>
+        <description>JournalEntryService.cls</description>
+        <displayedFields>
+            <field>Shipment__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Customer_Invoice__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Customer_Receipt__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Receiving_Document__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Supplier_Invoice__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Supplier_Payment__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Inventory_Change__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Work_Order__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Fixed_Asset_Adjustment__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Fixed_Asset_Depreciation__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Source Documents</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Unfinalize</fullName>
+        <description>JournalEntryUnfinalize.page</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Finalized__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Unfinalize</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Void</fullName>
+        <description>JournalEntryVoidCancel</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Finalized__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Transaction_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Finalized_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Posting_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Status__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Void__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Void</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>clone</fullName>
+        <description>JournalEntryCloneWithLines.page</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Transaction_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Posting_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Status__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Period__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Finalized__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Finalized_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>GL_Date_Time__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Auto_Reverse__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Customer__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Void__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Void_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Exceptions_Count__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>clone</label>
+    </fieldSets>
+    <fields>
+        <fullName>Auto_Reverse__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Auto Reverse check box tells to generate the reversing accounting entry in the next period.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>A checkmark indicates that Kenandy will generate a reversing accounting entry in the next period.</inlineHelpText>
+        <label>Auto Reverse</label>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Autonumber__c</fullName>
+        <displayFormat>{0000000000}</displayFormat>
+        <externalId>false</externalId>
+        <label>Autonumber</label>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>AutoNumber</type>
+    </fields>
+    <fields>
+        <fullName>Claim__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Claim</label>
+        <referenceTo>Claim__c</referenceTo>
+        <relationshipLabel>Journal Entries</relationshipLabel>
+        <relationshipName>Journal_Entries</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Company</description>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Journal Entries</relationshipLabel>
+        <relationshipName>Journal_Entries</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Currency__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to company</description>
+        <externalId>false</externalId>
+        <label>Currency</label>
+        <referenceTo>Currency__c</referenceTo>
+        <relationshipLabel>Journal Entry Currency</relationshipLabel>
+        <relationshipName>Journal_Entry_Currency</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Customer_Credit_Memo__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Customer credit memo</description>
+        <externalId>false</externalId>
+        <label>Customer Credit Memo</label>
+        <referenceTo>Customer_Invoice__c</referenceTo>
+        <relationshipLabel>Journal Entries (Customer Credit Memo)</relationshipLabel>
+        <relationshipName>Customer_Credit_Memo_Journal_Entries</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Customer_Invoice__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Customer invoice</description>
+        <externalId>false</externalId>
+        <label>Customer Invoice</label>
+        <referenceTo>Customer_Invoice__c</referenceTo>
+        <relationshipLabel>Journal Entries</relationshipLabel>
+        <relationshipName>Journal_Entries</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Customer_Receipt__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Customer receipt</description>
+        <externalId>false</externalId>
+        <label>Customer Receipt</label>
+        <referenceTo>Customer_Receipt__c</referenceTo>
+        <relationshipLabel>Journal Entries</relationshipLabel>
+        <relationshipName>Journal_Entries</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Customer__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Look up to the associated Customer</description>
+        <externalId>false</externalId>
+        <label>Customer</label>
+        <referenceTo>Customer__c</referenceTo>
+        <relationshipLabel>Journal Entries</relationshipLabel>
+        <relationshipName>Journal_Entries</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Description__c</fullName>
+        <externalId>false</externalId>
+        <label>Description</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>Exceptions_Count__c</fullName>
+        <externalId>false</externalId>
+        <label>Exceptions Count</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Finalized_Date__c</fullName>
+        <description>Finalized Date is the date when the document is finalized.</description>
+        <externalId>false</externalId>
+        <label>Finalized Date</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Finalized__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Finalized</label>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Fixed_Asset_Adjustment__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Fixed Asset Adjustment</label>
+        <referenceTo>Fixed_Asset_Adjustment__c</referenceTo>
+        <relationshipLabel>Journal Entries</relationshipLabel>
+        <relationshipName>Journal_Entries</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Fixed_Asset_Depreciation__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Fixed Asset Depreciation</description>
+        <externalId>false</externalId>
+        <label>Fixed Asset Depreciation</label>
+        <referenceTo>Fixed_Asset_Depreciation__c</referenceTo>
+        <relationshipLabel>Journal Entries</relationshipLabel>
+        <relationshipName>Journal_Entries</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>GL_Date_Time__c</fullName>
+        <description>GL Date Time for this journal entry record.</description>
+        <externalId>false</externalId>
+        <label>GL Date Time</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Has_Exceptions__c</fullName>
+        <externalId>false</externalId>
+        <formula>OR(
+Exceptions_Count__c &gt; 0,
+Line_Exceptions__c &gt; 0
+)</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Has Exceptions</label>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Inventory_Change__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Inventory Change</label>
+        <referenceTo>Inventory_Change__c</referenceTo>
+        <relationshipLabel>Journal Entries</relationshipLabel>
+        <relationshipName>Journal_Entries</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Line_Exceptions__c</fullName>
+        <description>Lines on this journal entry that have exceptions.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The line number in this journal entry that generated an exception.</inlineHelpText>
+        <label>Line Exceptions</label>
+        <summaryFilterItems>
+            <field>Journal_Entry_Line__c.Has_Exceptions__c</field>
+            <operation>equals</operation>
+            <value>True</value>
+        </summaryFilterItems>
+        <summaryForeignKey>Journal_Entry_Line__c.Journal_Entry__c</summaryForeignKey>
+        <summaryOperation>count</summaryOperation>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Summary</type>
+    </fields>
+    <fields>
+        <fullName>Period_Status__c</fullName>
+        <externalId>false</externalId>
+        <formula>IF(Period__r.Open__c, &apos;Open&apos;, if(Period__r.Closed__c,&apos;Closed&apos;,if(Period__r.Permanently_Closed__c,&apos;Permanently closed&apos;,&apos;No period assigned&apos;)))</formula>
+        <label>Period Status</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Period__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Period</description>
+        <externalId>false</externalId>
+        <label>Period</label>
+        <referenceTo>Period__c</referenceTo>
+        <relationshipLabel>Journal_Entries</relationshipLabel>
+        <relationshipName>Journal_Entries</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Posting_Date__c</fullName>
+        <externalId>false</externalId>
+        <label>Posting Date</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Purchase_Order__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Purchase Order</label>
+        <referenceTo>Purchase_Order__c</referenceTo>
+        <relationshipLabel>Journal Entries</relationshipLabel>
+        <relationshipName>Journal_Entries</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Receiving_Document__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Receiving document</description>
+        <externalId>false</externalId>
+        <label>Receiving Document</label>
+        <referenceTo>Receiving_Document__c</referenceTo>
+        <relationshipLabel>Journal Entries</relationshipLabel>
+        <relationshipName>Journal_Entries</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Recurring_Template__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Recurring Template</label>
+        <referenceTo>Recurring_Template__c</referenceTo>
+        <relationshipLabel>Journal Entries</relationshipLabel>
+        <relationshipName>Journal_Entries</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Shipment__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Shipment</description>
+        <externalId>false</externalId>
+        <label>Shipment</label>
+        <referenceTo>Shipment__c</referenceTo>
+        <relationshipLabel>Journal Entries</relationshipLabel>
+        <relationshipName>Journal_Entries</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Source_Document_Object_Name__c</fullName>
+        <description>source document object name for journal entries will always be &apos;Journal_Entry__c&apos;.
+Used only for the coding purpose and set in the trigger. 
+DO not place on layout.</description>
+        <externalId>false</externalId>
+        <label>Source Document Object Name</label>
+        <length>255</length>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Status__c</fullName>
+        <externalId>false</externalId>
+        <label>Status</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Open</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Closed</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Cancelled</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Void</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Supplier_Credit_Memo__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Supplier credit memo</description>
+        <externalId>false</externalId>
+        <label>Supplier Credit Memo</label>
+        <referenceTo>Supplier_Invoice__c</referenceTo>
+        <relationshipLabel>Journal Entries (Supplier Credit Memo)</relationshipLabel>
+        <relationshipName>Supplier_Credit_Memo_Journal_Entries</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Supplier_Invoice__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Supplier invoice</description>
+        <externalId>false</externalId>
+        <label>Supplier Invoice</label>
+        <referenceTo>Supplier_Invoice__c</referenceTo>
+        <relationshipLabel>Journal Entries</relationshipLabel>
+        <relationshipName>Journal_Entries</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Supplier_Payment__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Supplier payment</description>
+        <externalId>false</externalId>
+        <label>Supplier Payment</label>
+        <referenceTo>Supplier_Payment__c</referenceTo>
+        <relationshipLabel>Journal Entries</relationshipLabel>
+        <relationshipName>Journal_Entries</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Supplier__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Related Supplier record</description>
+        <externalId>false</externalId>
+        <label>Supplier</label>
+        <referenceTo>Supplier__c</referenceTo>
+        <relationshipLabel>Journal Entries</relationshipLabel>
+        <relationshipName>Journal_Entries</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Total_Credit__c</fullName>
+        <externalId>false</externalId>
+        <label>Total Credit</label>
+        <summarizedField>Journal_Entry_Line__c.Amount_CR__c</summarizedField>
+        <summaryForeignKey>Journal_Entry_Line__c.Journal_Entry__c</summaryForeignKey>
+        <summaryOperation>sum</summaryOperation>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Summary</type>
+    </fields>
+    <fields>
+        <fullName>Total_Debit__c</fullName>
+        <externalId>false</externalId>
+        <label>Total Debit</label>
+        <summarizedField>Journal_Entry_Line__c.Amount_DR__c</summarizedField>
+        <summaryForeignKey>Journal_Entry_Line__c.Journal_Entry__c</summaryForeignKey>
+        <summaryOperation>sum</summaryOperation>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Summary</type>
+    </fields>
+    <fields>
+        <fullName>Total_Number_Of_Lines__c</fullName>
+        <externalId>false</externalId>
+        <label>Total Number Of Lines</label>
+        <summaryForeignKey>Journal_Entry_Line__c.Journal_Entry__c</summaryForeignKey>
+        <summaryOperation>count</summaryOperation>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Summary</type>
+    </fields>
+    <fields>
+        <fullName>Transaction_Currency__c</fullName>
+        <description>Transaction currency code for this entry</description>
+        <externalId>false</externalId>
+        <label>Transaction Currency</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>USD</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>EUR</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>INR</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>AUD</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>SGD</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>GBP</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Transaction_Date__c</fullName>
+        <description>Date of the transaction, this could be populated from any source using a workflow depending on customer need.</description>
+        <externalId>false</externalId>
+        <label>Transaction Date</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Transaction_Type__c</fullName>
+        <description>Select the transaction type of the original transaction</description>
+        <externalId>false</externalId>
+        <label>Transaction Type</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Manual</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Accrual - Manual</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Type__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>The journal entry type. Can be either &quot;SCOA Adjustment&quot;, &quot;Period Adjustment&quot;, or &quot;Manual&quot;.</inlineHelpText>
+        <label>Type</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Manual</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Accrual - Manual</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Bank Transaction</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Year End Adjustment</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Void_Date__c</fullName>
+        <description>This field indicates when the document was voided.</description>
+        <externalId>false</externalId>
+        <label>Void Date</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Void__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>This checkbox will be checked once the journal entry is voided.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Indicates if the Journal Entry is void.</inlineHelpText>
+        <label>Void</label>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Work_Order__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Work Order</label>
+        <referenceTo>Work_Order__c</referenceTo>
+        <relationshipLabel>Journal Entries</relationshipLabel>
+        <relationshipName>Journal_Entries</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>finalized_hidden__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>DO NOT put on layout this is for internal use only.</description>
+        <externalId>false</externalId>
+        <label>finalized hidden</label>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <label>Journal Entry</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Type__c</columns>
+        <columns>Company__c</columns>
+        <columns>Transaction_Currency__c</columns>
+        <columns>Finalized__c</columns>
+        <columns>Transaction_Date__c</columns>
+        <columns>Finalized_Date__c</columns>
+        <columns>GL_Date_Time__c</columns>
+        <columns>Period__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Journal Entry</label>
+        <trackHistory>false</trackHistory>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Journal Entries</pluralLabel>
+    <searchLayouts>
+        <listViewButtons>Generate_Accounting</listViewButtons>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>Cancelled_not_Finalized</fullName>
+        <active>true</active>
+        <errorConditionFormula>TEXT(Status__c) == &apos;Cancelled&apos; &amp;&amp; Finalized__c</errorConditionFormula>
+        <errorDisplayField>Finalized__c</errorDisplayField>
+        <errorMessage>You cannot Finalize a Journal Entry that has been cancelled.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Manual_Type_Check</fullName>
+        <active>true</active>
+        <description>If the selected transaction type is Manual then no document lookup should be populated</description>
+        <errorConditionFormula>((ISPICKVAL( Type__c , &apos;Manual&apos;)) &amp;&amp; !ISBLANK(Shipment__c) )
+||
+((ISPICKVAL( Type__c , &apos;Manual&apos;)) &amp;&amp; !ISBLANK(Customer_Invoice__c) )
+||
+((ISPICKVAL( Type__c , &apos;Manual&apos;)) &amp;&amp; !ISBLANK(Customer_Receipt__c) )
+||
+((ISPICKVAL( Type__c , &apos;Manual&apos;)) &amp;&amp; !ISBLANK(Receiving_Document__c))
+||
+((ISPICKVAL( Type__c , &apos;Manual&apos;)) &amp;&amp; !ISBLANK(Supplier_Invoice__c))
+||
+((ISPICKVAL( Type__c , &apos;Manual&apos;)) &amp;&amp; !ISBLANK(Supplier_Payment__c))
+|| 
+((ISPICKVAL( Type__c , &apos;Manual&apos;)) &amp;&amp; !ISBLANK( Customer_Credit_Memo__c ))
+||
+((ISPICKVAL( Type__c , &apos;Manual&apos;)) &amp;&amp; !ISBLANK( Fixed_Asset_Adjustment__c ))
+||
+((ISPICKVAL( Type__c , &apos;Manual&apos;)) &amp;&amp; !ISBLANK( Fixed_Asset_Depreciation__c  ))
+||
+((ISPICKVAL( Type__c , &apos;Manual&apos;)) &amp;&amp; !ISBLANK( Inventory_Change__c   ))
+||
+((ISPICKVAL( Type__c , &apos;Manual&apos;)) &amp;&amp; !ISBLANK( Work_Order__c  ))</errorConditionFormula>
+        <errorDisplayField>Type__c</errorDisplayField>
+        <errorMessage>Manual Transaction Type should not be associated with any source document.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Status_Check_Void_Cancel</fullName>
+        <active>true</active>
+        <errorConditionFormula>ISCHANGED( Total_Number_Of_Lines__c ) &amp;&amp; (  OR(ISPICKVAL( Status__c , &apos;Void&apos;),ISPICKVAL( Status__c , &apos;Cancelled&apos;)) )</errorConditionFormula>
+        <errorMessage>You cannot add Journal Entry Line that has been cancelled or voided.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Total_Lines_And_Finalized_Check</fullName>
+        <active>true</active>
+        <description>Block if the Total Lines on the JE are &lt; 2 and record is being finalized.</description>
+        <errorConditionFormula>Total_Number_Of_Lines__c &lt; 2 &amp;&amp;  Finalized__c == true &amp;&amp; !(ISPICKVAL( Type__c, &apos;Year End&apos;))</errorConditionFormula>
+        <errorMessage>Journal Entry can not be finalized with 1 line.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Transaction_date_is_not_in_period</fullName>
+        <active>true</active>
+        <errorConditionFormula>if(ISPICKVAL( Type__c , 
+&apos;Year End&apos;) || ISPICKVAL( Type__c , 
+&apos;Bank Transaction&apos;) || ISPICKVAL( Type__c , 
+&apos;Year End Adjustment&apos;) ,
+false,IF(ISBLANK(Period__c),false,if(Transaction_Date__c  &gt;=  Period__r.Period_Start__c   &amp;&amp;
+Transaction_Date__c &lt; Period__r.Period_End__c ,false,true)))</errorConditionFormula>
+        <errorMessage>Transaction date or Finalized date cannot be after JE Cutoff.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Year_End_Adjustment_Company</fullName>
+        <active>true</active>
+        <errorConditionFormula>Period__c != null  &amp;&amp; 
+Company__c  &lt;&gt;  Period__r.Company__c</errorConditionFormula>
+        <errorDisplayField>Period__c</errorDisplayField>
+        <errorMessage>The company for the period must be the same as the company for the journal entry</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Year_End_Adjustment_Period</fullName>
+        <active>true</active>
+        <errorConditionFormula>Period__c  = null  &amp;&amp; ISPICKVAL(Type__c, &apos;Year End adjustment&apos;)</errorConditionFormula>
+        <errorDisplayField>Period__c</errorDisplayField>
+        <errorMessage>When the Type field is Year End Adjustment, a value in the Period field is required.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Year_End_Adjustment_Period_type</fullName>
+        <active>true</active>
+        <errorConditionFormula>ISPICKVAL(Type__c, &apos;Year End adjustment&apos;) &amp;&amp; NOT(ISPICKVAL(Period__r.Type__c,&apos;Period 13&apos;))</errorConditionFormula>
+        <errorDisplayField>Period__c</errorDisplayField>
+        <errorMessage>When the Type field is Year End Adjustment, the Type field for the period must be Period 13.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Year_End_Dates</fullName>
+        <active>true</active>
+        <errorConditionFormula>OR(ISPICKVAL(Type__c, &apos;Year End adjustment&apos;) &amp;&amp;( (Period__r.FiscalYear__r.Fiscal_Year_End_Date__c  - GL_Date_Time__c) * 86400  &lt;&gt; 1 ), 
+ISPICKVAL(Type__c, &apos;Year End&apos;) &amp;&amp;( (Period__r.FiscalYear__r.Fiscal_Year_End_Date__c  -  GL_Date_Time__c ) * 86400  &lt;&gt; 1 ))
+
+||
+
+OR(ISPICKVAL(Type__c, &apos;Year End adjustment&apos;) &amp;&amp;( (Period__r.FiscalYear__r.Fiscal_Year_End_Date__c - Posting_Date__c) * 86400 &lt;&gt; 1 ), 
+ISPICKVAL(Type__c, &apos;Year End&apos;) &amp;&amp;( (Period__r.FiscalYear__r.Fiscal_Year_End_Date__c - Posting_Date__c ) * 86400 &lt;&gt; 1 ))
+
+||
+
+OR(ISPICKVAL(Type__c, &apos;Year End adjustment&apos;) &amp;&amp;( (Period__r.FiscalYear__r.Fiscal_Year_End_Date__c - Transaction_Date__c) * 86400 &lt;&gt; 1 ), 
+ISPICKVAL(Type__c, &apos;Year End&apos;) &amp;&amp;( (Period__r.FiscalYear__r.Fiscal_Year_End_Date__c - Transaction_Date__c ) * 86400 &lt;&gt; 1 ))</errorConditionFormula>
+        <errorMessage> When the Type field value of a journal entry is Year End Adjustment or Year End, the transaction date, GL date, and posting date must be one second less than fiscal year end date. Save the journal entry before finalizing it.</errorMessage>
+    </validationRules>
+    <webLinks>
+        <fullName>Add_Manage_Lines</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Add Manage Lines</masterLabel>
+        <openType>noSidebar</openType>
+        <page>JournalEntryLinesManage</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Generate_Accounting</fullName>
+        <availability>online</availability>
+        <displayType>massActionButton</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Generate Accounting</masterLabel>
+        <openType>noSidebar</openType>
+        <page>JournalEntryAccounting</page>
+        <protected>false</protected>
+        <requireRowSelection>true</requireRowSelection>
+    </webLinks>
+    <webLinks>
+        <fullName>Generate_Accounting_Entry</fullName>
+        <availability>online</availability>
+        <displayType>link</displayType>
+        <linkType>page</linkType>
+        <masterLabel>Generate Accounting Entry</masterLabel>
+        <openType>replace</openType>
+        <page>JournalEntryAEPreview</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Unfinalize</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Unfinalize</masterLabel>
+        <openType>noSidebar</openType>
+        <page>JournalEntryUnfinalize</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Void</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Void</masterLabel>
+        <openType>noSidebar</openType>
+        <page>JournalEntryVoid</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Void_Cancel</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Void/Cancel</masterLabel>
+        <openType>noSidebar</openType>
+        <page>JournalEntryVoidCancel</page>
+        <protected>false</protected>
+    </webLinks>
+</CustomObject>

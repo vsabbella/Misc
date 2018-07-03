@@ -1,0 +1,555 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpHierarchy</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Customer and Product reporting hierarchies</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>MiniDetail</fullName>
+        <description>on the overview page</description>
+        <displayedFields>
+            <field>Parent__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Code__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Start_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>End_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>MiniDetail</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>NewFields</fullName>
+        <description>in Overview page when creating new records</description>
+        <displayedFields>
+            <field>Parent__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Code__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Start_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>End_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>New Fields</label>
+    </fieldSets>
+    <fields>
+        <fullName>CodeId__c</fullName>
+        <externalId>false</externalId>
+        <formula>CASESAFEID( LEFT(Code__c,15) )</formula>
+        <label>CodeId</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Code__c</fullName>
+        <description>external id used for data loads and integration</description>
+        <externalId>false</externalId>
+        <label>Code</label>
+        <length>32</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Current_Bool__c</fullName>
+        <description>Records are current if the start date &lt;= today and end &gt;= today, or no end date</description>
+        <externalId>false</externalId>
+        <formula>AND( Start_Date__c &lt;=  TODAY(),OR( End_Date__c &gt;= TODAY(),  ISBLANK(End_Date__c)))</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <inlineHelpText>Records are current if the start date &lt;= today and end &gt;= today, or no end date</inlineHelpText>
+        <label>Current</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Description__c</fullName>
+        <externalId>false</externalId>
+        <label>Description</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>End_DateTime__c</fullName>
+        <externalId>false</externalId>
+        <label>End DateTime</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>End_Date__c</fullName>
+        <externalId>false</externalId>
+        <label>End Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>End_Period_Date__c</fullName>
+        <externalId>false</externalId>
+        <formula>End_Period__r.Period_End__c</formula>
+        <label>End Period Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>End_Period__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>End Period</label>
+        <referenceTo>Period__c</referenceTo>
+        <relationshipLabel>Hierarchies (End Period)</relationshipLabel>
+        <relationshipName>Hierarchies1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Level__c</fullName>
+        <externalId>false</externalId>
+        <label>Level</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Total Company</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Company</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Area</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Zone</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Region</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Channel</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Sub Channel</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Market</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Case UPC</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>PromoGroup</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Planning Customer</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Reporting Customer</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>ParentCodeId__c</fullName>
+        <externalId>false</externalId>
+        <formula>CASESAFEID( LEFT(Parent_Code__c,15) )</formula>
+        <label>ParentCodeId</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Parent_Code__c</fullName>
+        <description>The code of the parent of this record</description>
+        <externalId>false</externalId>
+        <label>Parent Code</label>
+        <length>32</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Parent__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Which Hierarchy object is this a member of</description>
+        <externalId>false</externalId>
+        <label>Parent</label>
+        <referenceTo>Hierarchy__c</referenceTo>
+        <relationshipLabel>Hierarchy</relationshipLabel>
+        <relationshipName>Hierarchy</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Path__c</fullName>
+        <description>The path from my top hierarchy record down to myself separated by &apos;|&apos; so that we can report on products or customers by filtering in reports</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The path from the top of the hierarchy down to this record. Each level in the hierarchy is separated by &apos;|&apos; . The custom button &apos;Set Hierarchy Path&apos; updates the data automatically.</inlineHelpText>
+        <label>Path</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Pricebook__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Pricebook field will be used as part of customer hierarchy. When a pricebook is associated with a customer hierarchy, the corresponding price book will be used to determine the price of a product for a customer under the hierarchy.</description>
+        <externalId>false</externalId>
+        <label>Pricebook</label>
+        <referenceTo>Pricebook__c</referenceTo>
+        <relationshipLabel>Hierarchies</relationshipLabel>
+        <relationshipName>Hierarchies</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Primary_Key__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>used for uploading, is a combo of code + date</description>
+        <externalId>true</externalId>
+        <label>Primary Key</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Sequence_Number__c</fullName>
+        <description>used to specify a sort order for this record</description>
+        <externalId>false</externalId>
+        <label>Sequence Number</label>
+        <precision>8</precision>
+        <required>false</required>
+        <scale>3</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Start_DateTime__c</fullName>
+        <externalId>false</externalId>
+        <label>Start DateTime</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Start_Date__c</fullName>
+        <defaultValue>Today()</defaultValue>
+        <externalId>false</externalId>
+        <label>Start Date</label>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Start_Period_Date__c</fullName>
+        <externalId>false</externalId>
+        <formula>Start_Period__r.Period_Start__c</formula>
+        <label>Start Period Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Start_Period__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Start Period</label>
+        <referenceTo>Period__c</referenceTo>
+        <relationshipLabel>Hierarchies</relationshipLabel>
+        <relationshipName>Hierarchies</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Status__c</fullName>
+        <externalId>false</externalId>
+        <label>Status</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>New</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Submitted</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Approved</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Rejected</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Top_Parent_Code__c</fullName>
+        <description>The code of the topmost parent in this hierarchy, used to optimize the number of queries</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The code that identifies the topmost parent in the selected hierarchy.</inlineHelpText>
+        <label>Top Parent Code</label>
+        <length>32</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Type__c</fullName>
+        <description>Type indicates which hierarchy this record supports</description>
+        <externalId>false</externalId>
+        <label>Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Sales Organization</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>National Account</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Financial Hierarchy</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Product Hierarchy</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Segment Hierarchy</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                	<fullName>Customer Hierarchy</fullName>
+                	<default>false</default>
+            	</value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <label>Hierarchy</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Code__c</columns>
+        <columns>Parent_Code__c</columns>
+        <columns>Description__c</columns>
+        <columns>End_Date__c</columns>
+        <columns>Level__c</columns>
+        <columns>Parent__c</columns>
+        <columns>Type__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <listViews>
+        <fullName>All2</fullName>
+        <columns>NAME</columns>
+        <columns>Type__c</columns>
+        <columns>Parent__c</columns>
+        <columns>Code__c</columns>
+        <columns>Parent_Code__c</columns>
+        <columns>End_Date__c</columns>
+        <columns>Start_Date__c</columns>
+        <columns>Sequence_Number__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Hierarchy Name</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Hierarchies</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Parent_Code__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Code__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Status__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Current_Bool__c</customTabListAdditionalFields>
+        <lookupDialogsAdditionalFields>Type__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Level__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Current_Bool__c</lookupDialogsAdditionalFields>
+        <searchResultsAdditionalFields>Type__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Code__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Level__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Parent__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Parent_Code__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Start_Date__c</searchResultsAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>Invalid_Codes</fullName>
+        <active>true</active>
+        <description>Code and Parent Code must not be identical</description>
+        <errorConditionFormula>Code__c  =  Parent_Code__c</errorConditionFormula>
+        <errorMessage>Code and Parent Code must not be identical</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Segment_Hierarchy_Period_Validation</fullName>
+        <active>true</active>
+        <errorConditionFormula>ISPICKVAL( Type__c , &apos;Segment Hierarchy&apos;) &amp;&amp;   ISBLANK(Start_Period__c)</errorConditionFormula>
+        <errorMessage>Segment Hierarchy must have starting period.</errorMessage>
+    </validationRules>
+    <webLinks>
+        <fullName>Manage_Hierarchy</fullName>
+        <availability>online</availability>
+        <displayType>link</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Manage Hierarchy</masterLabel>
+        <openType>sidebar</openType>
+        <page>HierarchyManage</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Overview</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Overview</masterLabel>
+        <openType>sidebar</openType>
+        <page>HierarchyView</page>
+        <protected>false</protected>
+    </webLinks>
+</CustomObject>

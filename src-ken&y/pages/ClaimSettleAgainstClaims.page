@@ -1,0 +1,398 @@
+<apex:page standardcontroller="Claim__c" extensions="ClaimSettleAgainstClaimsExt" title="Settle Against Claims">
+    <apex:form id="mainForm">
+        <div id="page-container">
+    <apex:outputPanel id="errMsg">
+         <apex:pageMessages />
+     </apex:outputPanel> 
+     <apex:pageBlock >
+           <apex:pageBlockButtons location="top" >
+               <apex:commandButton action="{!cancel}" value="Go Back"/>
+           </apex:pageBlockButtons>
+           
+       </apex:pageBlock> 
+       </div>
+     </apex:form>
+      <!--KNDY-15530 This feature is not currently supported. 
+      <div id="page-container">
+            <c:KendoResources />
+            <apex:includeScript value="{!$Resource.GridActionListJS}" />
+            <div class="page-message"></div>
+            <apex:outputPanel id="errMsg">
+                <apex:pageMessages />
+            </apex:outputPanel> 
+            <c:busyWait includeScripts="false"/>
+            <apex:outputPanel id="notValid" rendered="{!Not(isValid)}">
+                <apex:pageBlock >
+                    <apex:pageBlockButtons location="top" >
+                        <apex:commandButton action="{!cancel}" value="Go Back"/>
+                    </apex:pageBlockButtons>
+                    
+                </apex:pageBlock> 
+            </apex:outputPanel>
+            
+            <apex:outputPanel id="Valid" rendered="{!isValid}">
+                <apex:pageBlock title="Claim Details" id="pgBlock" >
+                    <apex:pageBlockButtons location="top" >
+                        <apex:commandButton action="{!cancel}" value="Go Back"/>
+                    </apex:pageBlockButtons>
+                    
+                    <apex:actionFunction action="{!reset}" name="resetController" rerender="ClaimSection,errMsg" status="actionStatus" oncomplete="UnblockUI();"/>
+                    
+                    <apex:pageBlockSection id="ClaimSection">
+                        <apex:repeat value="{!$Objecttype.Claim__c.Fieldsets.Claim_Settle_Details}" var="c">
+                                <apex:outputField value="{!Claim__c[c]}"/>
+                         </apex:repeat>
+                         <apex:outputText value="{!amountLeft}" label="Amount Left" id="amtLeft" styleClass="amount-left"/>
+                    </apex:pageBlockSection>
+                
+                </apex:pageBlock> 
+                
+                <apex:pageBlock title="Available Claims">
+             
+                    <div class="grid-container">
+                        <div class="grid-message"></div>
+                        <div id="GridClaims"></div>
+                    </div>  
+         
+                 
+            </apex:pageBlock>
+            </apex:outputPanel>
+        </div>
+    </apex:form>
+    <div id="popUp">
+        
+        <apex:form id="popUpForm">
+            <apex:pageBlock id="popupBlock" rendered="{!isValid}" >
+                <apex:pageBlockButtons location="bottom">
+                  
+                    <input type="button" id="confirmButton" class="btn" value="Confirm" onclick="ClaimsManageUtils.ConfirmAction();" />
+                </apex:pageBlockButtons>
+                <apex:pageBlockSection >
+                    <apex:selectList value="{!selectedOption}" multiselect="false" size="1" label="By: " styleClass="select-list-fld" >
+                       <apex:selectOptions value="{!options}"/>
+                       <apex:actionSupport event="onchange" rerender="popupBlock" status="actionStatus"/>
+                   </apex:selectList>
+                   <apex:inputField value="{!Claim__c.Resolution_Code__c}" rendered="{!selectedOption == 'R'}" styleClass="resolution-code-fld"/>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+        </apex:form>
+    </div>
+    
+    <script type="text/javascript">
+        
+        //get Data from the controller
+        var getClaimsData = function() {
+            var deferred = $.Deferred();
+    
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ClaimSettleAgainstClaimsExt.getClaims}',
+                '{!Claim__c.Id}',
+                function (result, event) {
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+            );
+
+            return deferred.promise();
+        }
+        
+        var fieldList = JSONUtils.Parse('{!claimFieldList}');
+        var dateFields = KenandyErp.KendoGridOptions.GetDateFields(fieldList);
+        
+        $(document).on('KenandyErpReady', function(e) {
+        	
+            var claimsGrid = $('#GridClaims').kendoGridActionList({
+                            namespace: '{!NamespaceUU}', 
+                            config: '{!claimsGridConfigJson}', 
+                            fieldList: ClaimsManageUtils.GetFieldList(fieldList),
+                            lookupSearchAction: '{!$RemoteAction.ClaimSettleAgainstClaimsExt.lookupSearchFilter}', 
+                            getActionListFunction: getClaimsData,
+                            aggregates: [{ field: "amountApplied", aggregate: "sum" }],
+                            toolbarButtons: [ 
+                                { name: "grid-save-custom-command", text:"", template: "<input type='button' value='Save' class='btn grid-save-custom-command' />" }, //OUR SAVE METHOD
+                            ],
+                        }).data('kendoGridActionList');
+            
+            //DISABLE SELECT ALL
+            $('.grid-select-all').hide();
+            
+            //BINDING ALL EVENTS
+            claimsGrid.tbody.on("change", ".grid-select-one", $.proxy(ClaimsManageUtils.OnRowSelection, { grid: claimsGrid })); //ON CHECK BOX = TRUE, ENTIRE AMOUNT IS SELECTED
+            claimsGrid.dataSource.bind('change', $.proxy(ClaimsManageUtils.OnDataSourceChange, { grid: claimsGrid }));
+            claimsGrid.wrapper.on("click", ".grid-save-custom-command", $.proxy(ClaimsManageUtils.SaveAction, { grid: claimsGrid, options: { dateFields: dateFields } }));
+            
+            //KENDO WINDOW THAT WILL DISPLAY FURTHER ACTIONS IF AMOUNTLEFT IS NOT ZERO
+                var window = $("#popUp");
+                if (!window.data("kendoWindow")) {
+                            window.kendoWindow({
+                                height: "150px",
+                                width: "1200px",
+                                title: "Adjust the Balance: ", 
+                                visible: false, //ENSURES POPUP DOESNT LOAD ON PAGELOAD
+                                modal: true,
+                                position: {
+                                    top: 100,
+                                    left: 100
+                                },
+                                actions: [
+                                    "Pin",
+                                    "Minimize",
+                                    "Maximize",
+                                    "Close"
+                                ]
+                    });
+                }
+        }); 
+        
+        function UnblockUI() {
+            var grid = $('#GridClaims');
+            var messageElement = grid.closest("div.grid-container").find("div.grid-message:first");
+            KenandyErp.UnBlockUI(grid);
+            
+        }
+        
+        
+        var ClaimsManageUtils = function() {
+            return {
+            
+                ConfirmAction: function(e) {
+                    var self = this;
+                    var grid = $('#GridClaims').data('kendoGridActionList');
+                    var columns = grid.columns;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                    var ciBalance = parseFloat('{!Claim__c.Claim_Balance__c}');
+                    var lineTotal = ClaimsManageUtils.GetLineTotal();
+                    var amountLeft = (ciBalance + lineTotal).round(2);
+                    var currentData = grid.dataSource.data();
+                    var updatedRows = [];
+                    
+                    $.each(currentData, function(index, item) {
+                        if(item.amountApplied != 0) {
+                            item = item.toJSON();
+                            item = Serializer.ConvertToSFDCDate(item, { dateFields: dateFields });
+                            
+                        // Remove the extra attributes Kendo Grid creates for supporting wrapper classes
+                        for (var i = 0; i < columns.length; i++) {
+                            var name = columns[i].field;
+                            if (name && name.indexOf('.') != -1) {
+                                delete item[name];
+                            }
+                        }
+                            updatedRows.push(item);
+                        }
+                            
+                    });
+                    
+                    if (updatedRows.length > 0) {
+                        updatedRows = Serializer.ParameterMap(updatedRows);
+                    }
+                    
+                    var selectedOption = $('.select-list-fld').val();
+                    var resolutionCode = $('input[id="' + $('.resolution-code-fld').attr('id') + '_lkid"]').val() == null || $('input[id="' + $('.resolution-code-fld').attr('id') + '_lkid"]').val() == "000000000000000" ? "" : $('input[id="' + $('.resolution-code-fld').attr('id') + '_lkid"]').val();
+                    
+                    KenandyErp.BlockUI(grid.element);
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.ClaimSettleAgainstClaimsExt.proceedOnAmountLeft}',
+                         updatedRows,
+                         '{!Claim__c.Id}',
+                         selectedOption,
+                         resolutionCode,
+                         amountLeft,
+                         function (result, event) {
+                            KenandyErp.UnBlockUI(grid.element);
+                                        
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                                if (result.success) {
+                                    KenandyErp.BlockUI(grid.element);
+                                    var window = $("#popUp").data("kendoWindow");
+                                    window.close();
+                                    resetController(); //actionFunction that resets the controller
+                                    KenandyErp.Messages(result.messages, messageElement);
+                                    $('.grid-save-custom-command').hide();
+                                }
+                                else {
+                                    
+                                    KenandyErp.Messages(result.messages, messageElement);
+                                    var window = $("#popUp").data("kendoWindow");
+                                    window.close();
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                },
+                
+                SaveAction: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    var columns = grid.columns;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                    var cBalance = parseFloat('{!Claim__c.Claim_Balance__c}');
+                    var lineTotal = ClaimsManageUtils.GetLineTotal();
+                    var dateFields = self.options.dateFields;
+                    
+                    var currentData = grid.dataSource.data();
+                    var updatedRows = [];
+                    
+                    if(lineTotal == 0)
+                    {
+                        KenandyErp.Message("{!$Label.No_records_selected}", KenandyErp.MessageType.Error, messageElement);
+                        return;
+                    }
+                    else if(cBalance + lineTotal != 0)
+                    {
+                        //KenandyErp.BlockUI();
+                        var window = $("#popUp").data("kendoWindow");
+                        window.title("Adjust The Balance of " + ((cBalance + lineTotal).round(2)).toString());
+                        window.center();
+                        window.open();
+                        
+                    }
+                    else {
+                    
+                        $.each(currentData, function(index, item) {
+                            if(item.amountApplied != 0) {
+                                item = item.toJSON();
+                                item = Serializer.ConvertToSFDCDate(item, { dateFields: dateFields });
+                                
+                                // Remove the extra attributes Kendo Grid creates for supporting wrapper classes
+                                for (var i = 0; i < columns.length; i++) {
+                                    var name = columns[i].field;
+                                    if (name && name.indexOf('.') != -1) {
+                                        delete item[name];
+                                    }
+                                }
+                                updatedRows.push(item);
+                            }
+                                
+                        });
+                        
+                        if (updatedRows.length == 0) {
+                            KenandyErp.Message("{!$Label.No_records_changed}", KenandyErp.MessageType.Info, messageElement);
+                            return;
+                        }
+                        if (updatedRows.length > 0) {
+                            updatedRows = Serializer.ParameterMap(updatedRows);
+                        }
+                        
+                        KenandyErp.BlockUI(grid.element);
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.ClaimSettleAgainstClaimsExt.settleClaims}',
+                             updatedRows,
+                             '{!Claim__c.Id}',
+                             function (result, event) {
+                                KenandyErp.UnBlockUI(grid.element);
+                                            
+                                if (event.type == 'exception') {
+                                    KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                                } else {
+                                    if (result.success) {
+                                        KenandyErp.BlockUI(grid.element);
+                                        resetController(); //actionFunction that resets the controller
+                                        $('.grid-save-custom-command').hide();
+                                        KenandyErp.Messages(result.messages, messageElement);
+                                    }
+                                    else {
+                                        
+                                        KenandyErp.Messages(result.messages, messageElement);
+                                    }
+                                }
+                            },
+                            {escape: false}
+                        );
+                        
+                    }
+                    
+                },
+                
+                GetFieldList: function(fieldList) {
+
+                    return JSON.stringify(fieldList);
+                },
+                
+                OnRowSelection: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    var row = $(e.target).closest("tr");
+                    var item = grid.dataItem(grid.tbody.find("tr[data-uid='" + row.attr('data-uid') + "']"));
+                    var isSelected = $(e.target).is(":checked");
+          
+                    if (isSelected) {
+                        item.set("amountApplied", item.get('claim.Claim_Balance__c'));  
+                    }
+                    else {
+                        if (item.get('claim.Claim_Balance__c') == item.get('amountApplied')) {
+                            item.set("amountApplied", 0);
+                            ClaimsManageUtils.CalculateAmountLeft(item);
+                        }
+                    }
+                },
+                
+                CalculateAmountLeft: function(item) {
+                    var self = this;
+                    var grid = self.grid;
+                    var amountLeft = (!isNaN($('.amount-left').text())) ? parseFloat($('.amount-left').text()) : 0;
+                    var cBalance = parseFloat('{!Claim__c.Claim_Balance__c}');
+                    var lineTotal = ClaimsManageUtils.GetLineTotal();
+                    KenandyErp.ClearMessage();
+                    
+                    if (cBalance > 0 && cBalance + lineTotal < 0) {
+                        KenandyErp.Message(item.get('claim.Name') + ' {!$Label.Amount_applied_will_draw_balance_to_negative}');
+                        item.set("amountApplied", 0);   
+                    }
+                    
+                    if (cBalance < 0 && cBalance + lineTotal > 0) {
+                        KenandyErp.Message(item.get('claim.Name') + ' {!$Label.Amount_applied_will_draw_balance_to_positive}');
+                        item.set("amountApplied", 0);   
+                    }
+                    
+                    lineTotal = ClaimsManageUtils.GetLineTotal();
+                    amountLeft = (cBalance + lineTotal).round(2);
+                    $('.amount-left').text(kendo.toString(amountLeft, 'n2'));
+                },
+                
+                GetLineTotal: function() {
+                    var claimsGrid = $('#GridClaims').data('kendoGridActionList');
+                    var lineTotal = 0;
+                    $.each(claimsGrid.dataSource.data(), function(index, item) {
+                        lineTotal = (lineTotal + item.amountApplied).round(2); 
+                    });
+                    
+                    return lineTotal;
+                },
+                
+                OnDataSourceChange: function(e) {
+                    if (e.action == 'itemchange' && e.field == 'amountApplied' &&  e.items[0].amountApplied != 0) {
+                        var self = this;
+                        var grid = self.grid;
+                        var amountLeft = (!isNaN($('.amount-left').text())) ? parseFloat($('.amount-left').text()) : 0;
+                        var cBalance = parseFloat('{!Claim__c.Claim_Balance__c}');
+                        
+                        KenandyErp.ClearMessage();
+                        //if((cBalance > 0 && claims.get(claimId).amountApplied > 0) || (cBalance < 0 && claims.get(claimId).amountApplied < 0)) FROM CONTROLLER
+                        if((cBalance < 0 && !(e.items[0].amountApplied > 0 && e.items[0].amountApplied <= e.items[0].claim.Claim_Balance__c)) ||
+                            (cBalance > 0 && !(e.items[0].amountApplied < 0 && e.items[0].amountApplied >= e.items[0].claim.Claim_Balance__c)))
+                        {
+                            
+                            KenandyErp.Message(e.items[0].claim.Name + ' {!$Label.Please_apply_within_range}');
+                            e.items[0].set("amountApplied", 0);
+                        }
+                        else {
+                            ClaimsManageUtils.CalculateAmountLeft(e.items[0]);
+                        }
+                        
+                        
+                        
+                        
+                    }
+                }
+                
+            };
+        }();
+        
+    
+    
+    </script> --> 
+</apex:page>

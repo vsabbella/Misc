@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <aggregates>
+        <calculatedFormula>Accounting_Entry_Line__c.COMP_Functional_Currency_Amount_DR__c:SUM - Accounting_Entry_Line__c.COMP_Functional_Currency_Amount_CR__c:SUM</calculatedFormula>
+        <datatype>number</datatype>
+        <description>Variance on closed or completed work orders</description>
+        <developerName>FORMULA1</developerName>
+        <isActive>true</isActive>
+        <isCrossBlock>false</isCrossBlock>
+        <masterLabel>WIP Variance</masterLabel>
+        <scale>2</scale>
+    </aggregates>
+    <buckets>
+        <bucketType>picklist</bucketType>
+        <developerName>BucketField_42818940</developerName>
+        <masterLabel>Cost Incurred vs Cost Relieved</masterLabel>
+        <nullTreatment>n</nullTreatment>
+        <sourceColumnName>Work_Order__c.Inventory_Transactions__r$Type__c</sourceColumnName>
+        <useOther>false</useOther>
+        <values>
+            <sourceValues>
+                <sourceValue>Work Order Component Issue</sourceValue>
+            </sourceValues>
+            <sourceValues>
+                <sourceValue>Work Order Assembly Uncompletion</sourceValue>
+            </sourceValues>
+            <sourceValues>
+                <sourceValue>By-product Uncompletion</sourceValue>
+            </sourceValues>
+            <value>Cost Incurred</value>
+        </values>
+        <values>
+            <sourceValues>
+                <sourceValue>Work Order Component Return</sourceValue>
+            </sourceValues>
+            <sourceValues>
+                <sourceValue>Work Order Assembly Completion</sourceValue>
+            </sourceValues>
+            <sourceValues>
+                <sourceValue>By-product</sourceValue>
+            </sourceValues>
+            <value>Cost Relieved</value>
+        </values>
+        <values>
+            <sourceValues>
+                <sourceValue>Work Order Component Scrap</sourceValue>
+            </sourceValues>
+            <sourceValues>
+                <sourceValue>Work Order Assembly Scrap</sourceValue>
+            </sourceValues>
+            <value>Cost Scrapped</value>
+        </values>
+    </buckets>
+    <columns>
+        <field>Work_Order__c.Inventory_Transactions__r$Inventory_Change__c</field>
+    </columns>
+    <columns>
+        <field>Work_Order__c.Inventory_Transactions__r$Name</field>
+    </columns>
+    <columns>
+        <field>Work_Order__c.Inventory_Transactions__r$Item__c</field>
+    </columns>
+    <columns>
+        <field>Work_Order__c.Inventory_Transactions__r$Quantity__c</field>
+    </columns>
+    <columns>
+        <field>BucketField_42818940</field>
+    </columns>
+    <columns>
+        <field>Work_Order__c.Inventory_Transactions__r$Type__c</field>
+    </columns>
+    <columns>
+        <field>Work_Order__c.Inventory_Transactions__r.Accounting_Entry_Lines__r$Name</field>
+    </columns>
+    <columns>
+        <field>Work_Order__c.Inventory_Transactions__r.Accounting_Entry_Lines__r$Line_Type__c</field>
+    </columns>
+    <columns>
+        <field>Work_Order__c.Inventory_Transactions__r.Accounting_Entry_Lines__r$GL_Account__c</field>
+    </columns>
+    <columns>
+        <field>Work_Order__c.Inventory_Transactions__r.Accounting_Entry_Lines__r$COMP_Functional_Currency__c</field>
+    </columns>
+    <columns>
+        <field>Work_Order__c.Inventory_Transactions__r.Accounting_Entry_Lines__r$COMP_Functional_Currency_Amount_DR__c</field>
+    </columns>
+    <columns>
+        <field>Work_Order__c.Inventory_Transactions__r.Accounting_Entry_Lines__r$COMP_Functional_Currency_Amount_CR__c</field>
+    </columns>
+    <description>Report to overview Variances in Work orders that are completed or closed</description>
+    <filter>
+        <booleanFilter>(1 AND ((2 AND 3) OR (4 AND 5) OR (6 AND 7)))</booleanFilter>
+        <criteriaItems>
+            <column>Work_Order__c$Status__c</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>equals</operator>
+            <value>Complete,Closed</value>
+        </criteriaItems>
+        <criteriaItems>
+            <column>BucketField_42818940</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>equals</operator>
+            <value>Cost Incurred</value>
+        </criteriaItems>
+        <criteriaItems>
+            <column>Work_Order__c.Inventory_Transactions__r.Accounting_Entry_Lines__r$COMP_Functional_Currency_Amount_CR__c</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>equals</operator>
+            <value>0</value>
+        </criteriaItems>
+        <criteriaItems>
+            <column>BucketField_42818940</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>equals</operator>
+            <value>Cost Relieved</value>
+        </criteriaItems>
+        <criteriaItems>
+            <column>Work_Order__c.Inventory_Transactions__r.Accounting_Entry_Lines__r$COMP_Functional_Currency_Amount_DR__c</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>equals</operator>
+            <value>0</value>
+        </criteriaItems>
+        <criteriaItems>
+            <column>BucketField_42818940</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>equals</operator>
+            <value>Cost Scrapped</value>
+        </criteriaItems>
+        <criteriaItems>
+            <column>Work_Order__c.Inventory_Transactions__r.Accounting_Entry_Lines__r$COMP_Functional_Currency_Amount_DR__c</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>equals</operator>
+            <value>0</value>
+        </criteriaItems>
+    </filter>
+    <format>Summary</format>
+    <groupingsDown>
+        <dateGranularity>Day</dateGranularity>
+        <field>Work_Order__c$Facility__c</field>
+        <sortOrder>Asc</sortOrder>
+    </groupingsDown>
+    <groupingsDown>
+        <dateGranularity>Day</dateGranularity>
+        <field>Work_Order__c$Status__c</field>
+        <sortOrder>Asc</sortOrder>
+    </groupingsDown>
+    <groupingsDown>
+        <dateGranularity>Day</dateGranularity>
+        <field>Work_Order__c$Name</field>
+        <sortOrder>Asc</sortOrder>
+    </groupingsDown>
+    <name>WIP Variance Summary</name>
+    <params>
+        <name>co</name>
+        <value>1</value>
+    </params>
+    <reportType>WIP_Valuation__c</reportType>
+    <scope>organization</scope>
+    <showDetails>true</showDetails>
+    <timeFrameFilter>
+        <dateColumn>Work_Order__c$CreatedDate</dateColumn>
+        <interval>INTERVAL_CURRENT</interval>
+    </timeFrameFilter>
+</Report>

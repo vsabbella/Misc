@@ -1,0 +1,74 @@
+<apex:component >
+        
+    <apex:includeScript value="{!URLFOR($Resource.jquery_ui_110,'/jquery-ui-1.10.0.custom/js/jquery-1.9.0.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.treetable,'/javascripts/src/jquery.treetable.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.ForceTK, 'forcetk.js')}" /> 
+    <apex:includeScript value="{!URLFOR($Resource.analytics)}" />  
+
+    <apex:stylesheet value="{!URLFOR($Resource.treetable, '/stylesheets/jquery.treetable.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.treetable, '/stylesheets/jquery.treetable.theme.default.css')}" />
+    <style>
+    	.reportTable { width:95%; }
+    	.reportTable th, .reportTable td { padding:1px; }
+    	.reportView { padding-left:10px; padding-top:4px; margin-bottom:3px; }
+        a.reportName { text-decoration:none; }
+        th.reportNameCell, td.labelCell { width:450px; max-width:450px; min-width:450px; }
+        th.headCell, td.dataCell { width: 100px; max-width:100px; min-width:100px; text-align:right; }
+        td.dataCell span.sym { float:left; padding-left:65%; }
+    </style>
+
+    <apex:attribute name="reportItem" description="report item object" type="Report_Item__c" required="true" />
+    <apex:attribute name="filterFields" description="fields to filter on" type="String[]" />
+    
+    <script>
+        $(function() { 
+            var sid =   '{!$Api.Session_ID}';
+            //  if ( window.__sfdcSessionId != null ) sid  = __sfdcSessionId; // on a page layout this is sometimes needed ?
+            
+            var reportFilters = new Array();
+            if ('{!filterFields}' != '' && '{!filterFields}' != '[]') {
+	            var filterFields = '{!filterFields}'.replace('[','');
+	            filterFields = filterFields.replace(']','');
+	            var fieldArray = filterFields.split(',');
+	            for (var i=0;i<fieldArray.length;i++) {
+	            	var nvPair = fieldArray[i];
+	            	var nv = nvPair.split('::');
+	           		var nvMap = { };
+	         		nvMap['name'] = nv[0].trim();
+	           		nvMap['value'] = nv[1].trim();
+	      			reportFilters.push(nvMap);
+	            }
+	        }
+            
+            $('#table_{!reportItem.Report_Key__c}').analytics({
+		    	sessionid : sid,
+		        itemid : '{!reportItem.Id}',
+		        reportkey: '{!reportItem.Report_Key__c}',
+		        async:  ('{!reportItem.Asynchronous__c}'=='true'),
+		        reportid :'{!reportItem.Report_id__c}', 
+		        reportItemName :'{!reportItem.Name}',
+		        displayReportItemName : ('{!reportItem.Display_Name__c}'=='true'),
+		        includeDetails : ('{!reportItem.Show_Details__c}'=='true'),
+		        companyValue : '{!reportItem.Company__c}',
+		        periodValue : '{!reportItem.Period_Name__c}',
+		        dateField : '{!reportItem.Date_Field__c}',
+		        startDate : '{!reportItem.Start_Date__c}',
+		        endDate : '{!reportItem.End_Date__c}', 
+		        numericScale : '{!reportItem.Numeric_Scale__c}',
+		        showsymbol : ('{!reportItem.Financial_Report_Section__r.Financial_Report__r.Show_Symbols__c}'=='true'),
+		        symbolfirstlast : ('{!reportItem.Financial_Report_Section__r.Financial_Report__r.Symbols_First_Last__c}'=='true'),
+		        showColumnLabels : ('{!reportItem.Display_Column_Labels__c}'=='true'),
+		        showtotal : ('{!reportItem.Display_Total__c}'=='true'),
+		        totalontop : ('{!reportItem.Total_On_Top__c}'=='true'),
+		        totallabel : '{!reportItem.Total_Label__c}',
+		        showTotalRow : ('{!reportItem.Display_Column_Totals__c}'=='true'),
+		        totalRowLabel : '{!reportItem.Column_Total_Label__c}',
+		        filters : reportFilters
+		    });
+        });
+    </script>
+
+    <div class="reportView">
+        <table class="reportTable" id="table_{!reportItem.Report_Key__c}"></table>
+    </div>
+</apex:component>

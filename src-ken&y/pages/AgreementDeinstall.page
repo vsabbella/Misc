@@ -1,0 +1,100 @@
+<apex:page standardController="Agreement__c" extensions="AgreementDeinstallExt" sidebar="false">
+
+	<script>
+		function checkAll(cb, selectedSite)
+		{
+			console.log(cb);
+			console.log(selectedSite);
+			var inputElem = document.getElementsByTagName("input");
+			for(var i=0; i<inputElem.length; i++)
+			{
+				
+				if(inputElem[i].id.indexOf("checkedone") != -1){
+					console.log(inputElem[i]);
+					var dataId;
+					if(inputElem[i].attributes['data-id'].nodeValue == selectedSite){
+						inputElem[i].checked = cb.checked;
+					}
+				}
+			}
+		} 
+	</script>
+	<apex:sectionHeader title="{!Agreement__c.Name}" subtitle="Deinstall"/>
+	
+	<apex:form id="form">
+		<apex:pageMessages />
+		<apex:pageBlock >
+			<apex:pageBlockButtons location="top">
+				<apex:commandButton value="Go Back" action="{!cancel}"/>
+				<apex:commandButton value="Deinstall" action="{!deinstall}"/>
+			</apex:pageBlockButtons>
+			<apex:repeat value="{!installationDetails}" var="i">
+				
+				<apex:pageBlockSection title="{!i.site.name}" columns="1">
+					<apex:pageBlockSection columns="2">
+						<apex:pageBlockSection columns="1">
+							<apex:pageBlockSectionItem >
+								<apex:outputLabel value="Site"/>
+								<apex:outputPanel >
+									<a href="/{!i.site.Id}" id="{!i.site.Id}" onblur="LookupHoverDetail.getHover('{!i.site.Id}').hide();" 
+																		onfocus="LookupHoverDetail.getHover('{!i.site.Id}', '/{!i.site.Id}/m?retURL=%2F{!i.site.Id}&isAjaxRequest=1').show();" 
+																		onmouseout="LookupHoverDetail.getHover('{!i.site.Id}').hide();" 
+																		onmouseover="LookupHoverDetail.getHover('{!i.site.Id}', '/{!i.site.Id}/m?retURL=%2F{!i.site.Id}&isAjaxRequest=1').show();">
+										{!i.site['name']}
+									</a>
+								</apex:outputPanel>
+							</apex:pageBlockSectionItem>
+								<apex:outputField value="{!i.site.Name}"/>
+								<apex:outputField value="{!i.site.Notes__c}"/>
+							<apex:pageBlockSectionItem >
+								<apex:outputLabel value="Address"/>
+								<apex:outputPanel >
+									{!i.site.Street__c} <br/>
+									{!i.site.City__c}, {!i.site.State__c} {!i.site.Zip_Code__c} <br/>
+									{!i.site.Country__c}
+								</apex:outputPanel>
+							</apex:pageBlockSectionItem>
+						</apex:pageBlockSection>
+						
+						<apex:pageBlockSection columns="1">
+							<apex:outputText style="font-weight:bold;" value="There are no installations at this site" rendered="{!i.skids.size == 0}"/>
+							<apex:pageBlockTable value="{!i.skids}" var="s" rendered="{!i.skids.size > 0}">
+								<apex:column >
+									<apex:facet name="header"> 
+										<apex:inputCheckbox id="checkAll">
+											<apex:actionSupport event="onclick" onsubmit="checkAll(this, '{!i.site.Id}')" rerender=""/>
+										</apex:inputCheckbox>
+									</apex:facet>
+									<apex:inputCheckbox html-data-id="{!i.site.Id}" id="checkedone" value="{!s.selected}"/>
+								</apex:column>
+								<apex:column headerValue="Deinstall Quantity">
+									<apex:inputText value="{!s.qty}"/>
+								</apex:column>
+								<apex:column headervalue="SKID">
+									<a href="/{!s.skid.Id}" id="{!s.skid.Id}" onblur="LookupHoverDetail.getHover('{!s.skid.Id}').hide();" 
+																		onfocus="LookupHoverDetail.getHover('{!s.skid.Id}', '/{!s.skid.Id}/m?retURL=%2F{!s.skid.Id}&isAjaxRequest=1').show();" 
+																		onmouseout="LookupHoverDetail.getHover('{!s.skid.Id}').hide();" 
+																		onmouseover="LookupHoverDetail.getHover('{!s.skid.Id}', '/{!s.skid.Id}/m?retURL=%2F{!s.skid.Id}&isAjaxRequest=1').show();">
+										{!s.skid['name']}
+									</a>
+								</apex:column>
+								<apex:column headervalue="Fulfillment">
+									<a href="/{!s.f.Id}" id="{!s.f.Id}" onblur="LookupHoverDetail.getHover('{!s.f.Id}').hide();" 
+																		onfocus="LookupHoverDetail.getHover('{!s.f.Id}', '/{!s.f.Id}/m?retURL=%2F{!s.f.Id}&isAjaxRequest=1').show();" 
+																		onmouseout="LookupHoverDetail.getHover('{!s.f.Id}').hide();" 
+																		onmouseover="LookupHoverDetail.getHover('{!s.f.Id}', '/{!s.f.Id}/m?retURL=%2F{!s.f.Id}&isAjaxRequest=1').show();">
+										{!s.f['name']}
+									</a>
+								</apex:column>
+								<apex:column value="{!s.f.Product__c}"/>
+								<apex:column value="{!s.f.Quantity__c}"/>
+								<apex:column value="{!s.f.UOM__c}"/>
+								
+							</apex:pageBlockTable>
+						</apex:pageBlockSection>
+					</apex:pageBlockSection>
+				</apex:pageBlockSection>
+			</apex:repeat>
+		</apex:pageBlock>
+	</apex:form>
+</apex:page>

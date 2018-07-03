@@ -1,0 +1,166 @@
+<apex:page standardController="Financial_Report__c" extensions="FinancialReportExt" 
+            sidebar="false" 
+            showheader="{!$CurrentPage.parameters.print==null}">
+    
+    <c:SaveAs />
+    
+    <style>
+		.zens a { text-decoration:none; } 
+		button.right { float:right; }
+		@media print { .noPrint { display:none; } body .zens a { color:#000; } }
+		div.date { text-align:left; font-size:1.1em; font-weight:bold; padding-left:18px; }
+		div.intro { text-align:center; font-size:1.1em; font-weight:bold; }
+		a.sectionHeader, div.sectionBody { padding-left:18px; }
+		<apex:outputText value="{!Financial_Report__c.Report_Styles__c}" />
+	</style>
+
+    <span class="zens" >
+        <!--    put up two buttons for print preview and print  -->
+        <apex:outputPanel rendered="{!$CurrentPage.parameters.print==null}">
+            <button class="noPrint right" onclick="javascript:$('.reportSection').FinancialReportToXLS()">{!$Label.Export_XLS}</button>
+            <button class="noPrint right" onclick="javascript:$('.reportSection').FinancialReportToCSV()">{!$Label.Export_CSV}</button>
+            <button class="noPrint right" onclick="javascript:window.location.href='{!$CurrentPage.URL}&print=1'" >{!$Label.Print_Preview}</button>
+        </apex:outputPanel>
+
+        <apex:outputPanel rendered="{!$CurrentPage.parameters.print!=null}"  layout="none">
+            <button class="noPrint right" onclick="javascript:window.print();">{!$Label.PrintThisPage}</button>
+        </apex:outputPanel>
+
+        <apex:outputPanel rendered="{!Financial_Report__c.Display_Report_Name__c==true}" >
+            <h1 class="frName">
+                <a target="_blank" href="/{!Financial_Report__c.id}"><apex:outputText value="{!Financial_Report__c.Name}" /></a>
+            </h1>
+        </apex:outputPanel>
+        
+        <div class="date">
+            <apex:outputText value="{!$Label.Date_Time}: {!runtime}" /><!-- KNDY-2515 - Add date/time stamp to report -->  
+        </div> 
+        <div class="intro">
+            <apex:outputPanel rendered="{!NOT(ISNULL(Financial_Report__c.Introduction__c))}"><apex:outputText escape="true" value="{!Financial_Report__c.Introduction__c}" /><br /></apex:outputPanel>
+            
+            <!-- KNDY-2516 - Add parameters to report -->
+            <apex:outputPanel rendered="{!NOT(ISNULL(Financial_Report__c.Company__c))}"><apex:outputText escape="true" value="{!$ObjectType.Company__c.Label}: {!Financial_Report__c.Company__r.Name}" /><br /></apex:outputPanel>
+            <apex:outputPanel rendered="{!NOT(ISNULL(Financial_Report__c.Period_Name__c))}"><apex:outputText escape="true" value="{!$ObjectType.Period__c.Label}: {!Financial_Report__c.Period_Name__c}" /><br /></apex:outputPanel>      
+	        <apex:repeat value="{!segments}" var="segment"> 
+		        <apex:outputText value="{!segment}" /><br/>
+		    </apex:repeat>
+        </div>
+        
+        <!--    loop over all sections -->
+        <apex:repeat value="{!records}" var="ql">
+            <span class="reportSection">
+                <apex:outputPanel rendered="{!ql.Display_Section_Name__c==true}" >
+                    <h2><a class="sectionHeader" target="_blank" href="/{!ql.id}">{!ql.name}</a></h2>
+                </apex:outputPanel>
+                <div class="sectionBody" >
+                    <!--            loop over all reports -->
+                    <apex:repeat value="{!ql.Report_Items__r}" var="r" >
+                        <c:ReportView reportItem="{!r}" filterFields="{!filterFields[r.Id]}"/>
+                    </apex:repeat>
+                </div>
+            </span>
+        </apex:repeat>
+    </span>
+
+	<script>
+	jQuery.fn.FinancialReportToCSV = function() {
+	    var output = $(this).FinancialReportParse();
+	    var blob = new Blob([output], { type: "application/csv;charset=utf-8" });
+	    
+	    saveAs(blob, "{!Financial_Report__c.Name}.csv");
+	}
+	jQuery.fn.FinancialReportToXLS = function() {
+	    var csvData = [], response = [], allData = $(this).FinancialReportParse();
+	    
+	    var isNumber = function(val) { 
+	        var haschars = val.match(/[a-zA-Z]/); 
+	        return haschars? false : isNaN(parseFloat( val ))==false; 
+	    };
+	    
+	    // body 
+	    $.each( allData.split(/\r?\n/), function () {
+	        var row = ['<Row>'];
+	        $.each(this.split(','), function(idx) {
+	            var that = this.trim().replace(/"/g,'');
+	            if (isNumber(that) == false)
+	                row.push("<Cell><Data ss:Type=\"String\">"+that+"</Data></Cell>");
+	            else
+	                row.push("<Cell><Data ss:Type=\"Number\">"+that+"</Data></Cell>");            
+	        });
+	        row.push('</Row>');
+	        csvData.push(row.join('')); 
+	    });
+	    response = csvData.join('');
+	    
+		var header=[];
+	    
+	    // XL spec
+	    var excelDoc = ["<?xml version=\"1.0\"?>",
+	        "<?mso-application progid=\"Excel.Sheet\"?>",
+	        "<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"",
+	         " xmlns:o=\"urn:schemas-microsoft-com:office:office\"",
+	         " xmlns:x=\"urn:schemas-microsoft-com:office:excel\"",
+	         " xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"",
+	         " xmlns:html=\"http://www.w3.org/TR/REC-html40\">",
+	            "<Worksheet ss:Name=\"{!Financial_Report__c.Name}\">",    
+	            "<Table>",          header,     response,           "</Table>",
+	          "</Worksheet>",
+	        "</Workbook>"];
+	    
+	    var eoutput = excelDoc.join('\n');  
+	    var blob = new Blob([eoutput], { type: "application/vnd.ms-excel;charset=utf-8" });
+	    saveAs(blob, "{!Financial_Report__c.Name}.xls");
+	}
+	jQuery.fn.FinancialReportParse =  function () { 
+	    var alldata = $(this), csvData = [];
+	
+	    var numberValue = function ( input ) {  // parse numbers like  $2,222.00    or (2,222.00)     or 222
+	        var value = input.replace(/[\$,]/g,'');     //  may have a "$" or "," to remove
+	        
+	        var parts = value.split(/\w/);              // if contains (xx), must chage that to '-'   
+	        var isNeg = ( parts && parts.length >1 && parts[0] =='(' && parts[parts.length-1]==')' ); 
+	        if ( isNeg ) {          value = -value.replace(/[()]/g,'');     }
+	        return ( isNaN( value ) ? null : value ); 
+	    }
+	    
+	    csvData.push('{!Financial_Report__c.Name}');
+	    csvData.push('Date/Time: {!runtime}');  //KNDY-2515 - Add Date/Time stamp to csv and xls
+	    if ('{!Financial_Report__c.Introduction__c}' != null && '{!Financial_Report__c.Introduction__c}' != '')
+	        csvData.push('{!Financial_Report__c.Introduction__c}');
+	    
+	    //KNDY-2516 - Add parameters to csv and xls
+	    if ('{!Financial_Report__c.Company__c}' != null && '{!Financial_Report__c.Company__c}' != '')
+	        csvData.push('Company: {!Financial_Report__c.Company__r.Name}');
+	    if ('{!Financial_Report__c.Period_Name__c}' != null && '{!Financial_Report__c.Period_Name__c}' != '')
+	        csvData.push('Period: {!Financial_Report__c.Period_Name__c}');
+	
+	    alldata.each( function() {   // a list of .reportSections
+	        var data = $(this);
+	        
+	        var sectionHeader = data.find('a.sectionHeader:first');
+	        if ( sectionHeader.length>0) {  
+	            csvData.push('"' + sectionHeader.text() + '"');
+	        }
+	           
+	        data.find(".reportView").each(function() { 
+	            var rview = $(this),  reportName = rview.find('.reportName a:first');
+	                
+	            if ( reportName.length>0 ) {    csvData.push('"' + reportName.text() + '"');        }
+	
+	            rview.find("tr").each(function() {  // find and loop over rows
+	                var tmpArr = [];
+	                
+	                $(this).find("th,td").each(function() {
+	                    var txt = $(this).text().trim(), value = numberValue( txt ); 
+	                    tmpArr.push( value ? parseFloat( value ) : txt );                   
+	                });
+	                
+	                csvData.push(tmpArr.join(','));
+	            });
+	         })
+	    });
+	    
+	    return csvData.join('\n');
+	}
+	</script>
+</apex:page>

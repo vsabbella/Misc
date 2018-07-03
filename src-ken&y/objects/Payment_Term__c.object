@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpPaymentTerms</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Payment Terms</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableEnhancedLookup>true</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fields>
+        <fullName>Always_Take_Discount__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Always takes discount even if the payment is done after the eligible discount days.</description>
+        <externalId>false</externalId>
+        <label>DEPRECATED</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Cut_Off_Day__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>Enter number from 1-31 for cutoff day. If day from invoice date is greater than cutoff day of month, the due date will move to following month; enter 31 for last day of month</inlineHelpText>
+        <label>Cut Off Day</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Day_Of_Month__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>Enter number from 1-31 for day that invoice is due; enter 31 for last day of month</inlineHelpText>
+        <label>Day of Month</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Description__c</fullName>
+        <description>Description of the payment terms</description>
+        <externalId>false</externalId>
+        <label>Description</label>
+        <length>100</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Discount_Days__c</fullName>
+        <description>Number of days discount applies</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The number of days after the invoice date within which the invoice must be paid to receive the discount.</inlineHelpText>
+        <label>Discount Days</label>
+        <precision>2</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Discount_Percent__c</fullName>
+        <description>The discount that can be taken if invoice is paid within the discount days</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The discount given if the invoice is paid within the specified discount days.</inlineHelpText>
+        <label>Discount Percent</label>
+        <precision>7</precision>
+        <required>false</required>
+        <scale>4</scale>
+        <trackTrending>false</trackTrending>
+        <type>Percent</type>
+    </fields>
+    <fields>
+        <fullName>Due_Days__c</fullName>
+        <description>Number of days from delivery of goods or services until the payment is due</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Number of days from delivery of goods or services until the payment is due.</inlineHelpText>
+        <label>Due Days</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Months_Ahead__c</fullName>
+        <defaultValue>0</defaultValue>
+        <externalId>false</externalId>
+        <inlineHelpText>Enter number 0-12 of months ahead of due day of month that invoice should be due</inlineHelpText>
+        <label>Months Ahead</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Payment_Term_Unique__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>Name for uniqueness</description>
+        <externalId>false</externalId>
+        <label>Payment Terms</label>
+        <length>80</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Type__c</fullName>
+        <externalId>false</externalId>
+        <label>Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Due Days</fullName>
+                    <default>true</default>
+                    <label>Due Days</label>
+                </value>
+                <value>
+                    <fullName>Due Day Of Month</fullName>
+                    <default>false</default>
+                    <label>Due Day Of Month</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <label>Payment Terms</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Description__c</columns>
+        <columns>Type__c</columns>
+        <columns>Due_Days__c</columns>
+        <columns>Discount_Percent__c</columns>
+        <columns>Discount_Days__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Payment Term</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Payment Terms</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Description__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Type__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Due_Days__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Discount_Percent__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Discount_Days__c</customTabListAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>Cut_off_day_must_be_between_1_and_31</fullName>
+        <active>true</active>
+        <errorConditionFormula>OR(Cut_Off_Day__c &lt; 1, Cut_Off_Day__c &gt; 31)</errorConditionFormula>
+        <errorDisplayField>Cut_Off_Day__c</errorDisplayField>
+        <errorMessage>Cut off day must be between 1 and 31</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Day_of_Month_must_be_between_1_and_31</fullName>
+        <active>true</active>
+        <errorConditionFormula>OR(Day_Of_Month__c &lt; 1, Day_Of_Month__c &gt; 31)</errorConditionFormula>
+        <errorDisplayField>Day_Of_Month__c</errorDisplayField>
+        <errorMessage>Day of month must be between 1 and 31</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Enter_due_days_for_payment_term</fullName>
+        <active>true</active>
+        <errorConditionFormula>IF( ISPICKVAL( Type__c , &quot;Due Days&quot;) , ISBLANK(  Due_Days__c  ), false )</errorConditionFormula>
+        <errorMessage>Please enter due days for the selected payment term type.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Enter_due_days_of_month_for_payment_term</fullName>
+        <active>true</active>
+        <errorConditionFormula>IF( ISPICKVAL( Type__c , &quot;Due Day Of Month&quot;) ,  OR(ISBLANK(  Day_Of_Month__c  ),ISBLANK(  Cut_Off_Day__c  ),ISBLANK(  Months_Ahead__c  ) ),  false )</errorConditionFormula>
+        <errorMessage>Please enter due day of month, cut off day and months ahead for the selected payment term type.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Months_ahead_must_be_between_0_and_12</fullName>
+        <active>true</active>
+        <errorConditionFormula>OR(Months_Ahead__c &lt; 0, Months_Ahead__c &gt; 12)</errorConditionFormula>
+        <errorDisplayField>Months_Ahead__c</errorDisplayField>
+        <errorMessage>Months ahead must be between 0 and 12</errorMessage>
+    </validationRules>
+</CustomObject>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <columns>
+        <field>Customer_Invoice__c$Date_Invoiced__c</field>
+    </columns>
+    <columns>
+        <field>Customer_Invoice__c$Total_Amount__c</field>
+    </columns>
+    <columns>
+        <field>Customer_Invoice__c.Customer_Receipt_Lines__r$Customer_Receipt__c</field>
+    </columns>
+    <columns>
+        <field>Customer_Invoice__c.Customer_Receipt_Lines__r$Name</field>
+    </columns>
+    <columns>
+        <aggregateTypes>Sum</aggregateTypes>
+        <field>Customer_Invoice__c.Customer_Receipt_Lines__r$Amount__c</field>
+    </columns>
+    <columns>
+        <aggregateTypes>Sum</aggregateTypes>
+        <field>Customer_Invoice__c$Balance__c</field>
+    </columns>
+    <description>Customer invoices and payments</description>
+    <filter>
+        <booleanFilter>1 OR 2</booleanFilter>
+        <criteriaItems>
+            <column>Customer_Invoice__c$Status__c</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>notEqual</operator>
+            <value>Closed,Cancelled</value>
+        </criteriaItems>
+        <criteriaItems>
+            <column>Customer_Invoice__c$Void__c</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>equals</operator>
+            <value>0</value>
+        </criteriaItems>
+    </filter>
+    <format>Summary</format>
+    <groupingsDown>
+        <dateGranularity>Day</dateGranularity>
+        <field>Customer_Invoice__c$Bill_To_Customer__c</field>
+        <sortOrder>Asc</sortOrder>
+    </groupingsDown>
+    <groupingsDown>
+        <dateGranularity>Day</dateGranularity>
+        <field>Customer_Invoice__c$Name</field>
+        <sortOrder>Asc</sortOrder>
+    </groupingsDown>
+    <name>Customer Balance Detail</name>
+    <params>
+        <name>co</name>
+        <value>1</value>
+    </params>
+    <reportType>Customer_Invoices_with_or_without_Customer_Receipt__c</reportType>
+    <scope>organization</scope>
+    <showDetails>true</showDetails>
+    <sortColumn>Customer_Invoice__c$Date_Invoiced__c</sortColumn>
+    <sortOrder>Asc</sortOrder>
+    <timeFrameFilter>
+        <dateColumn>Customer_Invoice__c$CreatedDate</dateColumn>
+        <interval>INTERVAL_CURRENT</interval>
+    </timeFrameFilter>
+</Report>

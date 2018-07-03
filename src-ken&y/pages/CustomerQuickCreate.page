@@ -1,0 +1,170 @@
+<apex:page standardController="Customer__c"  extensions="CustomerQuickCreateExt" showHeader="true" sidebar="true" id="page" recordSetVar="custs">
+	<script type="text/javascript">
+
+		function copyInfo(){
+			
+			//Copy customer name from corp parent to children
+			var cName = document.getElementById('{!$Component.page.form.pbQuickCreate.pbsCorpQuickCreate.pbsCorpParentInfoPanel.pbsCorpParentName.inCorpParentName}').value;
+			document.getElementById('{!$Component.page.form.pbQuickCreate.pbsBillQuickCreate.pbsBillInfoPanel.pbsBillName.inBillName}').value = cName;
+			document.getElementById('{!$Component.page.form.pbQuickCreate.pbsSoldQuickCreate.pbsSoldInfoPanel.pbsSoldName.inSoldName}').value = cName;
+			document.getElementById('{!$Component.page.form.pbQuickCreate.pbsShipQuickCreate.pbsShipInfoPanel.pbsShipName.inShipName}').value = cName;
+			document.getElementById('{!$Component.page.form.pbQuickCreate.pbsSiteQuickCreate.pbsSiteInfoPanel.pbsSiteName.inSiteName}').value = cName;
+
+			var corpAddrFields = [<apex:repeat value="{!$ObjectType.Customer__c.FieldSets.Customer_Address_Fields}" var="f">'corp{!f}',</apex:repeat>];
+	        var billAddrFields = [<apex:repeat value="{!$ObjectType.Customer__c.FieldSets.Customer_Address_Fields}" var="f">'bill{!f}',</apex:repeat>];
+	        var soldAddrFields = [<apex:repeat value="{!$ObjectType.Customer__c.FieldSets.Customer_Address_Fields}" var="f">'sold{!f}',</apex:repeat>];
+	        var shipAddrFields = [<apex:repeat value="{!$ObjectType.Customer__c.FieldSets.Customer_Address_Fields}" var="f">'ship{!f}',</apex:repeat>];
+	        var siteAddrFields = [<apex:repeat value="{!$ObjectType.Customer__c.FieldSets.Customer_Address_Fields}" var="f">'site{!f}',</apex:repeat>];
+
+	        for (var i = 0; i < corpAddrFields.length; i++) {
+	           document.getElementsByClassName(billAddrFields[i])[0].value = document.getElementsByClassName(corpAddrFields[i])[0].value;
+	           document.getElementsByClassName(soldAddrFields[i])[0].value = document.getElementsByClassName(corpAddrFields[i])[0].value;
+	           document.getElementsByClassName(shipAddrFields[i])[0].value = document.getElementsByClassName(corpAddrFields[i])[0].value;
+	           document.getElementsByClassName(siteAddrFields[i])[0].value = document.getElementsByClassName(corpAddrFields[i])[0].value;
+	       	}
+
+		}
+		
+		function onCompanyChange(){
+			//Copy from Corp Parent to Other customer address fields
+			var cpCompany = document.getElementById('{!$Component.page.form.pbQuickCreate.pbsCorpQuickCreate.pbsCorpParentInfoPanel.pbsCorpParentCompany.inCorpParentCompany}').value;
+			document.getElementById('{!$Component.page.form.pbQuickCreate.pbsBillQuickCreate.pbsBillInfoPanel.pbsBillCompany.inBillCompany}').innerHTML = cpCompany;
+			document.getElementById('{!$Component.page.form.pbQuickCreate.pbsSoldQuickCreate.pbsSoldInfoPanel.pbsSoldCompany.inSoldCompany}').innerHTML = cpCompany;
+			document.getElementById('{!$Component.page.form.pbQuickCreate.pbsShipQuickCreate.pbsShipInfoPanel.pbsShipCompany.inShipCompany}').innerHTML = cpCompany;
+			document.getElementById('{!$Component.page.form.pbQuickCreate.pbsSiteQuickCreate.pbsSiteInfoPanel.pbsSiteCompany.inSiteCompany}').innerHTML = cpCompany;
+		}
+	</script>
+	<apex:form id="form">
+		<apex:pageBlock id="pbQuickCreate" mode="maindetail" title="Customer Quick Create">
+			<apex:pageMessages ></apex:pageMessages>
+			<apex:pageBlockSection columns="2" id="pbsCorpQuickCreate">
+				<apex:pageBlockSection columns="1" title="Corporate Parent Customer" id="pbsCorpParentInfoPanel">
+					<apex:pageBlockSectionItem id="pbsCorpParentCompany">
+                		<span>{!$ObjectType.Customer__c.Fields.Company__c.Label}</span>
+                        <apex:inputField id="inCorpParentCompany" value="{!corpParent.Company__c}"  onchange="onCompanyChange();" required="TRUE"/>
+	                </apex:pageBlockSectionItem> 
+	                <apex:pageBlockSectionItem id="pbsCorpParentName">
+                		<span>{!$ObjectType.Customer__c.Fields.Name.Label}</span>
+                        <apex:inputField id="inCorpParentName" value="{!corpParent.Name}" required="TRUE"/>
+	                </apex:pageBlockSectionItem> 
+			       <apex:repeat value="{!$ObjectType.Customer__c.FieldSets.Corporate_Parent_Quick_Create_Fields}" 
+			                var="field">
+			          <apex:inputField value="{!corpParent[field]}" required="{!field.required}"/> 
+			       </apex:repeat>
+			    </apex:pageBlockSection>
+				<apex:pageBlockSection columns="1" id="pbsCorpParentAddressPanel">
+    				<apex:pageBlockSection id="pbsCorpParentAddressSection" title="{!$ObjectType.Customer__c.Fields.Address__c.Label}" columns="1"  collapsible="False" >
+			            <apex:repeat value="{!$ObjectType.Customer__c.FieldSets.Customer_Address_Fields}" 
+				                var="field">
+				          	<apex:inputField styleClass="corp{!field}" value="{!corpParent[field]}" required="{!field.required}"/> 
+				       </apex:repeat>
+				       <apex:commandButton onClick="copyInfo(); return false;" id="copyAddress" value="Copy Address" rerender="pbsBillQuickCreate"/>
+		            </apex:pageBlockSection>
+            	</apex:pageBlockSection>
+			</apex:pageBlockSection>    
+
+			<apex:pageBlockSection columns="2" id="pbsBillQuickCreate">
+				<apex:pageBlockSection columns="1" title="Bill To Customer"  id="pbsBillInfoPanel">
+					<apex:pageBlockSectionItem id="pbsBillCompany">
+                		<span>{!$ObjectType.Customer__c.Fields.Company__c.Label}</span>
+                        <apex:outputField id="inBillCompany" value="{!billTo.Company__c}"/>
+	                </apex:pageBlockSectionItem> 
+	                <apex:pageBlockSectionItem id="pbsBillName">
+                		<span>{!$ObjectType.Customer__c.Fields.Name.Label}</span>
+                        <apex:inputField id="inBillName" value="{!billTo.Name}" required="TRUE"/>
+	                </apex:pageBlockSectionItem> 
+			       <apex:repeat value="{!$ObjectType.Customer__c.FieldSets.Bill_To_Quick_Create_Fields}" 
+			                var="field">
+			          <apex:inputField value="{!billTo[field]}" required="{!field.required}"/>
+			       </apex:repeat>
+			    </apex:pageBlockSection>
+				<apex:pageBlockSection columns="1" id="pbsBillAddressPanel">
+    				<apex:pageBlockSection id="pbsBillAddr" title="{!$ObjectType.Customer__c.Fields.Address__c.Label}" columns="1"  collapsible="False" >
+		                <apex:repeat value="{!$ObjectType.Customer__c.FieldSets.Customer_Address_Fields}" 
+				                var="field">
+			          	<apex:inputField styleClass="bill{!field}" value="{!billTo[field]}" required="{!field.required}"/> 
+			        </apex:repeat>
+		            </apex:pageBlockSection>
+		            
+            	</apex:pageBlockSection> 
+            	
+			</apex:pageBlockSection>    
+
+			<apex:pageBlockSection columns="2" id="pbsSoldQuickCreate">
+				<apex:pageBlockSection columns="1" title="Sold To Customer"  id="pbsSoldInfoPanel">
+					<apex:pageBlockSectionItem id="pbsSoldCompany">
+                		<span>{!$ObjectType.Customer__c.Fields.Company__c.Label}</span>
+                        <apex:outputField id="inSoldCompany" value="{!soldTo.Company__c}"/>
+	                </apex:pageBlockSectionItem> 
+	                <apex:pageBlockSectionItem id="pbsSoldName">
+                		<span>{!$ObjectType.Customer__c.Fields.Name.Label}</span>
+                        <apex:inputField id="inSoldName" value="{!soldTo.Name}" required="TRUE"/>
+	                </apex:pageBlockSectionItem> 
+					<apex:repeat value="{!$ObjectType.Customer__c.FieldSets.Sold_To_Quick_Create_Fields}" 
+					    var="field">
+						<apex:inputField value="{!soldTo[field]}" required="{!field.required}"/>
+					</apex:repeat>
+			    </apex:pageBlockSection>
+				<apex:pageBlockSection columns="1" id="pbsSoldAddressPanel">
+    				<apex:pageBlockSection id="pbsSoldAddr" title="{!$ObjectType.Customer__c.Fields.Address__c.Label}" columns="1"  collapsible="False" >
+		                <apex:repeat value="{!$ObjectType.Customer__c.FieldSets.Customer_Address_Fields}" 
+				                var="field">
+			          		<apex:inputField styleClass="sold{!field}" value="{!soldTo[field]}" required="{!field.required}"/> 
+			        	</apex:repeat>
+		            </apex:pageBlockSection>
+            	</apex:pageBlockSection>
+			</apex:pageBlockSection> 
+
+			<apex:pageBlockSection columns="2" id="pbsShipQuickCreate">
+				<apex:pageBlockSection columns="1" title="Ship To Customer"  id="pbsShipInfoPanel">
+					<apex:pageBlockSectionItem id="pbsShipCompany">
+                		<span>{!$ObjectType.Customer__c.Fields.Company__c.Label}</span>
+                        <apex:outputField id="inShipCompany" value="{!shipTo.Company__c}"/>
+	                </apex:pageBlockSectionItem> 
+	                <apex:pageBlockSectionItem id="pbsShipName">
+                		<span>{!$ObjectType.Customer__c.Fields.Name.Label}</span>
+                        <apex:inputField id="inShipName" value="{!shipTo.Name}" required="TRUE"/>
+	                </apex:pageBlockSectionItem> 
+					<apex:repeat value="{!$ObjectType.Customer__c.FieldSets.Ship_To_Quick_Create_Fields}" 
+					    var="field">
+						<apex:inputField value="{!shipTo[field]}" required="{!field.required}"/>
+					</apex:repeat>
+			    </apex:pageBlockSection>
+				<apex:pageBlockSection columns="1" id="pbsShipAddressPanel">
+    				<apex:pageBlockSection id="pbsShipAddr" title="{!$ObjectType.Customer__c.Fields.Address__c.Label}" columns="1"  collapsible="False" >
+		                <apex:repeat value="{!$ObjectType.Customer__c.FieldSets.Customer_Address_Fields}" 
+				                var="field">
+			          		<apex:inputField styleClass="ship{!field}" value="{!shipTo[field]}" required="{!field.required}"/> 
+			        	</apex:repeat>
+		            </apex:pageBlockSection>
+            	</apex:pageBlockSection>
+			</apex:pageBlockSection> 
+
+			<apex:pageBlockSection columns="2" id="pbsSiteQuickCreate" rendered="{!createSite}">
+				<apex:pageBlockSection columns="1" title="Site Customer"  id="pbsSiteInfoPanel">
+					<apex:pageBlockSectionItem id="pbsSiteCompany">
+						<span>{!$ObjectType.Customer__c.Fields.Company__c.Label}</span>
+						<apex:outputField id="inSiteCompany" value="{!site.Company__c}"/>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem id="pbsSiteName">
+						<span>{!$ObjectType.Customer__c.Fields.Name.Label}</span>
+						<apex:inputField id="inSiteName" value="{!site.Name}" required="TRUE"/>
+					</apex:pageBlockSectionItem>
+					<apex:repeat value="{!$ObjectType.Customer__c.FieldSets.Ship_To_Quick_Create_Fields}" var="field">
+						<apex:inputField value="{!site[field]}" required="{!field.required}"/>
+					</apex:repeat>
+				</apex:pageBlockSection>
+				<apex:pageBlockSection columns="1" id="pbsSiteAddressPanel">
+					<apex:pageBlockSection id="pbsSiteAddr" title="{!$ObjectType.Customer__c.Fields.Address__c.Label}" columns="1"  collapsible="False" >
+						<apex:repeat value="{!$ObjectType.Customer__c.FieldSets.Customer_Address_Fields}" var="field">
+							<apex:inputField styleClass="site{!field}" value="{!site[field]}" required="{!field.required}"/>
+						</apex:repeat>
+					</apex:pageBlockSection>
+				</apex:pageBlockSection>
+			</apex:pageBlockSection>
+
+			<apex:commandButton action="{!save}" id="create" value="Create"/>
+			<apex:commandButton action="{!cancel}" id="cancel" value="Cancel"/>
+	    </apex:pageBlock>
+    </apex:form>
+</apex:page>

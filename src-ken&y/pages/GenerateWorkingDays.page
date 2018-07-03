@@ -1,0 +1,33 @@
+<apex:page standardController="Calendar__c" extensions="GenerateWorkingDaysExt" sidebar="false" docType="html-5.0">
+    <apex:sectionHeader title="Generate Working Days" />
+    <apex:form >
+    	<c:busyWait />
+        <apex:pageBlock id="pb" mode="edit">
+            <apex:pageMessages id="msgs" />
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton action="{!save}" value="Generate" status="actionStatus" rerender="pb" />
+                <apex:commandButton action="{!cancel}" value="Cancel" immediate="true" />
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection collapsible="false" columns="2" title="Calendar Information">
+                <apex:outputField value="{!Calendar__c.Name}" />
+                <apex:outputField value="{!Calendar__c.Type__c}" />
+                <apex:outputField value="{!Calendar__c.Description__c}" />
+                <apex:outputField value="{!calendar.Start_Date__c}" label="Start Date" />
+                <apex:input type="date" value="{!endDate}" label="End Date" />
+            </apex:pageBlockSection>
+            <apex:pageBlockSection collapsible="false" columns="1" title="Working Days Setup">
+                <apex:pageBlockTable value="{!times}" var="time">
+                    <apex:column headerValue="Day of the Week">
+                        <apex:outputText value="{!time.dayOfTheWeek}" />
+                    </apex:column>
+                    <apex:column headerValue="Start Time">
+                        <apex:input type="time" value="{!time.startTime}" />
+                    </apex:column>
+                    <apex:column headerValue="End Time">
+                        <apex:input type="time" value="{!time.endTime}" />
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

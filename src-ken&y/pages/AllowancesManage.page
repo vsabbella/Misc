@@ -1,0 +1,15 @@
+<apex:page >
+
+    <apex:sectionHeader title="{!$Label.Manage_Allowances}"/>
+    <apex:pageBlock >
+        <apex:pageBlockSection columns="1" collapsible="true" title="{!$ObjectType.Allowance_Type__c.label}" id="allowanceType">
+            <apex:enhancedList type="Allowance_Type__c" height="310"  />
+        </apex:pageBlockSection>
+    
+        <apex:pageBlockSection columns="1" collapsible="true" title="{!$ObjectType.Allowance_Rule__c.label}" id="allowanceRule">
+            <apex:enhancedList type="Allowance_Rule__c" height="310"  />
+        </apex:pageBlockSection>
+
+    </apex:pageBlock>
+    
+</apex:page>

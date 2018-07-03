@@ -1,0 +1,12 @@
+<apex:component >
+    <apex:attribute name="classname"
+        description="This is the value for the icon of the component, infoM4, confirmM3, warningM2, etc."
+        type="String" required="false" default="infoM4" />
+        
+    <div class="message {!classname} ">
+        <img    alt="warning" class="msgIcon" src="/s.gif" title="warning"  style="float: left;" /> 
+        <apex:componentBody >
+                        Your content goes here 
+        </apex:componentBody>
+    </div>
+</apex:component>

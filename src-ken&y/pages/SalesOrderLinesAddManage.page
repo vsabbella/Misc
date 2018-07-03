@@ -1,0 +1,599 @@
+<apex:page standardController="Sales_Order__c" 
+    extensions="SalesOrderLinesAddManageExt,SalesOrderLineExt,KSE"  
+    sidebar="false"     docType="html-5.0"
+    action="{!checkConcurrency}">
+
+ <c:KendoResources />
+ <apex:includeScript value="{!$Resource.AddManage}"/>
+
+
+
+
+    <style type="text/css">
+#SalesOrderPBDivId .apexp .detailList .list .headerRow th {    white-space: normal; }
+#SalesOrderPBDivId .dateFormat {    display: none; }
+
+td.dataCell.currency input , 
+td.dataCell.double input,
+td.dataCell.percent input {  width: 65px;  text-align: right; }
+td.dataCell.reference input { width: 110px; }
+td.dataCell.{!NamespaceUU}Company__c input { width: 80px; } 
+td.dataCell.{!NamespaceUU}Selling_UOM__c input { width: 50px; } 
+td.dataCell.{!NamespaceUU}Description__c input,
+td.dataCell.{!NamespaceUU}Description__c textarea {   width: 150px; }
+td.dataCell.{!NamespaceUU}Fulfillment_Source__c input { width: 80px; } 
+
+td.dataCell.{!NamespaceUU}Unit_Price__c input { border: 0px; }
+td.dataCell.{!NamespaceUU}Unit_Price__c.false input { border: 2px inset; }
+td.dataCell.{!NamespaceUU}Available_Inventory__c input { border: 0px; }
+
+td.dataCell.{!NamespaceUU}Extended_Price__c { text-align: right; padding-right: 9px; } 
+th { text-align: center; }
+
+.helpOrb2 {
+    background-image: url(/img/help/helpOrbs.gif);
+    background-position: 0 0;   width: 20px;    height: 15px;
+}
+.helpOrb2:hover { background-position: top right;} 
+img.chatter-iconSmall {
+        background-image: url(/img/feeds/follow_sprite.png);
+        background-repeat: no-repeat;
+        background-position: -1px -148px;;
+        height: 15px;
+    }
+img.remove {
+        background-image: url(/img/ple/wrenchRemove.png);
+        background-repeat: no-repeat;
+        background-position: 2px -14px;
+        height: 15px;
+}
+.customPopup {
+    background-color: #F8F8F8;
+     border-style: solid;
+     border-color: #1797c0;
+     border-width: 9px;
+     left: 50%;
+     padding:10px;
+     position: absolute;
+     z-index: 11000;
+     width: 1000px; 
+    
+    margin-left: -500px;
+     max-height: 300px;
+      overflow:auto;
+     top:100px;
+}
+.greySections {     background-color: grey;     }   
+.closeButton {          float: right;   }
+.popupButton{           z-index:10000;      }
+.popupBackground{
+    background-color:black;
+    opacity: 0.70;
+    position:absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 9998;
+}
+.minOrderQtyHolder {
+    text-align: center;
+}
+</style>
+
+  <script>
+    var NS = '{!NamespaceUU}';  
+    
+    // load the results object into the DOM 
+    function fillDefaultsRow( tr, result ) {            
+        if ( cleanNS( result ) == false ) return; 
+        fill( tr, result, 'UPC_Code__c', 'UPC_Code__c');
+        fill( tr, result, 'Description__c',  'Description__c' ); 
+        fill( tr, result, 'Product__r.Name' , 'Product__c' ); 
+        fill( tr, result, 'Product__r.Selling_UOM__r.Name' , 'Selling_UOM__c' );
+        fill( tr, result, 'Unit_Price__c', 'Unit_Price__c');
+        fill( tr, result, 'Pricebook__r.Name' , 'Pricebook__c' );
+        fill( tr, result, 'Fulfillment_Source__c' , 'Fulfillment_Source__c' );
+        
+        var orderQtyFactorAt = '{!theSalesOrder.Customer__r.Order_Quantity_Factor_At__c}';
+        if (orderQtyFactorAt && orderQtyFactorAt.length > 0) {
+            var unitsPerPallet;
+            if (orderQtyFactorAt == 'Pallet') {
+                unitsPerPallet = valueAt( result, 'Product__r.Units_per_Pallet__c' );                
+            } else {
+                unitsPerPallet = valueAt( result, 'Product__r.Units_per_Layer__c' );                
+            }
+            if (unitsPerPallet) {
+                unitsPerPallet = unitsPerPallet.toFixed(2);
+                tr.find('.minOrderQtyHolder').html(unitsPerPallet);
+                var td = tr.find('.' + NS + 'Quantity_Ordered__c');
+                validateMinOrderQty(tr, td);
+            }
+        }
+
+        readOnlyInput( tr, 'Available_Inventory__c' );          // make this input read only
+        readOnlyInput( tr, 'Selling_UOM__c' );          // make this input read only
+            
+        // special case KNDY-1061, allow price on some items to be edited,  all others are readonly
+        /* OTC-365 Allow the ability to edit unit price for any line
+        readOnlyInput( tr, 'Unit_Price__c' );
+        
+        if (  valueAt( result, 'Product__r.Pricebook_Line_Required__c') == false ) {
+            // this price that can be edited
+            findNS( tr, 'Unit_Price__c').removeClass('true').addClass('false').find('input:visible').attr('readonly',null);
+        }       
+        */
+    }
+
+    /*
+        Checks if the Quantity validation is enabled in sold to customer. In case of exceptions
+        it updates tooltip for quantity exception message        
+    */
+    function validateMinOrderQty(tr, td) {     
+    	  
+        var orderQtyFactorAt = '{!theSalesOrder.Customer__r.Order_Quantity_Factor_At__c}';
+        if ( orderQtyFactorAt && orderQtyFactorAt.length > 0 ) {
+            // TRUE : Enforce quantity validations    
+            var unitsPerPalletOrLayer = tr.find('.minOrderQtyHolder').html();
+            if (unitsPerPalletOrLayer && parseFloat(unitsPerPalletOrLayer) > 0.0) {
+                var orderQty = td.find('input').val();
+                var exTooltipIcon = tr.find('.mockMinOrderQtyMismatchIcon');                
+                exTooltipIcon.data('evenqtyexception', orderQty && orderQty % unitsPerPalletOrLayer != 0);
+                showOrHideExceptionTooltip(exTooltipIcon);
+            }        
+        }        
+    }
+
+    function getFormattedDate(date) {
+        console.log(date);
+
+        var year = date.getFullYear();
+        var month = (1 + date.getMonth()).toString();
+        var day = date.getDate().toString();
+        month = month.length > 1 ? month : '0' + month;
+        day = day.length > 1 ? day : '0' + day;
+        return month + '/' + day + '/' + year;
+    }
+
+        
+    function inputChange( element, fieldPath) {           // called for any input field that is changing
+        var td = $(element).closest('td');                                          
+        var tr =  $( element ).closest('tr');
+        if ( td.hasClass(NS+'Line_Type__c' ) ) {  
+            resetCounter();
+        }
+
+        if ( td.hasClass(NS+'Product__c' ) || td.hasClass(NS+'Pricebook__c' )) { // we know which field because the API name is in the td class            
+            var productName, pricebookName;
+            if (td.hasClass(NS+'Product__c' )) {
+                productName = $( element ).val();   
+                pricebookName = tr.find('td.'+ NS + 'Pricebook__c').find('input[type=text]').val();                
+            }
+            if (td.hasClass(NS+'Pricebook__c' )) {
+                productName = tr.find('td.'+ NS + 'Product__c').find('input[type=text]').val();                   
+                pricebookName = $( element ).val();   
+            }
+            
+
+            var priceDate = '';
+            // console.log('{!theSalesOrder.Pricing_Date__c}');
+            if ('{!theSalesOrder.Pricing_Date__c}' != '') {
+                // console.log('pricing date not null');
+                priceDate = getFormattedDate(KenandyErp.ParseSFDCDate('{!theSalesOrder.Pricing_Date__c}'))
+            } else if ('{!theSalesOrder.Date_Time_Ordered__c}' != ''){
+                // console.log('date time ordered date not null');
+                priceDate = getFormattedDate(KenandyErp.ParseSFDCDateTime('{!theSalesOrder.Date_Time_Ordered__c}'))
+            }
+            // console.log(priceDate);
+
+            // String product_name, String salesorderId, String soPricebookId, String linePricebookName, String customerSoldToPricebookId
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.SalesOrderLineExt.getSOLineInfo}',
+                '{!theSalesOrder.Company__c}', priceDate, productName, '{!theSalesOrder.Pricebook__c}', pricebookName, '{!theSalesOrder.Customer__r.Pricebook__c}',
+                    function(result, event){ 
+                        fillDefaultsRow( tr, result) ;
+                        checkErrors( event);  
+                        // show or hide tooltip accordingly
+                        var trExIcon = tr.find('.mockMinOrderQtyMismatchIcon');
+                        trExIcon.data('priceexception', event.message ? event.message : '');
+                        showOrHideExceptionTooltip(trExIcon);                        
+                    }, {escape: false} 
+            );
+        }
+
+        if ( td.hasClass(NS + 'Quantity_Ordered__c' ) ) {                
+            validateMinOrderQty(tr, td);
+            //changeAF();
+           
+        }
+        
+         if( fieldPath == '{!UPCField}' && td.hasClass(NS+'UPC_Code__c' )){
+            var UPCCode = $( element ).val();
+            var index = $(element).closest('tr').index();           
+            populateProduct(UPCCode, index);
+         } 
+        
+    }
+
+    function showOrHideExceptionTooltip(trExIcon) {
+        if (trExIcon.data('evenqtyexception') || trExIcon.data('priceexception')) {
+            trExIcon.show('slow');
+            trExIcon.data("kendoTooltip").refresh();    
+        } else {
+            trExIcon.hide('slow');
+        }
+    }
+                    
+    // when the user adds multiple rows we have some work to do on the page
+    function afterPageRefresh() { 
+        // TODO use  NS  or findNS 
+    
+        // start by making all unit prices read only per KNDY-407
+        //$('.{!NamespaceUU}Unit_Price__c input:visible').attr('readonly','true');
+        $('.{!NamespaceUU}Available_Inventory__c input:visible').attr('readonly','true');
+        //start by making all UOM read only per KNDY-1159
+        $('.{!NamespaceUU}Selling_UOM__c input:visible').attr('readonly','true');
+        //Lookup Icon
+        $('.{!NamespaceUU}Selling_UOM__c img').css('display','none');
+        //Backgound
+        $('.{!NamespaceUU}Selling_UOM__c input:visible').css('border','0');
+        $('.{!NamespaceUU}Selling_UOM__c input:visible').css({'background-color' : '#FFFFFF'});
+        
+        // next, make misc lines editable per KNDY-1061
+        //$('.{!NamespaceUU}Unit_Price__c.false input:visible').attr('readonly',null);
+        
+              
+        focusTheNewRow( 'SalesOrderPBTableId' );
+
+        bootKendo();
+
+        // trap keypress on form to do quick save on ENTER 
+        $('form[id$=MainForm] input[type=text]').keypress(            
+            function(e) {
+                if (quickSaveActionFunction) {
+                    if(e.which == 13) {                                        
+                        // quick save on enter
+                        quickSaveActionFunction();
+                        e.stopPropagation();
+                        return false;
+                    }                
+                }                    
+            }               
+        );
+        
+        // Uncomment to disable field
+        // $( "select[id*='fulfillmentSourceField']" ).each(function() {
+        //   $( this ).prop('disabled', 'disabled');
+        // });
+    }
+
+    // for any kendo related initialisation code
+    function bootKendo() {
+        
+        $('.mockMinOrderQtyMismatchIcon').kendoTooltip({                                                
+                        content: kendo.template($("#kExceptionTooltipTemplate").html()),
+                        position: "top"
+                    });
+        
+    }
+      
+    $(document).ready(function() {         afterPageRefresh();     });
+    
+    </script>
+
+    <!-- KENDO Template for tool tip -->
+    <script id="kExceptionTooltipTemplate" type="text/x-kendo-template">        
+        <div style="text-align:left;">        
+        # if (target.data('evenqtyexception') === true) {#
+            <p>             
+             &\\#x25AB; Not an even order quantity.
+            </p>
+        # } #
+
+        # if (target.data('priceexception')) {#
+            <p>             
+             &\\#x25AB; #=target.data('priceexception')#
+            </p>
+        # } #
+        </div>
+    </script>
+
+  
+
+    <apex:sectionHeader title="{!$Label.Manage_Sales_Order_Lines}"  subtitle="{!Sales_Order__c.Name}" />
+
+    <apex:form id="MainForm"> <c:busyWait includeScripts="false"/>    
+<!--     	<apex:actionFunction name="changeAF" status="actionStatus" action="{!changeQuantity}" rerender="MainForm" oncomplete="updateFieldFocus();"/> -->
+        <apex:actionFunction action="{!save_lines}" name="quickSaveActionFunction"
+                                                            
+                                                            status="actionStatus"  
+                                                            rerender="MainForm"                                         
+                                                            rendered="{!AND(NOT(selecterror), NOT(concurrencyConflict))}"
+                                                            oncomplete="afterPageRefresh();"                            
+                                                            />
+
+        <div id="SalesOrderPBDivId">
+        <apex:outputPanel layout="block"    id="OutputPanelId"  >
+         
+            <apex:PageBlock mode="maindetail" id="SalesOrderPBId"   >
+                            
+                <apex:pageMessages id="errorMsgID" escape="false"/>
+                
+                 <apex:actionFunction name="populateProduct" action="{!prod_Update}" immediate="true" rerender="SalesOrderPBTableId" > 
+                    <apex:param id="ProdUPC" name="upcCode" value="" />
+                    <apex:param id="LineIndex" name="index" value="" />
+                 </apex:actionFunction>
+                
+                <apex:outputPanel >
+                    <apex:panelGrid columns="5" cellpadding="10" width="100%">
+                        <apex:commandButton value="|< {!$Label.First}" action="{!first}" disabled="{!!hasPrevious}" status="actionStatus" rerender="MainForm" oncomplete="afterPageRefresh();"  />
+                        <apex:commandButton value="< {!$Label.Previous}" action="{!previous}" disabled="{!!hasPrevious}" status="actionStatus" rerender="MainForm" oncomplete="afterPageRefresh();" />
+                        <apex:outputText value="{!$Label.Page} {!pageNumber} {!$Label.of} {!numberOfPages}"/>
+                        <apex:commandButton value="{!$Label.Next} >" action="{!next}" disabled="{!!hasNext}" status="actionStatus" rerender="MainForm" oncomplete="afterPageRefresh();" />
+                        <apex:commandButton value="{!$Label.Last} >|" action="{!last}" disabled="{!!hasNext}" status="actionStatus" rerender="MainForm" oncomplete="afterPageRefresh();" />
+                    </apex:panelGrid>
+                </apex:outputPanel> 
+                
+                <apex:PageBlockButtons >
+                     <apex:commandButton action="{!addNewRow}" 
+                                                            value="{!$Label.AddNew}" 
+                                                            status="actionStatus"
+                                                            rendered="{!not(selecterror)}"  
+                                                            rerender="MainForm"  
+                                                            oncomplete="afterPageRefresh();" 
+                                                            disabled="{!addNewClicked || concurrencyConflict}" />
+                                                             
+                    <apex:commandButton value="{!$Label.Clone}" 
+                                                            onclick="cloneNoAlert();return false;"  
+                                                            rerender="MainForm" 
+                                                            status="actionStatus"
+                                                            rendered="{!NOT(selecterror)}"
+                                                            disabled="{!addNewClicked || concurrencyConflict}" />
+                                                               
+                    <apex:commandButton id="RemoveButtonId" 
+                                                            value="{!$Label.Remove}" 
+                                                            rerender="MainForm" 
+                                                            status="actionStatus"
+                                                            onclick="deleteAlert();return false;" 
+                                                            rendered="{!not(selecterror)}" 
+                                                            disabled="{!addNewClicked || concurrencyConflict}" />
+                   
+	                <apex:commandButton id="cancelLineButtonId"
+	                										value="{!$Label.Cancel_Lines}" 
+	                    								    rerender="MainForm" 
+                                                            status="actionStatus"
+	                                                        onclick="cancelLineAlert();return false;" 
+	                                                        rendered="{!not(selecterror)}" 
+	                                                        disabled="{!addNewClicked || concurrencyConflict}" />
+                    
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                                                            
+                    <apex:commandButton action="{!availableInventory}"
+                                                        rendered="{!not(selecterror)}"  
+                                                        value="{!$Label.Check_Availability}" 
+                                                        status="actionStatus" 
+                                                        disabled="{!concurrencyConflict}"
+                                                        rerender="MainForm"
+                                                        oncomplete="afterPageRefresh();"/>
+                    
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                                                            
+                    <apex:commandButton action="{!save_lines}" id="quickSaveBtn"
+                                                            value="{!$Label.Quick_Save}"  
+                                                            status="actionStatus"  
+                                                            rerender="MainForm"                                         
+                                                            rendered="{!not(selecterror)}"  
+                                                            disabled="{!concurrencyConflict}"
+                                                            oncomplete="afterPageRefresh();"                            
+                                                            accessKey="s"/>
+                                                                                                  
+                    <apex:commandButton action="{!saveAndReturn}"
+                                                        rendered="{!not(selecterror)}"  
+                                                        value="{!$Label.Save_Return}"
+                                                        disabled="{!concurrencyConflict}" 
+                                                        status="actionStatus" />
+                                                        
+                    <apex:commandButton action="{!cancel}"  
+                                                            status="actionStatus"
+                                                            rerender="MainForm"
+                                                            html-formnovalidate="formnovalidate"
+                                                            value="{!$Label.Cancel_Return}"                 
+                                                            immediate="true" />
+                                                                                                                    
+                </apex:PageBlockButtons>
+                
+                <apex:outputPanel id="popupAddress">
+                    <apex:outputPanel styleClass="popupBackground" layout="block" rendered="{!displayPopUp}"/>
+                    
+                    <apex:outputPanel id="popInnerAddressPanel" styleClass="customPopup" layout="block" 
+                                                                                                                                rendered="{!displayPopUp}">
+                     <apex:pageMessages />
+                        <apex:pageBlockSection title="{!$Label.Segments}" columns="1"  collapsible=" false" >
+                            
+                            <c:AccountingSegments accDefault="{!VFnewOverride}"    rendered="{! NOT(ISNULL(VFNewOverride))}" />
+                        
+                        </apex:pageBlockSection>                 
+                             
+                         <apex:outputPanel id="buttonPanel" styleClass="popupButton"> 
+    
+                         <apex:commandButton value="{!$Label.Save_Segments}" action="{!saveSegmentsForWrapper}"   
+                                                                    rerender="MainForm" styleClass="popupButton"  
+                                                                    status="actionStatus"     oncomplete="afterPageRefresh();"  />
+                         <apex:commandButton value="{!$Label.Cancel}" action="{!closePopup}"  
+                                                                    rerender="MainForm" status="actionStatus" styleClass="popupButton"   
+                                                                    oncomplete="afterPageRefresh();"/>    
+                         </apex:outputPanel>
+                    </apex:outputPanel> 
+                </apex:outputPanel>
+                
+                
+                <apex:pageBlockSection title="{!$ObjectType.Sales_Order__c.Fields.Pricebook__c.Label} : {!Sales_Order__c.Pricebook__r.Name}" columns="1"   collapsible="false" >
+                
+                <apex:PageBlockTable value="{!soLineList}" var="solWrapper"        id="SalesOrderPBTableId">
+
+                    <!--apex:column headerValue="{!$Label.Select}" styleClass="removeCol" >
+                            <apex:inputCheckbox />
+                    </apex:column-->
+                    <apex:column styleClass="removeCol">
+                        <apex:facet name="header">
+                            <apex:inputCheckbox value="{!selectAllChecked}">
+                                <apex:actionSupport event="onclick" action="{!selectAll}" rerender="MainForm"/>
+                            </apex:inputCheckbox>
+                        </apex:facet>
+                        <apex:inputCheckbox value="{!solWrapper.selected}"/>
+                    </apex:column>
+
+                    <!-- <apex:column style="text-align:center;" headerValue="!">
+
+                        <img alt="warning" src="/img/msg_icons/warning16.png" title="{!$Label.Not_an_even_order_quantity}" 
+                                data-solineid = "{!solWrapper.soLine.id}"
+                                data-evenqtyexception="{!solWrapper.hasMinOrderQuantityException}" 
+                                class="mockMinOrderQtyMismatchIcon" style="{!solWrapper.ExceptionIconStyles}" />
+                    </apex:column>
+                    -->  
+                    
+<!--                    line number -->
+                    <apex:repeat value="{!$ObjectType.Sales_Order_Line__c.FieldSets.Line_Edit_RO}" var="f" >
+                        <apex:column headerValue="{!f.label}"  styleClass="{!f.Type}  {!f.FieldPath}" rendered="{!f.FieldPath!='Line_Value__c'}">
+                            <apex:outputField value="{!solWrapper.soLine[f]}"  />
+                        </apex:column>
+                    </apex:repeat>
+                    
+                   
+                    
+                    <apex:repeat value="{!$ObjectType.Sales_Order_Line__c.FieldSets.Line_Edit_A}"   var="f">
+<!--                         <apex:column styleClass="{!f.Type}  {!f.FieldPath}" rendered="{!f.FieldPath!='Quantity_Change_Reason__c' || quantityChange}"> -->
+                        <apex:column styleClass="{!f.Type}  {!f.FieldPath}" rendered="{!f.FieldPath=='Fulfillment_Source__c'}" > 
+                            <apex:facet name="header">
+                                <apex:outputText value="{!f.label}"            />
+                            </apex:facet>
+                    
+                            <apex:inputField value="{!solWrapper.soLine[f]}" required="{!OR(f.required, f.dbrequired)}" onchange="inputChange(this, '{!f.FieldPath}')" id="fulfillmentSourceField" />
+                        </apex:column>
+
+						<apex:column styleClass="{!f.Type}  {!f.FieldPath}" rendered="{!f.FieldPath!='Fulfillment_Source__c'}" >
+                            <apex:facet name="header">
+                                <apex:outputText value="{!f.label}"            />
+                            </apex:facet>
+                    
+                            <apex:inputField value="{!solWrapper.soLine[f]}"     
+                                 required="{!OR(f.required, f.dbrequired)}" onchange="inputChange(this, '{!f.FieldPath}')" />
+                        </apex:column>
+
+                       
+                        <!-- Do we need o not show it always -->
+                        <apex:column rendered="{!CONTAINS(f.FieldPath, 'Quantity_Ordered__c')}" style="text-align:center;">
+                            <!-- 
+                                This column is rendered only next to the Order quantity one to indicate the minimum order quantity
+                            -->
+                            <apex:facet name="header">
+                                {!$Label.Min_Order_Factor}
+                            </apex:facet>
+                            
+                            <span class="minOrderQtyHolder">
+                                <apex:outputText value="{0, number, 0.00}" rendered="{!theSalesOrder.Customer__r.Order_Quantity_Factor_At__c == 'Layer'}">
+                                    <apex:param value="{!solWrapper.soLine.Product__r.Units_per_Layer__c}" />
+                                </apex:outputText>                  
+                                <apex:outputText value="{0, number, 0.00}" rendered="{!theSalesOrder.Customer__r.Order_Quantity_Factor_At__c == 'Pallet'}">
+                                    <apex:param value="{!solWrapper.soLine.Product__r.Units_per_Pallet__c}" />
+                                </apex:outputText>                  
+                            </span>
+                            
+                        </apex:column>
+                    </apex:repeat>
+
+                                                                                            <!--                    LINE EDIT B is for Unit Price field -->
+                    <apex:repeat value="{!$ObjectType.Sales_Order_Line__c.FieldSets.Line_Edit_B}"   var="f">
+                        <apex:column styleClass="{!f.Type}  {!solWrapper.soLine['Product__r.Pricebook_Line_Required__c']}  {!f.FieldPath} " >
+                            <apex:facet name="header">
+                                <apex:outputText value="{!f.label}"            />
+                            </apex:facet>
+                            <apex:inputField value="{!solWrapper.soLine[f]}"    required="{!OR(f.required, f.dbrequired)}"     />
+                        </apex:column>
+                    </apex:repeat>
+                            
+                    <apex:repeat value="{!$ObjectType.Sales_Order_Line__c.FieldSets.Line_Edit_C}"   var="f">
+                        <apex:column styleClass="{!f.Type}  {!f.FieldPath}" >
+                            <apex:facet name="header">
+                                <apex:outputText value="{!f.label}"            />
+                            </apex:facet>
+                            <apex:inputField value="{!solWrapper.soLine[f]}"     
+                                 required="{!OR(f.required, f.dbrequired)}"    onchange="inputChange(this)" />
+                        </apex:column>
+                    </apex:repeat>
+                    <apex:column style="width:10%"> 
+                    <apex:facet name="header" >{!$Label.Segments}</apex:facet>
+                        <a href="javascript:addSegment({!solWrapper.rowIndex});" style="text-decoration:none;margin-left:40%" >
+                            <img src="/s.gif"  class="chatter-iconSmall chatter-followIcon" style="width: 20px; height:20px;" />
+                        </a>
+                    </apex:column>
+                  
+                </apex:PageBlockTable>
+                </apex:pageBlockSection>
+            </apex:PageBlock>
+
+            <!-- The below actionFunction's IMMEDIATE property is set to false to address the JIRA - PTM-56 -->
+            <apex:actionFunction name="remove"  
+                                                action="{!Remove}"      immediate="false"
+                                                status="actionStatus"   
+                                                    reRender="MainForm " 
+                                                    oncomplete="afterAddNewRow();">
+                <apex:param name="selected_indexes"  value="" />
+            </apex:actionFunction>
+    		
+    		<apex:actionFunction name="cancelLines"  
+                                                action="{!cancelLines}"      immediate="false"
+                                                status="actionStatus"   
+                                                    reRender="MainForm " 
+                                                    oncomplete="afterAddNewRow();">
+                <apex:param name="selected_indexes"  value="" />
+            </apex:actionFunction>
+            
+            <apex:actionFunction name="resetCounter"  
+                                                action="{!resetCounter}"      
+                                                status="actionStatus"  
+                                                reRender="" >
+    	        <apex:param name="selected_indexes"  value="" />
+            </apex:actionFunction>
+        
+            <apex:actionFunction name="addSegment" 
+                                                action="{!addSegments}"  
+                                            status="actionStatus" 
+                                            reRender="MainForm" >
+                <apex:param name="rowNum"  value="" /> 
+            </apex:actionFunction>
+        
+            <apex:actionFunction name="executeClone" 
+                                                action="{!clonesoline}"  
+                                            status="actionStatus" 
+                                            reRender="MainForm" >
+                <apex:param name="selected_indexes"  value="" /> 
+            </apex:actionFunction>
+
+        </apex:outputPanel></div>
+
+    <div id="responseErrors" ></div>
+    </apex:form>
+    
+<!--                this is to ensure the standard controller has all the fields  -->
+ <div style="display: none; " > 
+    <apex:outputText value="{!Sales_Order__c.Type__c}" />
+    <apex:outputText value="{!Sales_Order__c.Status__c}" />
+    <apex:outputText value="{!Sales_Order__c.Subtotal__c}" />
+    <apex:outputText value="{!Sales_Order__c.Ship_From_Location__c}" />
+    <apex:outputText value="{!Sales_Order__c.Accounting_Default__c}" />
+    <apex:outputText value="{!Sales_Order__c.Company__c}" />
+    <apex:outputText value="{!Sales_Order__c.Pricebook__c}" />
+    <apex:outputText value="{!Sales_Order__c.Required_Date__c}" /> 
+    <apex:repeat value="{!Sales_Order__c.Sales_Order_Lines__r}" var="stdCompList">
+        <apex:outputText value="{!stdCompList.Quantity_Shipped__c}" />
+        <apex:outputText value="{!stdCompList.Product__r.Item__r.Source__c}" />
+        <apex:outputText value="{!stdCompList.Product__r.Item__r.Non_Inventory__c}" />
+        <apex:repeat value="{!$ObjectType.Sales_Order_Line__c.FieldSets.Line_Edit_A}" var="f" ></apex:repeat> 
+        <apex:repeat value="{!$ObjectType.Sales_Order_Line__c.FieldSets.Line_Edit_B}" var="f" ></apex:repeat> 
+        <apex:repeat value="{!$ObjectType.Sales_Order_Line__c.FieldSets.Line_Edit_C}" var="f" ></apex:repeat> 
+    </apex:repeat>
+</div>
+
+
+</apex:page>

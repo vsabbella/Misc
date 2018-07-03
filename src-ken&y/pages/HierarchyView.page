@@ -1,0 +1,134 @@
+<apex:page standardController="Hierarchy__c"  sidebar="true" showheader="true" 
+ 		extensions="HierarchyController" docType="html-5.0" >
+ 		
+	<c:KendoResources />
+<!-- http://docs.telerik.com/kendo-ui/api/web/treeview -->
+
+
+<apex:outputPanel rendered="{!$CurrentPage.parameters.inline != '1'}" > 
+	<apex:sectionHeader subtitle="{!Hierarchy__c.Type__c}"  title="{!Hierarchy__c.Name}" />
+	
+	<p id="controls" >    
+	        {!$Label.Show} &nbsp;<a href="#" class="ExpandButton  btn niceButton"  data-level="none" >{!$Label.Collapse_All}</a>
+	        &nbsp;<a href="#" class="ExpandButton  btn niceButton"  data-level="all" >{!$Label.Expand_Levels}</a>	
+	        &nbsp; <apex:outputText value="{0, date, MMMM d','  yyyy}"><apex:param value="{!eff_date}" /></apex:outputText>
+	        
+	</p>
+</apex:outputPanel>
+
+<!--  TODO build a bread crumb  -->
+
+<!--  use a template for the node     -->
+<script id="treeview-template" type="text/kendo-ui-template">
+	<span class='k-nam' id='#=item.id#' title='#=item.spriteCssClass#,  #=item.code#' > #= item.text # </span>  
+	<span class='k-icon k-i-restore'  data-id='/#= item.id #' />
+</script>
+                  
+<div id="treeview">{!$Label.Loading} </div>
+
+<script>
+var treeview , datasource; 
+$(function(){  
+
+	Visualforce.remoting.Manager.invokeAction(
+		'{!$RemoteAction.HierarchyController.getHierarchyWithDate}', '{!Hierarchy__c.id}', '{!$CurrentPage.parameters.date}',
+		function (result, event) {
+			if (event.type == 'exception') {
+				$('#treeview').html(event.message);
+			}	else { 
+				buildTreeView( result ) ;				
+			}
+		}
+	);
+
+	// add click handlers to operate on the tree 
+    $(document).on('click', "a.ExpandButton", function() {
+    		var button_data = $(this).attr('data-level')
+        if ( button_data == 'all' ) treeview.expand(".k-item");
+        else treeview.collapse(".k-item");
+    });
+    
+ 	$(document).on('dblclick', "span.k-icon.k-i-restore", function() {
+    		var button_data = $(this).attr('data-id');
+        window.open( location.origin+button_data );
+      	return false;         
+    });
+   
+});
+
+function walk( nodes ) { 
+	// visit each node and set some info?
+	for (var i = 0; i < nodes.length; i++) {
+		nodes[i].expanded = true;
+		walk( nodes[i].items );
+	}
+} 
+
+function buildTreeView( results ) { 
+	// walk ( results) ;
+	
+	treeview = $("#treeview").kendoTreeView({  
+		dataSource: results, 
+		//dataSpriteCssClassField: "cssclass",
+	  	template: kendo.template($("#treeview-template").html()),
+	  	loadOnDemand: true 	  
+	}).data("kendoTreeView");
+	
+} 
+
+</script>
+<style>
+    a.niceButton , a:hover.niceButton { text-decoration: none;	padding: 4px 3px;}
+    
+    .k-in { font-size: 10pt; }
+    .k-sprite { background-position: 0 0; width: 24px;height: 24px;	background-size: 24px 24px; background-image: url(/img/icon/sun24.png);}
+    .k-sprite.Company , .k-sprite.L8 , .k-sprite.Sales.Zone 	{ background-image: url(/img/icon/building32.png); }
+    
+    .k-sprite.Area 	, .k-sprite.L7 ,
+    .k-sprite.National.Planning.Group { background-image: url(/img/icon/bigtop24.png);}
+    
+    .k-sprite.Division.Summary, .k-sprite.L6, 
+    .k-sprite.National.Planning.Subgroup,
+    .k-sprite.National.Planning.Subroup { background-image: url(/img/icon/factory24.png); }
+    
+    .k-sprite.Division , .k-sprite.L5 , .k-sprite.Zone,
+    .k-sprite.National.Planning.Company { background-image: url(/img/icon/factory24.png); }
+    .k-sprite.National.Parent.Company,
+    .k-sprite.Region ,  .k-sprite.L4 {  background-image: url(/img/icon/custom51_100/truck24.png);}
+    .k-sprite.L3 { background-image: url(/img/icon/sack24.png);}
+    
+    .k-sprite.Territory , .k-sprite.L2, .k-sprite.Market  {background-image: url(/img/icon/leaf24.png);}
+    .k-sprite.PromoGroup { background-image: url(/img/icon/box32.png); }
+    .k-sprite.Product.Group { background-image: url(/img/icon/chest32.png); }
+    .k-sprite.Reporting.Customer { background-image: url(/img/icon/campaignmember32.png); }
+    .k-sprite.Planning.Customer { background-image: url(/img/icon/telescope24.png); }
+    .k-sprite.Case.UPC { background-image: url(/img/icon/custom51_100/gears24.png); }
+    .k-sprite.Sold.To.Customer,
+    .k-sprite.Case.UPC-TPM { background-image: url(/img/icon/cash24.png); }
+    .k-sprite.Item {     background-image: url(/img/icon/ticket24.png); }
+    
+    #treeview { min-height:500px; height:500px;}
+    .k-nam { display: inline-block; padding: 4px 10px 0 0 ; }
+    .k-treeview .k-checkbox { vertical-align: middle;}
+    /* #treeview { width: 58%; display: inline-block; float: left; } */
+    /*
+    others that we can use  
+    /img/icon/campaignmember32.png
+    /img/content/workspace32.png
+    /img/content/deliver32.png
+    /img/icon/cash32.png
+    /img/icon/chest32.png
+    /img/icon/custom51_100/gears32.png
+    /img/icon/custom51_100/globe32.png
+    /img/icon/desk32.png
+    /img/icon/fan32.png
+    /img/icon/heart32.png
+    /img/icon/invoices32.png
+    /img/icon/orderBell32.png
+    /img/icon/quotes32.png
+    /img/icon/sun32.png
+    */
+    #result  { width: 40%; float: left; }
+
+</style>
+</apex:page>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <columns>
+        <field>CUST_NAME</field>
+    </columns>
+    <columns>
+        <field>Customer_Invoice__c.Invoice_Type__c</field>
+    </columns>
+    <columns>
+        <field>Customer_Invoice__c.Date_Invoiced__c</field>
+    </columns>
+    <columns>
+        <field>Customer_Invoice__c.Status__c</field>
+    </columns>
+    <columns>
+        <field>Customer_Invoice__c.Days_Past_Due__c</field>
+    </columns>
+    <columns>
+        <aggregateTypes>Sum</aggregateTypes>
+        <field>Customer_Invoice__c.Balance__c</field>
+    </columns>
+    <description>Customer invoices that have not yet been paid</description>
+    <filter>
+        <booleanFilter>1 AND (2 or 3)</booleanFilter>
+        <criteriaItems>
+            <column>Customer_Invoice__c.Balance__c</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>notEqual</operator>
+            <value>0</value>
+        </criteriaItems>
+        <criteriaItems>
+            <column>Customer_Invoice__c.Status__c</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>notEqual</operator>
+            <value>Closed,Cancelled</value>
+        </criteriaItems>
+        <criteriaItems>
+            <column>Customer_Invoice__c.Void__c</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>notEqual</operator>
+            <value>1</value>
+        </criteriaItems>
+    </filter>
+    <format>Summary</format>
+    <groupingsDown>
+        <dateGranularity>Day</dateGranularity>
+        <field>Customer_Invoice__c.Bill_To_Customer__c</field>
+        <sortOrder>Asc</sortOrder>
+    </groupingsDown>
+    <name>Open Invoices by Customer</name>
+    <params>
+        <name>co</name>
+        <value>1</value>
+    </params>
+    <reportType>CustomEntity$Customer_Invoice__c</reportType>
+    <scope>organization</scope>
+    <showDetails>true</showDetails>
+    <timeFrameFilter>
+        <dateColumn>Customer_Invoice__c.Date_Invoiced__c</dateColumn>
+        <interval>INTERVAL_CUSTOM</interval>
+    </timeFrameFilter>
+</Report>

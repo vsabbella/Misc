@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <columns>
+        <field>CUST_NAME</field>
+    </columns>
+    <columns>
+        <field>Supplier__c.Type__c</field>
+    </columns>
+    <columns>
+        <field>Supplier__c.Payment_Term__c</field>
+    </columns>
+    <description>Suppliers without payment terms</description>
+    <filter>
+        <criteriaItems>
+            <column>Supplier__c.Payment_Term__c</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>equals</operator>
+            <value></value>
+        </criteriaItems>
+    </filter>
+    <format>Summary</format>
+    <groupingsDown>
+        <dateGranularity>Day</dateGranularity>
+        <field>Supplier__c.Company__c</field>
+        <sortOrder>Asc</sortOrder>
+    </groupingsDown>
+    <name>Suppliers without Payment Terms</name>
+    <params>
+        <name>co</name>
+        <value>1</value>
+    </params>
+    <reportType>CustomEntity$Supplier__c</reportType>
+    <scope>organization</scope>
+    <showDetails>true</showDetails>
+    <timeFrameFilter>
+        <dateColumn>Supplier__c.Last_Consigned_Report_Date__c</dateColumn>
+        <interval>INTERVAL_CUSTOM</interval>
+    </timeFrameFilter>
+</Report>

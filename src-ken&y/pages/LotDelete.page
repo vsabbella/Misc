@@ -1,0 +1,9 @@
+<apex:page standardController="Lot__c" extensions="NewEditCloneDeleteExt" action="{!errMsg}">
+    <apex:sectionHeader title="Lot" />
+    <apex:form >
+        <apex:PageMessages />
+        <apex:outputpanel style="padding:20px;">
+            <apex:outputLink value="{!$CurrentPage.parameters.retURL}" >Click here to go back</apex:outputLink>
+        </apex:outputpanel>
+    </apex:form>
+</apex:page>

@@ -1,0 +1,291 @@
+<apex:page standardController="Financial_Report__c" extensions="FinancialReportExt" sidebar="true">
+
+	<apex:includeScript value="{!URLFOR($Resource.jquery_ui_110,'/jquery-ui-1.10.0.custom/js/jquery-1.9.0.js')}" />
+	<apex:includeScript value="{!URLFOR($Resource.jquery_ui_110,'/jquery-ui-1.10.0.custom/js/jquery-ui-1.10.0.custom.js')}" />
+	<apex:stylesheet value="{!URLFOR($Resource.jquery_ui_110,'/jquery-ui-1.10.0.custom/css/aloha/jquery-ui-1.10.3.custom.css')}" />
+
+     <apex:includeScript value="{!URLFOR($Resource.ForceTK, 'forcetk.js')}" /> 
+	
+	 <apex:stylesheet value="{!URLFOR($Resource.bootstrap_202, '/css/bootstrap-layout.css')}"  />
+	 
+<script>
+	var client, dataObj;
+	
+	$( function() { 
+		init(); 
+	  	client = new forcetk.Client();
+	    client.setSessionToken('{!$Api.Session_ID}');
+	    client.proxyUrl = null;
+	    client.instanceUrl = location.protocol + '//' + location.hostname; //
+	    client.ajax( '/v29.0/analytics/reports', success, checkErrors, 'GET',  null, false);
+	 });
+
+	 function success( data ) {   // build the recent report list
+		dataObj = data;
+		var ul = $('#reportList');
+		$.each( data , function ( i ) { 
+			$('<div class="ui-state-default" data-rpt-id="'+data[i].id+'"></div>')
+				.appendTo(ul)
+				.sortable({
+					stop: function( ev, ui ) {	}
+				})
+				.addClass( "ui-widget ui-widget-content ui-helper-clearfix ui-corner-all rpt-source-list" )
+				.text(data[i].name)
+				.click( function ( e) {
+					var recordId=""+$(this).attr('data-rpt-id');
+					navigateToSObject(recordId,'detail');
+				} ) ;
+		});
+		
+		$("#reportList > div").draggable({
+			connectToSortable: ".portlet-content",
+			helper: "clone",
+			revert: "invalid"
+		});
+		
+		// add a drop target on the recycle bin		 
+		$(".recycleBinModule").droppable({
+			accept: ".portlet-content div",
+			activeClass: "ui-state-hover",
+			hoverClass: "ui-state-active",
+			tolerance: "touch",
+			drop: dropOnRecycleBin							
+		}); 
+		 
+	} // end success() 
+	
+	
+	// call server to delete this reocord
+	function dropOnRecycleBin( event, ui ) {
+	
+		// TODO we should use a call to action function ( reload() ) 
+		// instead of  remoteAction + ActionFunction
+		var $ui = $(ui.draggable); 
+		var id = ui.draggable.attr('data-sobject-id');
+		if ( id == null ) {
+			return;		
+		}
+		Visualforce.remoting.Manager.invokeAction( 
+			'{!$RemoteAction.FinancialReportExt.removeReportItem}', 
+			id, function( result, event) {            
+				checkErrors( event);
+				if ( event.status ) { 
+					//  && $ui.remove(); 
+					reload(); // brute force the ui back into shape
+				} 
+			}
+		); 
+	} 	
+	function enableSaveChanges() { 
+		$('input.saveChanges').removeClass('btnDisabled').prop('disabled',null);
+	}
+	function disableSaveChanges() { 
+		$('input.saveChanges').addClass('btnDisabled').prop('disabled',true);
+	}
+	function init() {
+		disableSaveChanges(); 
+		
+		$( ".column" ).sortable({
+			stop: function( ev, ui ) {
+				enableSaveChanges(); 
+				// the dom has been re-ordered and will need to re-number the orderField
+				$(".column .orderField input").each( function ( idx) {				$(this).val(idx+1);				});
+			}
+		});
+		$( ".portlet" ).addClass( "ui-widget ui-widget-content ui-helper-clearfix ui-corner-all" )
+			.find( ".portlet-header" )
+				.addClass( "ui-widget-header ui-corner-all" ) // .prepend( "<span class='ui-icon ui-icon-plusthick'></span>")
+				.end()
+			.find( ".portlet-content >div" )
+				.addClass( "ui-state-default ui-widget ui-widget-content ui-helper-clearfix ui-corner-all" )
+				;
+	
+		$( ".portlet-header .ui-icon" ).click(function() {
+			$( this ).toggleClass( "ui-icon-minusthick" ).toggleClass( "ui-icon-plusthick" );
+			$( this ).parents( ".portlet:first" ).find( ".portlet-content" ).toggle();
+		});
+	
+		$( ".column" ).disableSelection();
+	  	$("#newPage").dialog({ autoOpen: false }); // TODO 
+	  	
+	  	// allow reports to be dropped on the sections 
+	  	$(".portlet-content").sortable({
+	  		stop: function( ev, ui ) {
+	  			enableSaveChanges(); 
+	  			$(".column .RptOrderField input").each( function ( idx) {
+					$(this).val(idx+1);
+				});
+	  			if ( ui.item.hasClass('rpt-source-list') ) { 
+					// save a new report item if it's not already there... 	  		
+					var $item = ui.item, 
+						reportid = $item.attr('data-rpt-id'), 
+						lineid= $item.parents('.portlet').attr('data-sobject-id'), 
+						nam= $item.html();
+					
+					$item.removeClass('rpt-source-list');  
+					Visualforce.remoting.Manager.invokeAction( 
+						'{!$RemoteAction.FinancialReportExt.addNewReportItem}', 
+						lineid, reportid, nam ,
+						function( result, event) {           
+							checkErrors( event);
+							if ( event.status) {
+								$item.attr('data-sobject-id', result);
+							} else { 
+								$item.remove(); 
+							}
+		                } 
+	        			)
+        			}  
+			}
+		}); 
+		
+		$('.portlet [data-sobject-id]').on('click',function ( e) {
+						  var recordId=""+$(this).attr('data-sobject-id');
+                          navigateToSObject(recordId,'detail');
+					} ); 
+	}// end init()
+	 
+	 function checkErrors ( event ) { 
+        if (event.status) { $('#responseErrors').hide(); return; }
+        $('#responseErrors').text( event.message + '{!$Label.Please_reload_the_page}').show();
+    }
+    function navigateToSObject(recordId, view) {
+        if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+            sforce.one.navigateToSObject(recordId, view);
+        } else {
+            window.location.href = "/" + recordId;
+        }
+    }
+    function navigateToURL(url, isRedirect) {
+        if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+            sforce.one.navigateToURL(url, isRedirect);
+        } else {
+            window.location.href = url;
+        }
+    }
+</script>
+
+<div  >
+<apex:sectionHeader title="{!$Label.Build_Report}" 
+	subtitle="{!Financial_Report__c.name}" />
+
+<apex:form id="form" ><c:busyWaitLight />
+	<div style="display:none;" >{!$currentpage.url}</div>	
+	<div class="right" >
+<!-- 	<h2>Build Report: {!Financial_Report__c.name}</h2>		 -->
+{!$Label.Drag_to_reorder_sections_or_reports} 
+ 	</div>
+ 	
+ 	<div id="responseErrors"  class="message  errorM4" style="display:none;"></div>
+	
+	<div class="buttons" >
+
+ 		<apex:commandButton action="{!saveOrder}" id="saveButton"  status="actionStatus" 
+ 			styleClass=" btn saveChanges btnDisabled" 
+ 			value=" {!$Label.Save_Changes} " rerender="block,saveButton" oncomplete="init();" />
+
+ 		<input  class="btn" onclick="$('.bRelatedList input').click();" type="button" value="{!$Label.New_Section}" name="np" />
+ 			
+<!-- 		<input class="btn"  -->
+<!-- 			onclick="window.location.href='/{!Financial_Report__c.id}/e?retURL=%2Fapex%2FReportBuilder?id={!Financial_Report__c.id}';"  -->
+<!-- 			type="button" value=" Edit {!financial_report__c.name}"  /> -->
+		
+		<input class="btn" onclick="var recordId='{!Financial_Report__c.id}'; navigateToSObject(recordId,'detail');"
+		type="button" value="{!$Label.Close}" name="cl" />
+	</div> 	
+  
+  
+  
+  
+<div  id="force"  class="container">
+    <div class="row" >
+
+ 	<apex:outputPanel id="block" styleclass="demo span8" layout="block"> 
+ 		<div class="column">
+ 		
+	 		<apex:repeat value="{!records}" var="ql"   >
+	 		<div class="portlet" data-sobject-id="{!ql.id}">
+	 		
+				<div class="portlet-header">
+					
+					<span class='ui-icon ui-icon-plusthick'></span>
+					
+					<span class='order-number'>{!$ObjectType.Order__c.Label}:&nbsp;{!ql.Order__c}&nbsp;</span>
+				
+					<apex:outputPanel rendered="{!ql.id != null }" >
+						<span>{!$Label.Section}:&nbsp;</span><a target="_blank" href="/{!ql.id}">{!ql.name}</a>&nbsp;
+					</apex:outputPanel>
+									
+					<!-- 				new records	 -->
+					<apex:outputPanel rendered="{!ql.id == null }" >
+					 	<apex:inputField value="{!ql.name}" />
+					</apex:outputPanel>	
+					
+				</div>
+				
+				<div class="portlet-content" >
+					{!$Label.This_section_will_display_the_following_reports}  
+					<apex:repeat value="{!ql.Report_Items__r}" var="r" >
+						<div data-sobject-id="{!r.id}">
+							<span>{!r.name}</span>
+							<span class="RptOrderField" ><apex:inputhidden value="{!r.Order__c}"  /></span>
+						</div>
+					</apex:repeat>
+				</div>
+			
+				<span class="orderField" ><apex:inputhidden value="{!ql.Order__c}"  /></span>
+				
+			</div>
+			
+			</apex:repeat>
+
+		</div>
+	</apex:outputPanel>
+	
+	<apex:outputPanel id="reportlist" styleclass="rpt span4" layout="block"> 
+ 		<span>{!$Label.Recently_Viewed_Reports}</span>
+ 		
+<!--  		TODO this should be in a scrollable DIV since we could have 200 returned  -->
+ 		<div id="reportList"></div>  
+ 		
+<!--  		Drag reports here to be removed from a section   TODO -->
+ 		<div class="recycleBinModule sidebarModule"><div class="sidebarModuleBody sidebarModuleBodyNoHeader"><a href="/search/UndeletePage" ><img src="/s.gif" alt="Recycle Bin" class="recycleIcon" title="{!$Label.Recycle_Bin}" /><span class="recycleText">{!$Label.Recycle_Bin}</span></a></div></div>
+ 		
+ 	</apex:outputPanel>
+	</div> <!--  end class=row -->
+</div> 	<!--  end force -->
+
+<apex:actionFunction name="reload" 
+	action="{!reLoad}" rerender="block"  
+	status="actionStatus" oncomplete="init();"/> 
+</apex:form>
+
+</div>
+
+<div style="display:none;" ><apex:relatedList list="Financial_Report_Sections__r" /> </div>
+
+ <style>
+  
+.container { padding-top: 8px; } 
+.rpt { background-color: #E8F4F8; min-height: 200px; }
+.rpt div, .portlet-content >div { margin: 5px; padding: 5px; width: 250px; }
+.container .portlet-content >div { width: 90%; }
+  
+#sortable { list-style-type: none; margin: 0; padding: 0; width: 60%; }
+#sortable li { margin: 0 3px 3px 3px; padding: 0.4em; padding-left: 1.5em; font-size: 1.3em; height: 18px; }
+#sortable li span { position: absolute; margin-left: -1.3em; }
+#sortable li span.order { margin-left: 1.5em; font-size: 0.8em; }
+.column { 
+	padding-bottom: 100px; 
+	}
+.portlet { margin: 0 1em 1em 0; }
+.portlet-header { margin: 0.3em; padding: 5px;  }
+.portlet-header .ui-icon { float: right; }
+.portlet-content { padding: 0.4em;}
+.ui-sortable-placeholder { border: 1px dotted black; visibility: visible !important; height: 50px !important; }
+.ui-sortable-placeholder * { visibility: hidden; }
+.demo { overflow: auto; }
+
+.buttons { padding-top: 8px; padding-left: 15%; }
+</style>
+</apex:page>

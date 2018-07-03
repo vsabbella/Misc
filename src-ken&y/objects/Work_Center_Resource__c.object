@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpWorkCenterResource</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>false</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>CapacityPlanning</fullName>
+        <description>CapacityPlanning</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Facility__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Work_Center__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Resource__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>CapacityPlanning</label>
+    </fieldSets>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Work Center Resources</relationshipLabel>
+        <relationshipName>Work_Center_Resources</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Facility__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Facility</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Lookup to Facility</inlineHelpText>
+        <label>Facility</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>Facility Company does not match Resource Company</errorMessage>
+            <filterItems>
+                <field>Facility__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Company__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Facility__c</referenceTo>
+        <relationshipLabel>Work Center Resources</relationshipLabel>
+        <relationshipName>Work_Center_Resources</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Manufacturing_Calendar__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Manufacturing Calendar</label>
+        <lookupFilter>
+            <active>true</active>
+            <booleanFilter>1 AND 2</booleanFilter>
+            <filterItems>
+                <field>Calendar__c.Type__c</field>
+                <operation>equals</operation>
+                <value>Manufacturing</value>
+            </filterItems>
+            <filterItems>
+                <field>Calendar__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Company__c</valueField>
+            </filterItems>
+            <isOptional>true</isOptional>
+        </lookupFilter>
+        <referenceTo>Calendar__c</referenceTo>
+        <relationshipLabel>Work Center Resources</relationshipLabel>
+        <relationshipName>Work_Center_Resources</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Quantity_Available__c</fullName>
+        <defaultValue>1</defaultValue>
+        <description>Quantity of the resource available at this work center</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Quantity of the resource available at this work center</inlineHelpText>
+        <label>Quantity Available</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Resource__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Resource</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Lookup to Resource</inlineHelpText>
+        <label>Resource</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>Resource Facility does not match Work Center Resource Facility</errorMessage>
+            <filterItems>
+                <field>Resource__c.Facility__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Facility__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Resource__c</referenceTo>
+        <relationshipLabel>Work Center Resources</relationshipLabel>
+        <relationshipName>Work_Center_Resources</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Work_Center_Resource_Unique__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <externalId>false</externalId>
+        <label>Work Center Resource Unique</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Work_Center__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Work Center</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Lookup to Work Center</inlineHelpText>
+        <label>Work Center</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>Work Center Facility does not match Work Center Resource Facility</errorMessage>
+            <filterItems>
+                <field>Work_Center__c.Facility__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Facility__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Work_Center__c</referenceTo>
+        <relationshipLabel>Work Center Resources</relationshipLabel>
+        <relationshipName>Work_Center_Resources</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <label>Work Center Resource</label>
+    <nameField>
+        <label>Work Center Resource</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Work Center Resources</pluralLabel>
+    <searchLayouts>
+        <lookupDialogsAdditionalFields>Company__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Facility__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Work_Center__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Resource__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Quantity_Available__c</lookupDialogsAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

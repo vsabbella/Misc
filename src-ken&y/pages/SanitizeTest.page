@@ -1,0 +1,167 @@
+<apex:page extensions="SupplierInvoiceManageExt" standardController="Supplier_Invoice__c" sidebar="false">
+ 
+    <c:KendoResources />
+    
+    <script type="text/javascript">
+
+    var arrTestStrings = [];    
+    
+    arrTestStrings.push({
+        'in'  :'https://www.domain.com/page?id1=1&id2=2#theFrag',
+        'out' :''
+    });
+    
+    arrTestStrings.push({
+        'in'  :'javascript:alert("ya!")',
+        'out' :''
+    });
+    
+    arrTestStrings.push({
+        'in'  :'https://www.domain.com/page/?id1=1&id2=2#theFrag',
+        'out' :''
+    });            
+    
+    arrTestStrings.push({
+        'in'  :'<img src=p onerror=alert(2)>',
+        'out' :''
+    });
+    
+    arrTestStrings.push({
+        'in'  :'https://www.domain<img src=p onerror=alert(2)>.com?id1=1&id2=2#theFrag',
+        'out' :''
+    });            
+    
+    arrTestStrings.push({
+        'in'  :'<a href="/a1B15000006M59xEAC" target="_blank">IC-0000000001</a>',
+        'out' :''
+    });
+    
+    arrTestStrings.push({
+        'in'  :'first text <a href="/a1B15000006M59xEAC" target="_blank">IC-0000000001</a>',
+        'out' :''
+    });            
+    
+    arrTestStrings.push({
+        'in'  :'<a href="/a1B15000006M59xEAC" target="_blank">IC-0000000001</a> last text',
+        'out' :''
+    });
+    
+    arrTestStrings.push({
+        'in'  :'first <a href="/a1B15000006M59xEAC" target="_blank">IC-0000000001</a> last text',
+        'out' :''
+    });            
+    
+    arrTestStrings.push({
+        'in'  :'first <a href="/a1B15000006M59xEAC" target="_blank">IC-0000000001<img src=p onerror=alert(2)></a> last text',
+        'out' :''
+    });
+    
+    arrTestStrings.push({
+        'in'  :'first <a href="/page1" target="_blank">IC1</a> last text <a href="/page2" target="_blank">IC2</a> text',
+        'out' :''
+    });            
+
+    arrTestStrings.push({
+        'in'  :'first <a href="/page1" target="_blank<img src=p onerror=alert(2)>">IC1</a> last text <a href="/page2" target="_blank">IC2</a> text',
+        'out' :''
+    }); 
+    
+    arrTestStrings.push({
+        'in'  :'<a href1="/page1" target="_blank">IC1</a>',
+        'out' :''
+    });       
+    
+    arrTestStrings.push({
+        'in'  :'<a href1="*@)(#%^&*)!($&^%)@$#^%<<>>>/page1" target="_blank">IC1</a>',
+        'out' :''
+    });      
+    
+    arrTestStrings.push({
+        'in'  :'<a href1="*@)(#%^&*)!<img src=p onerror=alert(2)>"($&^%)@$#^%<<>>>/page1" target="_blank">IC1<<img src=p onerror=alert(2)>"/a>',
+        'out' :''
+    });        
+    
+    //loop through all the strings to test and add the inputs to the input textarea            
+    function runTest() {
+        var inText = '';
+        for (var i=0; i<arrTestStrings.length; i++) {
+            inText += i + ') ' + arrTestStrings[i].in + '\n\n';
+        }
+        $("#in").val(inText);
+        
+        var outText = '';
+        var outHTML = '';
+        for (var i=0; i<arrTestStrings.length; i++) {
+            var san = sanitize(arrTestStrings[i].in);
+            outText += i + ') ' + san + '\n\n';
+            outHTML += i + ') ' + san + '<br/><br/>';
+        } 
+        $("#out").val(outText); 
+        $("#outHTML").html(outHTML); 
+
+    }
+    
+    
+    //ad hoc test           
+    function runTest2() {
+        var outText =  sanitize($("#in2").val());
+        $("#out2").val(outText);
+        $("#outHTML2").html(outText); 
+    } 
+    
+
+    </script>
+
+    
+	<div class="page-message"></div>
+
+    <apex:form id="theForm">
+        <apex:pageBlock title="Kenandy JavaScript Sanitization Test Page">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="Run Test" rerender="dummy" onclick="runTest();" />
+            </apex:pageBlockButtons>
+            <table>
+                <tr>
+                    <td>
+                        <textarea rows="30" cols="100" id="in"></textarea> 
+                    </td>
+                    <td>
+                        <textarea rows="30" cols="100" id="out"></textarea> 
+                    </td> 
+                    <td>
+                        <span id="outHTML"></span> 
+                    </td>                         
+                </tr>
+            </table>
+                       
+            
+        </apex:pageBlock>
+    </apex:form> 
+    
+    
+    
+    <apex:form id="theForm2">
+        <apex:pageBlock title="Ad Hoc Test">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="Run Test" rerender="dummy" onclick="runTest2();" />
+            </apex:pageBlockButtons>
+            <table>
+                <tr>
+                    <td>
+                        <textarea rows="10" cols="100" id="in2"></textarea> 
+                    </td>
+                    <td>
+                        <textarea rows="10" cols="100" id="out2"></textarea> 
+                    </td> 
+                    <td>
+                        <span id="outHTML2"></span> 
+                    </td>                         
+                </tr>
+            </table>
+                       
+            
+        </apex:pageBlock>
+    </apex:form>        
+    
+
+</apex:page>

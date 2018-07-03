@@ -1,0 +1,33 @@
+<apex:page > 
+<!--  standardController="Shipment__c" 
+					tabStyle="Shipment__c" 
+	               	 sidebar="false" 
+				recordSetVar="shipment"
+                  extensions="ShipmentAccountingExt">
+                  
+    <apex:form >
+    <c:busyWait />
+        <apex:sectionHeader subtitle="{!$Label.Generate_Shipment_Accounting} " title="{!$Label.Generate_Shipment_Accounting} "/>
+    	<apex:pageBlock id="pblock" >
+    		<apex:pageMessages id="pageMessages" ></apex:pageMessages>
+    		<apex:pageBlockTable value="{!objectList}" var="line" id="ShipmentLinePBTableId" rendered="{!not(selecterror)}">
+
+                    <apex:repeat value="{!$ObjectType.Shipment__c.FieldSets.Shipment_AE_RO}" var="f" >
+                        <apex:column headerValue="{!f.label}"  styleClass="{!f.Type}  {!f.FieldPath}"  rendered="{!f.FieldPath!='Line_Value__c'}">
+                            <apex:outputField value="{!line[f]}" />
+                        </apex:column>
+                    </apex:repeat>                    
+                                      
+            </apex:pageBlockTable>
+             
+        	<apex:pageBlockButtons >
+        		<apex:commandButton value="{!$Label.Generate}" action="{!GenerateShipmentAccounting}"  status="actionStatus" rerender="form" rendered="{!NOT(requiredFielderror)}" />
+        		<apex:commandButton value="{!$Label.Cancel} " action="{!cancel}" status="actionStatus" rerender="form"/>
+        	</apex:pageBlockButtons> 
+        	   
+    	</apex:pageBlock>
+    </apex:form>
+    <div id="responseErrors" >
+    </div>
+    -->
+</apex:page>

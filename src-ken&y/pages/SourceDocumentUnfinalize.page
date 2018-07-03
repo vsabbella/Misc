@@ -1,0 +1,33 @@
+<apex:page controller="SourceDocumentUnfinalize"  action="{!unfinalizeSourceDoc}" >
+
+	<apex:sectionHeader subtitle="{!SourceDocName}" 
+                                        title="{!$Label.Unfinalize_the_Document}"/>
+	
+	<apex:form id="form" > <c:busyWait />
+    <apex:pagemessages />
+	
+	<apex:pageBlock title="{!$Label.Click_Unfinalize_button}" >
+		<apex:pageBlockTable value="{!sObjList}" var="line" id="sObjListId"  rendered="true" >
+
+                    <apex:repeat value="{!sObjFields}" var="f" >
+                        <apex:column headerValue="{!f.label}"  styleClass="{!f.Type}  {!f.FieldPath}"  rendered="{!f.FieldPath!='Line_Value__c'}">
+                            <apex:outputField value="{!line[f]}" />
+                        </apex:column>
+                    </apex:repeat>                    
+                                     
+       </apex:pageBlockTable>
+		<apex:pageBlockButtons location="top">
+		<apex:commandButton value="{!$Label.Unfinalize}" 
+											action="{!unfinalize}"
+											status="actionStatus"
+											rendered="{!unfinalize}"
+											rerender="form" />
+		<apex:commandButton value="{!SourceDocName}" 
+											action="{!close}"/>
+		</apex:pageBlockButtons>
+		
+  
+	</apex:pageBlock> 
+     
+</apex:form>  
+</apex:page>

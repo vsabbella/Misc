@@ -1,0 +1,20 @@
+<apex:page showheader="true" sidebar="true" standardController="Work_Order__c" extensions="WorkOrderUndoReleaseExt">
+    <apex:form id="form">
+        <c:busyWait />
+        <apex:sectionHeader title="Undo Release" subtitle="{!Work_Order__c.Name}" />
+        <apex:actionFunction name="undoRelease" action="{!undoRelease}"  rerender="form" status="actionStatus" />
+        
+        <script>
+           window.onload = function() {
+               undoRelease();
+           };
+        </script>
+        
+        <apex:pageBlock >
+            <apex:pageMessages />
+            <apex:pageBlockButtons location="top"> 
+                <apex:commandButton action="{!cancel}"  value="{!$Label.Go_Back}" status="actionStatus" rerender="form" />
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

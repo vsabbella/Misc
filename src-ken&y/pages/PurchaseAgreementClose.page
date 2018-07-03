@@ -1,0 +1,39 @@
+<apex:page standardController="Contract__c" extensions="PurchaseAgreeementCloseCancelExt">
+
+        <script type="text/javascript"> 
+        $(document).ready(function() { 
+            closeConfirm();
+            return false;
+        });
+        
+        function closeConfirm(){
+            result = window.confirm('Are you sure you want to close the Purchase Agreement ?');
+            if(result == true) {
+                confirmCloseAF();
+            }
+            return false;
+        }
+
+        function goback(){
+            if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+                sforce.one.back(true);
+            } else {
+            	window.location.href = '/{!Contract__c.Id}';
+            }
+        }
+    </script>
+    
+    <apex:form id="theForm">
+        <c:busyWait />
+        <apex:pageBlock >
+            <apex:outputPanel id="errPanel"> 
+            <apex:PageMessages />
+            </apex:outputPanel>
+            <apex:actionFunction name="confirmCloseAF" action="{!close}" status="actionStatus" reRender="errPanel" />
+            <apex:pageBlockButtons location="bottom">
+            <apex:commandButton value="Return to Purchase Agreement" onClick="goback();return false;" status="actionStatus" reRender="theForm"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </apex:form>
+
+</apex:page>

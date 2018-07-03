@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Group of Customers for Planning and Reporting</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fields>
+        <fullName>Current__c</fullName>
+        <externalId>false</externalId>
+        <formula>if (  
+   AND( Start_Date__c &lt;=  TODAY()  , 
+       OR(  End_Date__c &gt;= TODAY(),  ISBLANK( End_Date__c) 
+   )
+) 
+,&apos;Yes&apos;,&apos;No&apos;)</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Current</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Customer_Number__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>used for uploading</description>
+        <externalId>true</externalId>
+        <inlineHelpText>used for uploading and integration</inlineHelpText>
+        <label>Customer Number</label>
+        <length>32</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>End_Date__c</fullName>
+        <externalId>false</externalId>
+        <label>End Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Investment_Level__c</fullName>
+        <externalId>false</externalId>
+        <label>Investment Level</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Investment Level 1</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Investment Level 2</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Investment Level 3</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Investment Level 4</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Investment Level 5</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Investment Level 6</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Investment Level 7</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Investment Level 8</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Sales_Hierarchy_Code__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>used for data loading the Sales_Hierarchy__c field</inlineHelpText>
+        <label>Sales Hierarchy Code</label>
+        <length>16</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Sales_Hierarchy__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Sales Hierarchy</label>
+        <referenceTo>Hierarchy__c</referenceTo>
+        <relationshipName>Reporting_Customers</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Sequence_Number__c</fullName>
+        <externalId>false</externalId>
+        <label>Sequence Number</label>
+        <precision>8</precision>
+        <required>false</required>
+        <scale>3</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Start_Date__c</fullName>
+        <externalId>false</externalId>
+        <label>Start Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Year__c</fullName>
+        <externalId>false</externalId>
+        <label>From Year</label>
+        <length>4</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <label>Reporting Customer</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Current__c</columns>
+        <columns>Customer_Number__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <listViews>
+        <fullName>All1</fullName>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Reporting Customer Name</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Reporting Customers</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Customer_Number__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Sales_Hierarchy__c</customTabListAdditionalFields>
+        <lookupDialogsAdditionalFields>Customer_Number__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Sales_Hierarchy__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Current__c</lookupDialogsAdditionalFields>
+        <searchResultsAdditionalFields>Customer_Number__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Year__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Investment_Level__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Sales_Hierarchy__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Current__c</searchResultsAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

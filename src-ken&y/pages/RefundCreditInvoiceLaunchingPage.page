@@ -1,0 +1,13 @@
+<apex:page standardController="Customer_Invoice__c" extensions="RefundCreditInvoiceLaunchExt" action="{!navigateToRefundCredit}">
+
+   <apex:sectionHeader subtitle="{!CustomerInvoiceName}" 
+                                        title="Refund Credit" help="{!URLFOR($Page.HelpCustomerRefunds)}"/>
+   <apex:form id="form" > <c:busyWait />
+	    <apex:pagemessages />
+        <apex:pageBlock >
+          <div align="center">  
+            <apex:commandButton value="{!CustomerInvoiceName}" style="text-align:right" action="{!returnToCI}"/>
+          </div>  
+        </apex:pageBlock> 
+   </apex:form>  
+</apex:page>

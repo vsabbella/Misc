@@ -1,0 +1,904 @@
+<apex:page controller="ProductionPlanningExt" sidebar="false" title="Capacity Planning" docType="html-5.0">
+    <c:KendoResources />
+    
+    <div class="page-container">
+        <apex:sectionHeader title="Capacity Planning" />
+        <div class="page-message" />
+        <apex:pageMessages id="msgs" />
+
+        <ul id="panelbar">
+            <li class="k-state-active">
+                <span class="kndy-label-column" style="float:left;">Filters</span>
+                <center><input type="button" id="search" value="Search" class="btn search-command" style="margin:7px;" /></center>
+                <ul>
+                    <li>
+                        <table class="kndy-table" style="padding:7px;">
+                            <tr>
+                                <td class="kndy-label-column"><apex:outputLabel value="{!$ObjectType.Company__c.Label}" for="company" /></td>
+                                <td class="kndy-data-column"><input id="company" /></td>
+
+                                <td class="kndy-label-column"><apex:outputLabel value="{!$ObjectType.Resource__c.Label}" for="resource" /></td>
+                                <td class="kndy-data-column"><input id="resource" /></td>
+
+                                <td class="kndy-label-column"><apex:outputLabel value="{!$ObjectType.Work_Order__c.Label}" for="workOrders" /></td>
+                                <td class="kndy-data-column"><select id="workOrders" /></td>
+                            </tr>
+                            <tr>
+                                <td class="kndy-label-column"><apex:outputLabel value="{!$ObjectType.Facility__c.Label}" for="facility" /></td>
+                                <td class="kndy-data-column"><input id="facility" /></td>
+
+                                <td class="kndy-label-column"><apex:outputLabel value="{!$ObjectType.Work_Center_Resource__c.Label}" for="workCenterResource" /></td>
+                                <td class="kndy-data-column"><input id="workCenterResource" /></td>
+
+                                <td class="kndy-label-column"><apex:outputLabel value="{!$ObjectType.Sales_Order__c.Label}" for="salesOrders" /></td>
+                                <td class="kndy-data-column"><select id="salesOrders" /></td>
+                            </tr>
+                            <tr>
+                                <td class="kndy-label-column"><apex:outputLabel value="{!$ObjectType.Work_Center__c.Label}" for="workCenter" /></td>
+                                <td class="kndy-data-column"><input id="workCenter" /></td>
+
+                                <td class="kndy-label-column"><apex:outputLabel value="{!$ObjectType.Work_Order__c.fields.Start_Date2__c.Label}" for="startDate" /></td>
+                                <td class="kndy-data-column"><input id="startDate" /></td>
+
+                                <td class="kndy-label-column"><apex:outputLabel value="Number of Days" for="days" /></td>
+                                <td class="kndy-data-column"><input id="days" /></td>
+                            </tr>
+                        </table>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+
+        <div id="tabStrip" style="margin-top:7px;">
+            <ul>
+                <li id="wcrTab">Work Center Resources</li>
+            </ul>
+            <div>
+                <div class="calendar-container">
+                    <div class="calendar-message" />
+                    <div id="wcrCalendar" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        var updatedOps = { };
+        var calendarData;
+        
+        $(document).on("KenandyErpReady", function(e) { 
+            ProductionUtil.Init({
+                allFields: "{!JSENCODE(allFieldsJson)}",
+                calendarFields: "{!JSENCODE(calendarFieldsJson)}"
+            }); 
+        });
+        
+        var ProductionUtil = function() {
+            return {
+                allFields: null,
+                calendarFields: null,
+                wcrCalendar: null,
+                overlaps: { },
+                initLoad: false,
+
+                Init: function(args) {
+                    this.allFields = JSON.parse(args.allFields);
+                    this.calendarFields = JSON.parse(args.calendarFields);
+
+                    ProductionUtil.RenderFilters();
+                    ProductionUtil.RenderTabs();
+                    ProductionUtil.RenderWCRCalendar();
+                    ProductionUtil.BindButtons();
+                },
+
+                RenderFilters: function() {
+                    $("#panelbar").kendoPanelBar();
+
+                    $.fn.KendoComboBox($("#company"), { 
+                        lookupSearchAction: "{!$RemoteAction.ProductionPlanningExt.lookupSearchFilter}", 
+                        referenceTo: "Company__c",
+                        title: "{!$ObjectType.Company__c.Label}",
+                        value: "{!defaultCompany}"
+                    });
+            
+                    $.fn.KendoComboBox($("#facility"), { 
+                        lookupSearchAction: "{!$RemoteAction.ProductionPlanningExt.lookupSearchFilter}", 
+                        referenceTo: "Facility__c",
+                        title: "{!$ObjectType.Facility__c.Label}",
+                        value: "{!defaultFacility}",
+                        filterCriteria: "Company__c=\'#=Id#\'",
+                        cascadeFrom: "company"
+                    });
+
+                    $.fn.KendoComboBox($("#workCenter"), { 
+                        lookupSearchAction: "{!$RemoteAction.ProductionPlanningExt.lookupSearchFilter}", 
+                        referenceTo: "Work_Center__c",
+                        title: "{!$ObjectType.Work_Center__c.Label}",
+                        value: "{!defaultWorkCenter}",
+                        filterCriteria: "Facility__c=\'#=Id#\'",
+                        cascadeFrom: "facility"
+                    });
+
+                    $.fn.KendoComboBox($("#resource"), { 
+                        lookupSearchAction: "{!$RemoteAction.ProductionPlanningExt.lookupSearchFilter}", 
+                        referenceTo: "Resource__c",
+                        title: "{!$ObjectType.Resource__c.Label}",
+                        value: "{!defaultResource}",
+                        filterCriteria: "Facility__c=\'#=Id#\'",
+                        cascadeFrom: "facility"
+                    });
+
+                    $.fn.KendoComboBox($("#workCenterResource"), { 
+                        lookupSearchAction: "{!$RemoteAction.ProductionPlanningExt.lookupSearchFilter}", 
+                        referenceTo: "Work_Center_Resource__c",
+                        title: "{!$ObjectType.Work_Center_Resource__c.Label}",
+                        value: "{!defaultWorkCenterResource}"
+                    });
+
+                    var cascade = function() {
+                        var company = $("#company").data("kendoComboBox").value();
+                        var facility = $("#facility").data("kendoComboBox").value();
+                        var wc = $("#workCenter").data("kendoComboBox").value();
+                        var resource = $("#resource").data("kendoComboBox").value();
+                        var wcr = $("#workCenterResource").data("kendoComboBox");
+                        var filters;
+                        var enable = false;
+
+                        if (company && facility && wc && resource) {
+                            filters = "Work_Center__c = \'" + wc + "\' AND Resource__c = \'" + resource + "\'";
+                            enable = true;
+                        }
+
+                        if (wcr) {
+                            wcr.destroy();
+                            $("#workCenterResource").empty();
+                        }
+
+                        $.fn.KendoComboBox($("#workCenterResource"), { 
+                            lookupSearchAction: "{!$RemoteAction.ProductionPlanningExt.lookupSearchFilter}", 
+                            referenceTo: "Work_Center_Resource__c",
+                            title: "{!$ObjectType.Work_Center_Resource__c.Label}",
+                            value: "{!defaultWorkCenterResource}",
+                            filterCriteria: filters
+                        });
+                        $("#workCenterResource").data("kendoComboBox").enable(enable);
+                    };
+
+                    $("#workCenter").data("kendoComboBox").bind("cascade",cascade);
+                    $("#resource").data("kendoComboBox").bind("cascade",cascade);
+
+                    $.fn.KendoMultiSelect($("#workOrders"), {
+                        lookupSearchAction: "{!$RemoteAction.ProductionPlanningExt.lookupSearchFilter}",
+                        referenceTo: "Work_Order__c",
+                        title: "Work Orders",
+                        filterCriteria: "Facility__c=\'#=Id#\' AND Status__c NOT IN (\'Draft\',\'Complete\',\'Cancelled\',\'Closed\')",
+                        cascadeFrom: "facility"
+                    });
+
+                    $.fn.KendoMultiSelect($("#salesOrders"), {
+                        lookupSearchAction: "{!$RemoteAction.ProductionPlanningExt.lookupSearchFilter}",
+                        referenceTo: "Sales_Order__c",
+                        title: "Sales Orders"
+                    });
+                    
+                    var d = "{!defaultStartDate}";
+                    if (d != "") {
+                        d = new Date(d);
+                        d = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+                    } else {
+                        d = new Date();
+                        d.setHours(0,0,0,0);
+                    }
+
+                    $.fn.KendoDatePicker($("#startDate"), {
+                        value: d
+                    });
+                    
+                    $("#days").kendoNumericTextBox({
+                        decimals: 0,
+                        min: 1,
+                        format: "n0",
+                        value: {!defaultDays} > 0 ? {!defaultDays} : 30
+                    });
+                },
+
+                RenderTabs: function() {
+                    var tabs = $("#tabStrip").kendoTabStrip({
+                        animation: {
+                            close: {
+                                duration: 200,
+                                effects: "fadeOut"
+                            },
+                            open: {
+                                duration: 200,
+                                effects: "fadeIn"
+                            }
+                        }
+                    }).data("kendoTabStrip");
+
+                    tabs.select(0);
+                },
+
+                RenderWCRCalendar: function() {
+                    var me = this;
+                    var calendarFields = this.calendarFields;
+                    var dateFields =  KenandyErp.KendoGridOptions.GetDateFields(this.allFields);
+
+                    var getColumns = function() {
+                        return KenandyErp.KendoGridOptions.GetColumns(calendarFields);
+                    };
+
+                    var getModel = function() {
+                        return {
+                            id: "id",
+                            fields: {
+                                id: { from: "record.Id", type: "string" },
+                                title: { from: "record.Name", type: "string" },
+                                start: { from: "startDT", type: "date" },
+                                end: { from: "endDT", type: "date" },
+                                parentId: { from: "parentId", type: "string", defaultValue: null }
+                            }
+                        };
+                    };
+
+                    var getDataSource = function() {
+                        return new kendo.data.GanttDataSource({
+                            transport: {
+                                read: function(options) {
+                                    var messageElement = $("#wcrCalendar").closest("div.calendar-container").find("div.calendar-message");
+                                    KenandyErp.ClearMessage(messageElement);
+                                    KenandyErp.ClearMessage();
+                                    
+                                    if (calendarData) {
+                                        ProductionUtil.initLoad = false;
+                                        options.success(calendarData);
+                                    } else {
+                                        var errors = false;
+                                        if (!$("#facility").val()) {
+                                            KenandyErp.Message("Facility is required",KenandyErp.MessageType.Error,$(".page-message"));
+                                            errors = true;
+                                        }
+                                        if (!$("#startDate").val()) {
+                                            KenandyErp.Message("Start date is required",KenandyErp.MessageType.Error,$(".page-message"));
+                                            errors = true;
+                                        }
+                                        if (!$("#days").val()) {
+                                            KenandyErp.Message("Number of days is required",KenandyErp.MessageType.Error,$(".page-message"));
+                                            errors = true;
+                                        }
+
+                                        if (!errors) {
+                                            KenandyErp.BlockUI($("#wcrCalendar"));
+
+                                            Visualforce.remoting.Manager.invokeAction(
+                                                "{!$RemoteAction.ProductionPlanningExt.getWCRData}",
+                                                $("#facility").val(),
+                                                $("#workCenter").val() ? $("#workCenter").val() : null,
+                                                $("#resource").val() ? $("#resource").val() : null,
+                                                $("#workCenterResource").val() ? $("#workCenterResource").val() : null,
+                                                $("#workOrders").val() && $("#workOrders").val().length > 0 ? JSON.stringify($("#workOrders").val()) : null,
+                                                $("#salesOrders").val() && $("#salesOrders").val().length > 0 ? JSON.stringify($("#salesOrders").val()) : null,
+                                                new Date($("#startDate").val()).toUTCString(),
+                                                $("#days").val(),
+                                                function(result,event) {
+                                                    KenandyErp.UnBlockUI($("#wcrCalendar"));
+                                                    var expanded = { };
+
+                                                    $.each(ProductionUtil.wcrCalendar.dataSource.data(), function(i,op) {
+                                                        if (op.expanded) {
+                                                            expanded[op.record.Id] = true;
+                                                        }
+                                                    });
+
+                                                    if (event.type == "exception") {
+                                                        $(".grid-save-custom-command").hide();
+                                                        KenandyErp.Message(event.message,KenandyErp.MessageType.Error,messageElement);
+                                                    } else if (result.success) {
+                                                        $(".grid-save-custom-command").show();
+                                                        KenandyErp.CleanNamespace(result.records,"{!namespaceUU}");
+
+                                                        $.each(result.records, function(i,newOp) {
+                                                            if (expanded[newOp.record.Id]) {
+                                                                newOp.expanded = true;
+                                                            }
+                                                        });
+
+                                                        ProductionUtil.initLoad = false;
+                                                        options.success(result.records);
+                                                    } else {
+                                                        $(".grid-save-custom-command").hide();
+                                                        KenandyErp.Messages(result.messages,messageElement);
+                                                    }
+                                                },
+                                                { escape: false }
+                                            );
+                                        } else {
+                                            options.success([ ]);
+                                        }
+                                    }
+                                },
+                                update: function(options) {
+                                    var messageElement = $("#wcrCalendar").closest("div.calendar-container").find("div.calendar-message");
+                                    KenandyErp.ClearMessage(messageElement);
+                                    KenandyErp.ClearMessage();
+
+                                    if (!options.data.summary && (options.data.startDate != options.data.startDT || options.data.endDate != options.data.endDT)) {
+                                        KenandyErp.BlockUI($("#wcrCalendar"));
+
+                                        var dateFields = KenandyErp.KendoGridOptions.GetDateFields(ProductionUtil.allFields);
+                                        var findOverlapsFor = { };
+                                        
+                                        var updatedOp = JSON.parse(JSON.stringify(options.data));
+                                        updatedOp = Serializer.ConvertFromSFDCDate(updatedOp, { dateFields: dateFields });
+                                        $.each(dateFields, function(i,fld) {
+                                            updatedOp[fld.field] = updatedOp[fld.field].toUTCString();
+                                        });
+                                        delete updatedOp["record.Id"];
+                                        delete updatedOp["record.Name"];
+                                        delete updatedOp["orderId"];
+
+                                        findOverlapsFor[updatedOp.parentId] = true;
+
+                                        Visualforce.remoting.Manager.invokeAction(
+                                            "{!$RemoteAction.ProductionPlanningExt.updateDates}",
+                                            updatedOp,
+                                            function(result,event) {
+                                                KenandyErp.UnBlockUI($("#wcrCalendar"));
+
+                                                if (event.type == "exception") {
+                                                    $(".grid-save-custom-command").hide();
+                                                    KenandyErp.Message(event.message,KenandyErp.MessageType.Error,messageElement);
+                                                } else if (result.success) {
+                                                    $(".grid-save-custom-command").show();
+                                                    KenandyErp.CleanNamespace(result.records,"{!namespaceUU}");
+                                                    var parents = { };
+                                                    var minChildren = { };
+                                                    var maxChildren = { };
+                                                    var dataMap = { };
+
+                                                    $.each(ProductionUtil.wcrCalendar.dataSource.data(), function(i,task) {
+                                                        dataMap[task.record.Id] = task;
+
+                                                        if (task.summary) {
+                                                            parents[task.record.Id] = task;
+                                                        } else {
+                                                            if (!minChildren[task.parentId] || (task.start < minChildren[task.parentId].start)) {
+                                                                minChildren[task.parentId] = task;
+                                                            }
+                                                            if (!maxChildren[task.parentId] || (task.end > maxChildren[task.parentId].end)) {
+                                                                maxChildren[task.parentId] = task;
+                                                            }
+                                                        }
+                                                    });
+
+                                                    $.each(result.records, function(i,newOp) {
+                                                        newOp = Serializer.ConvertFromSFDCDate(newOp, { dateFields: dateFields });
+
+                                                        if (dataMap[newOp.record.Id]) {
+                                                            var task = dataMap[newOp.record.Id];
+
+                                                            task.startDate = newOp.startDate;
+                                                            task.start = newOp.startDate;
+                                                            task.endDate = newOp.endDate;
+                                                            task.end = newOp.endDate;
+                                                        } else {
+                                                            updatedOps[newOp.record.Id] = newOp;
+                                                        }
+                                                    });
+
+                                                    $.each(parents, function(parentId,parent) {
+                                                        if (minChildren[parentId]) {
+                                                            parent.startDate = minChildren[parentId].start;
+                                                            parent.start = minChildren[parentId].start;
+                                                        }
+                                                        if (maxChildren[parentId]) {
+                                                            parent.endDate = maxChildren[parentId].end;
+                                                            parent.end = maxChildren[parentId].end;
+                                                        }
+                                                    });
+                                                    
+                                                    ProductionUtil.FindOverlaps(findOverlapsFor);
+                                                    ProductionUtil.wcrCalendar.refresh();
+                                                } else {
+                                                    $(".grid-save-custom-command").hide();
+                                                    KenandyErp.Messages(result.messages,messageElement);
+                                                }
+                                            },
+                                            { escape: false }
+                                        );
+                                    } else {
+                                        KenandyErp.UnBlockUI($("#wcrCalendar"));
+                                    }
+                                }
+                            },
+                            schema: {
+                                model: getModel(),
+                                parse: function(response) {
+                                    $.each(response, function(i,item) {
+                                        item = Serializer.ConvertToDate(item, dateFields);
+                                    });
+                                    return response;
+                                }
+                            },
+                        });
+                    };
+
+                    var onDataBound = function(e) {
+                        $.each(e.sender.list.dataSource.view(), function(i,row) {
+                            var tr = $("tr[data-uid='" + row.uid + "']");
+
+                            if (tr.length > 0) {
+                                tr.find("td span:not([class])").hide();
+                                tr.find("td span.nameLink").remove();
+                                tr.find("td:eq(0)").append('<span class="nameLink"><a href="/' + row.record.Id + '" target="_blank">' + row.record.Name + '</a></span>');
+
+                                if (row.record.Work_Order__r) {
+                                    tr.find("td:eq(1)").append('<span class="nameLink"><a href="/' + row.record.Work_Order__r.Id + '" target="_blank">' + row.record.Work_Order__r.Name + '</a></span>');
+
+                                    if (row.record.Work_Order__r.Shipment_Line__r) {
+                                        tr.find("td:eq(2)").append('<span class="nameLink"><a href="/' + row.record.Work_Order__r.Shipment_Line__r.Sales_Order_Line__r.Id + '" target="_blank">' + row.record.Work_Order__r.Shipment_Line__r.Sales_Order_Line__r.Name + '</a></span>');
+                                    }
+                                }
+
+                                tr.find("td span[class]").removeAttr("style");
+                                tr.find("td span:not([class!=''])").hide(); //KNDY-15282
+                            }
+                        });
+                        
+                        if (!ProductionUtil.initLoad) { // workaround. databound doesn't hold info on what data was bound!!
+                            ProductionUtil.initLoad = true;
+                            ProductionUtil.FindOverlaps.call(me);
+                        }
+                        ProductionUtil.wcrCalendar.wrapper.trigger("setOverlaps");
+                    };
+                    
+                    this.wcrCalendar = $("#wcrCalendar").kendoGantt({
+                        columns: getColumns(),
+                        currentTimeMarker: false,
+                        dataSource: getDataSource(),
+                        editable: { template: $("#editor").html() },
+                        snap: false,
+                        selectable: false,
+                        showWorkDays: false,
+                        showWorkHours: false,
+                        views: [
+                            "month",
+                            { type: "week", slotSize: 70, selected: true },
+                            { type: "day", slotSize: 70 }
+                        ],
+                        toolbar: KenandyErp.KendoGridOptions.GetToolbarButtons(["Expand All","Collapse All","Level Load","Save"]),
+                        add: function(e) { e.preventDefault(); },
+                        remove: function(e) { e.preventDefault(); },
+                        resizeable: true,
+                        edit: function(e) {
+                            if (e.task.summary) {
+                                e.preventDefault();
+                            }
+                        },
+                        moveStart: function(e) {
+                            if (e.task.summary) {
+                                e.preventDefault();
+                            }
+                        },
+                        dataBound: onDataBound,
+                        save: function(e) {
+                            if (!e.values || !e.values.parentId || !e.task.parentId) {
+                                e.preventDefault();
+                                return;
+                            }
+
+                            var currentWorkCenterResource = this.dataSource.get(e.task.parentId);
+                            var newWorkCenterResource = this.dataSource.get(e.values.parentId);
+                            
+                            if (newWorkCenterResource.parentId) {
+                                e.preventDefault();
+                                return;
+                            }
+                            
+                            var setWorkCenterResource = { }
+                            setWorkCenterResource[e.values.parentId] = true; 
+                            setWorkCenterResource[e.task.parentId] = true;
+                            
+                            // todo check if currentParent and newParent type is same
+                            if (newWorkCenterResource && !newWorkCenterResource.parentId) {
+                                e.task.set("parentId",e.values.parentId);
+                            }
+                            
+                            ProductionUtil.FindOverlaps.apply(me,[setWorkCenterResource]);
+                        }
+                    }).data("kendoGantt");
+
+                    this.wcrCalendar.wrapper.on("click", ".grid-expand-all-custom-command", $.proxy(ProductionActions.ExpandAll, { calendar: this.wcrCalendar }));
+                    this.wcrCalendar.wrapper.on("click", ".grid-collapse-all-custom-command", $.proxy(ProductionActions.CollapseAll, { calendar: this.wcrCalendar }));
+                    this.wcrCalendar.wrapper.on("setOverlaps", this.SetTaskOverlaps.bind(this));
+                },
+
+                BindButtons: function() {
+                    $(".search-command").on("click", function() { ProductionUtil.wcrCalendar.dataSource.read(); });
+                    $(".grid-level-load-custom-command").on("click", $.proxy(ProductionActions.LevelLoad, { calendar: this.wcrCalendar }));
+                    $(".grid-save-custom-command").on("click", $.proxy(ProductionUtil.Save, { calendar: this.wcrCalendar, dateFields: KenandyErp.KendoGridOptions.GetDateFields(this.allFields) }));
+                },
+                
+                FindOverlaps: function (setWorkCenterResource) { 
+                    // [Sunil] Conversion of Jeff's brute force algo for overlap calculation to front end
+                    // TODO better algo than brute force. For large dataset this will be annoyingly slow
+                    var me = this,
+                        isWorkCenterResourceSpecified = false,
+                        operationsByWorkCenter = {};
+                    
+                    if ( setWorkCenterResource && setWorkCenterResource.length > 0) {
+                        isWorkCenterResourceSpecified = true;
+                    } else {
+                        setWorkCenterResource = {};
+                    }
+                    
+                    // holds the operations by workcenter resource
+                    // if setWorkCenterResource is specified, only the specified work center resource
+                    // will be persisted as only those operations needs to be worked on
+                    $.each(me.wcrCalendar.dataSource.data(), function (idx, op) {
+                        if ( op.parentId ){
+                            if ( isWorkCenterResourceSpecified ) {
+                                setWorkCenterResource[op.parentId] = true;
+                            } else {
+                                
+                                setWorkCenterResource[op.parentId] = true;
+                            }
+                            
+                            // add the operations to the workcenterresource
+                            if ( setWorkCenterResource[op.parentId] ) {
+                                if ( !operationsByWorkCenter[op.parentId] ) {
+                                    operationsByWorkCenter[op.parentId] = [];
+                                }
+                                operationsByWorkCenter[op.parentId].push(op);
+                            }
+                        }
+                    });
+                    
+                    // get the work center resources for which the overlaps needs to be calculated
+                    for ( var wcrId in setWorkCenterResource) {
+                        var firstStartDate,
+                            lastEndDate,
+                            allOverlaps = {},
+                            overlaps = {};
+                        
+                        if ( operationsByWorkCenter[wcrId] ) {
+                            for ( var i=0; i< operationsByWorkCenter[wcrId].length; i++ ) {
+                                var op1 = operationsByWorkCenter[wcrId][i];
+                                if (firstStartDate == null || (op1.start < firstStartDate)) {
+                                    firstStartDate = op1.start;
+                                }
+                                if (lastEndDate == null || (op1.end > lastEndDate)) {
+                                    lastEndDate = op1.end;
+                                }
+                                
+                                for ( var j=i+1; j< operationsByWorkCenter[wcrId].length; j++ ) {
+                                    var op2 = operationsByWorkCenter[wcrId][j];
+                                    if (op1.start <= op2.end && op1.end >= op2.start) {
+                                        var startDate = op1.start > op2.start ? op1.start : op2.start;
+                                        var endDate = op1.end < op2.end ? op1.end : op2.end;
+                                        
+                                        if (allOverlaps[startDate] && allOverlaps[startDate] > endDate) {
+                                            endDate = allOverlaps[startDate];
+                                        }
+                                        allOverlaps[startDate] =endDate;
+                                    }
+                                }
+                            }
+                            
+                            
+                            // calculate overlaps
+                            for (var startDate in allOverlaps ) {
+                                var endDate = allOverlaps[startDate];
+                                var found = false;
+                                for (var startOverlap in overlaps) {
+                                    var endOverlap = overlaps[startOverlap];
+                                    if (startDate <= endOverlap && endDate >= startOverlap) {
+                                        var newStart = startDate > startOverlap ? startOverlap : startDate;
+                                        var newEnd = endDate < endOverlap ? endOverlap : endDate;
+                                        //overlaps.remove(startOverlap);
+                                        delete overlaps[startOverlap];
+                                        overlaps[newStart] = newEnd;
+                                        found = true;
+                                        break;
+                                    }   
+                                }
+                                if (!found) {
+                                    overlaps [startDate] =endDate;
+                                }
+                            }
+                            
+                            me.overlaps[wcrId] = overlaps;
+                        }
+                    }
+                },
+                
+                GetTasksByWorkCenterResource: function (tasks) {
+                    var overlaps = {},
+                        me = this,
+                        ds = me.wcrCalendar.dataSource;
+                        
+                    tasks.each ( function (index, task){
+                        var dataElement = ds.getByUid(task.dataset.uid);
+                        if (dataElement.summary){
+                            var arr = [];
+                            var tmpOverlaps = me.overlaps[dataElement.id];
+                            for ( var overlap in tmpOverlaps ){
+                                var range = {start: new Date( overlap), end: new Date(tmpOverlaps[overlap])};
+                                arr.push ( range);
+                            }
+                            arr.sort ( function (a,b) {
+                                
+                               if ( a.start < b.start ) {
+                                   return -1;
+                               } else if ( a.start > b.start ) {
+                                   return 1;
+                               } else {
+                                   return 0;
+                               }
+                            });
+                            overlaps[dataElement.id] = arr;
+                        }
+                    });
+                    return overlaps;
+                },
+                
+                SetTaskOverlaps: function () { // applies color on the overlapping region by work center resource
+                    var tasks = $('.k-task'),
+                        me = this;
+                    var ds = me.wcrCalendar.dataSource,
+                        today = me.wcrCalendar.view().start;
+                    
+                    if ( tasks ){
+                        // keeping a map of overlaps by the Work Center Resource
+                        var overlaps = me.GetTasksByWorkCenterResource.apply(me,[tasks]);
+                        
+                        // for each task based on the overlappping region, apply the gradient shades
+                        // this is going to be costly
+                        tasks.each ( function(index, task){
+                            var el = $(task);
+                            var dataElement = ds.getByUid(task.dataset.uid);
+                            // if ( !dataElement.summary ){
+                                var OVERLAP_COLOR =  'rgba(231,56,39,1)',
+                                    TASK_COLOR = dataElement.summary ? '#737373' : 'rgb(58, 134, 200)';
+                                    
+                                var refId = dataElement.summary ? dataElement.id : dataElement.parentId;
+                                if( overlaps[refId] && overlaps[refId].length > 0) {
+                                    var bgStr = TASK_COLOR + ' 0%', 
+                                        taskOverlap = false,
+                                        lastStart = 0,
+                                        lastEnd = 0;
+                                    
+                                    $.each ( overlaps[refId], function (idx, overlap ) {
+                                        if ( dataElement.start > overlap.end || dataElement.end < overlap.start ) {
+                                            // there is no overlap here. do nothing.
+                                        } else if ( (dataElement.start -  overlap.start) >= 0 && (dataElement.end - overlap.end) <=0 ) {
+                                            // case when the overlap is across the whole task. exit off the loop and se the overlap
+                                            // shade for whole task
+                                            taskOverlap = true;
+                                            return false;
+                                        } else {
+                                            var dsStart = dataElement.start < today ? today : dataElement.start;
+                                            var startPercentage = (dsStart -  overlap.start) == 0 ? 0 : ( ((overlap.start-dsStart) / (dataElement.end - dsStart)) * 100 ),
+                                                endPercentage = (dataElement.end - overlap.end) ==0 ? 100 : ( ((overlap.end - dsStart) / (dataElement.end - dsStart)) * 100 );
+                                            
+                                            startPercentage = lastStart > startPercentage ? lastStart : startPercentage;
+                                            endPercentage = lastEnd > endPercentage ? lastEnd : endPercentage;
+                                            
+                                            // start should be greater than last start
+                                            // start should be greater than last end 
+                                            if ( startPercentage <= 0 ) {
+                                                bgStr += ',' + OVERLAP_COLOR + ' 0%,';
+                                            } else {
+                                                bgStr += ',' + TASK_COLOR + ' ' + startPercentage +'%,' + OVERLAP_COLOR + ' ' + startPercentage + '%,';
+                                            }
+                                            
+                                            // end should be greater than last end
+                                            // end should be greater than last start
+                                            if ( endPercentage >= 100 ) {
+                                                bgStr += OVERLAP_COLOR + ' 100%';
+                                                return false;
+                                            } else {
+                                                bgStr += OVERLAP_COLOR + ' ' + endPercentage + '%,' + TASK_COLOR + ' ' + endPercentage + '%' ;
+                                            }
+                                            
+                                            lastStart = startPercentage;
+                                            lastEnd = endPercentage;
+                                        }
+                                    });
+                                    
+                                    // setting the background/gradient 
+                                    if ( taskOverlap ){
+                                        el.css('background',OVERLAP_COLOR);
+                                    } else if ( bgStr ){
+                                        bgStr += ','+TASK_COLOR + ' 100%';
+                                        
+                                        el.css('background', '-moz-linear-gradient(left,'+ bgStr +')' ); /* Old Browsers */
+                                        el.css('background', '-webkit-linear-gradient(left,'+ bgStr +')' ); /* Chrome, Safari4+ */
+                                        el.css('background', '-o-linear-gradient(left,'+ bgStr +')' );  /* Chrome10+,Safari5.1+ */
+                                        el.css('background', '-ms-linear-gradient(left,'+ bgStr +')' ); /* Opera 11.10+ */
+                                        el.css('background', 'linear-gradient(to right,'+ bgStr +')' ); /* IE 10+ */
+                                    } 
+                                } else {
+                                    el.css('background',TASK_COLOR);
+                                }
+                            // }
+                        });
+                    }
+                    
+                },
+                Save: function() {
+                    var calendar = this.calendar;
+                    var dateFields = this.dateFields;
+                    var messageElement = $(".page-message");
+                    var operations = [ ];
+                    var expanded = {};
+
+                    $.each(calendar.dataSource.data(), function(i,op) {
+                        if (!op.summary) {
+                            op = JSON.parse(JSON.stringify(op));
+
+                            op.startDT = op.startDate;
+                            op.endDT = op.endDate;
+
+                            delete op["start"];
+                            delete op["end"];
+                            delete op["title"];
+                            delete op["id"];
+                            delete op["orderId"];
+
+                            op = Serializer.ConvertFromSFDCDate(op, { dateFields: dateFields });
+                            $.each(dateFields, function(i,fld) {
+                                op[fld.field] = op[fld.field].toUTCString();
+                            });
+
+                            operations.push(op);
+                        } else if (op.expanded) {
+                            expanded[op.record.Id] = true;
+                        }
+                    });
+                    $.each(updatedOps, function(i,op) {
+                        op = Serializer.ConvertFromSFDCDate(JSON.parse(JSON.stringify(op)), { dateFields: dateFields });
+                        $.each(dateFields, function(i,fld) {
+                            op[fld.field] = op[fld.field].toUTCString();
+                        });
+                        operations.push(op);
+                    });
+
+                    KenandyErp.BlockUI($("#wcrCalendar"));
+
+                    Visualforce.remoting.Manager.invokeAction(
+                        "{!$RemoteAction.ProductionPlanningExt.save}",
+                        operations,
+                        function(result,event) {
+                            KenandyErp.UnBlockUI($("#wcrCalendar"));
+
+                            if (event.type == "exception") {
+                                KenandyErp.Message(event.message,KenandyErp.MessageType.Error,messageElement);
+                            } else if (result.success) {
+                                calendar.dataSource.read();
+                                $.each(calendar.dataSource.data(), function(i,op) {
+                                    if (expanded[op.record.Id] === true) {
+                                        op.expanded = true;
+                                    }
+                                });
+                                calendar.refresh();
+                            } else {
+                                KenandyErp.Messages(result.messages,messageElement);
+                            }
+                        },
+                        { escape: false }
+                    );
+                }
+            }
+        }();
+
+        var ProductionActions = function() {
+            return {
+                LevelLoad: function() {
+                    var calendar = this.calendar;
+                    var messageElement = $(".calendar-message");
+                    KenandyErp.ClearMessage(messageElement);
+
+                    if ($("#workCenter").val() || $("#resource").val() || $("#workCenterResource").val()) {
+                        KenandyErp.Message("Please remove work center, resource and work center resource filters before leveling load",KenandyErp.MessageType.Error,messageElement);
+                        return;
+                    }
+
+                    if (!$("#startDate").val()) {
+                        KenandyErp.Message("Please enter a start date",KenandyErp.MessageType.Error,messageElement);
+                        return;
+                    }
+
+                    var woIds = [ ];
+                    var expanded = [ ];
+                    $.each(calendar.dataSource.data(), function(i,op) {
+                        if (!op.summary) {
+                            woIds.push(op.record.Work_Order__c);
+                        } else if (op.expanded) {
+                            expanded.push(op.record.Id);
+                        }
+                    });
+
+                    KenandyErp.BlockUI($("#wcrCalendar"));
+
+                    Visualforce.remoting.Manager.invokeAction(
+                        "{!$RemoteAction.ProductionPlanningExt.levelLoad}",
+                        woIds,
+                        new Date($("#startDate").val()).toUTCString(),
+                        function(result,event) {
+                            KenandyErp.UnBlockUI($("#wcrCalendar"));
+
+                            if (event.type == "exception") {
+                                KenandyErp.Message(event.message,KenandyErp.MessageType.Error,messageElement);
+                            } else if (result.success) {
+                                KenandyErp.CleanNamespace(result.records,"{!namespaceUU}");
+                                calendarData = result.records;
+                                calendar.dataSource.read();
+                                calendarData = undefined;
+
+                                $.each(calendar.dataSource.data(), function(i,op) {
+                                    if (expanded.indexOf(op.record.Id) > -1) {
+                                        op.expanded = true;
+                                    }
+                                });
+                                calendar.refresh();
+                            } else {
+                                KenandyErp.Messages(result.messages,messageElement);
+                            }
+                        },
+                        { escape: false }
+                    );
+                },
+
+                ExpandAll: function() {
+                    var calendar = this.calendar;
+                    $.each(calendar.dataSource.data(), function(i,row) {
+                        if (row.summary) {
+                            row.expanded = true;
+                        }
+                    });
+                    calendar.refresh();
+                },
+
+                CollapseAll: function() {
+                    var calendar = this.calendar;
+                    $.each(calendar.dataSource.data(), function(i,row) {
+                        if (row.summary) {
+                            row.expanded = false;
+                        }
+                    });
+                    calendar.refresh();
+                }
+            };
+        }();
+    </script>
+
+    <script id="editor" type="text/x-kendo-template">
+        <div class="k-edit-label"><label for="start">Start</label></div>
+        <div data-container-for="start" class="k-edit-field"><input data-role="datetimepicker" name="start" /></div>
+
+        <div class="k-edit-label"><label for="end">End</label></div>
+        <div data-container-for="end" class="k-edit-field"><input data-role="datetimepicker" name="end" /></div>
+    </script>
+
+    <style>
+        .k-gantt .k-header.k-nonwork-hour { background-color: #f5f5f5; }
+
+        span.k-header { background-color: #ebebeb !important; }
+
+        span.k-state-hover { background-color: #fff !important; }
+
+        span.k-state-selected {
+            background-color: #fff;
+            box-shadow: none !important; 
+        }
+
+        button.k-button.k-button-icontext.k-gantt-create,
+        div.k-task-dot.k-task-start,
+        div.k-task-dot.k-task-end,
+        a.k-button.k-gantt-delete,
+        div.k-task-draghandle,
+        a.k-link.k-task-delete,
+        div.k-current-time { display: none !important; }
+    </style>
+</apex:page>

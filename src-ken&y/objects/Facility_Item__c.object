@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <content>FacilityItemNew</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpFacilityItem</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Facility specific Item information</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>false</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>Assign_Facility</fullName>
+        <description>ManageItems.page</description>
+        <displayedFields>
+            <field>Facility__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Source__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Active__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Assign Facility</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>New_Facility_Item</fullName>
+        <description>FacilityItemNew</description>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Facility__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <label>New_Facility_Item</label>
+    </fieldSets>
+    <fields>
+        <fullName>ABC_Code__c</fullName>
+        <description>Priority code that classifies this item by its relative impact on inventory value. A is highest impact; C is lowest impact. Used primarily for cycle count frequency.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>If you cycle count using the ABC method, you can identify the item as A, B, or C on the Item detail page. To set up the intervals between cycle counts, go to the Company page.</inlineHelpText>
+        <label>ABC Code</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>A</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>B</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>C</fullName>
+                    <default>true</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Active__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Active Item if checked; Used to phase out a item. If item is inactive, a P.O. or W.O. can not be placed against item but the QOH can be used.</description>
+        <externalId>false</externalId>
+        <label>Active</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Aggregation_Days__c</fullName>
+        <externalId>false</externalId>
+        <label>Aggregation Days</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Company</description>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Facility Items</relationshipLabel>
+        <relationshipName>Facility_Items</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Description__c</fullName>
+        <description>Item description can be up to 255 characters; use extended description field if needed</description>
+        <externalId>false</externalId>
+        <label>Description</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>EOQ__c</fullName>
+        <description>Economic Order Quantity: Optimum quantity to make or buy at one time : EOQ is determined by opitmizing the cost incurred to place each order for this item with the carrying cost of holding these items in stock.</description>
+        <externalId>false</externalId>
+        <label>EOQ</label>
+        <precision>10</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Facility_Item_Unique__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>false</externalId>
+        <label>Facility Item Unique</label>
+        <length>120</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Facility__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Facility</description>
+        <externalId>false</externalId>
+        <label>Facility</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>Facility Company must match Facility Item Company</errorMessage>
+            <filterItems>
+                <field>Facility__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Company__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Facility__c</referenceTo>
+        <relationshipLabel>Facility Items</relationshipLabel>
+        <relationshipName>Facility_Items</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Item__c</fullName>
+        <description>Master relationship to Item</description>
+        <externalId>false</externalId>
+        <label>Item</label>
+        <lookupFilter>
+            <active>true</active>
+            <booleanFilter>1 OR 2</booleanFilter>
+            <errorMessage>Item Company must match Facility Item Company</errorMessage>
+            <filterItems>
+                <field>Item__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Company__c</valueField>
+            </filterItems>
+            <filterItems>
+                <field>Item__c.Company__c</field>
+                <operation>equals</operation>
+                <value></value>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Item__c</referenceTo>
+        <relationshipLabel>Facility Items</relationshipLabel>
+        <relationshipName>Facility_Items</relationshipName>
+        <relationshipOrder>0</relationshipOrder>
+        <reparentableMasterDetail>false</reparentableMasterDetail>
+        <trackTrending>false</trackTrending>
+        <type>MasterDetail</type>
+        <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    </fields>
+    <fields>
+        <fullName>Last_Cycle_Count__c</fullName>
+        <defaultValue>Today()</defaultValue>
+        <description>Date item was last cycle counted</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Date item was last cycle counted</inlineHelpText>
+        <label>Last Cycle Count</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Lead_Time__c</fullName>
+        <description>For purchased or outsourced items, the number of mfg days to get item into inventory from the time it&apos;s ordered; for manufactured items, total number mfg days</description>
+        <externalId>false</externalId>
+        <label>Lead Time</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Next_Cycle_Count_Date__c</fullName>
+        <description>Date for next cycle based on last cycle count date + number of days corresponding to ABC code from the Company</description>
+        <externalId>false</externalId>
+        <formula>Last_Cycle_Count__c + IF(ISPICKVAL(ABC_Code__c, &quot;A&quot;), (IF(ISBLANK(Facility__r.A_Days__c), BLANKVALUE(Company__r.A_Days__c, 0), Facility__r.A_Days__c)), IF(ISPICKVAL( ABC_Code__c , &quot;B&quot;),  (IF(ISBLANK(Facility__r.B_Days__c), BLANKVALUE(Company__r.B_Days__c, 0), Facility__r.B_Days__c)),  (IF(ISBLANK(Facility__r.C_Days__c), BLANKVALUE(Company__r.C_Days__c, 0), Facility__r.C_Days__c)) ) )</formula>
+        <label>Next Cycle Count Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Ordering_Multiple__c</fullName>
+        <description>Ordering multiple is used by MRP in planning orders; for example, if multiple is 25 and the actual demand is 70, then the system will suggest an order of 75</description>
+        <externalId>false</externalId>
+        <label>Ordering Multiple</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Safety_Stock__c</fullName>
+        <description>The amount of stock over and above what is forecast to be required so as to provide stock availaility for customer service or other miscellaneous uses not forecast in the Master Plan to the MRP i.e, Buffer stock.</description>
+        <externalId>false</externalId>
+        <label>Safety Stock</label>
+        <precision>10</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Shrinkage__c</fullName>
+        <defaultValue>0</defaultValue>
+        <description>The % of an item expected to be unusable or defective. (MRP inflates planned orders to cover shrinkage.) For example, 10 % shrinkage would be entered as 10</description>
+        <externalId>false</externalId>
+        <label>Shrinkage</label>
+        <precision>4</precision>
+        <required>false</required>
+        <scale>1</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Source__c</fullName>
+        <externalId>false</externalId>
+        <label>Source</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Purchased</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Manufactured</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Miscellaneous</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Phantom</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Expense</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Use_Lot_Sizing__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>If selected, safety stock, EOQ, ordering multiple, and shrinkage factor are used when MRP plans orders; if cleared, lot for lot technique is used</description>
+        <externalId>false</externalId>
+        <label>Use Lot Sizing</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <label>Facility Item</label>
+    <listViews>
+        <fullName>All</fullName>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Facility Item</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Facility Items</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Company__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Facility__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Active__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Description__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Source__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Lead_Time__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Safety_Stock__c</customTabListAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ControlledByParent</sharingModel>
+</CustomObject>

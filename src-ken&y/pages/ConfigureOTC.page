@@ -1,0 +1,88 @@
+<apex:page standardController="Company__c" extensions="ConfigureOTCExt" doctype="html-5.0">
+    <apex:sectionHeader title="{!Company__c.Name}" subtitle="{!$Label.Configure_OTC}"/>
+     
+    <style type="text/css">
+        .filterLabel {
+            font-weight: bold;
+            font-size: 98%;
+        }
+        
+        table.fuelRatesTbl tr:first-child{
+            background-color : #f2f3f3;
+            font-weight:bold;
+        }
+        
+        table.fuelRatesTbl tr:hover {
+            background-color: #e3f3ff;
+        } /* hovering */
+        
+    </style>
+    
+    <apex:form id="theForm">
+        <c:busyWait /> 
+        
+        <script>setTimeout(function(){$('[id$=theForm] .message').slideUp(1000)}, 15*1000);</script>
+        
+        <apex:pageBlock title="{!$Label.General_Configuration}">
+            <apex:pageMessages />
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="{!$Label.Save}" action="{!onSave}" reRender="theForm" status="actionStatus" accessKey="s"/>
+                <apex:commandButton value="{!$Label.Cancel}" action="{!cancel}" immediate="true"  reRender="theForm" status="actionStatus"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection >
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.OTC__c.Fields.Parent_Level_Freight_Allowances_Only__c.Label}" />
+                    <apex:inputCheckbox value="{!otc.Parent_Level_Freight_Allowances_Only}"/>
+                </apex:pageBlockSectionItem>
+               
+            </apex:pageBlockSection>
+            
+        </apex:pageBlock>
+
+       
+        <apex:pageBlock title="{!$Label.Fuel_Rates}" id="manageFuelRatesBlock">
+            
+            <apex:panelGrid styleClass="list fuelRatesTbl" columns="4" cellspacing="0">
+                <!-- Row 1 -->
+                <apex:outputLabel >{!$Label.Regarding}</apex:outputLabel>
+                <!-- <apex:outputLabel >{!$Label.None}</apex:outputLabel> -->
+                <apex:outputLabel >{!$Label.Weekly}</apex:outputLabel>
+                <apex:outputLabel >{!$Label.Monthly}</apex:outputLabel>
+                <apex:outputLabel >{!$Label.Quarterly}</apex:outputLabel>
+                
+                <!-- Row 2 -->
+                <apex:outputLabel >{!$ObjectType.Transit_Route__c.Fields.Fuel_Allowance__c.Label}</apex:outputLabel>
+                <!-- <apex:inputText value="{!otc.Fuel_Allowance_Preference_None}" />  -->
+                <apex:inputText value="{!otc.Fuel_Allowance_Preference_Weekly}"/>
+                <apex:inputText value="{!otc.Fuel_Allowance_Preference_Monthly}"/>
+                <apex:inputText value="{!otc.Fuel_Allowance_Preference_Quarterly}"/>
+                
+                <!-- Row 3 -->
+                <apex:outputLabel >{!$ObjectType.Transit_Route__c.Fields.Distance_Rate__c.Label}</apex:outputLabel>
+                <!-- <apex:inputText value="{!otc.Distance_Rate_Preference_None}" /> -->
+                <apex:inputText value="{!otc.Distance_Rate_Preference_Weekly}"/>
+                <apex:inputText value="{!otc.Distance_Rate_Preference_Monthly}"/>
+                <apex:inputText value="{!otc.Distance_Rate_Preference_Quarterly}"/>
+                
+            </apex:panelGrid>
+            
+        </apex:pageBlock>
+
+        <apex:pageBlock title="{!$Label.Sales_Order_Fulfillment}">
+            <apex:pageBlockSection >
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.OTC__c.Fields.Max_Lines_for_Sync_order_release__c.Label}" />
+                    <apex:inputText value="{!otc.Max_Lines_for_Sync_order_release}"/>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.OTC__c.Fields.Customer_Credit_Hold_Check_At_Allocate__c.label}" />
+                    <apex:inputCheckbox value="{!otc.Customer_Credit_Hold_Check_At_Allocate}" />
+                </apex:pageBlockSectionItem>
+
+            </apex:pageBlockSection>     
+        </apex:pageBlock>
+
+    </apex:form>
+</apex:page>

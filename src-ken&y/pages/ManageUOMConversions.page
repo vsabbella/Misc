@@ -1,0 +1,312 @@
+<apex:page showHeader="true" sidebar="true" standardController="UOM__c" id="page" recordsetVar="UOMCoversions"    extensions="ManageUOMConversionsExt" showheader="true" tabStyle="UOM__c" readOnly="true" docType="html-5.0">
+     
+    <style type="text/css"> 
+    
+        .column-label {
+            vertical-align: middle !important;
+            width: 5%;
+            padding-left: 5%;
+            padding-bottom: 2%;
+        }
+        
+        .column-field {
+            vertical-align: middle !important;
+            width: 25%;
+            padding-right: 15%;
+            padding-bottom: 2%;
+        }
+        
+    </style>
+    
+    <c:KendoResources />
+    <script src="../../soap/ajax/38.0/connection.js" type="text/javascript"> </script>
+    <c:QLPKChunk completeCallback="OnCompleteQLPK"  chunkSize="1000"  />
+    <c:QueryChunk uniqueId="UOM"/>
+
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+
+    <apex:sectionHeader subtitle="UOM Conversions" />
+
+    <div class="page-message"></div>
+    <apex:form id="uomMasterViewForm">
+        <c:busyWait includeScripts="false" />
+    
+    <apex:pageBlock title="{!$Label.Filters}">    
+        <table class="kndy-table" >
+
+            <tr>
+                <td class="column-label">
+                     <apex:outputLabel value="{!$ObjectType.UOM__c.Label}" for="uomConversionFilter" />:
+                </td>
+                <td class="column-field">
+                    <select id="uomConversionFilter" class="kendoWidgetSelector"></select>
+                </td>
+                <td  class="column-label">
+                     <apex:outputLabel value="{!$ObjectType.Item__c.Label}" for="itemFilter" />:
+                </td>
+                <td class="column-field">
+                    <select id="itemFilter" class="kendoWidgetSelector"></select>
+                </td>
+            </tr>
+            <tr>
+                
+                <td align="right" colspan="2">
+                    <input name="searchFilter" id="searchFilter" type="button" value="{!$Label.Search}" onclick="UomMasterViewActions.Search();" class="btn" />
+                    <input name="clearFilters" id="clearFilters" type="button" value="{!$Label.CSReset}" onclick="UomMasterViewActions.Reset();" class="btn" />
+                </td>
+                <td colspan="2">&nbsp;</td>
+            </tr>
+        </table>
+    </apex:pageBlock>
+    
+    </apex:form>
+    
+    <apex:pageBlock id="UOMMasterViewGridContainer">    
+        <div class="grid-container">
+            <div class="grid-message"></div>
+            <div id="{!uomConversionLinesConfig.uniqueId}" ></div>
+        </div>
+    </apex:pageBlock>
+
+    <script type="text/javascript">  
+        var uomConversionFilter;
+        var namespace = '{!NamespaceUU}';
+        var defaultUomId = '{!defaultUomId}';
+        var isHideResults = true;
+        var aggregates = [];
+        var uomQuery = '{!uomQuery}';
+        var uomWhereClause = '';
+        var uomWrappers = [];
+        var itemIds = {};
+        var uomIds = {};
+        var totalChunks = 0;
+        var itemFilter;
+  
+        //QL chunks are complete, call the chunk queries
+        OnCompleteQLPK = function(type){
+            parallelStart_UOM(uomQuery, chunkList[type], chunkCallback_UOM, completeCallback_UOM, checkErrors_UOM, updateStatus_UOM,uomWhereClause);
+            totalChunks = numTotal_UOM;
+         };
+         
+        //====== BEGIN QueryChunk.component methods
+        //this is the function that each chunk query from the QueryChunk.component will call back to.
+        //we are defining it here and passing it into the component
+        
+        var chunkCallback_UOM = function(result, event) {
+            
+            var uomConversions = [];
+            
+            KenandyErp.CleanNamespace(result, NameSpaceUU);
+            for (index = 0; index < result.length; ++index) {
+                uomConversions.push(result[index]);
+            }
+            
+            var messageElement = $(".page-message");
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ManageUOMConversionsExt.getUOMWrappers}',
+                uomConversions,
+                function(result, event) {
+                    if (event.type === 'exception') {
+                        KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                    } else if (result.success === false) {
+                        KenandyErp.Messages(result.messages, messageElement);
+                    } else {
+                        KenandyErp.CleanNamespace(result.records, namespace);
+                        uomWrappers = uomWrappers.concat(result.records);
+                        totalChunks--;
+                        if(totalChunks == 0){
+                            chunkingComplete();
+                        }
+                    }
+                },
+                { escape: false, buffer: false }
+            );
+            
+        };
+        
+        var updateStatus_UOM = function (msgLocation, statusMsg) { 
+            if (msgLocation == 2) {
+                window.setTimeout(function(){
+                    $("#status-message2").text(statusMsg);
+                }); 
+            } else {
+                window.setTimeout(function(){
+                    $("#status-message1").text(statusMsg);
+                });     
+            } 
+        }; 
+        
+        var checkErrors_UOM = function (event) { 
+            if (event.status) {            
+            } else if (event.type === 'exception') {
+                errors.push(event.message + ' : ' + event.type);
+            } else {
+                errors.push(event.message);
+            }
+            if (errors.length == 0) {
+            } else {
+                console.log('***errors***');
+                console.log(errors);
+            }
+        };  
+    
+        //this is the function that QueryChunk.component will call back to when all chunks are complete.
+        //we are defining it here and passing it into the component
+        var completeCallback_UOM = function(uniqueId) {
+            
+            console.log('all chunks complete: ' + uniqueId);
+            KenandyErp.UnBlockUI($('.grid-container'));
+            
+    	}; 
+    	
+    	var chunkingComplete = function() {
+    	    isHideResults = false;
+    	    $('#{!uomConversionLinesConfig.uniqueId}').data("kendoGridActionList").dataSource.read();
+    	    KenandyErp.UnBlockUI($('.grid-container'));
+    	}
+
+        var getuomMasterViewLinesData = function() {
+            var deferred = $.Deferred();
+            
+            if (isHideResults) {
+                setTimeout(function() {
+                    deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+                }, 100);
+            }
+            else {              
+                setTimeout(function() {
+                    deferred.resolve({ records: uomWrappers, success: true, total: uomWrappers.length }, { statusCode: 200 });
+                }, 100);
+            }
+            
+            return deferred.promise();
+        }
+        
+        $(document).on('KenandyErpReady', function(e) {
+            
+            UomMasterViewActions.Init();
+            $("#itemFilter").data("kendoComboBox").text('');
+        });
+        
+        var UomMasterViewUtils = function() {
+            return {
+                GetFieldList: function(fieldList) {
+                    fieldList = JSON.parse(fieldList);
+                    
+                    $.each(fieldList, function() {
+                        var aggregateField = _.where(aggregates, {field: this.field})[0];
+                        
+                        if (aggregateField && this.field == aggregateField.field) {
+                            this.aggregate = aggregateField.aggregate;
+                        }
+                    });
+        
+                    return JSON.stringify(fieldList);
+                }
+            };
+        }();
+        
+        var UomMasterViewActions = function() {
+            
+            return { 
+            
+                Init: function() {
+                    var uomConversionLinesGridConfigOptions = '{!uomConversionLinesConfigJson}';
+                    
+                    // Hide grid on page load
+                    $('[id$=UOMMasterViewGridContainer]').hide();
+                    
+                    uomConversionFilter = $.fn.KendoMultiSelect($('#uomConversionFilter'), { 
+                        lookupSearchAction: '{!$RemoteAction.ManageUOMConversionsExt.lookupSearchFilter}', 
+                        referenceTo: 'UOM__c', 
+                        title: 'UOM', 
+                        value: defaultUomId 
+                    });
+                    
+                    itemFilter = $.fn.KendoComboBox($('#itemFilter'), { 
+                        lookupSearchAction: '{!$RemoteAction.ManageUOMConversionsExt.lookupSearchFilter}', 
+                        referenceTo: '{!NamespaceUU}Item__c', 
+                        title: '{!$ObjectType.Item__c.Label}', 
+                    });
+
+                    var uomConversionGrid = $("#{!uomConversionLinesConfig.uniqueId}").kendoGridActionList({
+                        config: uomConversionLinesGridConfigOptions,
+                        fieldList: UomMasterViewUtils.GetFieldList('{!uomConversionLinesFieldList}'),
+                        namespace: "{!NamespaceUU}",
+                        lookupSearchAction: "{!$RemoteAction.ManageUOMConversionsExt.lookupSearchFilter}",
+                        getActionListFunction: getuomMasterViewLinesData,
+                        modelIdField: "uomConversionId",
+                        validateLookupOnBlur: "Promise"
+                    }).data("kendoGridActionList");
+                    
+                    uomConversionGrid.wrapper.on("click", ".grid-save-command", UomMasterViewActions.Save);
+                },
+                
+                Save: function() {
+                    var grid = $('#{!uomConversionLinesConfig.uniqueId}').data("kendoGridActionList");
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                    KenandyErp.ClearMessage(messageElement);
+
+                    var gridUtils = new KendoGridUtils(grid);
+
+                    if (!gridUtils.IsValid()) return;
+
+                    if (!gridUtils.HasChanges()) {
+                        KenandyErp.Message("No records changed.", KenandyErp.MessageType.Info, messageElement);
+                        return;
+                    }
+
+                    KenandyErp.BlockUI(grid.element);
+
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.ManageUOMConversionsExt.saveUomConversionLines}',
+                        gridUtils.UpdatedRows(),
+                        gridUtils.NewRows(),
+                        gridUtils.DeletedRows(),
+                        function(result, event) {
+                            KenandyErp.UnBlockUI(grid.element);
+                                        
+                            if (event.type == 'exception') KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            else if (!result.success) KenandyErp.Messages(result.messages, messageElement);
+                            else UomMasterViewActions.Search();
+                        },
+                        { escape: false }
+                    );
+                },
+                
+                Search: function() {
+                    var grid = $('#{!uomConversionLinesConfig.uniqueId}').data("kendoGridActionList");
+                    KenandyErp.ClearMessage(grid.element.closest("div.grid-container").find("div.grid-message:first"));
+
+                    uomWrappers = [];
+                    grid.dataSource._destroyed = [];
+
+                    uomWhereClause = '';
+                    if (uomConversionFilter.value().length > 0) {
+                        var uomIdFilter = "('" + uomConversionFilter.value().join("','") + "')";
+                        uomWhereClause = "(UOM_1__c IN " + uomIdFilter + " OR UOM_2__c IN " + uomIdFilter + ")";
+                    }
+
+                    if (itemFilter.value().trim() != '') {
+                        if (uomWhereClause != '') uomWhereClause += " AND ";
+                        uomWhereClause += "Item__c = '" + itemFilter.value() + "'";
+                    }
+
+                    KenandyErp.BlockUI($('.grid-container'));
+
+                    chunkEntireDB(NameSpaceUU + 'UOM_Conversion_Details__c');
+
+                    $('[id$=UOMMasterViewGridContainer]').show();
+                },
+                
+                Reset: function() {
+                    $("form[id$='uomMasterViewForm']")[0].reset();
+                    uomWhereClause = '';
+                    uomWrappers = [];
+                    $('[id$=UOMMasterViewGridContainer]').hide();
+                }
+            };
+        }();
+    </script>
+</apex:page>

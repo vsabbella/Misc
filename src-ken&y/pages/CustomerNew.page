@@ -1,0 +1,30 @@
+<apex:page standardController="Customer__c" extensions="CustomerNewExtension">
+    
+     <apex:form id="theForm">
+        <c:busyWait />
+        <apex:outputPanel id="secHead" ><apex:sectionHeader title="{!$Label.New_Customer}"  />
+        </apex:outputPanel>
+
+        <apex:pageBlock id="newBlock"  mode="edit"> <apex:outputPanel id="outerMessagePanel"> <apex:pageMessages escape="false"/></apex:outputPanel>
+            <apex:pageBlockSection title="{!$Label.Customer_Information}" collapsible=" false">
+                <apex:repeat value="{!customerFieldsNew}"  id="repeatFields" var="f">                
+                    <apex:inputField value="{!customer[f]}" id="inputField" required="{!f.required}"/>
+                </apex:repeat>
+            </apex:pageBlockSection>
+            
+            <apex:outputPanel id="Address_Panel">
+                <apex:pageBlockSection id="Address_Section" title="{!$ObjectType.Customer__c.Fields.Address__c.Label}" columns="1"  collapsible=" false" >
+                    <apex:repeat value="{!$ObjectType.Customer__c.FieldSets.Customer_Address_Fields}" var="field">                
+                        <apex:inputField value="{!customer[field]}" required="{!field.required}" rendered="{!IF(!CopyFromParent,TRUE,FALSE)}"/>
+                        <apex:outputField value="{!customer[field]}" rendered="{!IF(CopyFromParent,TRUE,FALSE)}"/>
+                     </apex:repeat>
+                </apex:pageBlockSection>
+            </apex:outputPanel>
+
+            <apex:pageBlockButtons >
+                <apex:CommandButton value="{!$Label.Save}"   action="{!doSave}" styleClass="popupButton" status="actionStatus" rerender="theForm" accessKey="s"/>
+                <apex:CommandButton value="{!$Label.Cancel}" immediate="true"  action="{!doCancel}" status="actionStatus" rerender="theForm"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>     
+    </apex:form>
+</apex:page>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <columns>
+        <aggregateTypes>Sum</aggregateTypes>
+        <field>Accounting_Entry_Line__c.COMP_Transaction_Currency_Amount_DR__c</field>
+    </columns>
+    <columns>
+        <aggregateTypes>Sum</aggregateTypes>
+        <field>Accounting_Entry_Line__c.COMP_Transaction_Currency_Amount_CR__c</field>
+    </columns>
+    <columns>
+        <aggregateTypes>Sum</aggregateTypes>
+        <field>Accounting_Entry_Line__c.COMP_Functional_Currency_Amount_DR__c</field>
+    </columns>
+    <columns>
+        <aggregateTypes>Sum</aggregateTypes>
+        <field>Accounting_Entry_Line__c.COMP_Functional_Currency_Amount_CR__c</field>
+    </columns>
+    <columns>
+        <field>Accounting_Entry_Line__c.Period_Name__c</field>
+    </columns>
+    <columns>
+        <field>Accounting_Entry__c.GL_Date_Time__c</field>
+    </columns>
+    <format>Summary</format>
+    <groupingsDown>
+        <dateGranularity>Day</dateGranularity>
+        <field>FK_NAME</field>
+        <sortOrder>Asc</sortOrder>
+    </groupingsDown>
+    <name>AELS Grouped by GL w FC TC</name>
+    <params>
+        <name>co</name>
+        <value>1</value>
+    </params>
+    <reportType>CustomEntityCustomEntity$Accounting_Entry__c$Accounting_Entry_Line__c@Accounting_Entry_Line__c.GL_Account__c</reportType>
+    <scope>organization</scope>
+    <showDetails>true</showDetails>
+    <timeFrameFilter>
+        <dateColumn>Accounting_Entry__c.Transaction_Date__c</dateColumn>
+        <interval>INTERVAL_CUSTOM</interval>
+    </timeFrameFilter>
+</Report>

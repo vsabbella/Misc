@@ -1,0 +1,614 @@
+<apex:page showHeader="true" sidebar="true" extensions="WorkOrderNewExtV2,CompanyDefaultExt,KSE" standardController="Work_Order__c" tabStyle="Work_Order__c" docType="html-5.0">    
+    
+    <apex:sectionHeader subtitle="{!$Label.New} {!$ObjectType.Work_Order__c.Label}" title="{!$ObjectType.Work_Order__c.Label} {!$Label.edit}" />
+    
+     <style type="text/css">
+        .line-total {
+            border: 2px dashed !important;
+            font-weight: bold;
+            width: 100px;
+            text-align: right;
+        }
+        
+        .text-red { border-color: red !important; }
+        .text-green { border-color: green !important; }
+        
+        .amount {
+            padding: .3em .4em !important;
+        }
+
+        .column-label {
+            vertical-align: middle !important;
+            width: 15%;
+        }
+        
+        .column-field {
+            vertical-align: middle !important;
+            width: 85%;
+        }
+        
+        div.individualPalette.lookupHoverDetail[id^='lookup'] .pbButton input.btn:nth-child(2) {
+            display: none;
+        }
+
+         .bold {
+             font-weight: bold;
+         }
+
+    </style>
+    
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.async}"/>
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+    <apex:form id="WorkOrderManageForm">
+        <div class="page-container">
+            
+            <div class="page-message"></div>
+            <apex:pageMessages id="msgs"/>
+            
+        
+        <apex:pageBlock mode="edit" id="pb">  
+                <apex:pageBlockSection columns="1">
+                    <div id="WOHeaderDetailList">
+                    </div>
+                    <div id="WOQuantityGrid"/>
+                </apex:pageBlockSection>
+                <apex:pageBlockButtons location="top">
+                    <apex:outputPanel layout="none">
+                        
+                        <button id="saveButton" class ="k-button kndy-btn save-command" type="button" accesskey="s">Save</button>
+                        <a style="text-decoration: none; font-weight: bold;" class='k-button kndy-btn cancel-command' onclick="workOrderUtil.goback()">Cancel</a>
+                       
+                    </apex:outputPanel>
+                </apex:pageBlockButtons>
+        </apex:pageBlock>
+         </div>
+        </apex:form>
+            
+    <script type="text/javascript">
+        var workOrderHeaderData = function(readOptions) {
+            var deferred = $.Deferred();
+
+            setTimeout(function() {
+                var records = [];
+                   
+                delete workOrderUtil.workOrderHeaderData['attributes'];
+                records.push(workOrderUtil.workOrderHeaderData);
+           
+                deferred.resolve({ records: records, success: true, total: records.total }, { statusCode: 200 });
+            }, 100);
+            
+            return deferred.promise();
+        };
+        
+ 
+                
+        $(document).on('KenandyErpReady', function(e) {
+            KenandyErp.KendoGridOptions.DefaultPageSize = KenandyErp.KendoGridOptions.PageSizes[0];
+                            
+            workOrderUtil.Init({
+                workOrderId: '{!workOrder.Id}',
+                workOrderHeaderData: '{!JSENCODE(WorkOrderJson)}',
+                workOrderHeaderFieldList: '{!WorkOrderHeaderFieldList}',
+                               
+     
+            });
+        });
+
+        var workOrderUtil = function() {
+            
+            return {
+                workOrderId: null,
+                workOrderHeaderData: null,
+                workOrderHeaderFieldList: null,
+                workOrderHeaderDetailList: null,
+                returnUrl:null,
+
+                Init: function(args) {
+                    // initialize defaults
+                    this.workOrderId = args.workOrderId;
+                    this.workOrderHeaderData = JSON.parse(args.workOrderHeaderData);
+                    this.workOrderHeaderFieldList = JSON.parse(args.workOrderHeaderFieldList);
+                    this.returnUrl= "{!JSENCODE(returnUrl)}";
+                    KenandyErp.CleanNamespace(this.workOrderHeaderData,'{!namespaceUU}');
+
+                    this.RenderWidgets();
+                    if ( this.workOrderHeaderData.Quantity_Value_Holder__c ) {
+                        this.GetPackagingUomHierarchy(this.workOrderHeaderData.Assembly_Item_Specification__c ).then(this.RenderQuantityGrid.bind(this))
+                    }
+                },
+
+                RenderQuantityGrid: function () {
+                    var self = this;
+                    if (self.packagingUomHierarchy ) {
+                        var headerEl = $('#WOHeaderDetailList');
+                        var orderQtyEl = headerEl.find('[name=Order_Quantity__c]').closest('div');
+
+                        orderQtyEl.children().hide();
+
+                        try {
+                            $('#orderQtyPkUom').remove();
+                        } catch(e){}
+
+                        var newEl = $('<div id="orderQtyPkUom"/>');
+
+                        var detailList = $('#WOHeaderDetailList').data('kendoDetailList');
+                        detailList.enable(false, {disabledFields:['Order_Quantity__c']} );
+
+                        var qtyData = [];
+
+                        if ( self.workOrderHeaderData.Quantity_Value_Holder__c ) {
+                            qtyData = JSON.parse(self.workOrderHeaderData.Quantity_Value_Holder__c);
+                        }
+                        var pkguom = detailList.data.Packaging_UOM__c;
+
+                        var columns=[];
+                        var fieldConfig = {};
+
+                        var newFields = [];
+                        for ( var i=0; i<self.packagingUomHierarchy.length; i++ ) {
+                            columns.push({ field: self.packagingUomHierarchy[i].Id, title: 'Quantity :' + self.packagingUomHierarchy[i].Name });
+                            fieldConfig[self.packagingUomHierarchy[i].Id] = {type: 'number', defaultValue: 0};
+                            newFields.push('<div class="bold">' + self.packagingUomHierarchy[i].Name + '</div><input class="valuefield" id="' + self.packagingUomHierarchy[i].Id + '" type="number" value="'+qtyData[self.packagingUomHierarchy[i].Id]+'" step="1" min="0" ></input>');
+                            if ( pkguom && self.packagingUomHierarchy[i].Id == pkguom) break;
+                        }
+
+                        newEl.append(newFields.join(''));
+                        orderQtyEl.append(newEl);
+                        $(".valuefield").kendoNumericTextBox({
+                            decimals: 0
+                        });
+
+                    } else {
+                        detailList.enable(true, {disabledFields:['Order_Quantity__c']} );
+                    }
+                },
+                
+                RenderWidgets: function() {
+                   // Show  header detail list
+                    var headerLookupSearchFilters = [];
+
+                    headerLookupSearchFilters.push({ field: "Assembly_Item_Specification__c", filter: " ( #if(Type__c == 'Repair') {#Type__c ='Repair'#}else {#Type__c !='Repair'#}# and Company__c = \'#=Company__c#\' and Production__c = true and Active__c = true and (#if ( Facility__c ) { #Facility__c = \'#=Facility__c#\' or #}# Facility__c = null )) " });
+                    headerLookupSearchFilters.push({ field: "Facility__c", filter: "Company__c = \'#=Company__c#\'" });
+                    headerLookupSearchFilters.push({ field: "Complete_to_Location__c", filter: "Facility__c = \'#=Facility__c#\'" });
+                    headerLookupSearchFilters.push({ field: "MRB_Location__c", filter: "Facility__c = \'#=Facility__c#\'" });
+                    headerLookupSearchFilters.push({ field: "Default_WIP_Location__c", filter: "Facility__c = \'#=Facility__c#\'" });
+                    headerLookupSearchFilters.push({ field: "Reason_Code__c", filter: "Type__c = 'Work Order'" });
+                    
+                    // Destroy RequisitionHeaderDetailList
+                    if (this.workOrderHeaderDetailList) {
+                        this.workOrderHeaderDetailList.destroy();
+                        $('#WOHeaderDetailList').empty();
+                    }
+                    
+
+                    this.workOrderHeaderDetailList = $('#WOHeaderDetailList').kendoDetailList({
+                        namespace: '{!NamespaceUU}',                     
+                        sections: [
+                            {
+                                fields: workOrderUtil.workOrderHeaderFieldList
+                            }
+                        ],
+                        lookupSearchAction: '{!$RemoteAction.WorkOrderNewExtV2.lookupSearchFilter}',
+                        lookupSearchFilters: headerLookupSearchFilters, 
+                        getDetailListFunction: workOrderHeaderData
+                    }).data('kendoDetailList');
+
+                    this.workOrderHeaderDetailList.enable(false, {disabledFields:['Order_Quantity__c']} );
+                    
+                    this.workOrderHeaderDetailList.element.bind('OnReadSuccess', this.OnInvoiceHeaderDetailListReadSuccess);
+
+
+                },
+
+                updateItemSpecConfig: function () { //return;
+                    var el = $('#WOHeaderDetailList').data('kendoDetailList').element.find('[id="Assembly_Item_Specification__r.Name"]').data('kendoLookup');
+                    if (!el) return;
+
+                    var options = el.options;
+                    options.template = '<span>#=data.text#</span><br /><span style="font-size: .9em; color: grey;">Revision: #=data.sobjectMap.Revision__c#</span>';
+
+                    var dataSource = new kendo.data.DataSource({
+                        transport: {
+                            read: function(readOptions) {
+                                var searchTerm = '';
+
+                                if (readOptions.data.filter && readOptions.data.filter.filters.length > 0) {
+                                    var filter = _.where(readOptions.data.filter.filters, { field: 'text' });
+
+                                    if (filter && filter.length > 0) {
+                                        searchTerm = (filter[0] && filter[0].value) ? filter[0].value : '';
+                                    }
+                                }
+
+                                Visualforce.remoting.Manager.invokeAction(
+                                        '{!$RemoteAction.WorkOrderNewExtV2.lookupSearchFilter2}',
+                                        searchTerm,
+                                        options.referenceTo,
+                                        options.criteria,
+                                        'Revision__c',
+                                        function (result, event) {
+                                            if (event.type == 'exception') {
+                                                KenandyErp.Alert(event.message);
+                                            } else {
+                                                KenandyErp.CleanNamespace(result, '{!NamespaceUU}');
+                                                readOptions.success(result);
+                                            }
+                                        },
+                                        {escape: false}
+                                );
+                            }
+                        },
+                        serverFiltering: true
+                    });
+
+                    el.setOptions(options);
+                    el.setDataSource(dataSource);
+
+                },
+                
+                completeLocation:null,
+       		    mrbLocation:null,
+       		    wipLocation:null,
+       		    facilityDefault:null,
+       		    itemSpec:null,
+       		    packagingUom: null,
+                packagingUomHierarchy: null,
+       		    
+                BindHeaderEvents: function() {
+                     $('#Type__c').bind('change',
+                        workOrderUtil.setItemSpecFilter
+                    );
+                    $('input[name="Facility__c"]').bind('change', 
+                        workOrderUtil.OnFacilityChange
+                    );
+                    $('input[name="Company__c"]').bind('change', 
+                        $.proxy(workOrderUtil.UpdateAllFilters, { clearOptions: {CLEAR_ALL: true} })
+                    );
+                    
+                    //Bind Type change event
+	                $.each($(".k-autocomplete input"), function(){
+	                        $(this).data("kendoLookup").options.minLength = 1;
+	                            if(this.id=='Complete_to_Location__r.Name'){
+	                               workOrderUtil.completeLocation=this;
+	                            } else if(this.id=='MRB_Location__r.Name'){
+	                               workOrderUtil.mrbLocation=this;
+	                            } else if(this.id=='Default_WIP_Location__r.Name'){
+	                               workOrderUtil.wipLocation=this;
+	                            } else if(this.id=='Facility__r.Name'){
+	                               workOrderUtil.facilityDefault=this;
+	                            } else if(this.id=='Assembly_Item_Specification__r.Name'){
+	                               workOrderUtil.itemSpec=this;
+	                            } else if ( this.id == 'Packaging_UOM__r.Name' ) {
+	                                workOrderUtil.packagingUom=this;
+	                            }
+	                });
+	                
+                   $('input[name="Need_Date2__c"]').bind('change',
+                        workOrderUtil.OnitemSpecDatesChange
+                    );
+                    $('input[name="Start_Date2__c"]').bind('change',
+                        workOrderUtil.OnitemSpecDatesChange
+                    );
+                    $('input[name="Assembly_Item_Specification__c"]').bind('change', function () {
+                        workOrderUtil.OnitemSpecDatesChange();
+                    });
+
+                    $('input[name="Packaging_UOM__c"]').bind('change', workOrderUtil.RenderQuantityGrid.bind(this));
+
+                    $('input[name="Assembly_Item_Specification__c"]').bind('change', workOrderUtil.OnItemSpecChange.bind(this));
+                    workOrderUtil.OnTypeChange.call(this);
+                    $('select[name="Type__c"]').bind('change',
+                        workOrderUtil.OnTypeChange
+                    );
+                   
+                    $('.save-command').on("click",
+                        $.proxy(workOrderUtil.Save, { detailList: $('#WOHeaderDetailList').data('kendoDetailList') })
+                    );
+                },
+                
+                OnInvoiceHeaderDetailListReadSuccess: function(e) {
+                    workOrderUtil.updateItemSpecConfig();
+
+                    // Bind header events
+                    workOrderUtil.BindHeaderEvents();
+
+
+                
+                },
+               OnTypeChange: function(e) {
+                    if ($('#Type__c').val() == 'Regular'){
+                        $('#Item__c').parent().hide();
+                        $('label[for="Item__c"]').hide();
+                        $('#Rework_Reason__c').parent().hide();
+                        $('label[for="Rework_Reason__c"]').hide();
+                    } else {
+                        $('#Item__c').parent().show();
+                        $('label[for="Item__c"]').show();
+                        $('#Rework_Reason__c').parent().show();
+                        $('label[for="Rework_Reason__c"]').show();
+                    }
+                },
+                UpdateAllFilters: function(callback ) {
+               
+                    var facilityId = $("#Facility__c").val();
+                    var companyId = $("#Company__c").val();
+                    var woType = $('#Type__c').val();
+                    
+                    $(workOrderUtil.itemSpec).data('kendoLookup').options.criteria = "(Company__c =\'"+companyId+"\' and Production__c = true and Active__c = true and (Facility__c = \'"+facilityId+"\' or Facility__c = null )"
+                                                    + ( woType== 'Repair' ? " AND Type__c = 'Repair' " : " AND Type__c != 'Repair'" ) +  ") ";
+                    $(workOrderUtil.completeLocation).data('kendoLookup').options.criteria = "Facility__c = \'"+facilityId+"\' ";
+                    $(workOrderUtil.mrbLocation).data('kendoLookup').options.criteria = "Facility__c =\'"+facilityId+"\'";
+                    $(workOrderUtil.wipLocation).data('kendoLookup').options.criteria = "Facility__c =\'"+facilityId+"\'";
+                    
+                    //Clear  Fields
+                    if ( this.clearOptions.CLEAR_ALL ) {
+                        $(workOrderUtil.facilityDefault).data('kendoLookup').options.criteria = "Company__c = \'"+companyId+"\' ";
+                        $(workOrderUtil.facilityDefault).data('kendoLookup').value("");
+                        workOrderUtil.workOrderHeaderDetailList.data.set('Complete_to_Location__r', "");                                        
+                        workOrderUtil.workOrderHeaderDetailList.data.set('Complete_to_Location__c', "");
+                        workOrderUtil.workOrderHeaderDetailList.data.set('Default_WIP_Location__r', "");                                        
+                        workOrderUtil.workOrderHeaderDetailList.data.set('Default_WIP_Location__c', "");
+                        workOrderUtil.workOrderHeaderDetailList.data.set('MRB_Location__r', "");                                        
+                        workOrderUtil.workOrderHeaderDetailList.data.set('MRB_Location__c', "");
+                        
+                    }
+                    
+                    $(workOrderUtil.itemSpec).data('kendoLookup').value("");
+
+                    
+                    if ( callback && typeof callback == 'function' ) {
+                        callback ( null, true);
+                    }
+                },  
+                OnFacilityChange: function(e) {
+                    var self = this;
+                    var facilityId = $("#Facility__c").val();
+                   
+                    if (!facilityId) {
+                        return;
+                    }
+
+                    KenandyErp.BlockUI();
+                    //it will get changed facility default locations.            
+                    async.waterfall ( [
+                        function ( callback ) {
+                            Visualforce.remoting.Manager.invokeAction(
+                                '{!$RemoteAction.WorkOrderNewExtV2.getLocationDefaultsFromFacility}',
+                                facilityId,
+                                function (result, event) {  
+                                    callback( null, result,event);
+                                },
+                                {escape: false}
+                            );
+                        },
+                        function( result, event, callback) {
+                                    
+                                    if (event.type == 'exception') {
+                                        callback ( event.message, null);
+                                        KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                                    } else {
+                                        KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                        
+                                        if (result.success) {
+                                            if (result.records && result.records.length > 0) {
+                                                var facility = result.records[0];   
+                                                var completeToLocationRef = (facility.Default_Work_Order_Complete_to_Location__r) ? facility.Default_Work_Order_Complete_to_Location__r : { Id: null, Name: null };                                      
+                                                var completeToLocation = (facility.Default_Work_Order_Complete_to_Location__c) ? facility.Default_Work_Order_Complete_to_Location__c : null;
+                                                var wipLocationRef = (facility.Default_Work_Order_WIP_Location__r) ? facility.Default_Work_Order_WIP_Location__r : { Id: null, Name: null };                                      
+                                                var wipLocation = (facility.Default_Work_Order_WIP_Location__c) ? facility.Default_Work_Order_WIP_Location__c : null;
+                                                var mrbLocationRef = (facility.Default_Work_Order_MRB_Location__r) ? facility.Default_Work_Order_MRB_Location__r : { Id: null, Name: null };                                      
+                                                var mrbLocation = (facility.Default_Work_Order_MRB_Location__c) ? facility.Default_Work_Order_MRB_Location__c : null;
+                                                
+                                                workOrderUtil.workOrderHeaderDetailList.data.set('Complete_to_Location__r', completeToLocationRef);                                        
+                                                workOrderUtil.workOrderHeaderDetailList.data.set('Complete_to_Location__c', completeToLocation);
+                                                workOrderUtil.workOrderHeaderDetailList.data.set('Default_WIP_Location__r', wipLocationRef);                                        
+                                                workOrderUtil.workOrderHeaderDetailList.data.set('Default_WIP_Location__c', wipLocation);
+                                                workOrderUtil.workOrderHeaderDetailList.data.set('MRB_Location__r', mrbLocationRef);                                        
+                                                workOrderUtil.workOrderHeaderDetailList.data.set('MRB_Location__c', mrbLocation);
+                                                
+                                            }
+                                        }
+                                        
+                                        callback ( null, true);
+                                    }
+                },
+                        function ( res, callback ) {
+                             //it will do remaining   settings of filters with changed facility.    
+                            workOrderUtil.UpdateAllFilters.apply( { clearOptions: {CLEAR_ALL: false} }, [callback] );
+                            
+                        }
+                        ], function (err, result) {
+                            
+                            KenandyErp.UnBlockUI();
+                    } );
+                    
+                },
+                
+                
+                setItemSpecFilter: function(options) {
+                    var facilityId = $("#Facility__c").val();
+                    var companyId = $("#Company__c").val();
+                    
+                    var typeRepair = 'Repair';
+                    if($("#Type__c").val() == typeRepair ){
+                     $(workOrderUtil.itemSpec).data('kendoLookup').options.criteria = "(Type__c = \'"+typeRepair+"\' and Company__c =\'"+companyId+"\' and Production__c = true and Active__c = true and (Facility__c = \'"+facilityId+"\' or Facility__c = null )) ";
+                    } else{
+                      $(workOrderUtil.itemSpec).data('kendoLookup').options.criteria = "(Type__c != \'"+typeRepair+"\' and Company__c =\'"+companyId+"\' and Production__c = true and Active__c = true and (Facility__c = \'"+facilityId+"\' or Facility__c = null )) ";
+                    }
+                    $(workOrderUtil.itemSpec).data('kendoLookup').refresh();
+                    $(workOrderUtil.itemSpec).data('kendoLookup').value("");
+                },
+
+                GetPackagingUomHierarchy: function (itemSpec) {
+                    var that = this;
+                    var deferred = $.Deferred();
+                    if ( itemSpec) {
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.WorkOrderNewExtV2.getPackagingUomForItem}',
+                            itemSpec,
+                            function (result, event) {
+                                if ( result && result.records.length ) {
+                                    that.packagingUomHierarchy = result.records;
+
+                                }
+                                deferred.resolve({});
+                            });
+                    }
+                    return deferred.promise();
+                },
+                
+                OnItemSpecChange: function (e) {
+                    var that = this;
+                    // Refresh the packaging uom on item spec change
+                    // Will default the uom from item spec 
+                    var dataSource = $('#WOHeaderDetailList').data('kendoDetailList').dataSource;
+                    var data = $('#WOHeaderDetailList').data('kendoDetailList').data;
+                    if (data.Assembly_Item_Specification__c ) {
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.WorkOrderNewExtV2.getPackagingUomForItem}',
+                            data.Assembly_Item_Specification__c,
+                            function (result, event) {
+                                if ( result && result.records.length ) {
+                                    var lkupPackagingUom = $(workOrderUtil.packagingUom).data('kendoLookup');
+                                    that.packagingUomHierarchy = result.records;
+
+                                    var str = _.pluck(result.records, 'Id').join("\',\'");
+                                    str= '(\''+str.replace(/"/g, "\'")+'\')';
+                                    lkupPackagingUom.options.criteria = "Id IN "+str;
+                                    
+                                    if ( result.additionalInfo ) {
+                                        var defaultPackagingUom = JSON.parse( result.additionalInfo.replace(/(&quot\;)/g,"\""));
+                                        if ( defaultPackagingUom ) {
+                                            $('#WOHeaderDetailList').data('' +
+                                                    'kendoDetailList').data.set('Packaging_UOM__r', defaultPackagingUom);
+                                            $('#WOHeaderDetailList').data('kendoDetailList').data.set('Packaging_UOM__c', defaultPackagingUom.Id);
+                                        }
+                                    }
+                                } else {
+                                    $('#WOHeaderDetailList').data('kendoDetailList').data.set('Packaging_UOM__r', {Id: '', Name: ''});
+                                    $('#WOHeaderDetailList').data('kendoDetailList').data.set('Packaging_UOM__c', '');
+                                }
+                                that.RenderQuantityGrid.call(that);
+                            });
+                    }
+                },
+                
+                OnitemSpecDatesChange: function(e) {
+                    var detailData = ($('#WOHeaderDetailList').data('kendoDetailList').data);
+                     
+                    if (detailData.Assembly_Item_Specification__c  && (detailData.Start_Date2__c  || detailData.Need_Date2__c ) && (!detailData.Start_Date2__c  || !detailData.Need_Date2__c )) {   
+                   
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.WorkOrderNewExtV2.calculateDates}',
+                         detailData.Assembly_Item_Specification__c, 
+                         
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                                
+                               if (result > 0) {
+                                   if (detailData.Start_Date2__c == null) {
+                                       var startDate = new Date(detailData.Need_Date2__c.getTime());
+                                       startDate.setDate(detailData.Need_Date2__c.getDate() - result); 
+                                        detailData.set('Start_Date2__c', startDate);
+                                   }
+                                         
+                                    else if (workOrderUtil.workOrderHeaderData.Need_Date2__c == null){ 
+                                        var needDate = new Date(detailData.Start_Date2__c.getTime());
+                                       needDate.setDate(detailData.Start_Date2__c.getDate() + result); 
+                                       detailData.set('Need_Date2__c', needDate);
+                                    }      
+                                    
+                                        
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                 }
+                },
+                Save: function(e) {
+                    var self = this;
+                    var detailList = self.detailList;
+                    var returnUrl = '{!ReturnUrl}';
+                    KenandyErp.ClearMessage();
+                    
+                    if (!detailList.validate()) {
+                        KenandyErp.Message("Please fix the following errors.");
+                        e.preventDefault();
+                        return false;
+                    }
+                    
+                    var grid = self.grid;
+                    var options = self.options;
+
+                    var headerDateFields = detailList.getDateFields(); 
+                    var headerRowsList = [];
+                    var headerRows = [];
+                    
+                    headerRowsList.push(detailList.data);
+                    
+                    headerRows = $.map(headerRowsList, function(item, index) {
+                        item = item.toJSON();
+                        item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+                        delete item.attributes;
+                        delete item.Facility__r;
+                        delete item.Company__r.attributes;
+                        if(item.Assembly_Item_Specification__c == ''){
+                            delete item.Assembly_Item_Specification__c;
+                        }
+                        return item;
+                    });
+
+                    if (headerRows.length > 0) {
+                        headerRows = Serializer.ParameterMap(headerRows, { isDml: true });
+                    }
+
+                    if ( workOrderUtil.packagingUomHierarchy ) {
+                        var obj = {};
+                        _.each(_.pluck(workOrderUtil.packagingUomHierarchy, 'Id'), function (itm){
+                            obj[itm] = ($('#'+itm).val()||0)
+                        });
+                        headerRows[0].Quantity_Value_Holder__c = JSON.stringify(obj);
+                    }
+
+                    headerDateFields = headerDateFields ? _.pluck(headerDateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+
+                    KenandyErp.BlockUI();
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.WorkOrderNewExtV2.save}',
+                        headerRows[0],
+                        headerDateFields,
+
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();
+
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message);
+                            } else {
+                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+
+                                if (result.success) {
+                                    KenandyErp.NavigateToSObject(result.additionalInfo, 'detail');
+                                }
+                                else {
+                                    KenandyErp.Messages(result.messages);
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                },
+                goback: function() {
+                    var self= this;
+                    KenandyErp.back(true,self.returnUrl);
+                }
+            };
+        }();
+    </script>
+
+   
+</apex:page>

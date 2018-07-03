@@ -1,0 +1,1462 @@
+<apex:page controller="SegmentHierarchyViewManageExt" docType="html-5.0" tabStyle="Hierarchy__c" >
+      <style>
+        .columnLeft {
+            width: 40%;
+            vertical-align: top;
+        }
+        .columnRight {
+            width: 60%;
+            vertical-align: top;
+        }
+       
+    </style>
+   
+    <c:KendoResources kendoVersion="2016.1.412" />
+    
+    
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+    <apex:includeScript value="{!URLFOR($Resource.jquery_ui_110,'/jquery-ui-1.10.0.custom/js/jquery-ui-1.10.0.custom.js')}" />
+	
+    <apex:form id="TheForm">
+       <apex:sectionHeader title="Manage Hierarchies" help="{!helpURL}"/>
+        <div id="ThePageBlockOne">
+        <apex:pageBlock >
+                 <div id="page-msg" class="page-message"></div>
+                 <apex:panelGrid columns="4" width="100%" styleClass="search-filters" columnClasses="column-width">
+                    <apex:outputPanel >
+                        <label class="company-label" for="HierarchyNameFilter">Hierarchy Name</label>
+                        <input id="HierarchyNameFilter" class="kendoWidgetSelector" />
+                    </apex:outputPanel>
+        
+                    <apex:outputPanel >
+                        <label class="company-label" for="HierarchyTypeFilter">Segment Type</label>
+                        <input id="HierarchyTypeFilter" class="kendoWidgetSelector" />
+                    </apex:outputPanel>
+                
+                     <apex:outputPanel >
+                        <label class="company-label" for="AsOfDateFilter">As Of Date</label>
+                        <input id="AsOfDateFilter" class="kendoWidgetSelector" />
+                    </apex:outputPanel>
+ 	                <apex:outputPanel >
+	                 	<button id="gridButton" class ="k-button kndy-btn" type="button">Fetch Hierarchy</button>								
+	               	</apex:outputPanel>
+                </apex:panelGrid>
+			<apex:pageBlockButtons location="top">
+                 <button id="actionButton" class ="k-button kndy-btn" type="button">Actions</button>								
+                 <button id="goBackButton" class ="k-button kndy-btn" type="button">Go Back</button>								
+			</apex:pageBlockButtons>
+
+        </apex:pageBlock>
+        </div>
+		<div  id="ThePageBlockTwo" >
+		
+        <apex:pageBlock >
+            <div id="pageblockTwo-msg" class="page-message"></div>
+	        <apex:pageblocksection >
+		        <apex:pageblocksectionitem dataStyle="width: 30%;">
+                 	<apex:panelGrid columns="1" width="100%" styleClass="search-filters" columnClasses="column-width">
+ 	             		<div id="pageblockTwoLeft-msg" class="grid-message"></div>
+	                    <apex:outputPanel >
+		                        <div id="SegmentNameFilterGroup">
+		                        <label class="company-label" for="SegmentNameFilter">Add Segment Values</label>
+		                        <input id="SegmentNameFilter" class="kendoWidgetSelector" />
+		                        </div>
+	                    </apex:outputPanel>
+            			<div id="SegmentGrid" ></div>
+                	</apex:panelGrid>
+		        </apex:pageblocksectionitem>
+		        <apex:pageblocksectionitem dataStyle="width: 70%;">
+                  	<apex:panelGrid columns="1" >
+ 	             		<div id="pageblockTwoRight-msg" class="grid-message"></div>
+            			<div id="treelist" ></div>
+                	</apex:panelGrid>
+		        </apex:pageblocksectionitem>
+	        </apex:pageblocksection>
+        </apex:pageBlock>
+		</div>
+
+ 		<div  id="ThePageBlockThree" width="80%">
+        <apex:pageBlock >
+            <div id="pageblockThree-msg" class="page-message"></div>
+			<div id="HierarchyGrid"/>
+			<apex:pageBlockButtons location="bottom">
+                 <button id="gridButtonOne" class ="k-button kndy-btn" type="button">Open Selected Hierarchy</button>								
+                 <button id="gridButtonTwo" class ="k-button kndy-btn" type="button">Create new Hierarchy</button>								
+			</apex:pageBlockButtons>
+        </apex:pageBlock>
+            
+		</div>
+	<c:busyWait includeScripts="false" />
+	<script type="text/javascript">
+		var asOfDateSer;
+		var ChangesAllowed = false;
+		var FutureHierarchyExists = false;
+		var asOfDateNewSer='';
+		var asOfDate;
+		var asOfDateChanged;
+		var HierarchyType = '';
+		var HierarchyName = '';
+		var WhereClause = '';
+		var ObjectName='';
+		var FieldSet='';
+		var sobjectList;
+		var HierField='';
+        var fieldInfoList = [];
+        var fieldInfoListLeft = [];
+        var dateFields = [];
+        var referenceFields = [];               
+        var NamespaceUU = '';
+        var treelist;
+        var recordsToBeInserted= [];
+        var recordsToBeUpdated= [];
+        var SegIdToTreelist= [];
+        var SegmentType='';
+        var SegmentGrid;
+        var HierarchyTypeDropdown;
+        var HierarchyNameDropdown;
+        var AsOfDateFilter;
+        $(document).on('KenandyErpReady', function(e) {
+        
+             NamespaceUU  = '{!NamespaceUU}';
+             $('#ThePageBlockTwo').hide();
+             $('#SegmentGrid').hide();
+             $('#SegmentSelector').hide();
+ 			 $('#ThePageBlockThree').show();
+ 			 $('#page-msg').hide();
+  			 $('#pageblockTwo-msg').hide();
+  			 $('#pageblockTwoLeft-msg').hide();
+  			 $('#pageblockTwoRight-msg').hide();
+  			 $('#pageblockThree-msg').hide();
+   			 $('#ThePageBlockOne').hide();
+			 $('#gridButton').hide();
+             
+            JournalEntryLinesManageUtils.init({
+              HeaderActions: null
+            });
+         
+        });
+
+        HierarchyTypeDropdown = $.fn.KendoDropDownListCustom($('#HierarchyTypeFilter'), { getPicklistValuesAction: '{!$RemoteAction.SegmentHierarchyViewManageExt.getHierarchyTypeList}'});       
+        HierarchyNameDropdown = $.fn.KendoAutoComplete($('#HierarchyNameFilter'), { lookupSearchAction: '{!$RemoteAction.SegmentHierarchyViewManageExt.lookupSearchFilterNoDuplicates}',dataValueField:'Name', referenceTo: 'Hierarchy__c', title: 'Hierarchy Name' });
+       	AsOfDateFilter = $.fn.KendoDateTimePicker($('#AsOfDateFilter'), {
+       	    value: KenandyErp.Now()
+       	});
+       	
+       	
+       	$('#AsOfDateFilter').bind('change',function(e) {//this is to bind change function on AsOfDateFilter of pageblockone
+					
+					var asOfDateNew = KenandyErp.ParseSFDCDateTime($('#AsOfDateFilter').val());
+					asOfDateNewSer = JSON.stringify(asOfDateNew);
+					Visualforce.remoting.Manager.invokeAction(
+			            '{!$RemoteAction.SegmentHierarchyViewManageExt.CheckHierarchyExists}',
+			         	 HierarchyName,
+			         	 HierarchyType,
+			         	 asOfDateNewSer,
+			            function (result, event) { 
+			            	if(result.AllDone == true) {	
+			            		/*if(result.FoundFutureHirec == true && asOfDateNew > asOfDate){																			
+			       					KenandyErp.Message('Hierarchy already exists with future. Please delete already existing future dated hierarchy to create new future dated hierarchy. The date changed can be used only to fetch hierarchy.' , KenandyErp.MessageType.Warning, document.getElementById("page-msg"));  
+			        				new MessagingObj(true,false,false,false,false);
+									ChangesAllowed = true;
+									asOfDateNewSer = JSON.stringify(asOfDateNew);
+									FutureHierarchyExists  = true;
+		        				}
+		        				else{*/
+									if(asOfDateNew < asOfDate || asOfDateNew > asOfDate ){
+				           				if(result.FoundPastHirec){
+					           				var r = confirm("You have chosen to change the As of Date .Hierarchy already exists before this Date. This date can be used  to Fetch hierarchy and no changes can be made to the existing hierarchy. ");
+											if (r == true) {
+												asOfDateNewSer = '';
+												asOfDate = KenandyErp.ParseSFDCDateTime($('#AsOfDateFilter').val());
+						  						asOfDateSer = JSON.stringify(asOfDate);
+												ChangesAllowed = true;
+											} else {
+												$('#AsOfDateFilter').val(KenandyErp.Now());
+												asOfDate = KenandyErp.ParseSFDCDateTime($('#AsOfDateFilter').val());
+						  						asOfDateSer = JSON.stringify(asOfDate);
+												ChangesAllowed = false;
+												asOfDateNewSer = '';
+							        			fetchHierarchy();						
+											}
+										}else if(result.FoundFutureHirec ){
+					           				var r = confirm("You have chosen to change the As of Date .Hierarchy already exists after this Date. This date can be used only to Fetch hierarchy and no changes can be made to the existing hierarchy. ");
+											if (r == true) {
+												asOfDateNewSer = JSON.stringify(asOfDateNew);
+												ChangesAllowed = true;
+											} else {
+												$('#AsOfDateFilter').val(KenandyErp.Now());
+												asOfDate = KenandyErp.ParseSFDCDateTime($('#AsOfDateFilter').val());
+							  					asOfDateSer = JSON.stringify(asOfDate);
+												ChangesAllowed = false;
+												asOfDateNewSer = '';
+							        			fetchHierarchy();						
+											}
+											
+										}else if(!result.FoundHirec){
+					           				var r = confirm("You have chosen to change the As of Date . This hierarchy will be effective from this date.");
+											
+											if (r == true) {
+												asOfDateNewSer = '';
+						  						asOfDateSer = JSON.stringify(asOfDateNew);
+						  						asOfDate=asOfDateNew;													
+											} else {
+												$('#AsOfDateFilter').val(KenandyErp.Now());
+											}
+										}
+										
+									}else{
+									
+									}
+		        				
+		        				
+		        					
+		   					}
+		   					else{
+		       					KenandyErp.Message('Error Occured while changing the Date. Please try again. ' , KenandyErp.MessageType.Error, document.getElementById("page-msg"));  
+		        				new MessagingObj(true,false,false,false,false);
+								$('#AsOfDateFilter').val(KenandyErp.Now());
+		        				fetchHierarchy();
+		   					
+		   					}
+			             },
+		             	{escape: false}
+		    		);
+					       		
+       	});
+       	
+       	
+       	$('#HierarchyTypeFilter').bind('change',function(e) {//this is to bind change function on HierarchyTypeFilter of pageblockone
+			
+			KenandyErp.BlockUI();
+			var dataItem = HierarchyTypeDropdown.dataItem();
+			HierarchyType = dataItem.text;
+			if(HierarchyType == null || HierarchyType == 'Select Segment Type'){
+				new MessagingObj(true,false,false,false,false);
+				KenandyErp.Message("Please select Segment type.", KenandyErp.MessageType.Error, document.getElementById("page-msg"));    			
+	        	$('#ThePageBlockTwo').hide();
+			}else{
+				new MessagingObj(false,false,false,false,false);
+				HierarchyName = $('#HierarchyNameFilter').val();
+				Visualforce.remoting.Manager.invokeAction(
+		            '{!$RemoteAction.SegmentHierarchyViewManageExt.checkHierarchyNameAvailability}',
+		         	 HierarchyName,
+		         	 HierarchyType,
+		            function (result, event) { 
+		            	if(result == true) {																					
+	       					KenandyErp.Message('Hierarchy already exists with the name ' + HierarchyName + '. Please enter another name.' , KenandyErp.MessageType.Error, document.getElementById("page-msg"));  
+	        				new MessagingObj(true,false,false,false,false);
+	        				$('#ThePageBlockTwo').hide();
+	        					
+	   					}
+	   					else{
+	        				new MessagingObj(false,false,false,false,false);
+	        				fetchHierarchy();
+	   					
+	   					}
+		             },
+	             	{escape: false}
+	    		);
+			 }
+			 KenandyErp.UnBlockUI();      	
+       	});
+       	
+       	$('#HierarchyNameFilter').bind('change',function(e) {//this is to bind change function on HierarchyNameFilter of pageblockone
+			
+        	KenandyErp.BlockUI();
+        	if(HierarchyName != $('#HierarchyNameFilter').val()){
+        	new MessagingObj(false,false,false,false,false);
+			HierarchyName = $('#HierarchyNameFilter').val();
+			HierarchyType = $('#HierarchyTypeFilter').val();
+			if(HierarchyType != null && HierarchyType != 'Select Segment Type'){
+				Visualforce.remoting.Manager.invokeAction(
+		            '{!$RemoteAction.SegmentHierarchyViewManageExt.checkHierarchyNameAvailability}',
+		         	 HierarchyName,
+		         	 HierarchyType,
+		            function (result, event) { 
+		            	if(result == true) {																					
+	       					KenandyErp.Message('Hierarchy already exists with the name ' + HierarchyName + '. Please enter another name.' , KenandyErp.MessageType.Error, document.getElementById("page-msg"));  
+	        				new MessagingObj(true,false,false,false,false);
+							if(HierarchyType == null || HierarchyType == 'Select Segment Type'){
+		        				$('#ThePageBlockTwo').hide();
+		        			}
+	   					}
+	   					else{
+	        				new MessagingObj(false,false,false,false,false);
+							if(HierarchyType != null && HierarchyType != 'Select Segment Type' && treelist == null){
+		        				fetchHierarchy();
+		        				$('#ThePageBlockTwo').show();
+		        			}
+		        			//else{
+		        			//	fetchHierarchy();		        				
+		        			
+		        			//}
+	   					
+	   					}
+		             },
+	             {escape: false}
+	    		);
+	    	}
+	    	}
+			KenandyErp.UnBlockUI();	
+       	});
+       	
+        var JournalEntryLinesManageUtils = function() {//this finction is called on page load
+
+            
+        	return {
+                HeaderActions: null,
+        	
+         	    init: function(args){
+                   this.RenderActionListDropdown();
+                   this.showPageblockThree();                  			                        	               
+        	    },
+                RenderActionListDropdown: function() {
+                    $('#actionButton').kendoDropDownButton({
+                        items: [
+                            /*{
+                                text: "Clear All Filters", 
+                                id: "secondItem",                               
+                                click: function(e) {
+																		
+									HierarchyTypeDropdown.text('Select Segment Type') ;
+									HierarchyTypeDropdown.value('Select Segment Type') ;
+									$('#HierarchyNameFilter').val('') ;
+					              	$('#ThePageBlockTwo').hide();
+					              	$('#ThePageBlockThree').hide();
+									$('#treelist').empty();
+ 									$('#SegmentGrid').empty();
+  									$('#HierarchyGrid').empty();
+ 									
+                                } 
+                            },*/
+                            {
+                               text: "Save Changes",
+//                             cssClass: "k-state-disabled",
+                               click: function(e) {
+	                                if(ChangesAllowed){
+		                 				KenandyErp.Message('As of Date is in past or future hierarchy exists. Please click cancel changes to cancel date changes and re-fetch hierarchy with current date', KenandyErp.MessageType.Error, document.getElementById("page-msg"));  
+		    							new MessagingObj(true,false,false,false,false);
+	                                }else{
+	                              		KenandyErp.BlockUI();
+	                              		saveChangesToTheDatabase();
+	                               		KenandyErp.UnBlockUI()
+	                               	}
+                               }
+                                
+                            },                                                        
+                            {
+                               text: "Cancel Changes",
+//                               cssClass: "k-state-disabled",
+                               click: function(e) {
+		               				KenandyErp.BlockUI();
+		               				if(asOfDateNewSer != ''){
+		               				asOfDateNewSer = ''
+		               				}
+		               				$('#AsOfDateFilter').val(KenandyErp.Now());
+									var asOfDate = KenandyErp.ParseSFDCDateTime($('#AsOfDateFilter').val());		               				
+  									asOfDateSer = JSON.stringify(asOfDate);
+									ChangesAllowed = false;
+		               				fetchHierarchy();
+									KenandyErp.UnBlockUI();                               
+                                }
+                             },
+                             {
+                               text: "Delete Hierarchy",
+                                 click: function(e) {
+		               				KenandyErp.BlockUI();
+		               				var r = confirm("Are you sure you want to Delete the hierarchy Named " + HierarchyName);
+									if (r == true) {
+									    DeleteHierarchy();
+									} else {
+		               					fetchHierarchy();
+									}
+									KenandyErp.UnBlockUI();                               
+                                }
+                              }
+                        ]
+                        
+                        
+                    });
+			var actionButton =  $('#actionButton').data("kendoDropDownButton");
+	              console.log('actionButton');
+	              console.log(actionButton.options);
+				//var items = $("#actionButton").find(".k-link:contains('Clear')").parent();
+	              actionButton.enable(actionButton.options.items[2],false);
+              },                              
+            showPageblockThree: function(){// showing pageblock three at pageload
+				$('#ThePageBlockThree').show();
+	            $('#ThePageBlockTwo, #ThePageBlockOne').hide();
+	            //$('#ThePageBlockOne').hide();
+				var lookupSearchFilters = [];
+				var fieldList = JSONUtils.Parse('{!hierarchyFieldList}');
+				var HierarchyGrid = $('#HierarchyGrid').kendoGridActionList({
+				namespace: '{!NamespaceUU}', 
+	         			config: new ConfigObj('HierarchyGrid', '', '', '', '', true, false, true), 
+				fieldList: JSON.stringify(fieldList),
+				lookupSearchAction: '{!$RemoteAction.SegmentHierarchyViewManageExt.lookupSearchFilter}', 
+				getActionListFunction: FetchHierarchyList,
+				lookupSearchFilters: lookupSearchFilters,
+				filterable: true,
+				selectable: 'row'
+		   		}).data('kendoGridActionList');
+
+			   
+			   $('#HierarchyGrid').bind('click',function(e) {//binding HierarchyGrid click
+					
+					KenandyErp.BlockUI();
+					console.log('clicked ' + e); 
+					console.log('e data ');
+					console.log(e.target.innerText);
+					HierarchyName = e.target.innerText;
+					var hierarchyGridData = $("#HierarchyGrid").data("kendoGridActionList");
+					var selectedItem = hierarchyGridData.dataItem(hierarchyGridData.select());
+					HierarchyName =  selectedItem.HierarchyName;
+					HierarchyType = selectedItem.SegmentType;
+					console.log(selectedItem.HierarchyName);				   
+					asOfDate = KenandyErp.ParseSFDCDateTime(KenandyErp.Now());
+					asOfDateSer = JSON.stringify(asOfDate);
+					$('#HierarchyNameFilter').val(selectedItem.HierarchyName);
+					$('#AsOfDateFilter').val(KenandyErp.Now());
+									
+					HierarchyTypeDropdown.select(function(dataItem) {
+    					return dataItem.text === selectedItem.SegmentType;
+					});
+					HierarchyTypeDropdown.enable(false);
+					var autocomplete = $("#HierarchyNameFilter").data("kendoAutoComplete");
+					autocomplete.enable(false);
+					$('#gridButton').show();
+					KenandyErp.UnBlockUI();
+					
+			   });
+              
+              
+              
+              }
+              };
+            
+            }();
+			function DeleteHierarchy(){
+				
+	    		new MessagingObj(false,false,false,false,false);
+				Visualforce.remoting.Manager.invokeAction(
+		             '{!$RemoteAction.SegmentHierarchyViewManageExt.DeleteHierarchy}',
+		             HierarchyName,
+		          	 HierarchyType,
+		          	 asOfDateSer,
+		             function (result, event) {
+		             console.log('--------'); 
+		             console.log(result);
+		             	if(result.AllDone == true) {
+	            			var message = 	result.Messages;		
+	                 		KenandyErp.Message(message, KenandyErp.MessageType.Info, document.getElementById("page-msg"));  
+			               	if(message != null && message != ''){
+	    						new MessagingObj(true,false,false,false,false);
+			               	}
+	                     	
+				        	$('#ThePageBlockTwo').hide();
+							$('#ThePageBlockThree').show();
+				        	$('#ThePageBlockOne').hide();
+				        	HierarchyType='';
+							var lookupSearchFilters = [];
+							var fieldList = JSONUtils.Parse('{!hierarchyFieldList}');
+							var HierarchyGrid = $('#HierarchyGrid').kendoGridActionList({
+							namespace: '{!NamespaceUU}', 
+				         			config: new ConfigObj('HierarchyGrid', '', '', '', '', true, false, true), 
+							fieldList: JSON.stringify(fieldList),
+							lookupSearchAction: '{!$RemoteAction.SegmentHierarchyViewManageExt.lookupSearchFilter}', 
+							getActionListFunction: FetchHierarchyList,
+							lookupSearchFilters: lookupSearchFilters,
+							filterable: true,
+							selectable: 'row'
+					   		}).data('kendoGridActionList');
+	            		}
+	      				else {
+	                 		KenandyErp.Message(result.Messages, KenandyErp.MessageType.Error, document.getElementById("page-msg"));  
+			               	if(result.Messages != null && result.Messages != ''){
+	    									new MessagingObj(true,false,false,false,false);
+			               	}
+			             }      
+			         },
+			         {escape: false}
+			    );
+			
+			
+			}           
+            function saveChangesToTheDatabase(){//this function is called when save Changes actionbutton is clicked
+				console.log('inside save changes to database function');
+	    		new MessagingObj(false,false,false,false,false);
+				Visualforce.remoting.Manager.invokeAction(
+		             '{!$RemoteAction.SegmentHierarchyViewManageExt.SaveResult}',
+		             JSON.stringify(recordsToBeInserted),
+		          	 JSON.stringify(recordsToBeUpdated),
+		             function (result, event) {
+		             console.log('--------'); 
+		             console.log(result);
+		             	if(result.AllDone == true) {
+		             		console.log('iski  maaki');
+		             		console.log(result);																					
+	            			var message = 	result.Messages;		
+	                     	fetchHierarchy();
+	                 		KenandyErp.Message(message, KenandyErp.MessageType.Info, document.getElementById("page-msg"));  
+			               	if(message != null && message != ''){
+	    						new MessagingObj(true,false,false,false,false);
+			               	}
+	                     	
+	            		}
+	      				else {
+	                 		KenandyErp.Message(result.Messages, KenandyErp.MessageType.Error, document.getElementById("page-msg"));  
+			               	if(result.Messages != null && result.Messages != ''){
+	    									new MessagingObj(true,false,false,false,false);
+			               	}
+			             }      
+	        			 recordsToBeInserted=[];
+	        			 recordsToBeUpdated=[];
+			         },
+			         {escape: false}
+			    );
+                               	            
+            }
+            var getDataSource = function() {
+                
+                var dataSource = new kendo.data.TreeListDataSource({
+                    
+                    transport:{
+                        read:  function (options){
+                            var promise = getTreeViewData();
+                            promise.done(function(result, event){
+                                if (event.type == 'exception') {
+                                    
+                                    // trigger onreadfailure
+                                    $('#treelist').trigger({
+                                        type: "OnReadFailure",
+                                        result: result, 
+                                        event: event 
+                                    }); 
+                                    
+                                } else {
+                                    options.success(result.records);
+                                    
+                                    // trigger onreadsuccess
+                                    $('#treelist').trigger({
+                                        type: "OnReadSuccess",
+                                        result: result, 
+                                        event: event 
+                                    });
+                                }
+                            });
+                            
+                        }
+                    },
+                    schema: {
+                        model: getModel(),
+                        parse: function (response) {
+                            $.each(response, function (idx, item) {
+                                
+                                if(item.parentIdHier === undefined){
+                                    item.parentIdHier = null;
+                                }          
+                                item = Serializer.IncludeNulls(item, { fields: referenceFields });
+                                item = Serializer.ConvertFromSFDCDate(item, { dateFields: dateFields });
+                            });
+                            
+                            return response;
+                        },    
+                        expanded: true
+                    }
+                });
+                
+                return dataSource;
+           	 };      
+                
+
+			 function formatDate(dateip) {
+			      if (dateip != null) 
+			      {
+			
+			      var amt = $('<div/>').kendoOutputText({
+			        type: 'date',
+			        scale: 2,
+			        value: dateip
+			      });
+			
+			      }
+			      return dateip;
+			 }   
+				
+             function getModel() {
+                 var model = {};
+                 var sobj  = {};
+                 model.id = "HierRec.Id";
+                
+                 var fields = KenandyErp.KendoGridOptions.GetFields(fieldInfoList);
+                 fields.parentId = { field: 'parentIdHier',  nullable: true };
+                 model.fields = fields;
+                 model.expanded = true;
+                 console.log(model);
+                 return model;
+             }       
+             function getColumns() {
+                 var columns = [];
+                 var buttons = [];
+                 buttons.push({name:'destroy',text:'Remove from Hierarchy'});
+     
+                 columns = KenandyErp.KendoGridOptions.GetColumns(fieldInfoList, {
+                             lookupSearchAction: '{!$RemoteAction.SegmentHierarchyViewManageExt.lookupSearchFilter}',
+                             lookupSearchFilters: []
+                           });
+                 
+                 //Add Hyperlink for Name.
+                 for(var i=0;i<columns.length;i++) {
+                     
+                      if (columns[i].field == 'HierRec.Name') {
+                         columns[i].template = function(data) {
+                             if (data['HierRec.Name']) {
+                                 return '<span><a href="/' + data['HierRec.Id'] + '">' + data['HierRec.Name'] + '</a></span>';
+                             }
+                             else {
+                                 return '';
+                             }
+                         };
+                     }
+     
+                     //TODO:Check if we can exclude filters on system dates here.
+                     if (!columns[i].hidden) {
+                         columns[i].filterable = true;
+                         columns[i].width  = 200;
+                     }
+                 }
+                    //Commenting out edit/add child capacity as they are not compatible with current kendo versions.
+                  var columnObj= {};   
+                  
+                  columnObj.title = 'Actions';
+                  columnObj.command=buttons;
+                  columnObj.hidden=false;
+                  columnObj.width  = 200;
+                  columns[1].hidden = true;
+                  columns.push(columnObj);   
+                  
+                  return columns;
+             }    
+          
+        var getTreeViewData = function() {
+ 			
+	        new MessagingObj(false,false,false,false,false);
+            var deferred = $.Deferred();
+            var invalidIdIndex = [];    
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.SegmentHierarchyViewManageExt.treeListRead}',asOfDateSer, asOfDateNewSer,ObjectName,FieldSet,WhereClause,sobjectList,
+                HierField,HierarchyType,HierarchyName,
+                function (result, event) {
+                    if(result.hasExceptions == true){
+	        			new MessagingObj(false,true,false,false,false);
+	                	KenandyErp.Message(result.message, KenandyErp.MessageType.Error, document.getElementById("pageblockTwo-msg"));
+                    }
+                    else
+                    {
+                         for(i=0;i<result.records.length;i++){
+                          if(result.records[i].isInvalid == true){
+                            KenandyErp.Message(result.records[i].Message, KenandyErp.MessageType.Warning, document.getElementById("pageblockTwo-msg"));  
+ 	        				new MessagingObj(false,true,false,false,false);
+                            invalidIdIndex.push(i);
+                          }                    
+                        }
+                        for(i=0;i<invalidIdIndex.length;i++){
+                           result.records.splice(invalidIdIndex[i],1);     
+                        }                                             
+                    }
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+            );
+
+            return deferred.promise();
+        };
+ 
+ 
+       var getFieldInfoListData = function() {
+			
+             var deferred = $.Deferred();
+             Visualforce.remoting.Manager.invokeAction(
+                 '{!$RemoteAction.SegmentHierarchyViewManageExt.getFieldInfoList}',ObjectName,FieldSet,sobjectList,NamespaceUU,
+                 function (result, event) {
+                     deferred.resolve(result, event); 
+                     
+                 },
+                 {escape: false}
+             );
+             return deferred.promise();
+       }
+       
+		function getTreeList(){
+			
+	        new MessagingObj(false,false,false,false,false);
+            $('#treelist').empty();
+            $('#treelist').show();
+			
+			var fieldInfoListPromise = getFieldInfoListData();
+			fieldInfoListPromise.done(function(result, event){
+	            if(result.hasExceptions == true){   
+                     KenandyErp.Message(result.Messages, KenandyErp.MessageType.Error, document.getElementById("pageblockTwo-msg"));  
+	        		 new MessagingObj(false,true,false,false,false);
+	            }
+	            else{
+	                fieldInfoList=JSON.parse(result.records);
+	                dateFields = KenandyErp.KendoGridOptions.GetDateFields(fieldInfoList);
+	                referenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(fieldInfoList);    
+	                
+	                if(treelist != null){
+	                	try{
+	                		treelist.destroy();
+	                	}catch(ex){
+	                		console.log("Broken");
+	                		console.log(ex);
+	                		
+	                	}
+	                	
+	                	
+	                	treelist = null;
+	                }                
+	                treelist = $("#treelist").kendoTreeList({
+	                    dataSource: getDataSource(),
+	                    filterable: true,
+	                    resizable: true,
+	                    
+	                    editable: {
+	                      move: true
+	                    },
+	                    sortable: false,  
+	                    columnMenu: true,
+	                    save:function(e){
+},
+     				drop :function(e) {
+                        
+			            if(ChangesAllowed){
+							KenandyErp.Message('As of Date is in past or future hierarchy exists. Please click cancel changes to cancel date changes and re-fetch hierarchy with current date', KenandyErp.MessageType.Error, document.getElementById("page-msg"));  
+							new MessagingObj(true,false,false,false,false);
+							e.valid = false;
+			            }else{
+	 	        			new MessagingObj(false,false,false,false,false);
+	                        console.log("e.source");
+							console.log(e.source);
+							console.log("e.destination");
+							console.log(e.destination);
+							console.log("e.valid");
+							console.log(e.valid);
+							var destination;
+							var destinationId;
+							
+							if(!e.destination){
+	                            //e.setValid(false);
+								destination = null;	
+								destinationId = null;	
+							}
+							else{ 
+							destination = e.destination.HierRec;
+							destinationId = e.destination.HierRec.Id;	
+							}
+							var self = this;
+	                        Visualforce.remoting.Manager.invokeAction(
+					             '{!$RemoteAction.SegmentHierarchyViewManageExt.EventDragAndDrop}',
+					             asOfDateSer,
+					             JSON.stringify(e.source.HierRec),
+					             e.source.HierRec.Id,
+					             JSON.stringify(destination),
+					             destinationId,
+					             HierarchyType,
+					             HierarchyName,
+					             function (result, event) { 
+	               					if (result.AllDone == true) {
+						               	if(result.HierarchyRecToBeInserted != null){
+                                            //KenandyErp.CleanNamespace(result.HierarchyRecToBeInserted, '{!NamespaceUU}');
+
+											var found = false;
+											for(var i = 0; i < recordsToBeInserted.length; i++) {
+												var obj = recordsToBeInserted[i].map(function(items) {return items[NamespaceUU+'CodeId__c'];});
+                                                var OBjex = recordsToBeInserted[i].map(function(items) {return items[NamespaceUU+'Parent_Code__c'];});
+											    if (result.HierarchyRecToBeInserted.length > 0 && obj.indexOf(result.HierarchyRecToBeInserted[0][NamespaceUU+'CodeId__c'] ) == 0 ) // == result.HierarchyRecToBeInserted[0].CodeId__c) {
+											    {   if(OBjex && OBjex.indexOf(result.HierarchyRecToBeInserted[0][NamespaceUU+'Parent_Code__c'] ) == 0) 
+                                                    	{found = true;}
+                                                 	if(!OBjex)
+                                                    	{found = true;}
+													if(found) {
+														recordsToBeInserted.splice(i, 1);
+													}
+											    }	
+											}						 				
+						               	}
+						               	recordsToBeInserted.push(result.HierarchyRecToBeInserted);
+						               	if(result.HierarchyRecToBeUpdated != null){
+                                            //KenandyErp.CleanNamespace(result.HierarchyRecToBeUpdated, '{!NamespaceUU}');
+											var found = false;
+											for(var i = 0; i < recordsToBeUpdated.length; i++) {
+												var obj = recordsToBeUpdated[i].map(function(items) {return items[NamespaceUU+'CodeId__c'];});						
+                                                var OBjex = recordsToBeUpdated[i].map(function(items) {return items[NamespaceUU+'Parent_Code__c'];});
+											    if (result.HierarchyRecToBeUpdated.length > 0 && obj.indexOf(result.HierarchyRecToBeUpdated[0][NamespaceUU+'CodeId__c'] ) == 0)
+											    {   if(OBjex && OBjex.indexOf(result.HierarchyRecToBeUpdated[0][NamespaceUU+'Parent_Code__c'] ) == 0) 
+                                                    	{found = true;}
+                                                 	if(!OBjex)
+                                                    	{found = true;}
+													if(found) {
+														recordsToBeUpdated.splice(i, 1);
+													}
+											    }	
+											}						 				
+						               	}
+						               	recordsToBeUpdated.push(result.HierarchyRecToBeUpdated);
+										console.log("recordsToBeInserted");
+										console.log(recordsToBeInserted);
+										console.log("recordsToBeUpdated");
+										console.log(recordsToBeUpdated);
+						               	if(result.Messages != null && result.Messages != ''){
+	                   						KenandyErp.Message(result.Messages, KenandyErp.MessageType.Warning, document.getElementById("pageblockTwo-msg"));  
+	        								new MessagingObj(false,true,false,false,false);
+						               	}
+						            }
+	               					else {
+	 									var grid = self.grid;
+	 									var treelisttemp = $("#treelist").data("kendoTreeList").dataSource.read();
+	 									var treelist = $("#treelist").data("kendoTreeList");
+			               				if(treelist!= null){
+						               		treelist.refresh();}
+	                            		KenandyErp.Message(result.Messages, KenandyErp.MessageType.Error, document.getElementById("pageblockTwo-msg"));  
+						               	if(result.Messages != null && result.Messages != ''){
+	        								new MessagingObj(false,true,false,false,false);
+						               	
+						               	}
+						               	
+						               }
+						             },
+						             {escape: false}
+	                         );
+	            	}
+   				},
+                remove :function(e){
+					
+		            if(ChangesAllowed){
+						KenandyErp.Message('As of Date is in past or future hierarchy exists. Please click cancel changes to cancel date changes and re-fetch hierarchy with current date', KenandyErp.MessageType.Error, document.getElementById("page-msg"));  
+						new MessagingObj(true,false,false,false,false);
+						e.preventDefault();
+		            }else{
+	       				var r = confirm("You have chosen to delete segment values from the hierarchy. The selected segment and its children will be end dated with As of date. All Do you want to proceed? ");
+						if (r == true) {
+			        		new MessagingObj(false,false,false,false,false);
+							var self = this;
+							var level = this.dataSource.level(e.model);
+							var IdList=[];
+					        var dataItem = this.dataItem(e.model);
+					        var children = this.dataSource.childNodes(dataItem);
+					        //console.log(children[0].id);
+					        for(var i=0; i< children.length; i++){
+						        /*while(children[i] && children[i].id){
+						          console.log("child is,");
+						          if(children[i] && children[i].id){
+						          	console.log(children[i].id);
+						          	console.log(children[i].HierRec);
+						          	IdList.push(children[i].id)
+						          }*/
+						          var nextchildren = this.dataSource.childNodes(children[i]);
+						          if(nextchildren.length > 0){
+						          	for(var j=0;j< nextchildren.length;j++){
+						          	children.push(nextchildren[j]);}
+						          }else {
+						          	continue;
+						          }
+						        //}
+					        }
+					        for(var i=0; i< children.length; i++){
+					        	IdList.push(children[i].id);
+					        }
+					            
+		            
+				            Visualforce.remoting.Manager.invokeAction(
+				             '{!$RemoteAction.SegmentHierarchyViewManageExt.EventDeleteRow}',
+				             asOfDateSer,
+				             JSON.stringify(e.model.HierRec),
+				             e.model.HierRec.Id,
+				             HierarchyType,
+				             HierarchyName,
+				             sobjectList,
+				             IdList,
+				             function (result, event) { 
+				               if (result.AllDone == true) {	
+					               	/*if(result.HierarchyRecToBeUpdated != null){
+										var found = false;
+										for(var i = 0; i < recordsToBeUpdated.length; i++) {
+											var obj = recordsToBeUpdated[i].map(function(items) {return items.CodeId__c;});						
+										    if (result.HierarchyRecToBeUpdated.length > 0 && obj.indexOf(result.HierarchyRecToBeUpdated[0].CodeId__c) == 0) // obj == result.HierarchyRecToBeUpdated[0].CodeId__c) {
+										    {    found = true;
+												if(found) {
+													recordsToBeUpdated.splice(i, 1);
+												}
+										    }	
+										}						 				
+					               	}
+					               	if(result.HierarchyRecToBeUpdated != null){
+										var found = false;
+										for(var i = 0; i < recordsToBeInserted.length; i++) {
+											var obj = recordsToBeInserted[i].map(function(items) {return items.CodeId__c;});						
+										    if (result.HierarchyRecToBeUpdated.length > 0 && obj.indexOf(result.HierarchyRecToBeUpdated[0].CodeId__c) == 0) // obj == result.HierarchyRecToBeUpdated[0].CodeId__c) {
+										    {    found = true;
+												if(found) {
+													recordsToBeInserted.splice(i, 1);
+												}
+										    }	
+										}						 				
+					               	}
+							        recordsToBeUpdated.push(result.HierarchyRecToBeUpdated);*/
+			                        fetchHierarchy();
+			                        KenandyErp.Message('Selected segment value was removed from hierarchy successfully.', KenandyErp.MessageType.Warning, document.getElementById("page-msg"));  
+										new MessagingObj(true,false,false,false,false);
+				               	
+				               }
+		               		  else {
+			                        fetchHierarchy();
+		                        KenandyErp.Message(result.Messages, KenandyErp.MessageType.Warning, document.getElementById("pageblockTwo-msg"));  
+				               	if(result.Messages != null && result.Messages != ''){
+		        					new MessagingObj(false,true,false,false,false);
+				               	}
+				               	
+				               }
+				             },
+				             {escape: false}
+				         );
+						} else {
+			        		fetchHierarchy();
+						}
+					}
+            	},
+                columns: getColumns()
+                }).data('kendoTreeList');                                                                  
+                }
+				});
+		}
+		
+        function getTreeListLeft(){
+        	
+             if(SegmentGrid != null){
+             	try{
+                 	//SegmentGrid.dataSource.data([]);
+             		SegmentGrid.destroy();
+             		$('#SegmentGrid').empty();
+             	}catch(ex){
+             		console.log("Broken");
+             		console.log(ex);
+             		
+             	}
+             	
+             	
+             	//SegmentGrid = null;
+             }                
+        		
+					//SegmentGrid.dataSource.read();        		
+					var lookupSearchFilters = [];
+					var fieldList = JSONUtils.Parse('{!segmentFieldList}');
+					SegmentGrid = $('#SegmentGrid').kendoGridActionList({
+						namespace: '{!NamespaceUU}', 
+			         	config: new ConfigObj('SegmentGrid', '', '', '', '', true, true, true), 
+						fieldList: JSON.stringify(fieldList),
+						lookupSearchAction: '{!$RemoteAction.SegmentHierarchyViewManageExt.lookupSearchFilter}', 
+						getActionListFunction: FetchSegmentList,
+						lookupSearchFilters: lookupSearchFilters,
+		            	toolbarButtons: [ 
+		                	{ name: "grid-save-custom-command", template: "<a id='btnaddhierarchy' class='k-button' title='Add to Hierarchy'><span class='btn grid-save-custom-command'>Add to Hierarchy</span></a>"}
+		            	],
+						filterable: true
+				   }).data('kendoGridActionList');
+				
+		        	SegmentGrid.wrapper.off().on("click", ".grid-save-custom-command", $.proxy(addSegment, { grid: SegmentGrid, options: { } }));        	
+
+
+        }
+        var addSegment = function(e){
+        	$('#btnaddhierarchy').addClass('k-state-disabled');
+        	$('#btnaddhierarchy').css('pointer-events','none');
+        	var sgrid = this.grid;
+			Visualforce.remoting.Manager.invokeAction(
+	            '{!$RemoteAction.SegmentHierarchyViewManageExt.CheckHierarchyExists}',
+	         	 HierarchyName,
+	         	 HierarchyType,
+	         	 asOfDateSer,
+	            function (result, event) { 
+	            	if(result.AllDone == true) {	
+         				if(result.FoundFutureHirec ){
+							ChangesAllowed = true;
+						}
+        					
+			            if(ChangesAllowed){
+							KenandyErp.Message('Hierarchy Already exists in future. You cannot make changes before its start date. ', KenandyErp.MessageType.Error, document.getElementById("page-msg"));  
+							new MessagingObj(true,false,false,false,false);
+			            }else{
+				            KenandyErp.BlockUI();
+				            console.log('inside add segment');
+				 	        new MessagingObj(false,false,false,false,false);
+				       	   //var grid = this.grid;
+						   var currentData = sgrid.dataSource.data();
+						   SegIdToTreelist=[];
+						   
+				           $.each(currentData, function(index, item) {
+				           		if(item.IsSelected__custom == true) {
+				           			SegIdToTreelist.push(item.RecId);
+				           		}
+					   
+				           });
+			        
+				  			console.log('SegIdToTreelist');
+							console.log(SegIdToTreelist);
+							//HierarchyName = $('#HierarchyNameFilter').val() ;
+					        Visualforce.remoting.Manager.invokeAction(
+					            '{!$RemoteAction.SegmentHierarchyViewManageExt.addSegmentToTreelist}',
+					             JSON.stringify(SegIdToTreelist),
+					         	 HierarchyName,
+					         	 asOfDateSer,
+					         	 HierarchyType,
+					            function (result, event) { 
+					            	if(result.AllDone == true) {																					
+								        console.log('id returned:' + result.segIdsAdded);
+								        fetchHierarchy();
+				       					KenandyErp.Message(result.Messages, KenandyErp.MessageType.Info, document.getElementById("page-msg"));  
+						               	if(result.Messages != null && result.Messages != ''){
+				        					new MessagingObj(true,false,false,false,false);
+						               	}
+										HierarchyTypeDropdown.enable(false);
+					 					var autocomplete = $("#HierarchyNameFilter").data("kendoAutoComplete");
+										autocomplete.enable(false);
+										$('#gridButton').show();
+										
+				   					}
+									else {
+										var grid = self.grid;
+										var treelisttemp = $("#treelist").data("kendoTreeList").dataSource.read();
+										var treelist = $("#treelist").data("kendoTreeList");
+						          		if(treelist!= null){
+					               			treelist.refresh();}
+				  						if(SegmentGrid!= null){
+				  							//SegmentGrid.refresh();
+				  							}
+					               		KenandyErp.Message(result.Messages, KenandyErp.MessageType.Error, document.getElementById("page-msg"));  
+						               	if(result.Messages != null && result.Messages != ''){
+				        					new MessagingObj(true,false,false,false,false);
+						               	
+						               	}
+					               }      
+					             },
+				             {escape: false}
+				    	);
+			        
+			       			KenandyErp.UnBlockUI();
+			       		}
+   					}
+   					else{
+       					KenandyErp.Message('Error Occured while changing the Date. Please try again. ' , KenandyErp.MessageType.Error, document.getElementById("page-msg"));  
+        				new MessagingObj(true,false,false,false,false);
+						$('#AsOfDateFilter').val(KenandyErp.Now());
+        				fetchHierarchy();
+   					
+   					}
+	             },
+             	{escape: false}
+    		);
+					       		
+        };
+					
+ 	
+ 	function fetchHierarchy(){
+		
+        new MessagingObj(false,false,false,false,false);
+        recordsToBeInserted= [];
+        recordsToBeUpdated= [];
+        var SegIdToTreelist= [];
+		
+	    Visualforce.remoting.Manager.invokeAction(
+	        '{!$RemoteAction.SegmentHierarchyViewManageExt.FetchHierarchy}',
+	        HierarchyName,
+	        HierarchyType,
+	        asOfDateSer,
+	        asOfDateNewSer,
+	        function (result, event) {
+	            
+	            if (event.type == 'exception') {
+        				new MessagingObj(true,false,false,false,false);
+	                	KenandyErp.Message(event.message, KenandyErp.MessageType.Error, document.getElementById("page-msg"));
+	            } else {
+                	if (result.showBlockTwo) {
+						$('#ThePageBlockTwo').show();
+						$('#ThePageBlockOne').show();
+	            		$('#ThePageBlockThree').hide();
+		        		$("#goBackButton").show();
+			            //enabling save and cancel changes
+//			            $('#actionButton').parent().find('li.k-state-disabled').removeClass('k-state-disabled');
+			            
+                    	sobjectList=result.sObjectListJSON;
+  	        			KenandyErp.Message(result.Message, KenandyErp.MessageType.Warning, document.getElementById("page-msg"));    			
+			            if(result.Message != '')
+        					new MessagingObj(true,false,false,false,false);
+   
+  						getTreeList();
+  						if(HierarchyType == 'Cross Segment'){
+						    $('#SegmentNameFilterGroup').show();
+							$('#SegmentSelector').show();
+						    $('#SegmentGrid').hide();
+						    $('#SegmentNameFilter').val('Select Segment');
+						    
+				               						
+        					var dropDownList = $("#SegmentNameFilter").kendoDropDownList({
+					        	dataValueField: 'value',
+					        	dataTextField: 'text',
+					        	change: function(){
+					        		
+					        		KenandyErp.BlockUI();
+					        		if($('#SegmentNameFilter').val() != 'Select Segment'){
+						        		$('#SegmentGrid').show();
+						        		SegmentType = $('#SegmentNameFilter').val();
+						        		getTreeListLeft(); 
+					        		}             						
+					        		KenandyErp.UnBlockUI();
+					        	},
+														        	
+					        	dataSource: {
+					        		transport: {
+					        			read: function(readOptions) {
+									    	
+							            	Visualforce.remoting.Manager.invokeAction(
+					    						'{!$RemoteAction.SegmentHierarchyViewManageExt.getSegmentValueList}',
+					    						HierarchyType,
+							                	function (result, event) {
+								                    if (event.type == 'exception') {
+        												new MessagingObj(true,false,false,false,false);
+	                									KenandyErp.Message(event.message, KenandyErp.MessageType.Error, document.getElementById("page-msg"));
+								                   	 } else {
+								                 	       readOptions.success(result);
+								                	 }
+							                	},
+							                		{escape: false}
+							                );
+							            }
+					        		}
+					        	}
+				        	}).data('kendoDropDownList');
+				               						
+				               						
+       					}
+      					else{
+      					
+					  		$('#SegmentGrid').show();
+					  		var dataItem = HierarchyTypeDropdown.dataItem();
+							SegmentType = dataItem.value;
+							//SegmentType = HierarchyType;
+      						getTreeListLeft(); 
+						    $('#SegmentNameFilterGroup').hide();
+      						             						
+      					}
+
+					}
+                    else {
+                    	
+                    	if(result.showBlockThree){                    	
+ 							$('#ThePageBlockThree').show();
+			                $('#ThePageBlockTwo').hide();
+			                $('#ThePageBlockOne').hide();
+							var lookupSearchFilters = [];
+							var fieldList = JSONUtils.Parse('{!hierarchyFieldList}');
+							var HierarchyGrid = $('#HierarchyGrid').kendoGridActionList({
+								namespace: '{!NamespaceUU}', 
+		            			config: new ConfigObj('HierarchyGrid', '', '', '', '', true, false, true), 
+								fieldList: JSON.stringify(fieldList),
+								lookupSearchAction: '{!$RemoteAction.SegmentHierarchyViewManageExt.lookupSearchFilter}', 
+								getActionListFunction: FetchHierarchyList,
+								lookupSearchFilters: lookupSearchFilters,
+								filterable: true
+						   }).data('kendoGridActionList');
+  	        				KenandyErp.Message(result.Message, KenandyErp.MessageType.Warning, document.getElementById("page-msg"));    			
+			            	if(result.Message != '')
+        						new MessagingObj(true,false,false,false,false);
+   
+						   
+						   $('#HierarchyGrid').bind('click',function(e) {
+							   KenandyErp.BlockUI();
+							   console.log('clicked ' + e); 
+							   console.log('e data ');
+							   console.log(e.target.innerText);
+							   HierarchyName = e.target.innerText;
+							   $('#HierarchyNameFilter').val(HierarchyName);
+							   KenandyErp.UnBlockUI();
+						   });
+
+                      	}
+                      }
+                  }
+				},
+				{escape: false}
+		);
+ 	}
+       	var gridButton = $("#gridButton").kendoButton({
+		        click: function getSelectHierarchy(e){
+		        	
+		        	KenandyErp.BlockUI();
+		        	console.log(e);
+		        	$('#ThePageBlockTwo').show();
+					$('#ThePageBlockThree').hide();
+		        	$("#goBackButton").show();
+		        	fetchHierarchy();
+		        	KenandyErp.UnBlockUI();
+		        }
+ 			}).data("kendoButton");
+  
+       	var goBackButton = $("#goBackButton").kendoButton({
+		        click: function getSelectHierarchy(e){
+        			KenandyErp.BlockUI();
+        			HierarchyName =  '';
+					$('#HierarchyNameFilter').val('');
+					HierarchyType = '';
+ 					$('#HierarchyTypeFilter').val('');
+        			new MessagingObj(false,false,false,false,false);
+		        	HierarchyType = '';
+					ChangesAllowed = false;
+		        	
+		        	$('#ThePageBlockTwo').hide();
+					$('#ThePageBlockThree').show();
+		        	$('#ThePageBlockOne').hide();
+					var lookupSearchFilters = [];
+					var fieldList = JSONUtils.Parse('{!hierarchyFieldList}');
+					var HierarchyGrid = $('#HierarchyGrid').kendoGridActionList({
+					namespace: '{!NamespaceUU}', 
+		         			config: new ConfigObj('HierarchyGrid', '', '', '', '', true, false, true), 
+					fieldList: JSON.stringify(fieldList),
+					lookupSearchAction: '{!$RemoteAction.SegmentHierarchyViewManageExt.lookupSearchFilter}', 
+					getActionListFunction: FetchHierarchyList,
+					lookupSearchFilters: lookupSearchFilters,
+					filterable: true,
+					selectable: 'row'
+			   		}).data('kendoGridActionList');
+					KenandyErp.UnBlockUI();
+		        }
+ 			}).data("kendoButton");
+
+       	var gridButtonOne = $("#gridButtonOne").kendoButton({
+		        click: function getSelectHierarchy(e){
+		        	
+		        	if(HierarchyName == ''){
+	        			KenandyErp.Message('please select hierarchy to open.', KenandyErp.MessageType.Error, document.getElementById("page-msg"));    			
+      					new MessagingObj(true,false,false,false,false);
+		        		
+		        	}
+		        	else{
+	        			KenandyErp.BlockUI();
+	        			new MessagingObj(false,false,false,false,false);
+			        	console.log(e);
+			        	$('#ThePageBlockTwo').show();
+						$('#ThePageBlockThree').hide();
+			        	$("#goBackButton").show();
+			        	fetchHierarchy();
+			        	KenandyErp.UnBlockUI();
+		        	}
+		        }
+ 			}).data("kendoButton");
+       	var gridButtonTwo = $("#gridButtonTwo").kendoButton({
+		        click: function getNewHierarchy(e){
+		        	
+        			KenandyErp.BlockUI();
+        			new MessagingObj(false,false,false,false,false);
+		        	console.log(e);
+		        	$('#ThePageBlockOne').show();
+		        	$('#ThePageBlockTwo').hide();
+					$('#ThePageBlockThree').hide();
+		        	$("#goBackButton").show();
+					asOfDate = KenandyErp.ParseSFDCDateTime(KenandyErp.Now());
+					asOfDateSer = JSON.stringify(asOfDate);
+					HierarchyName =  '';
+				    HierarchyType = '';
+					$('#HierarchyNameFilter').val('');
+					$('#AsOfDateFilter').val(KenandyErp.Now());
+					HierarchyTypeDropdown.select(function(dataItem) {
+    					return dataItem.text === "Select Segment Type";
+					});
+					HierarchyTypeDropdown.enable(true);
+					var autocomplete = $("#HierarchyNameFilter").data("kendoAutoComplete");
+					autocomplete.enable(true);
+		        	//fetchHierarchy();
+		        	$('#gridButton').hide();
+		        	KenandyErp.UnBlockUI();
+		        }
+ 			}).data("kendoButton");
+		var ConfigObj = function(uniqueId, title, objectName, fieldset, buttons, alwaysUseFullDateTimeFormat, renderCheckboxes, scrollable){
+			         this.uniqueId = uniqueId;
+			         this.title = title;
+			         this.objectName = objectName;
+			         this.fieldset = fieldset;
+			         this.buttons = 'search';
+			         this.alwaysUseFullDateTimeFormat = alwaysUseFullDateTimeFormat;
+			         this.renderCheckboxes = renderCheckboxes;
+			         this.scrollable = scrollable;
+		         };  
+
+		var MessagingObj = function(pagebol, pageblockTwobol, pageblockTwoLeftbol, pageblockTwoRightbol, pageblockThreebol){
+			         
+           		$('#page-msg').hide();
+				$('#pageblockTwo-msg').hide();
+				$('#pageblockTwoLeft-msg').hide();
+				$('#pageblockTwoRight-msg').hide();
+				$('#pageblockThree-msg').hide();
+		        if(pagebol){
+      				$('#page-msg').show();
+		        }
+		        if(pageblockTwobol){
+      				$('#pageblockTwo-msg').show();
+		        }
+		        if(pageblockTwoLeftbol){
+      				$('#pageblockTwoLeft-msg').show();
+		        }
+		        if(pageblockTwoRightbol){
+      				$('#pageblockTwoRight-msg').show();
+		        }
+		        if(pageblockThreebol){
+      				$('#pageblockThree-msg').show();
+		        }
+		};  
+ 	
+ 	var FetchHierarchyList  = function(){
+ 		
+        var deferred = $.Deferred();
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.SegmentHierarchyViewManageExt.FetchHierarchyList}',
+            HierarchyType,
+            function (result, event) {
+                deferred.resolve(result, event);
+            },
+            {escape: false}
+        );
+        
+        return deferred.promise();
+ 	}          
+ 	var FetchSegmentList  = function(){
+	    
+	    new MessagingObj(false,false,false,false,false);
+ 		
+        var deferred = $.Deferred();
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.SegmentHierarchyViewManageExt.FetchSegmentList}',
+				sobjectList,
+                SegmentType, 
+            function (result, event) {
+				if (event.type != 'exception') {
+	            	if (result.message != null &&  result.message != ''){
+		               		KenandyErp.Message(result.message, KenandyErp.MessageType.Warning, document.getElementById("page-msg"));  
+	        				new MessagingObj(true,false,false,false,false);
+	            	
+	            	}else{
+	        				new MessagingObj(false,false,false,false,false);
+	            	
+	            	}
+	                deferred.resolve(result, event);
+	            }
+            },
+            {escape: false}
+        );
+        
+        return deferred.promise();
+ 	}          
+     </script>   
+	<script type="text/x-kendo-template" id="detailTemplate">
+        <div class="grid-container grid-detail-container k-block k-info-colored">
+			<div class="grid-exceptions-message k-hidden"></div>
+            <div class="grid-exceptions"></div>
+        </div>
+    </script>
+        
+        
+        
+        
+        <!--        <apex:sectionHeader title="Manage Hierarchies" help="{!helpURL}"/>
+        <apex:pageBlock id="ThePageBlockOne">
+            <apex:pageBlockSection columns="3" id="ThePageBlockSectionOne" >
+  	        <apex:pageblocksectionitem dataStyle="width: 25%;">
+ 	   	        <apex:outputlabel value="Hierarchy Name" />	        
+                <apex:input type="text" value="{!HierarchyName}" label="Hierarchy Name" id="TheNameBox"/>   
+ 			</apex:pageblocksectionitem>
+   	        <apex:pageblocksectionitem dataStyle="width: 25%;">
+  	   	        <apex:outputlabel value="Hierarchy Type" />	        
+                <apex:selectList value="{!selectedHierarchy}" multiselect="false" size="1" label="Hierarchy Type" >
+                    <apex:selectOptions value="{!HierarchyTypeList}" ></apex:selectOptions>
+                </apex:selectList>
+			</apex:pageblocksectionitem>
+   	        <apex:pageblocksectionitem dataStyle="width: 50%;">
+   	   	        <apex:outputlabel value="As Of Date"/>	        
+                <apex:input type="auto" value="{!asofdate}" label="As Of Date" id="TheInputBox"/>   
+			</apex:pageblocksectionitem>
+            </apex:pageBlockSection>
+                <div align="center">
+                   <apex:commandButton value="Fetch Hierarchy" action="{!renderTreeList}"  />                   
+                   <apex:commandButton value="Clear All Filters" action="{!resetFilter}"/>                              
+                   <apex:commandButton value="Go Back" rendered="{!showGoBack}" action="{!goBack}"/>                              
+                </div>
+
+        </apex:pageBlock>
+        <apex:pageBlock id="ThePageBlockTwo" rendered="{!NOT(ShowBlockThree)}" >
+        	<apex:pageBlockSection id="ThePageBlockSectionTwo" columns="2" >
+   	        <apex:pageblocksectionitem dataStyle="width: 30%;">
+	 	        <apex:panelGrid columns="2" id="theGridOne" >
+				<div></div>
+	         	<apex:pageMessages ></apex:pageMessages>           
+		   	        <apex:outputlabel value="Add Segment Values" rendered="{!showSelectList}"/>	        
+			        <apex:selectList value="{!selectedSegment}" multiselect="false" size="1" label="Add Segment Values" rendered="{!showSelectList}" >
+			    	    <apex:selectOptions value="{!SegmentValueList}" ></apex:selectOptions>
+						<apex:actionSupport event="onchange" reRender="theGridOne" action="{!Applyfilter}" />			
+		            </apex:selectList>
+					&nbsp; 
+					<apex:pageBlockTable value="{!lstSetController}" var="seg" rendered="{!showTable}" id="TheTable">
+		
+					    <apex:column id="selected">
+						    <apex:facet name="header">
+						        <c:VFSeleclAll />
+						    </apex:facet>					
+				            <apex:inputCheckbox value="{!seg.isSelected}" >
+				            </apex:inputCheckbox>
+			            </apex:column>
+						<apex:column headerValue="Available Values " value="{!seg.Name}">
+						</apex:column>
+			
+					</apex:pageBlockTable>
+					
+					<br/> 
+		  	        <apex:panelGroup rendered="{!showTable}">
+		           		<apex:commandButton value="<<Previous"  action="{!previous}" disabled="{!NOT(hasPrevious)}" reRender="theGridOne" />
+		           		<apex:commandButton value="Next >>"  action="{!next}" disabled="{!NOT(hasNext)}" reRender="theGridOne" />
+		            	<apex:commandButton value="Add to hierarchy >>" action="{!addToTreeList}"  />
+	            	</apex:panelGroup>
+	            </apex:panelGrid>
+			</apex:pageblocksectionitem>  
+			<apex:pageblocksectionitem dataStyle="width: 70%;">
+	 	        <apex:panelGrid columns="1" id="theGridTwo" >
+	            	<c:KendoTreeList asOfDate="{!asofdateSer}" objectname="{!objectname}" 
+	                            fieldset="{!fieldsetName}" sobjectlist="{!sobjectListSer}" 
+	                            hierfield="{!hierField}" rendered="{!showTreeList}" 
+	                            HierarchyName="{!HierarchyName}" HierarchyType="{!selectedHierarchy}" id="thecomponent"/> 
+
+	            </apex:panelGrid>
+			</apex:pageblocksectionitem>
+       	</apex:pageBlockSection>
+        </apex:pageBlock>
+        <apex:pageBlock id="ThePageBlockThree" rendered="{!ShowBlockThree}" >
+        	<apex:pageMessages ></apex:pageMessages>           
+			<apex:pageBlockTable value="{!HierarchyWrapperlist}" var="hrec" Style="width: 70%;">
+			    <apex:column headerValue="Select Hierarchy" id="selected">
+					<apex:actionSupport action="{!SelectHierarchy}" event="onclick" reRender="hidden">
+					
+						<input type="radio" name="ruleType" >
+							<apex:param name="conid" value="{!hrec.HierarchyName}"/>	
+						</input> 
+					</apex:actionSupport>  
+           		</apex:column>
+				<apex:column headerValue="Hierarchy Name " value="{!hrec.HierarchyName}">
+				</apex:column>
+				<apex:column headerValue="Segment Type " value="{!hrec.SegmentType}">
+				</apex:column>
+			</apex:pageBlockTable>
+        	<br/>
+            <div align="center">
+     	       <apex:commandButton value="Open Selected Hierarchy" action="{!ShowHierarchy}"/>                   
+            </div>
+        </apex:pageBlock> -->
+    </apex:form>
+</apex:page>

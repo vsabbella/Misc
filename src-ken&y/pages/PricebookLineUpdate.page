@@ -1,0 +1,544 @@
+<apex:page showHeader="true" sidebar="false" 
+    extensions="PricebookLineUpdateExt,KendoExt" standardController="Company__c"
+	tabStyle="Pricebook_Line__c" 
+	docType="html-5.0" id="pbUpdatePage">
+    
+    
+    <c:KendoResources />
+    <style type="text/css">
+        .filterLabel {
+            font-weight: bold;
+            font-size: 93%;
+        }
+		.filterInput {
+        	width : 80%;
+        }
+        
+		.filterDateInput {
+        	width : 100px;
+        }
+        
+        .dateRange {
+            border: 1px solid lightgray;
+            padding: 5px;
+            border-radius: 5px;
+            text-align: center;
+            width: 250px;
+        }
+        .hierarchy-name { width: 50%}
+        .hierarchy-path-name { font-size: 10px; color:gray}
+     
+        /* column width adjustments */
+        .colA { width: 300px; padding-right: 20px;} 
+        .colB {}
+        .colZ { width: 10%;}         
+    </style>
+    
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+    <apex:includeScript value="{!$Resource.PricebookSharedJScript}" />
+    <apex:includeScript value="{!$Resource.kendoRemoteComboBox}" />
+    <apex:sectionHeader subtitle="Modify Pricebook Lines" title="Company - '{!Company__c.Name}'"/>
+    
+    
+
+    <apex:pageBlock title="{!$Label.Filter}">				
+        <apex:form id="formFilter">           
+        <apex:panelGrid columns="4" cellspacing="1" width="100%" columnClasses="colA, colB, colB, colZ">
+            <!-- Row 1 -->
+
+            <apex:outputLabel value="{!$Label.Effective_Dates}" styleClass="filterLabel" />
+			<apex:outputLabel value="{!$ObjectType.Pricebook__c.Label}" styleClass="filterLabel" />
+			<apex:outputLabel value="{!$ObjectType.Product_Group__c.Label}" styleClass="filterLabel" />
+            
+            <apex:outputLabel value="{!$ObjectType.Pricebook_Line__c.Fields.Price__c.Label}" styleClass="filterLabel" />
+            
+            <apex:outputPanel layout="block" styleClass="dateRange"> 
+                &nbsp;
+                <input name="fromDateFilter" id="fromDateFilter" value="{!fromDate}" data-role="datepicker" data-change="onSearchFiltersChanged" 
+                class="kendoWidgetSelector filterDateInput" type="date" />
+                &nbsp; {!$Label.to} &nbsp;
+                <input name="toDateFilter" id="toDateFilter" value="{!toDate}" data-role="datepicker" data-change="onSearchFiltersChanged" 
+                    class="kendoWidgetSelector filterDateInput" type="date"/>
+            </apex:outputPanel>
+	        <apex:outputPanel >
+		        <input type="text" id="pricebookFilter" class="filterInput"/>
+	        </apex:outputPanel>
+	        
+	        <apex:outputPanel >
+		        <input type="text" id="productGroupFilter" class="filterInput"/>
+	        </apex:outputPanel>
+	        
+	        <apex:outputPanel > 
+		        <input type="number" id="priceFilter" data-format="c" data-decimals="3" class="kendoWidgetSelector" 
+		                data-role="numerictextbox" data-change="onSearchFiltersChanged" min="0"/>
+	        </apex:outputPanel>
+            
+            <!-- Blank row for gap -->
+            <apex:outputPanel layout="block"/>
+            <apex:outputPanel layout="block"/>
+            <apex:outputPanel layout="block"/>
+            <apex:outputPanel layout="block"/>            
+            
+            <!-- Row 2 Starts here -->
+            <apex:outputLabel value="{!$Label.Active_Now}" styleClass="filterLabel" />
+            <apex:outputLabel value="{!$ObjectType.Hierarchy__c.Label}" styleClass="filterLabel" />
+            <apex:outputLabel value="{!$ObjectType.Product__c.Label}" styleClass="filterLabel" />
+
+			<apex:outputPanel layout="none"></apex:outputPanel>
+
+            <apex:outputPanel layout="block">
+                <input type="checkbox" id="showActivePricebooks"/> 
+            </apex:outputPanel>
+            
+	        <apex:outputPanel >
+		        <input type="text" id="hierarchyFilter" class="filterInput"/>
+	        </apex:outputPanel>
+
+            <apex:outputPanel > 
+                <input type="text" id="productFilter" class="filterInput"/>
+	        </apex:outputPanel>
+
+                <apex:outputPanel >
+                        <button id="resetPriceButton" type="button" data-role="button" 
+                            class="kendoWidgetSelector" data-click="onResetFields">{!$Label.CSReset}</button>
+                </apex:outputPanel>
+	    </apex:panelGrid>    	
+        </apex:form>    
+	</apex:pageBlock>
+	<apex:pageBlock title="{!$Label.Matching_Pricebook_Lines}">    
+	    <apex:facet name="header">
+    	   <apex:panelGrid columns="8" cellspacing="0" bgcolor="white">
+    	        <apex:outputPanel styleclass="pbTitle">
+    	            <h2 class="mainTitle">{!$Label.Matching_Pricebook_Lines}</h2>
+    	        </apex:outputPanel>
+                <apex:outputLabel value="{!$ObjectType.Pricebook_Line__c.fields.Price__c.Label}" styleClass="filterLabel" />
+    			<apex:outputPanel >				
+                    <input id="newPriceInput" data-placeholder="{!$Label.New_price_value}" data-role="numerictextbox" data-format="n6" data-spinners="false" type="number" class="kendoWidgetSelector filterInput" />
+    			</apex:outputPanel>
+    			
+                <apex:outputLabel value="{!$ObjectType.Pricebook_Line__c.fields.Start_Date__c.Label}" styleClass="filterLabel" />
+                <apex:outputPanel >
+                    <input name="effectiveFromDateFilter" id="effectiveFromDateFilter" data-role="datepicker" data-placeholder="{!$Label.New_Start_Date}" 
+                           class="kendoMassUpdateWidgetSelector filterInput" type="date"/>
+                    <span class="k-invalid-msg" data-for="effectiveFromDateFilter"></span>
+    			</apex:outputPanel>
+            
+                <apex:outputLabel value="{!$ObjectType.Pricebook_Line__c.fields.End_Date__c.Label}" styleClass="filterLabel" />
+                <apex:outputPanel >
+                    <input name="effectiveToDateFilter" id="effectiveToDateFilter" data-placeholder="{!$Label.New_End_Date}"
+                           data-role="datepicker" class="kendoMassUpdateWidgetSelector filterInput" type="date" />
+                    <span class="k-invalid-msg" data-for="effectiveToDateFilter"></span>
+                </apex:outputPanel>
+                <apex:outputPanel >
+                	<button id="updatePriceButton" type="button" data-role="button" 
+                        class="kendoWidgetSelector" disabled="disabled" data-click="onUpdatePriceBookLineButtonClick">{!$Label.Update_Matching_Pricebook_Lines}</button>
+    			</apex:outputPanel>
+    		</apex:panelGrid>     
+	    </apex:facet>
+	    
+		<div class="grid-container">
+    		<div class="grid-message"></div>
+        	<div id="{!config.uniqueId}" > </div>
+        </div>    
+    </apex:pageBlock>
+    
+
+    <script type="text/javascript">      
+        function getKendoGridDomId() {
+            return $("#{!config.uniqueId}");
+        }  
+
+        function hasValidComboValue(comboSelector) {
+            var combo = $(comboSelector).data('kendoComboBox');
+            return combo.value() && combo.text() != combo.value();
+        }
+
+        function onResetFields(e){                        
+            $("form[id$='formFilter']")[0].reset();            
+            $('#priceFilter').data('kendoNumericTextBox').value('');
+            getKendoGridObject().dataSource.read(); 
+        }
+    	// on click of Update Pricebook line button
+    	function onUpdatePriceBookLineButtonClick(e) {   
+    		var yesCallBack = function () {
+                var pbGrid = getKendoGridObject();                
+                var currentData = getCurrentGridData(pbGrid); // searched data or whole grid data 
+    			
+    			var newPriceVal = $('#newPriceInput').data('kendoNumericTextBox').value();
+                var newEffFromVal = $('#effectiveFromDateFilter').data('kendoDatePicker').value();
+                newEffFromVal = newEffFromVal ? newEffFromVal.getTime() : null;
+                var newEffToVal = $('#effectiveToDateFilter').data('kendoDatePicker').value();                
+                newEffToVal = newEffToVal ? newEffToVal.getTime() : null;
+                
+                var todayInMillis = new Date().getTime();
+                
+    			for (var i = 0; i < currentData.length; i++) {
+    				var rec	= currentData[i];    			
+                    /*
+                    	Records in future end dates can be changed. This check is not reproducing server side date validations,
+                        but its minimal one to ensure less errors on multiple pricebook lines
+                    */
+                    if (rec['End_Date__c'] && rec['End_Date__c'].getTime() > todayInMillis) {
+                        // GridRelatedList clears namespace after reading the data, so
+                        // shouldn't be a problem
+                        if (newPriceVal && rec['Price__c']	!= newPriceVal) {
+                            rec['Price__c']	= newPriceVal;	
+                            rec.dirty = true;
+                        }   
+                        
+                        var recEffSD = rec['Start_Date__c'] || rec['Start_Date__c'].getTime();
+                        var recEffED = rec['End_Date__c'] || rec['End_Date__c'].getTime();
+                        
+                        if (newEffFromVal) {
+                            if (recEffSD != newEffFromVal) {
+                                rec['Start_Date__c'] = new Date(newEffFromVal);
+                                rec.dirty = true;
+                            }                        
+                        }
+                        
+                        if (newEffToVal) {                            
+                            if (recEffED != newEffToVal) {
+                                rec['End_Date__c'] = new Date(newEffToVal);
+                                rec.dirty = true;
+                            }                        
+                        }
+                    }
+                    
+    			}
+    			pbGrid.refresh();
+    		}
+
+    		var noCallBack = function (){
+    			
+    		}
+
+    		$.fn.KendoConfirmation(
+    			{
+                    animation: false,
+    				title: 'Confirmation', 
+    				html: 'Are you sure ?',
+    				width : 250    				
+    			}, 
+    			yesCallBack, noCallBack);
+    	}
+    	
+    	function onComboFilterChanged(e) {
+    	    
+    	    onSearchFiltersChanged(e);
+    	    
+    	    var productComboBox = $('#productFilter').data("kendoComboBox");
+    	    var productGroupComboBox = $('#productGroupFilter').data("kendoComboBox");
+    	    var pricebookComboBox = $('#pricebookFilter').data("kendoComboBox");
+    	    var hierarchyComboBox = $('#hierarchyFilter').data("kendoComboBox");
+            
+    	    pricebookComboBox.dataSource.read();
+    	    productGroupComboBox.dataSource.read();
+            productComboBox.dataSource.read();
+            hierarchyComboBox.dataSource.read();
+            
+            cleanupKendoComboBox(pricebookComboBox);
+            cleanupKendoComboBox(productComboBox);
+            cleanupKendoComboBox(productGroupComboBox);
+            cleanupKendoComboBox(hierarchyComboBox);            
+            
+            productGroupComboBox.refresh();
+            productComboBox.refresh();
+            pricebookComboBox.refresh();
+            hierarchyComboBox.refresh();
+    	}
+    	
+		// Called by all filter components, whenever value changes for them
+		function onSearchFiltersChanged(e) {			
+            getKendoGridObject().dataSource.read();    			
+		}
+ 		
+ 		function createPricebookFilterInfo(excludeProductId, excludeProductGroupId, excludePricebookId, excludeHierarchyId) {
+ 	        var price = $('#priceFilter').data('kendoNumericTextBox').value();
+            price = price != null ? price : null;
+            
+            var fromDate = vfRemotingDateString($('#fromDateFilter').data('kendoDatePicker').value());
+            var toDate = vfRemotingDateString($('#toDateFilter').data('kendoDatePicker').value());
+            var productId = hasValidComboValue('#productFilter') ? $('#productFilter').val() : null;
+            productId = productId && productId.length > 0 ? productId : null;
+            
+            var productGroupId = hasValidComboValue('#productGroupFilter') ? $('#productGroupFilter').val() : null;
+			productGroupId = productGroupId && productGroupId.length > 0 ? productGroupId : null;
+            
+            var hierarchyId = hasValidComboValue('#hierarchyFilter') ? $('#hierarchyFilter').val() : null;
+			hierarchyId = hierarchyId && hierarchyId.length > 0 ? hierarchyId : null;
+            
+            var pricebookId = hasValidComboValue('#pricebookFilter') ? $('#pricebookFilter').val() : null;
+			pricebookId = pricebookId && pricebookId.length > 0 ? pricebookId : null;
+			
+			return {
+			    companyId       :   '{!Company__c.Id}',
+			    productId       :   excludeProductId ? null : productId, 
+			    productGroupId  :   excludeProductGroupId ? null : productGroupId, 
+			    hierarchyId     :   excludeHierarchyId ? null: hierarchyId, 
+			    pricebookId     :   excludePricebookId ? null : pricebookId, 
+			    fromDateStr     :   fromDate, 
+			    toDateStr       :   toDate, 
+			    price           :   price
+			};
+ 		}
+ 		
+ 		// Called by GridRelatedList component when transport requires a READ 
+ 		function loadRelatedData () {
+          	var deferred = $.Deferred();
+            var remoteArgs = JSON.parse('{!configJson}');
+			
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.PricebookLineUpdateExt.getPricebookLinesUsingFilters}',
+                createPricebookFilterInfo(),
+                function (result, event) {
+                    deferred.resolve(result, event);
+                });
+
+            return deferred.promise();
+        }
+ 		
+        function cleanupKendoComboBox(kendoCombo) {
+            var comboVal = kendoCombo.value();
+            if (comboVal) {
+                var whereExp = {};
+                whereExp[kendoCombo.options.dataValueField] = comboVal;
+                if (_.where(kendoCombo.dataSource.data(), whereExp).length) {
+                    kendoCombo.value('');
+                    kendoCombo.text('');
+                }
+            }
+        }
+ 		
+        function showHierarchyDisplayLabel(data) {
+            var hierarchyItemsCount = 0;
+            var hierarchyStartIndex = 0;
+
+            if (data.Path__c) {
+                hierarchyItemsCount = data.Path__c.split("|").length - 1;
+            
+                if (hierarchyItemsCount > 3) {
+                    hierarchyStartIndex = data.Path__c.split("|", hierarchyItemsCount-2).join("|").length+1;
+                    data.Path__c = "..." + data.Path__c.substring(hierarchyStartIndex, data.Path__c.length-1);
+                }
+                data.Path__c = data.Path__c.split("|").join(">");
+            } else {
+                data.Path__c = '';
+            }
+
+            var displayTemplate = kendo.template('<table class="kndy-table">' +
+                            '<tr>' +
+                                '<td class="hierarchy-name"><b>#: data.Name #</b></td>' +
+                                '<td class="hierarchy-path-name kndy-text-right">#: data.Path__c #</td>' +                                
+                            '</tr>' +
+                            '</table>');
+
+            return displayTemplate(data);
+        }
+        
+        $(document).on('KenandyErpReady', function(e) {
+            // Called when set price INPUT is changed
+            $('#newPriceInput').keyup(
+                function (e) {         
+                    var priceVal = $(this).val();            
+                    $('#updatePriceButton').data('kendoButton').enable (priceVal && priceVal > 0);          
+                }
+            );
+            
+            var productComboBox = $('#productFilter').kndyRemoteComboBox({
+                sobject : 'Product__c', // will be sobject to query
+                placeholder : '{!$Label.Type_to_search}...',
+                criterias : function() {
+                    return [ 
+    	        		{'field' : 'Company__c', 'operator' : '=', 'value' : '{!Company__c.Id}', 'wrapValueInQuotes' : true }
+                    ];
+                }, // map structure with key value combinations
+                orderByField : 'Name',
+                sortOrder : 'asc',
+                remoteActionLoadRecords	: '{!$RemoteAction.KendoExt.loadRecords}',
+                relatedFilterInfo : function() {
+                    return  {
+                                relatedFilterLimiter : '{!if (Namespace != null, Namespace +'.', '')}PricebookLineUpdateExt.ProductRelatedFilterLimiter',
+                    	        relatedFilterValues : createPricebookFilterInfo(true, false, false, false)
+                            };
+                }
+                
+            }).data("kendoComboBox");
+            // bind change event
+            productComboBox.bind("change", onSearchFiltersChanged);
+            
+            var productGroupComboBox = $('#productGroupFilter').kndyRemoteComboBox({
+                sobject : 'Product_Group__c', // will be sobject to query
+                placeholder : '{!$Label.Type_to_search}...',
+                criterias : function() {
+                    return [ 
+    	        		{'field' : 'Company__c', 'operator' : '=', 'value' : '{!Company__c.Id}', 'wrapValueInQuotes' : true }
+                    ];
+                }, // map structure with key value combinations
+                orderByField : 'Name',
+                sortOrder : 'asc',
+                remoteActionLoadRecords	: '{!$RemoteAction.KendoExt.loadRecords}',
+                
+                relatedFilterInfo : function() {
+                    return  {
+                                relatedFilterLimiter : '{!if (Namespace != null, Namespace +'.', '')}PricebookLineUpdateExt.ProductGroupRelatedFilterLimiter',
+                    	        relatedFilterValues : createPricebookFilterInfo(false, true, false, false)
+                            };
+                }
+                 
+            }).data("kendoComboBox");
+            // bind change event
+            productGroupComboBox.bind("change", onSearchFiltersChanged);
+            
+            var hierarchyComboBox = $('#hierarchyFilter').kndyRemoteComboBox({
+                sobject : 'Hierarchy__c', // will be sobject to query
+                placeholder : '{!$Label.Type_to_search}...',
+                orderByField : 'Name',
+                dataTextField : 'Name',
+                additionalFields: 'Path__c',
+                sortOrder : 'asc',
+                
+                template: '#= showHierarchyDisplayLabel(data) #',
+                
+                remoteActionLoadRecords	: '{!$RemoteAction.KendoExt.loadRecords}',
+                relatedFilterInfo : function() {
+                    return  {
+                                relatedFilterLimiter : '{!if (Namespace != null, Namespace +'.', '')}PricebookLineUpdateExt.HierarchyRelatedFilterLimiter',
+                    	        relatedFilterValues : createPricebookFilterInfo(false, false, false, true)
+                            };
+                }
+                
+            }).data("kendoComboBox");
+            // bind change event
+            hierarchyComboBox.bind("change", onSearchFiltersChanged);
+            hierarchyComboBox.list.width(500);
+            
+            var pricebookComboBox = $('#pricebookFilter').kndyRemoteComboBox({
+                sobject : 'Pricebook__c', // will be sobject to query
+                placeholder : '{!$Label.Type_to_search}...',
+                criterias : function() {
+                    return [ 
+    	        		{'field' : 'Company__c', 'operator' : '=', 'value' : '{!Company__c.Id}', 'wrapValueInQuotes' : true }
+                    ];
+                }, // map structure with key value combinations
+                orderByField : 'Name',
+                sortOrder : 'asc',
+                remoteActionLoadRecords	: '{!$RemoteAction.KendoExt.loadRecords}',
+                
+                relatedFilterInfo : function() {
+                    return  {
+                                relatedFilterLimiter : '{!if (Namespace != null, Namespace +'.', '')}PricebookLineUpdateExt.PricebookRelatedFilterLimiter',
+                    	        relatedFilterValues : createPricebookFilterInfo(false, false, true, false)
+                            };
+                }
+            }).data("kendoComboBox");
+            // bind change event
+            pricebookComboBox.bind("change", onSearchFiltersChanged);
+           
+            hierarchyComboBox.bind("change", function(e){
+                pricebookComboBox.dataSource.read();
+                productComboBox.dataSource.read();
+                productGroupComboBox.dataSource.read();
+
+                productComboBox.refresh();
+                pricebookComboBox.refresh();
+                productGroupComboBox.refresh();
+            });
+            
+            productGroupComboBox.bind("change", function(e){
+                pricebookComboBox.dataSource.read();
+                productComboBox.dataSource.read();
+                hierarchyComboBox.dataSource.read();
+                // cleanupKendoComboBox(pricebookComboBox);
+                // cleanupKendoComboBox(productComboBox);
+                
+                productComboBox.refresh();
+                pricebookComboBox.refresh();
+                hierarchyComboBox.refresh();
+            });
+
+            productComboBox.bind("change", function(e){
+                cleanupKendoComboBox(productGroupComboBox);
+                pricebookComboBox.dataSource.read();
+                productGroupComboBox.dataSource.read();
+                hierarchyComboBox.dataSource.read();                                
+                // cleanupKendoComboBox(pricebookComboBox);
+                                                
+                productGroupComboBox.refresh();
+                pricebookComboBox.refresh();
+                hierarchyComboBox.refresh();
+            });
+
+            
+            pricebookComboBox.bind("change", function(e){
+                productGroupComboBox.dataSource.read();
+                productComboBox.dataSource.read();
+                hierarchyComboBox.dataSource.read();                      
+                // cleanupKendoComboBox(productComboBox);
+                // cleanupKendoComboBox(productGroupComboBox);
+                
+                productGroupComboBox.refresh();
+                productComboBox.refresh();
+                hierarchyComboBox.refresh();
+            });
+            
+        	kendo.init($('.kendoWidgetSelector'));
+           	
+            $(".kendoMassUpdateWidgetSelector").kendoDatePicker({
+                change: function() {
+                    var value = this.value();
+                    
+                    $('#updatePriceButton').data('kendoButton').enable (value && value > 0);          
+                }
+            });
+            // Validate dates
+        	$('#toDateFilter,#fromDateFilter,.kendoMassUpdateWidgetSelector').kendoValidator({
+                rules: {
+                    correctDateFormat: function (e) {
+                        var dateVal = $(e).val();
+                        // either a valid date or fail 
+                        return dateVal == '' || Date.parse(dateVal) || false;                        
+                    }
+                },
+                messages: {
+                    correctDateFormat: "Invalid date"
+                }
+            });
+            
+            $('#showActivePricebooks').change(function (){
+                
+                var fromDateFilter = $('#fromDateFilter').data('kendoDatePicker');
+                var toDateFilter = $('#toDateFilter').data('kendoDatePicker');
+                var showActivePricebooks = $(this).is(':checked');
+                if (showActivePricebooks) {
+                    fromDateFilter.value(new Date());
+                    toDateFilter.value(null);
+                    onSearchFiltersChanged();
+                } 
+                
+                fromDateFilter.enable(!showActivePricebooks);
+                toDateFilter.enable(!showActivePricebooks);
+            });
+            
+        	var lookupSearchFilters = [];
+            lookupSearchFilters.push({ field: "Product__c", filter: "Company__c = \'{!Company__c}\'" });
+            lookupSearchFilters.push({ field: "Product_Group__c", filter: "Company__c = \'{!Company__c}\'" });
+            lookupSearchFilters.push({ field: "Pricebook__c", filter: "Company__c = \'{!Company__c}\'" });
+
+
+            $.fn.GridRelatedList($('#{!config.uniqueId}'), { namespace: '{!NamespaceUU}', config: '{!configJson}', fieldList: '{!fieldList}', 
+                                                                lookupSearchAction: '{!$RemoteAction.PricebookLineUpdateExt.lookupSearchFilter}', 
+                                                                getRelatedListFunction: loadRelatedData, 
+                                                                saveRelatedListAction: '{!$RemoteAction.PricebookLineUpdateExt.saveList}',
+                                                                lookupSearchFilters : lookupSearchFilters
+                                                            }
+                                );
+            
+            var grid = $('#{!config.uniqueId}').data("kendoGrid");
+			grid.bind("edit", onAddNewRow);
+
+        });
+        
+    </script>
+
+
+</apex:page>

@@ -1,0 +1,72 @@
+<apex:page standardController="Sales_Order__c" extensions="SalesOrderNewExt">
+    <c:KendoResources />
+    <script>
+        function updateCompanyDefaults(fieldElementId){
+            var val = document.getElementById(fieldElementId+'_lkid').value;
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.SalesOrderNewExt.updateCompanyDefaults}',
+                val,
+                function(result, event){
+                    KenandyErp.CleanNamespace(result, '{!NamespaceUU}');
+
+                    document.getElementById("{!$Component.form.pb1.SoInfo.soCustomer}").value = null;
+                    document.getElementById("{!$Component.form.pb1.SoInfo.SOPriceDetDate}").value = null;
+                    if(result.Currency__r && result.Currency__r != null){
+                        document.getElementById("{!$Component.form.pb1.SoInfo.SOCurrency}").value = result.Currency__r.Name;
+                    }
+            });
+        }
+
+        function updateCustDefaults(fieldElementId ){
+
+            var val = document.getElementById(fieldElementId+'_lkid').value;
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.SalesOrderNewExt.updateCustomerDefaults}',
+                val,
+                function(result, event){
+                    KenandyErp.CleanNamespace(result, '{!NamespaceUU}');
+                    if(result.Price_Determination_Date__c && result.Price_Determination_Date__c != null){
+                        document.getElementById("{!$Component.form.pb1.SoInfo.SOPriceDetDate}").value = result.Price_Determination_Date__c;
+                    }
+                    if(result.Currency__r && result.Currency__r != null){
+                        document.getElementById("{!$Component.form.pb1.SoInfo.SOCurrency}").value = result.Currency__r.Name;
+                    }
+            });
+        }
+    </script>
+    <apex:sectionHeader id="sh" subtitle="{!$Label.New_Sales_Order}" title="{!$Label.New_Sales_Order}"/>
+    <apex:pagemessages id="pm"/>
+
+    <apex:form id="form">
+	<c:busyWait />
+        
+    <apex:pageBlock id="pb1">
+
+        <apex:pageBlockButtons id="pbs1">
+            <apex:commandButton id="cb1" value="{!$Label.Save}" action="{!save}" status="actionStatus" rerender="sh,pm,form" accessKey="s"/>
+            <apex:commandButton id="cb2" value="{!$Label.Cancel}" action="{!cancel}" status="actionStatus" rerender="sh,pm,form"/>
+        </apex:pageBlockButtons>
+        
+        <apex:pageBlockSection id="SoInfo" title="{!$Label.Sales_Order_Information}" columns="2" collapsible="false">
+            <apex:inputField id="soCompany" value="{!newObj.Company__c}" onchange="updateCompanyDefaults(this.id); return false;" required="true"/>
+            <apex:inputField id="soCustomer" value="{!newObj.Customer__c}" onchange="updateCustDefaults(this.id); return false;"/>   
+            <apex:repeat value="{!$ObjectType.Sales_Order__c.FieldSets.New_Sales_Order}" var="f" > 
+            	<apex:inputField value="{!newObj[f]}" required="{!OR(f.required, f.dbrequired)}"  />
+            </apex:repeat>   
+            <apex:inputField id="SOPriceDetDate" value="{!newObj.Price_Determination_Date__c}"/>     
+            <apex:inputField id="SOCurrency" value="{!newObj.Currency__c}" required="true"/>        
+        </apex:pageBlockSection>
+
+        <apex:pageBlockSection title="{!$Label.Tax_Information}" columns="2" collapsible="false" rendered="{!if($ObjectType.Sales_Order__c.FieldSets.New_Sales_Order_Tax.size > 0, true, false)}">   
+            <apex:repeat value="{!$ObjectType.Sales_Order__c.FieldSets.New_Sales_Order_Tax}" var="f" > 
+            	<apex:inputField value="{!Sales_Order__c[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+            </apex:repeat> 
+        </apex:pageBlockSection>  
+  
+    </apex:pageBlock>
+   
+    </apex:form>  
+      <div id="responseErrors" style="display:none;">
+        <apex:outputText value="{!Sales_Order__c.Company__c}" />
+    </div>
+</apex:page>

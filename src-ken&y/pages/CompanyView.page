@@ -1,0 +1,40 @@
+<apex:page standardController="Company__c" sidebar="true" extensions="Dynatree">
+	
+	<apex:stylesheet value="{!URLFOR($Resource.bootstrap_202, '/css/bootstrap-layout.css')}"  />
+	
+	<apex:form > <c:busyWait />
+	
+	<c:sectionHeader id="seHead" title="{!$Label.Company_Hierarchy}" subject="{!subject}"  />
+	
+	<div id="force" class="container-fluid" >
+	  	<div class="row-fluid">
+		   	<div class="span6">
+				<!--   		creates a DIV id = tree, loads a tree into that -->
+				<c:Dynatree subject="{!subject}"  fieldsetname="overview" /> 
+			</div>
+			
+			<div class="span6">
+				<c:MiniDetail subject="{!subject}"  fieldSetName="Overview"   id="MiniDetail" />
+			</div>
+			
+		</div>
+	</div>	
+
+	
+		<apex:actionFunction name="changeSubject" action="{!changeTheSubject}" 
+			rerender="MiniDetail, seHead"  status="actionStatus" >
+			<apex:param name="subject" value=""  />
+		</apex:actionFunction> 
+	</apex:form>
+	
+<script>
+$(function(){
+	$("#tree").dynatree("option", "onActivate", function(node) {
+		if( tree.isUserEvent() ) { //  tree is a global  
+			changeSubject( node.data.key );  // user clicks change the right panel subject
+		}
+	});
+}); 
+</script>
+
+</apex:page>

@@ -1,0 +1,34 @@
+<apex:page >
+<!--<apex:page standardController="Accounting_Entry__c" extensions="AccountingEntryVoidExt" showHeader="true" action="{!voidAccountingEntryCheck}" >
+
+    <apex:sectionHeader title="{!$ObjectType.Accounting_Entry__c.label}" subtitle="{!Accounting_Entry__c.Name}" />
+   
+    <apex:form id="AccountEntryForm"  >
+	
+    <c:busyWait />
+    
+         <apex:pageBlock title="{!$Label.Void_Accounting_Entry}" id="PageBlock">
+         <apex:pageMessages ></apex:pageMessages>
+            <apex:pageBlockButtons >
+ 
+                <apex:commandButton action="{!voidAccountingEntry}" value="{!$Label.Void}" rendered="{!boolVoid}" status="actionStatus" rerender="AccountEntryForm"/> 
+                <apex:commandButton action="{!delete}" value="{!$Label.Delete}" immediate="true" rendered="{!boolDelete}" status="actionStatus" rerender="AccountEntryForm"/>
+                <apex:commandButton action="{!cancel}" value="{!$Label.Cancel}" immediate="true" status="actionStatus" rerender="AccountEntryForm"/>
+            </apex:pageBlockButtons>
+
+            <apex:pageBlockSection title="{!$Label.Accounting_Entry_Below_will_be_Voided}" columns="2" collapsible="false">
+            <apex:repeat value="{!$ObjectType.Accounting_Entry__c.FieldSets.Accounting_Entry_Void}" var="f">
+                  <apex:OutputField value="{!Accounting_Entry__c[f]}" />
+              </apex:repeat>
+
+            </apex:pageBlockSection>
+      
+            </apex:pageBlock>
+
+    </apex:form>
+    <div style="display:none;" >
+            <apex:repeat value="{!$ObjectType.Accounting_Entry__c.FieldSets.Source_Documents}" var="sd">
+                  	<apex:OutputField value="{!Accounting_Entry__c[sd]}" id="sourceDocId" style="display:none;"/>
+           	</apex:repeat>
+	</div>-->
+</apex:page>

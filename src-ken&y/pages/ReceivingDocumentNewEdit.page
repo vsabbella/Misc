@@ -1,0 +1,37 @@
+<apex:page standardController="Receiving_Document__c" extensions="ReceivingDocumentNewEditExt">
+    
+    <apex:form id="form">
+        <apex:sectionHeader id="sh" subtitle="{!sectionHeaderText}" title="New/Edit Receiving Document"/>
+        <apex:pagemessages id="pm"/>
+    	<c:busyWait />
+        
+        <apex:pageBlock id="pb1">
+            <apex:pageBlockButtons id="pbs1">
+            <apex:commandButton id="cb1" value="{!$Label.Save}" action="{!save}" status="actionStatus" disabled="{!disabled}" rerender="form" accessKey="s"/>
+            <apex:commandButton id="cb2" value="{!$Label.Cancel}" action="{!cancel}" status="actionStatus" rerender="form"/>
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockSection title="Information" columns="2" collapsible="false">
+    
+                <apex:repeat value="{!readOnlyRDFields}" var="f" > 
+                	<apex:outputField value="{!rd[f]}" />
+                </apex:repeat>
+                <apex:repeat value="{!RDEditFields}" var="f" > 
+                    <apex:inputField value="{!rd[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+                </apex:repeat>
+                
+                <apex:outputField value="{!rd['Status__c']}"/>
+                
+            </apex:pageBlockSection>
+      
+        </apex:pageBlock>
+       
+    </apex:form>  
+    
+    <div id="ensurefield" style="display:none;">
+        <apex:outputText value="{!Receiving_Document__c.Company__c}" />
+        <apex:outputText value="{!Receiving_Document__c.Status__c}" />
+        <apex:outputText value="{!Receiving_Document__c.Name}" />
+    </div>    
+    
+</apex:page>

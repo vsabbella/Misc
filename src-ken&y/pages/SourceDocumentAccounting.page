@@ -1,0 +1,970 @@
+<apex:page controller="SourceDocumentAccountingCon" id="thePage" action="{!populateSobjDetails}">
+    
+     <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+    <!--Chunking Remoting requests-->   
+    <script>
+        var SDID;
+        var SDName;
+        //Deferred objects to resolve async process
+        var RemoteDeferred; 
+        var RemoteDeferredDel;
+        var RemoteDeferredDelAES;
+
+        var chunks;//serialized map of the autonumchunks
+
+        var Valid=false;//Controls page render based on AE valid
+        var DelDraft=false;//Indicates presence of existing draft
+        var Progress=0;//Indicates number of AEL generated for progress bar
+
+        //Hold server vars for chunking AE
+        var AutoNumChunks;
+        var size;
+        var LineCount=0;
+        var guid;
+        var numberOfRetries=1;
+        var realtimeRetriesAccting=new Array();
+        var realtimeRetriesRevAccting=new Array();        
+
+
+        //Hold server vars for  del Drafts      
+        var DelDraftAEId;       
+        var AESDraftDel=false;
+        var generateAEResult;//Result of generate accounting remote
+    	var AESDraftInProgress=false;
+
+        //Void related vars
+        var AESVoid=false;
+        var revChunks;//serialized map of the AutoNumReverseChunks
+        var voidAEId;
+        var doVoid;
+        var revSize;
+        var AELineCount;
+        var CleanupDraftIds= new Array();
+
+
+
+        $(document).on('KenandyErpReady', function(e)
+         {
+
+            Visualforce.remoting.timeout = 120000; // Set timeout at page level    
+
+
+            SDID="{!theSourceDocIdPg}";
+            SDName="{!theSourceDocNamePg}";
+            AutoNumChunks='{!autoNumberChunks}';
+            numberOfRetries='{!NumberOfRetries}';
+            Valid="{!isValidAE}";
+            LineCount="{!Linecount}";
+            guid="{!guid}";
+            DraftCount="{!DraftLineCount}";
+            //DelDraft="{!deletepoller}";
+            DelDraftAEId="{!draftAEIdToDel}";
+            var CleanuPVal='{!draftAEIdsSer}';
+            CleanupDraftIds=JSONUtils.Parse(CleanuPVal);
+            console.log('CleanupDraftIds');
+            console.log(CleanupDraftIds);
+
+            
+            size ="{!size}";
+           
+            //console.log('AutoNumChunks');
+            //console.log(AutoNumChunks);
+            //console.log('isValidAE');
+            //console.log(Valid);   
+            
+            chunks =JSONUtils.Parse(AutoNumChunks);
+
+
+            deferred = $.Deferred();
+            deferreddel=$.Deferred();
+            deferredReverse=$.Deferred();
+
+            RemoteDeferred= new Array();        
+            RemoteDeferredDel= new Array();  
+            RemoteDeferredDelAES= new Array();
+            RemoteDeferredReverse=new Array();
+             
+            //console.log('SDID');
+            //console.log(SDID);            
+            //console.log('SDName');
+            //console.log(SDName);
+            //console.log('chunks');
+            //console.log(chunks);
+
+            $('#DataBlock').hide();
+            
+          /*  Commenting as we are consolidating draft AE and deleteing at end of processs
+          if(DelDraft=='true')//Indicates existing drafts.Invoking Deldrafts remote call
+                {
+                    delDraft(DelDraftAEId);                  
+                }*/
+
+            if(Valid!='false') //Call generateaccoutning remote only if  SD is not valid for AE generation
+               {
+                generateChunks();
+               }
+            else if("{!RenderExisting}"=="true")//Render Existing AE
+               {
+                  var AESer='{!recordser}';
+                  var AE=JSONUtils.Parse(AESer);
+                  
+                   //console.log("record");
+                   //console.log(AE);
+                  
+                  var AEid="{!record.id}";
+
+                  gridInit(AEid);  
+                  rulesGridInit(AEid);
+                  detailListInit(AE);
+                  $('#DataBlock').show();
+                  $('#LoadingBlock').hide();
+
+                   
+                }
+            
+        });
+
+        function closeaction(){
+            var returnurl = '{!closeURL}';
+            KenandyErp.NavigateToURL(returnurl, true);
+        }
+        function reviewaction(){
+            KenandyErp.NavigateToSObject(generateAEResult.AEID);
+        }
+	      /*Do a retry for the failed chunk in case of transaction timeouts*/
+	   	function checkRetry(event) {
+	        var doRetry = false;
+	        if (event.type === 'exception') {
+	        	if ((event.message.indexOf("timeout") > -1) ||
+	        		(event.message.indexOf("Remoting request invalid for your session") > -1) || 
+	        		(event.message.indexOf("Logged in") > -1)) {
+	        		doRetry = true;	
+	        	}	
+	        }  
+	        return doRetry;  	
+		}      
+    
+      /*Recursive Remote Call Logic*/   
+        function generateChunks()
+        {   
+              var largemsg='Accounting is being generated.Please do not refresh page or press Back button of browser';                                                     
+              KenandyErp.Message(largemsg, KenandyErp.MessageType.Info);                                              
+
+              progressbar(0,LineCount);
+              remotingCall(0);  
+
+
+        }
+         function remotingCall(chunkIndex)
+        {
+            var RemoteDeferredItem = $.Deferred();           
+            RemoteDeferred.push(RemoteDeferredItem);
+            // var currChunkMap = chunks[chunkIndex];
+            var currchunkIndex = chunkIndex;
+            
+            console.log('currchunkIndex');
+            console.log(currchunkIndex);
+            var chunkItem=chunks[currchunkIndex];
+            var max=chunkItem['max']; 
+            var min=chunkItem['min']; 
+            
+            //console.log('chunkItem');
+            //console.log(chunkItem);
+            //console.log('max');
+            //console.log(max);
+            
+            Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.SourceDocumentAccountingCon.generateAccounting}',
+                        SDID, 
+                        guid,
+                        SDName,
+                        currchunkIndex,
+                        size,
+                        max,
+                        min,
+                        function (result, event) {
+                            
+                            //console.log('Entered VF Remote');   
+                               console.log('Remote result ');
+                               console.log(result);                             
+
+                            // console.log('Remote event');      
+                            // console.log(event);                            
+                            EventObj=Object.create(event);
+                            console.log('My eventObj');      
+                            console.log(EventObj);     
+                            if(event.status==true && result)
+                            {
+                                console.log('Logs');                             
+                                console.log(result.logs);                             
+                                KenandyErp.Message(result.Messages, KenandyErp.MessageType.Info);
+                                if(result.NextChunkIndex<size)
+                                {
+                                    if(result.progress!=-1)
+                                        {
+                                          remotingCall(result.NextChunkIndex);
+                                          Progress=result.progress;
+                                          console.log('Progress'+Progress);
+                                        }
+                                    else
+                                        {
+                                            //Error Generating AE for that Chunk.So wont proceed.  
+                                        }
+                                                                
+                                    RemoteDeferredItem.resolve(result, event);
+
+                                                                
+                                }
+                                else //Last chunk
+                                {
+                                Progress=LineCount-1;
+                                                                    
+                                RemoteDeferredItem.resolve(result, event);
+
+
+                                //Display the grid Only when all chunks have been retrieved
+                                $.when.apply($, RemoteDeferred).done( function (obj1,obj2)
+                                                 {
+                                                         
+                                                     deferred.resolve(obj1,obj2);  
+                                                     console.log('Result',result); 
+                                                     if(result.RenderReview==true)
+                                                       {
+                                                                                                                 
+                                                             generateAEResult=result;
+                                                             
+                                                            if(generateAEResult.hasReverse==true){
+                                                                doVoid=false;   
+                                                            }
+                                                             if(generateAEResult.hasVoid==true){
+                                                                doVoid=true;   
+                                                            }
+                                                             
+
+                                                            if(generateAEResult.hasReverse==true || generateAEResult.hasVoid==true)
+                                                                {
+                                                                    AESVoid=true; 
+                                                                    voidAEId=generateAEResult.voidAEId;
+                                                                    revChunks=JSONUtils.Parse(generateAEResult.reverseChunkMap);
+                                                                    AELineCount=generateAEResult.AELineCount;
+                                                                     
+                                                                    // if(SDName=='Journal_Entry__c')
+                                                                    // {
+                                                                    //      doVoid=false;
+                                                                    // }
+                                                                    // else
+                                                                    // {
+                                                                    //     doVoid=true;
+                                                                    // }
+                                                                    revSize=generateAEResult.reverseSize;
+																	console.log('revChunks');
+																	console.log(revChunks);
+ 																	console.log('generateAEResult');
+																	console.log(generateAEResult);																	
+                                                                    console.log('revChunks');
+                                                                    reverseAE(0);
+                                                       
+                                                                }
+                                                          
+
+                                                             if(generateAEResult.hasDrafts==true)
+                                                             {
+                                                                  AESDraftDel=true;
+                                                                  if(CleanupDraftIds)
+                                                                  {
+                                                                    CleanupDraftIds.push(generateAEResult.AESDraftId);
+                                                                  }
+                                                                  else
+                                                                  {
+                                                                    CleanupDraftIds = new Array();
+                                                                    CleanupDraftIds.push(generateAEResult.AESDraftId);
+                                                                  }
+                                                                  DraftCount=Number(DraftCount)+Number(generateAEResult.draftCount);
+                                                                  //delDraft(CleanupDraftIds);
+                                                                  
+                                                               
+                                                             }
+                                                             /* If Both Void and Drafts -On complete ,Void Renders result and  Del is called.Messages Hidden upon del complete
+                                                                If Void and no Drafts   -Void Renders the result and hides messages.and del not called.
+                                                                If No Void But drafts   -Below code Renders the resultcalls del and Messages Hidden upon del complete.
+                                                                If No Void No Draft     -Below code  Renders the result hides message and renders result.
+                                                             */
+                                                           if(!AESVoid )
+
+                                                                {    
+                                                                  if(AESDraftDel)
+                                                                  {
+                                                                         delDraft(CleanupDraftIds);
+
+                                                                  } 
+                                                                  else//No Drafts No Void .Can render page without further ado
+                                                                  {
+                                                                     $('#MessagesBlock').hide();           
+
+                                                                  }     
+                                                                     renderResult();
+                                                                
+        
+                                                                }
+
+
+                                                            
+                                                          }
+                                                     else
+                                                         {
+                                                             //All chunks have been processed and still No AE exists.Error
+                                                         }  
+                            
+                                                 }                                     
+                                             );  
+                                    }
+                                    
+                                }
+                            else //Remoting failure
+                                    {
+                                                                        
+                                        var isTimeout=checkRetry(event);
+						                if(isTimeout)
+						                {
+											if (currchunkIndex in realtimeRetriesAccting) 
+											{
+												realtimeRetriesAccting[currchunkIndex]++;
+											} 
+											else 
+											{
+												realtimeRetriesAccting[currchunkIndex] = 1;
+											}
+											
+											if (realtimeRetriesAccting[currchunkIndex] <= numberOfRetries) {
+											
+												console.log('Inside generate AE -'+' Current Retry Count:'+realtimeRetriesAccting[currchunkIndex]+', currchunkIndex: '+currchunkIndex+', max:'+ max+', min :'+ min +', curr time: ' + new Date());
+                                                RemoteDeferredItem.resolve(result, event);						
+												remotingCall(currchunkIndex);
+												
+											} 
+											else {
+												//we hit our number of retries, time to fail
+                                                KenandyErp.Message(event.message, KenandyErp.MessageType.Fatal);
+											}
+						                
+						                }
+						                else
+						                {
+		                                      KenandyErp.Message(event.message, KenandyErp.MessageType.Fatal);
+		                                    //  $('#LoadingBlock').hide();						                
+						                }
+
+                                    }
+              
+                        },
+                        {escape: false}
+
+
+                    );
+             progressbar(Progress,LineCount);
+  
+            return RemoteDeferredItem.promise();
+        }
+        function delDraft(DelDraftAEIds)
+        {
+            var RemoteDeferredItemDel= $.Deferred();
+            /*if(AESDraftDel)
+             {
+               RemoteDeferredDelAES.push(RemoteDeferredItemDel); 
+             }*///We are consolidating draft del
+           // else
+           // {
+               RemoteDeferredDel.push(RemoteDeferredItemDel);  
+            // }
+            console.log('DelDraftAEIds');
+            console.log(DelDraftAEIds);
+
+            Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.SourceDocumentAccountingCon.deleteDrafts}',
+                        SDID, 
+                        DelDraftAEIds,
+                        DraftCount,
+                        function (result, event) {
+                            
+                            console.log('Entered VF Delete');   
+                            console.log('Remote result ');
+                            //console.log(result);                             
+                            //console.log('Remote event');      
+                            //console.log(event);                            
+                           
+                            EventObj=Object.create(event);
+                            //console.log('My eventObj');      
+                            //console.log(EventObj);
+                            if(event.status==true && result)
+                            {
+
+                                  KenandyErp.Message('Draft Accounting Entries are being deleted.Do not refresh page or press back button', KenandyErp.MessageType.Info);
+
+                                if(!result.AllDone)
+                                {
+                                    if(result.ChunkDelete)
+                                        {
+                                                                                    
+                                            //Progress=result.Progress;
+                                            delDraft(DelDraftAEIds);
+                                            console.log('Progress'+result.Progress);                                        
+                                        }
+                                    else
+                                        {
+                                            //some error deleting current current chunk .Displayed in messages.  
+                                        }
+                                    AESDraftInProgress=true;
+                      
+                                    RemoteDeferredItemDel.resolve(result, event);                                    
+                                    
+                                
+                                 }
+                                else if(result.AllDone)
+                                {
+                                                                    
+                                    console.log('All Drafts Deleted');                                         
+                                    RemoteDeferredItemDel.resolve(result, event);   
+                                    //Commenting the below                                  
+                                   // var remoteDeferredArray;
+                                        //Progress=DraftCount;
+                                     /*  if(AESDraftDel)
+                                            {
+                                              remoteDeferredArray=RemoteDeferredDelAES ; 
+                                            }
+                                        else
+                                            {
+                                              remoteDeferredArray=RemoteDeferredDel ; 
+                                             
+                                            }   */
+                            
+                                    //Display the grid Only when all chunks have been retrieved
+                                    $.when.apply($, RemoteDeferredDel).done( function (obj1,obj2)
+                                                     {
+                                                                 
+                                                         deferreddel.resolve(obj1,obj2); 
+                                                         console.log('deferredDelResolve');                                        
+                                                         console.log('RemoteDeferredDel Array');                                              
+                                                         console.log(RemoteDeferredDel); 
+                                                         //console.log('Result');
+                                                         //console.log(result);
+                                                         if(result.ChunkDelete==true)
+                                                             {
+                                                                //Page render control rests solely with Void remote call
+                                                                 
+                                                                /*if(!AESVoid && AESDraftDel)
+                                                                     {
+                                                                         renderResult();
+                                                                     }
+                                                                 else//Give page render control to Void Remote call
+                                                                     {
+                                                                         AESDraftInProgress=false;
+                                                                      
+                                                                     }*/
+
+                                                                  $('#MessagesBlock').hide();           
+
+
+                                                              }
+                                                         else
+                                                             {
+                                                                 //deleteHeader has failed
+                                                             }
+                                                         
+    
+                                                     }
+                                         
+                                                 );                                                                     
+                                        
+                                    }
+ 
+             
+                                }
+                            else  //Remoting failure
+                                {
+
+		                                      KenandyErp.Message(event.message, KenandyErp.MessageType.Fatal);
+		                                    //  $('#LoadingBlock').hide();						                
+
+                                   
+                                }
+
+                        },
+                        {escape: false}
+
+                    );
+            //No Need to show progress
+            // progressbar(Progress,DraftCount);
+  
+            return RemoteDeferredItemDel.promise();
+        }   
+        function reverseAE(currchunkIndex)
+        {
+            var RemoteDeferredItemReverse= $.Deferred();
+
+            RemoteDeferredReverse.push(RemoteDeferredItemReverse);  
+
+            console.log('currchunkIndex');
+            console.log(currchunkIndex);
+            
+            var chunkItem=revChunks[currchunkIndex];
+            var max=chunkItem['max']; 
+            var min=chunkItem['min']; 
+             
+            Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.SourceDocumentAccountingCon.reverseAE}',
+                        voidAEId, 
+                        currchunkIndex,
+                        revSize,
+                        min,
+                        max,
+                        doVoid,
+                        guid,
+                        function (result, event) {
+                            
+                            console.log('Entered VF Reverse');   
+                            console.log('Remote result ');
+                            console.log(result);                             
+                            //console.log('Remote event');      
+                            //console.log(event);                            
+                           
+                            EventObj=Object.create(event);
+                            //console.log('My eventObj');      
+                            //console.log(EventObj);
+                            if(event.status==true && result)
+                            {
+
+                                KenandyErp.Message(result.Messages, KenandyErp.MessageType.Info);
+                                
+
+                                if(!result.AllDone)
+                                {
+                                    Progress=result.Progress;
+                                    if(Progress!=-1)
+                                        {
+                                           if(result.ChunkReverse==true)
+                                                {
+                                                                                            
+                                                    reverseAE(result.NextChunkIndex);
+                                                    console.log('Progress'+result.Progress);                                        
+                                                }
+                                            else
+                                                {
+                                                    //some error deleting current current chunk .Displayed in messages.  
+                                                }
+   
+                                        }
+                                    else
+                                        {
+                                            //Some Error 
+                                        }
+                                    
+                                                
+                      
+                                     RemoteDeferredItemReverse.resolve(result, event);                                    
+                                    
+                                
+                                 }
+                                else if(result.AllDone)
+                                {
+                                    Progress=AELineCount-1;
+
+                                                                    
+                                    console.log('Reverse Complete');                                         
+                                    RemoteDeferredItemReverse.resolve(result, event);      
+                                    if(AESDraftInProgress)
+                                    {
+
+                                       console.log('Reverse Complete but Draft in progress'); 
+                                       KenandyErp.Message('Draft Accounting Entries are being deleted.Do not refresh page or press back button', KenandyErp.MessageType.Info);
+                                       //commenting below as we are not deferring rendering page until draft completes
+                                      // reverseAE(result.NextChunkIndex-1);//Make empty remote call   .Next chunk index is not incremente din serve method if exceeds total                                
+
+                                    }   
+                                   // else
+                                    //{
+                                            //Display the grid Only when all chunks have been retrieved
+                                            $.when.apply($, RemoteDeferredReverse).done( function (obj1,obj2)
+                                                             {
+                                                                         
+                                                                 deferredReverse.resolve(obj1,obj2); 
+                                                                 console.log('deferredDelResolve');                                        
+                                                                 console.log('RemoteDeferredReverse Array');                                              
+                                                                 console.log(RemoteDeferredReverse); 
+                                                                 //console.log('Result');
+                                                                 //console.log(result);
+                                                                 if(result.ChunkReverse==true)
+                                                                     {
+                                                                       renderResult();
+
+                                                                        if(AESDraftDel)
+                                                                        {
+                                                                         delDraft(CleanupDraftIds);
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                          $('#MessagesBlock').hide();
+                                                                             
+                                                                         //generateChunks();
+                                                                        }
+                                                                      }
+                                                                 else
+                                                                     {
+                                                                         //Last reverse has failed
+                                                                     }
+                                                                 
+            
+                                                             }
+                                                 
+                                                         );                                                                     
+                                        
+                                  //  }    
+                                    
+
+                                  }                           
+
+
+ 
+             
+                                }
+                            else  //Remoting failure
+                                {
+                                        var isTimeout=checkRetry(event);
+						                if(isTimeout)
+						                {
+											if (currchunkIndex in realtimeRetriesRevAccting) 
+											{
+												realtimeRetriesRevAccting[currchunkIndex]++;
+											} 
+											else 
+											{
+												realtimeRetriesRevAccting[currchunkIndex] = 1;
+											}
+											
+											if (realtimeRetriesRevAccting[currchunkIndex] <= numberOfRetries) {
+												//var msExec = (new Date().getTime()) - realtimeStartTimestamp[Arule];
+											
+												console.log('Inside reverse AE -'+' Current Retry Count:'+realtimeRetriesRevAccting[currchunkIndex]+', currchunkIndex: '+currchunkIndex+', max:'+ max+', min :'+ min +', curr time: ' + new Date());
+												RemoteDeferredItemReverse.resolve(result, event);                                    
+												reverseAE(currchunkIndex);
+												
+											} 
+											else {
+												//we hit our number of retries, time to fail
+                                                KenandyErp.Message(event.message, KenandyErp.MessageType.Fatal);
+											}
+						                
+						                }
+						                else
+						                {
+                                             KenandyErp.Message(event.message, KenandyErp.MessageType.Fatal);
+						                }
+                                    //  $('#LoadingBlock').hide();
+                                   
+                                }
+
+                        },
+                        {escape: false}
+
+                    );
+            //No Need to show progress
+             progressbar(Progress,AELineCount);
+  
+            return RemoteDeferredItemReverse.promise();
+        }             
+     function renderResult()
+        {
+            var AEId = generateAEResult.AEID;
+            gridInit(AEId);  
+            rulesGridInit(AEId);
+            detailListInit(generateAEResult.AE);
+            $('#DataBlock').show();
+            $('#LoadingBlock').hide();       
+        }
+    </script>
+    <script>
+    /*Kendo Grid Logic*/
+        var aeLinesGrid = null;
+        var rulesGrid = null;
+        var aggregates = [];
+        
+        var AELineUtils = function(fieldList) {
+            return {
+                GetFieldList: function(fieldList) {
+                    fieldList = JSON.parse(fieldList);
+                    
+                    $.each(fieldList, function() {
+                        var aggregateField = _.where(aggregates, {field: this.field})[0];
+                        
+                        if (aggregateField && this.field == aggregateField.field) {
+                            this.aggregate = aggregateField.aggregate;
+                        }
+                    });
+                    return JSON.stringify(fieldList);
+                }
+                
+            };
+        }();
+        
+        var getAELinesData = function(config) {
+            if(!config){
+                return;
+            }
+            var deferred = $.Deferred();
+            var remoteArgs = JSON.parse(config);
+            // The stuff returned from Salesforce has extra properties like "attributes"
+            // which couldn't be deserialised back
+            remoteArgs.parentRecord = { Id: remoteArgs.parentRecord.Id };
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.SourceDocumentAccountingCon.getAELines}',
+                remoteArgs,
+                function (result, event) {
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+            );
+
+            return deferred.promise();
+        }
+        
+        var getRulesData = function(config) {
+            if(!config){
+                return;
+            }
+            var deferred = $.Deferred();
+            var remoteArgs = JSON.parse(config);
+            // The stuff returned from Salesforce has extra properties like "attributes"
+            // which couldn't be deserialised back
+            remoteArgs.parentRecord = { Id: remoteArgs.parentRecord.Id };
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.SourceDocumentAccountingCon.getRules}',
+                remoteArgs,
+                function (result, event) {
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+            );
+
+            return deferred.promise();
+        }
+        
+        
+        function gridInit(recordId){
+            
+            if (aeLinesGrid) {
+                aeLinesGrid.destroy();
+                $('#aeLinesGrid').empty();
+            }
+            
+            if(recordId == ""){
+                return;
+            }
+            
+            var lookupSearchFilters = [];
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.SourceDocumentAccountingCon.getGridConfig}',
+                "{!theSourceDocIdPg}",
+                recordId,
+                function (result, event) {
+                    console.log('result');
+                    console.log(result);
+                    var getAELinesData = function() {
+                        var deferred = $.Deferred();
+                        var remoteArgs = JSON.parse(result.config);
+                        // The stuff returned from Salesforce has extra properties like "attributes"
+                        // which couldn't be deserialised back
+                        remoteArgs.parentRecord = { Id: remoteArgs.parentRecord.Id };
+                        
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.SourceDocumentAccountingCon.getAELines}',
+                            remoteArgs,
+                            function (result, event) {
+                                deferred.resolve(result, event);
+                            },
+                            {escape: false}
+                        );
+                        return deferred.promise();
+                    }
+                    
+                    
+                    aeLinesGrid = $.fn.GridRelatedList($('#aeLinesGrid'), { namespace: '{!NamespaceUU}', config: result.config, fieldList: AELineUtils.GetFieldList(result.fieldInfoList), lookupSearchAction: '{!$RemoteAction.SourceDocumentAccountingCon.lookupSearchFilter}', getRelatedListFunction: getAELinesData, lookupSearchFilters: lookupSearchFilters, saveRelatedListAction: '{!$RemoteAction.SourceDocumentAccountingCon.saveAction}' });
+                },
+                {escape: false}
+            );
+        }
+        
+        function rulesGridInit(recordId){
+            
+            if (rulesGrid) {
+                rulesGrid.destroy();
+                $('#rulesGrid').empty();
+            }
+            
+            if(recordId == ""){
+                return;
+            }
+            var lookupSearchFilters = [];
+            console.log('Inside rulesGridInit');
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.SourceDocumentAccountingCon.getRulesGridConfig}',
+                "{!theSourceDocIdPg}",
+                recordId,
+                function (result, event) {
+                    console.log('result');
+                    console.log(result);
+                    
+                    var getRulesData = function() {
+                        var deferred = $.Deferred();
+                        var remoteArgs = JSON.parse(result.config);
+                        // The stuff returned from Salesforce has extra properties like "attributes"
+                        // which couldn't be deserialised back
+                        remoteArgs.parentRecord = { Id: remoteArgs.parentRecord.Id };
+                        
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.SourceDocumentAccountingCon.getRules}',
+                            remoteArgs,
+                            function (result, event) {
+                                deferred.resolve(result, event);
+                            },
+                            {escape: false}
+                        );
+                        
+                        return deferred.promise();
+                    }
+                    
+                    
+                    rulesGrid = $.fn.GridRelatedList($('#rulesGrid'), { namespace: '{!NamespaceUU}', config: result.config, fieldList: AELineUtils.GetFieldList(result.fieldInfoList), lookupSearchAction: '{!$RemoteAction.SourceDocumentAccountingCon.lookupSearchFilter}', getRelatedListFunction: getRulesData, lookupSearchFilters: lookupSearchFilters, saveRelatedListAction: '{!$RemoteAction.SourceDocumentAccountingCon.saveAction}' });
+                    
+                },
+                {escape: false}
+            );
+        }
+    
+        var aeHeaderFieldList = JSON.parse('{!aeHeaderFieldList}');
+                                         
+        function detailListInit(result) {
+            $('#AEHeaderDetailList').kendoDetailList({
+                namespace: '{!NamespaceUU}',  
+                sections: [
+                    {
+                        fields: aeHeaderFieldList
+                    }
+                ],
+                lookupSearchAction: '{!$RemoteAction.SourceDocumentAccountingCon.lookupSearchFilter}',
+                getDetailListFunction: function(readOptions) {
+					var deferred = $.Deferred();
+					var records = [];
+            
+					if (result) {
+						records.push(result);
+					}
+        
+		            setTimeout(function() {
+		                deferred.resolve({ records: records, success: true, total: records.length }, { statusCode: 200 });
+		            }, 100);
+					
+		            return deferred.promise();
+        }
+            }).data('kendoDetailList');
+        }
+    </script>
+
+    <apex:form id="form" >  
+    
+    <apex:sectionHeader subtitle="{!$Label.Generate_Accounting_Entry}" 
+                                        title="{!$Label.Generate_for} {!SourceDocName}"/>
+
+    <c:busyWait includeScripts="false" />
+    <apex:actionRegion >
+    <div id="MessagesBlock">  
+                   <apex:pagemessages id="Messages" />
+                    <div class="page-message"></div>
+    </div>
+    <div id="LoadingBlock">                      
+                    <apex:outputpanel id="LoadingPanel" >
+                        <apex:pageblock >
+                            <table width="100%">
+                                <tr>
+                                    <td align="center"><div id="ProgressBar" ></div></td>
+                                </tr>                    
+                            </table>  
+                        </apex:pageblock>
+                        <script>
+						var pb;
+                        
+                        function progressbar(progressCount,LineCount)
+                        {
+                            var exp=LineCount;
+                            var curr=progressCount;
+
+                            if (pb) {
+                                pb.value(curr);
+                            }
+                            else {
+                                pb = $("#ProgressBar").kendoProgressBar({
+                                    type: "percent",
+                                    min: 0,
+                                    max: exp,
+                                    value: curr,
+                                    animation: {
+                                        duration: 200
+                                    }
+                                }).data("kendoProgressBar");
+                            }
+                        }
+                        
+                        </script>
+                    </apex:outputpanel>
+        </div>
+        <div id="DataBlock">
+              <apex:pageBlock title="{!$Label.Accounting_Entry_Generated}"  id="DataPanel1" >
+        
+                <apex:pageBlockButtons location="top">
+                    
+                    <apex:commandButton value="{!$Label.Return_to} {!SourceDocName}" 
+                                                       onClick="closeaction();return false;" status="actionStatus" rerender="form"/>
+                    <apex:commandButton value="Review Accounting Entry" 
+                                                    onClick="reviewaction();return false;"
+                                                     status="actionStatus" rerender="form"/>
+                </apex:pageBlockButtons>
+                
+               <!-- <apex:pageBlockSection >
+        
+                    <apex:repeat value="{!$ObjectType.Accounting_Entry__c.FieldSets.Preview}" var="f">
+                        <apex:outputField value="{!record[f]}"  />          
+                    </apex:repeat>
+                 
+                </apex:pageBlockSection>-->
+                <apex:pageBlockSection columns="1">
+                      <div id="AEHeaderDetailList">
+                      </div>
+                </apex:pageBlockSection>
+                   
+            </apex:pageBlock> 
+
+            <apex:pageBlock title="{!$Label.Accounting_Entry_Lines_Generated}" id="DataPanel2" >
+                <div class="grid-container" id="theGrid">
+                    <div class="grid-message"></div>
+                    <div id="aeLinesGrid"></div>
+                </div>  
+            </apex:pageBlock>
+    
+            <apex:pageBlock title="{!$Label.Accounting_Rules_Matched}" id="DataPanel3" >
+                <div class="grid-container">
+                    <div class="grid-message"></div>
+                    <div id="rulesGrid"></div>
+                </div>
+            </apex:pageBlock>
+    
+            <br/>
+         <!--Commenting as part of KNDY-6885 -->
+       </div>
+
+   </apex:actionRegion>
+    
+</apex:form>      
+    
+</apex:page>

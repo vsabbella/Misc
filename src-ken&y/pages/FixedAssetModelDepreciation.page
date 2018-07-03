@@ -1,0 +1,69 @@
+<apex:page standardcontroller="Fixed_Asset__c" sidebar="false" showHeader="false" extensions="FixedAssetModelDepreciationExt">
+	<apex:pageMessages />
+	<apex:panelGrid columns="2" width="100%">
+	<apex:panelGroup rendered="{!existingDepreciation.size > 0}">
+		<apex:outputPanel layout="block" style="width:500px;text-align:center;font-size:18px;font-weight:bold;color:#222222;">
+			<apex:outputText value="{!$Label.Asset_Value_History}" />
+		</apex:outputPanel>
+		<apex:chart height="350" width="500" data="{!existingDepreciation}" 
+	        name="AssetValue">
+	        <!-- 
+	        <apex:axis type="Numeric" position="right" fields="ed" minimum="{!edMin}" maximum="{!edMax}"
+	            title="Depreciation Amount ({!Fixed_Asset__c.Company__r.Transaction_Currency_Default__c})" grid="false"/>
+            -->
+	        <apex:axis type="Numeric" position="left" fields="ba" 
+	            title="{!$Label.Asset_Value} ({!Fixed_Asset__c.Company__r.Default_Transaction_Currency__c})" grid="false"/>
+	   	  	<apex:axis type="Category" position="bottom" fields="d" 
+	            title="{!$Label.Date}" >
+            	<apex:chartLabel rotate="315" field="d"/>
+	        </apex:axis>
+	        <!-- 
+	        <apex:lineSeries axis="right" xField="d" yField="ed" title="Existing Depreciation"
+	            markerType="circle" markerSize="4"/>
+            -->
+	        <apex:lineSeries axis="left" xField="d" yField="ba" title="{!$Label.Asset_Value}"
+	            markerType="circle" markerSize="2" />
+            <apex:legend position="bottom"/>
+    	</apex:chart>
+    </apex:panelGroup>
+    
+    <apex:panelGroup rendered="{!modeledDepreciation.size > 0}">
+    	<apex:outputPanel layout="block" style="width:500px;text-align:center;font-size:18px;font-weight:bold;color:#222222;">
+    		<apex:outputText value="Modeled Depreciation" />
+    	</apex:outputPanel>
+	    <apex:chart height="350" width="500" data="{!modeledDepreciation}" 
+	        name="Model">
+	        <apex:axis type="Numeric" position="left" fields="sl,db,ma" 
+	            title="{!$Label.Asset_Value} ({!Fixed_Asset__c.Company__r.Default_Transaction_Currency__c})" grid="false"/>
+	   	  	<apex:axis type="Category" position="bottom" fields="d" 
+	            title="{!$Label.Date}" >
+            	<apex:chartLabel rotate="315" field="d"/>
+	        </apex:axis>    
+	        <apex:lineSeries axis="left" xField="d" yField="sl" title="{!$Label.Straight_Line}"
+	            markerType="circle" markerSize="2" />
+	        <apex:lineSeries axis="left" xField="d" yField="db" title="{!$Label.Declining_Balance}"
+	            markerType="circle" markerSize="2" />
+	        <apex:lineSeries axis="left" xField="d" yField="ma" title="{!$Label.Macrs}"
+	            markerType="circle" markerSize="2" />
+	        <apex:lineSeries axis="left" xField="d" yField="sy" title="{!$Label.Sum_of_Years}"
+	            markerType="circle" markerSize="2"/>
+	            
+	        <apex:legend position="bottom"/>
+	    </apex:chart>
+    </apex:panelGroup>
+    </apex:panelGrid>
+    
+	<div style="display:none;">
+		{!existingDepreciation.size}<br/>
+		{!modeledDepreciation.size}
+		{!Fixed_Asset__c.Depreciation_Method__c}
+		{!Fixed_Asset__c.Depreciation_Period__c}
+		{!Fixed_Asset__c.Depreciation_Convention__c}
+		{!Fixed_Asset__c.Declining_Balance__c}
+		{!Fixed_Asset__c.Acquisition_Cost__c}
+		{!Fixed_Asset__c.In_Service_Date__c}
+		{!Fixed_Asset__c.Estimated_End_of_Life__c}
+		
+	</div>
+	
+</apex:page>

@@ -1,0 +1,36 @@
+<apex:page standardController="Customer_Receipt__c"  
+				tabStyle="Customer_Receipt__c"
+                sidebar="false"
+                extensions="CustomerReceiptUnapplyPaymentExt">
+    
+        
+	<apex:form id="mainFormID">
+	
+		<c:busyWait /> 
+	
+	
+		<apex:pageBlock mode="edit" id="pageBlockID"  >
+            <apex:outputText value="Deprecated"/>
+			<apex:pageMessages id="errorMsgID" ></apex:pageMessages>
+			
+			<apex:pageBlockButtons id="btnoutpanel" location="top"> 
+				<!-- <apex:commandButton id="unapplybutton" action="{!unapplyPayment}" value="Unapply Payment" status="actionStatus" disabled="{!unapplyDisabled}"/>-->
+				<apex:commandButton id="cancelbutton" action="{!cancel}" value="Cancel" status="actionStatus" rerender="mainFormID"/>
+			</apex:pageBlockButtons>
+            <!-- 
+            <apex:pageBlockSection title="Customer Receipt Below will be Unapplied" columns="2" collapsible="false">
+            
+				<apex:repeat value="{!$ObjectType.Customer_Receipt__c.FieldSets.Customer_Receipt_AutoApply}" var="f">
+					<apex:OutputField value="{!Customer_Receipt__c[f]}" />
+				</apex:repeat>
+            
+            </apex:pageBlockSection>
+           	-->
+            	
+		</apex:pageBlock>
+	
+	
+	</apex:form>                
+              
+                
+</apex:page>

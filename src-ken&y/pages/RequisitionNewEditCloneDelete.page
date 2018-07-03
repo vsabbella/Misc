@@ -1,0 +1,18 @@
+<apex:page standardController="Requisition__c" extensions="NewEditCloneDeleteExt" action="{!errMsg}">
+	<apex:sectionHeader title="Requisition"/>
+	<script type="text/javascript">
+		function goback(){
+		  if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+		      sforce.one.back(true);
+		  } else {
+		      window.history.back();
+		  }
+		}
+	</script>
+    <apex:form >
+        <apex:pageMessages />
+        <apex:outputPanel style="padding:20px;"> 
+            <apex:outputLink onClick="goback();return false;" >{!$Label.Click_to_go_back}</apex:outputLink>
+        </apex:outputPanel>
+    </apex:form>
+</apex:page>

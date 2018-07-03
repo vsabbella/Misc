@@ -1,0 +1,1353 @@
+<apex:page >
+Deprecated
+<!-- Commenting based on KNDY-10059 -->
+<!-- <apex:page standardController="Financial_Report__c" extensions="FinancialReportGenerateExt" sidebar="false" docType="html-5.0" action="{!updateReportSectionsWithSubsections}"> -->
+    
+  <!--   <c:KendoResources /> 
+    
+    <apex:includeScript value="{!$Resource.jison}"/>
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />         
+   
+   
+	<apex:outputPanel id="jsPanel">
+	
+   
+    <script>
+
+        Visualforce.remoting.timeout = 120000; // Set timeout at page level    
+    
+        $(document).ready(function() {
+            init('{!Financial_Report__c.Id}');          
+        });
+        
+		var referenceFields = [];
+        
+        var reportItemToNameMap = {};
+        var subsectionsToCalculatedSections = {};
+        var calculatedSectionFormulas = {};
+        var reportType = "{!JSENCODE(Financial_Report__c.Report_Type__c)}";
+        var segments = [];
+        var exportHeader = false;
+        
+        function init(reportId){
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.FinancialReportGenerateExt.getFinancialReportSectionsWithSubsections}',
+                reportId,
+                function (result, event) {
+                    checkErrors(event);
+                    for (i=0; i<result.length; i++) { //sections
+                        for (j=0; j<result[i].reportSectionList.length; j++) { //subsections                            
+                            setProgress(result[i].reportSectionList[j]);
+                            
+                            if(result[i].reportSectionList[j].ready){   
+                                //only display column heading on first grid
+                                var displayColumnHeadings = false; 
+                                if ((i == 0) && (j == 0)) {
+                                    displayColumnHeadings = true;
+                                } else {
+                                    displayColumnHeadings = false;
+                                }                           
+                                
+		                        //never display heading on cash flow statement
+		                        if (reportType == 'Cash Flow') {
+		                        	displayColumnHeadings = false;	
+		                        }
+		                        
+                                //for the last subsection, create the totals footer.  However only display it if it is specified to display it.
+                                var buildSectionTotals = false;
+                                if ((j == result[i].reportSectionList.length - 1) &&  (result[i].reportSection.showGroupingSectionFooter)) { 
+                                    buildSectionTotals = true;
+                                }
+                                
+                                //Process grid data
+                                processSection(reportId, result[i].reportSectionList[j].sectionId, result[i], buildSectionTotals, displayColumnHeadings);
+                            }                       
+                        }  
+                    }
+                },
+                {escape: false}
+            );
+        }
+
+        
+        function processSection(reportId, sectionId, sectionWithSubsections, buildSectionTotals, displayColumnHeadings){            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.FinancialReportGenerateExt.returnReportSectionDetails}',
+                sectionId,
+                reportId,
+                function (result, event) {
+                    checkErrors(event);                 
+                    if (result.reportSection['{!NamespaceUU}Section_Type__c'] == 'Calculated') {
+                        buildCalculatedSection(sectionWithSubsections, result);
+                    } else {
+                        processSectionData(result, sectionWithSubsections, displayColumnHeadings);
+                    }
+
+                    if (buildSectionTotals) {
+                        buildSectionTotalGrid(sectionWithSubsections, result); 
+                    }                     
+                },
+                {escape: false}
+            );
+        }
+        
+        function processSectionData(sectionData, sectionWithSubsections, displayColumnHeadings){
+            //console.log('sectionData');
+            //console.log(sectionData);
+            
+            var headerAttrib = {};
+            if (displayColumnHeadings == false) {
+                headerAttrib = {style: "display: none"};
+            }else{
+            	headerAttrib = {style: "text-align:right"};
+            }
+            
+            //Create a grid for each call to this function based on the sectionId
+            var aggregates = [];
+            var columns = [];
+            var data = [];            
+            var col = new Object();
+            col.field = "reportItemKey";
+            col.title = sectionData.reportSection['{!NamespaceUU}Key_Label__c'];
+            col.width = "300px";
+            col.headerAttributes = headerAttrib;
+            columns.push(col);
+            var model = new Object();
+            var fields = new Object();
+            fields["reportItemKey"] = new Object();
+            fields["reportItemKey"]["type"] = "string";
+            model.fields = fields;
+
+            var toolbar;
+            var toolbarDefault = kendo.template("<h1> "+sectionData.reportSection.Name+"</h1>");
+                
+           
+            //do any customizations based on the report type
+            if (reportType == 'Trial Balance') {
+				toolbar = [	{name:"exportPdf",text:"PDF"},
+						  	{name:"exportExcel",text:"Excel"},
+						    {name:"Print",text:"Print"}	];				
+				
+				exportHeader = [];
+				exportHeader.push('{!JSENCODE(Financial_Report__c.Name)}');
+				exportHeader.push('{!JSENCODE(reportDateTimeFormatted)}');
+        		
+	
+				
+				//reset the first columns
+				columns = [];
+				var fields = new Object();
+				
+				//split the pipe delim column into multiple columns
+				segments = sectionData.reportSection['{!NamespaceUU}Key_Label__c'].split("|");
+				for(i=0; i<segments.length; i++){
+					var col = new Object();
+		            col.field = "segment"+i;
+		            col.title = segments[i];
+		            //col.width = "200px";
+		            col.headerAttributes = headerAttrib;
+		            columns.push(col);
+		            fields[col.field] = new Object();
+		            fields[col.field]["type"] = "string";
+				}
+				model.fields = fields;
+				
+				
+
+                var trialBalCols = [                
+                    //TODO: these Transactional Currency fields will get hidden: false to show up in grid                   
+                    {"title": "Beg. Bal. (TC)", "field": "begBalTC",    "hidden": true, "mapLookup": ""}, //need to calc this one 
+                    {"title": "Debits (TC)",    "field": "debitsTC",    "hidden": true, "mapLookup": "_Normal Period_TC-Debits"},
+                    {"title": "Credits (TC)",   "field": "creditsTC",   "hidden": true, "mapLookup": "_Normal Period_TC-Credits"},
+                    {"title": "End Bal. (TC)",  "field": "endBalTC",    "hidden": true, "mapLookup": ""}, //need to calc this one
+                    
+                    {"title": "Beg. Bal. (FC)", "field": "begBalFC",    "hidden": false,    "mapLookup": ""}, //need to calc this one
+                    {"title": "Debits (FC)",    "field": "debitsFC",    "hidden": false,    "mapLookup": "_Normal Period_FC-Debits"},
+                    {"title": "Credits (FC)",   "field": "creditsFC",   "hidden": false,    "mapLookup": "_Normal Period_FC-Credits"},
+                    {"title": "End Bal. (FC)",  "field": "endBalFC",    "hidden": false,    "mapLookup": ""},  //need to calc this one
+                    
+                    {"title": "Beg. Credits (TC)",  "field": "begCreditsTC",    "hidden": true,     "mapLookup": "_Beginning_TC-Credits"}, 
+                    {"title": "Beg. Debits (TC)",   "field": "begDebitsTC",     "hidden": true,     "mapLookup": "_Beginning_TC-Debits"},
+                    {"title": "Beg. Credits (FC)",  "field": "begCreditsFC",    "hidden": true,     "mapLookup": "_Beginning_FC-Credits"},
+                    {"title": "Beg. Debits (FC)",   "field": "begDebitsFC",     "hidden": true,     "mapLookup": "_Beginning_FC-Debits"}            
+                    
+                ];
+                
+
+                
+                //build a set of the hidden columns
+                var hiddenCols = {};
+                
+                //build a map of the mapLookups to field names where we can just drop the values in the grid-as in (no calcs needed)
+                var mapLookups = {};
+                var directColumns = [];
+                for(i=0; i<trialBalCols.length; i++){
+                    if (trialBalCols[i].mapLookup != "") {
+                        mapLookups[trialBalCols[i].mapLookup] = trialBalCols[i].field;
+                        directColumns.push(trialBalCols[i].field);
+                    }
+                    if (trialBalCols[i].hidden) {
+                        hiddenCols[trialBalCols[i].field] = true;
+                    }
+                }
+                
+                for(i=0; i<trialBalCols.length; i++){
+                    if (!trialBalCols[i].hidden) {
+                        reportItemToNameMap[trialBalCols[i].field] = 'column'+i;
+                        
+                        var col = new Object();
+                        col.field = trialBalCols[i].field;
+                        col.title = trialBalCols[i].title;
+                        col.format = "{0:c}"; //{0:n2}
+                        col.footerTemplate = '<div style="text-align:right">#=kendo.toString(sum, "c")#</div>';
+                        //col.footerTemplate = "Total: #=kendo.toString(sum, 'c')#";
+                        col.template = '<div style="text-align:right">#=kendo.toString('+col.field+', "c")#</div>';
+                        col.headerAttributes = headerAttrib;
+                        
+                        if (((col.field == "endBalTC") || (col.field == "endBalFC")) && "{!fr.Drill_Down_Report_ID__c}" != "") {
+                        	col.template = '<div style="text-align:right"><a href="\\\\#" class="link">#= kendo.toString('+col.field+', "c") #</a></div>';
+                        }
+                        
+
+                       	columns.push(col);
+                        fields[trialBalCols[i].field] = new Object();
+                        fields[trialBalCols[i].field]["type"] = "number";
+                        
+                        var agg = new Object();
+                        agg.field = col.field;
+                        agg.aggregate = "sum";
+                        aggregates.push(agg);                           
+
+                    }
+                }                       
+                
+                //loop through our data map and build a distinct union of all the column heading names in there
+                //the names look like this: Trial Balance_a1bo0000000CFXWAA4_Beginning_FC-Credits
+                var dataColumnHeadings = {};
+                for(i=0; i<sectionData.rowKeys.length; i++) {   
+                    for(var dataColumnHeading in sectionData.reportSectionDataMap[sectionData.rowKeys[i]]) {
+                        dataColumnHeadings[dataColumnHeading] = "";
+                    }
+                }           
+
+                
+                //build a map of the data field name to the full column heading for the direct matches
+                var fieldNameToColumnHeadingMap = {};
+                for(var dataColumnHeading in dataColumnHeadings) {
+                    for(var mapLookup in mapLookups) {
+                        if (dataColumnHeading.endsWith(mapLookup)) {
+                            fieldNameToColumnHeadingMap[mapLookups[mapLookup]] = dataColumnHeading;
+                        }
+                    }
+                }
+
+                
+                for(i=0; i<sectionData.rowKeys.length; i++){
+                    var d = new Object();
+                    //d["reportItemKey"] = sectionData.rowKeys[i];
+                    
+                    //split up the rowkey value
+					var reportItemKeyValues = sectionData.rowKeys[i].split("|");                    
+                    
+                    for (j=0; j<segments.length; j++) {
+                    	d["segment"+j] = reportItemKeyValues[j];
+                    }
+                    
+                    
+                    
+                    
+                    //start with 0 everywhere
+                    var trialBalVals = {begBalTC:0, debitsTC:0, creditsTC:0, endBalTC:0, begBalFC:0, debitsFC:0, creditsFC:0, endBalFC:0, begCreditsTC: 0, begDebitsTC: 0, begCreditsFC: 0, begDebitsFC: 0};
+                    
+                    //drop in all the field values for the columns we can set directly (including the hidden ones)
+                    for (var fieldName in fieldNameToColumnHeadingMap) {
+                        if (fieldNameToColumnHeadingMap[fieldName] in sectionData.reportSectionDataMap[sectionData.rowKeys[i]]) {
+                            var fieldValue = sectionData.reportSectionDataMap[sectionData.rowKeys[i]][fieldNameToColumnHeadingMap[fieldName]];
+                            if (!isNaN(fieldValue)) {
+                                trialBalVals[fieldName] = parseFloat(fieldValue);
+                            }
+                        }
+                    }
+                    
+                    if (defaultReportSpanType == 'By Month') {
+	                    trialBalVals["begBalTC"] = 0;
+	                    trialBalVals["begBalFC"] = 0;             
+                    } else {
+	                    trialBalVals["begBalTC"] = (trialBalVals["begDebitsTC"] - trialBalVals["begCreditsTC"]);
+	                    trialBalVals["begBalFC"] = (trialBalVals["begDebitsFC"] - trialBalVals["begCreditsFC"]);                    
+                    }                   
+                    
+
+                    trialBalVals["endBalTC"] = (trialBalVals["begBalTC"] + trialBalVals["debitsTC"] - trialBalVals["creditsTC"]);
+                    trialBalVals["endBalFC"] = (trialBalVals["begBalFC"] + trialBalVals["debitsFC"] - trialBalVals["creditsFC"]);                    
+
+                    
+                    //add in the data which is not hidden
+                    for (var trialBalVal in trialBalVals) {
+                        if (trialBalVal in hiddenCols == false) {
+                            d[trialBalVal] = trialBalVals[trialBalVal];
+                            referenceFields.push(trialBalVal);
+                        }
+                    }
+                    
+                    data.push(d);
+                }                       
+                    
+                
+            } else if (reportType == 'Cash Flow') {
+				toolbar = toolbarDefault;
+
+                reportItemToNameMap["Amount"] = "column0";
+                
+                var col = new Object();
+                col.field = "Amount";
+                col.title = "Amount";
+                col.format = "{0:c}"; //{0:n2}
+                col.headerAttributes = headerAttrib;
+                col.template = '<div style="text-align:right">#=kendo.toString('+col.field+', "c")#</div>';
+                columns.push(col);
+                
+                fields["Amount"] = new Object();
+                fields["Amount"]["type"] = "number";
+	            
+	            var cashFlowCols = ["_Current", "_Previous"];
+	            
+	            for(i=0; i<sectionData.rowKeys.length; i++){
+	                var d = new Object();
+	                d["reportItemKey"] = sectionData.rowKeys[i];	                
+		            
+					//need to override the first column's label for the cash current / prev since they are grouped on "true"		            
+		            if ((d["reportItemKey"] == true) || (d["reportItemKey"] == "true")) {
+		            	d["reportItemKey"] = sectionData.reportSection.Name;
+		            	toolbar = false; //hide the toolbar (subsection heading) on these cash sections as well
+		            }
+	                
+	                //net income gets special handling, since it comes through with just 1 column.  no current / previous
+	                if (sectionData.rowKeys[i] == "Net Income") { 
+		                toolbar = false; //hide the toolbar (subsection heading) on for net income
+		                for (var colName in sectionData.reportSectionDataMap[sectionData.rowKeys[i]]) {
+                            var fieldValue = sectionData.reportSectionDataMap[sectionData.rowKeys[i]][colName];
+                            if (!isNaN(fieldValue)) {
+                            	d["Amount"] = parseFloat(fieldValue);
+                            }		               			
+		                }	
+	                
+	                } else {
+						
+						var cashFlowVals = {_Current:0, _Previous:0};
+	                
+		                for (var colName in sectionData.reportSectionDataMap[sectionData.rowKeys[i]]) {
+			                for(j=0; j<cashFlowCols.length; j++){
+			               		if (colName.endsWith(cashFlowCols[j])) {
+		                            var fieldValue = sectionData.reportSectionDataMap[sectionData.rowKeys[i]][colName];
+		                            if (!isNaN(fieldValue)) {
+		                            	cashFlowVals[cashFlowCols[j]] = parseFloat(fieldValue);
+		                            }		               			
+			               		}
+			                }	                
+		                }	
+		                d["Amount"] = (cashFlowVals["_Current"] - cashFlowVals["_Previous"]);  
+		                
+	                }
+					
+	                data.push(d);
+	            }       	            			
+				
+            } else {
+      
+                toolbar = toolbarDefault;
+                
+                for(i=0; i<sectionData.reportItems.length; i++){
+                    reportItemToNameMap[sectionData.reportItems[i].Id] = 'column'+i;
+                    
+                    var col = new Object();
+                    col.field = sectionData.reportItems[i].Id;
+                    col.title = sectionData.reportItems[i].Name;
+                    col.format = "{0:c}"; //{0:n2}
+                    col.template = '<div style="text-align:right">#=kendo.toString('+col.field+', "c")#</div>';
+                    //col.footerTemplate = "Total: #=kendo.toString(sum, 'c')#";
+					col.footerTemplate = '<div style="text-align:right">#=kendo.toString(sum, "c")#</div>';                    
+                    col.headerAttributes = headerAttrib;
+                    columns.push(col);
+                    
+                    fields[sectionData.reportItems[i].Id] = new Object();
+                    fields[sectionData.reportItems[i].Id]["type"] = "number";
+                    
+                    var agg = new Object();
+                    agg.field = col.field;
+                    agg.aggregate = "sum";
+                    aggregates.push(agg);
+                }   
+                
+                
+                for(i=0; i<sectionData.rowKeys.length; i++){
+                    var d = new Object();
+                    for(j=0; j<columns.length; j++){
+                        if(columns[j].field == "reportItemKey"){
+                            d["reportItemKey"] = sectionData.rowKeys[i];
+                        }else{
+                            d[columns[j].field] = sectionData.reportSectionDataMap[sectionData.rowKeys[i]][columns[j].field];
+                        }
+                    }
+                    data.push(d);
+                }       
+            
+                                        
+            }       
+
+            
+			//check for null data grid, and replace with 0's
+			data = zeroNullData(columns, data);             
+            
+
+            //hide the progress bar
+            $("#" + sectionData.reportSection.Id + "progress").hide();
+            //Now create the grid
+                        
+			var grid;
+
+           	grid = $("#" + sectionData.reportSection.Id).kendoGrid({
+                dataSource: {
+                    data: data,
+                    schema: {
+                        model: model
+                    },
+                    aggregate: aggregates
+                },
+                scrollable: true,
+                sortable: false,
+                filterable: false,
+                columns: columns,
+                toolbar: toolbar,
+                dataBound: function(e) {
+                    setTimeout(function () {
+                        
+                        if (sectionWithSubsections.reportSection.showGroupingSectionFooter) {
+                            calculateSectionTotals(sectionData.reportSection.Id); //only calc footer totals if we are showing the footer
+                        }
+
+                        calculateCalculatedSection(sectionData.reportSection.Id);
+                    }, 0);
+                }                
+            });
+        
+			var finGrid = $("#" + sectionData.reportSection.Id).data("kendoGrid");            
+			if (exportHeader != false) {
+				finGrid.exportHeader = exportHeader;     
+			}  
+            
+				grid.on("click", ".k-grid-exportPdf", 
+                	$.proxy(KenandyErp.KendoGridActions.Export, 
+                    	{ 
+                        	grid: finGrid, 
+                            format: KenandyErp.KendoGridOptions.ExportFormat.Pdf, 
+                            options: {
+                                referenceFields: referenceFields
+                            }
+                        })
+                );            
+                
+                grid.on("click", ".k-grid-exportExcel", 
+					$.proxy(KenandyErp.KendoGridActions.Export, 
+						{ 
+                            grid: finGrid, 
+                            format: KenandyErp.KendoGridOptions.ExportFormat.Excel, 
+                            options: {
+                                referenceFields: referenceFields
+                            } 
+                        })
+				);                
+                
+                grid.on("click", ".k-grid-Print", 
+					$.proxy(KenandyErp.KendoGridActions.Export, 
+						{ 
+                            grid: finGrid, 
+                            format: KenandyErp.KendoGridOptions.ExportFormat.PrintableView, 
+                            options: {
+                                referenceFields: referenceFields
+                            } 
+                        })
+				);                
+            
+				grid.on('click', '.link', function(e) {
+        			showDetails.call(finGrid, e);
+				});
+            
+            
+            //add a data attribute to indicate the section type
+             $("#" + sectionData.reportSection.Id).attr('data-sectiontype', 'Data');
+        
+     		//hide footer for cash flow
+     		if (reportType == 'Cash Flow') {
+     			$("#" + sectionData.reportSection.Id).find(".k-grid-footer").hide();
+     		}
+     		
+        
+        }
+        
+		function showDetails(e) {
+		    var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+	        var reportURL = "/{!fr.Drill_Down_Report_ID__c}";
+			reportURL += "?pv0={!fr.Period__r.Name}";
+			for(i=0; i<segments.length; i++){
+	            reportURL += ("&pv"+(i+1)+"="+encodeURIComponent(dataItem["segment"+i]));
+			}	
+			var win = window.open(reportURL, '_blank');
+			win.focus();
+		}
+        
+        function setProgress(reportSection){
+            
+            if(reportSection.ready){
+                var pb = $('#' + reportSection.sectionId+ "progress");
+                if(pb.options){
+                    //var progress = (100);
+                    //pb.value(progress);
+                    pb.value(false);
+                }else{
+                      pb = $("#" + reportSection.sectionId + "progress").kendoProgressBar({
+                        min: 0,
+                        max: 100,
+                        type: "value",
+                        animation: {
+                            duration: 500
+                        }
+                    }).data("kendoProgressBar");
+                    //var progress = (100);
+                    //pb.value(progress);
+                    pb.value(false);
+                }
+            }else{
+                var pb = $("#" + reportSection.sectionId + "progress");
+                if(pb.options){
+                    var progress = ((reportSection.totalReady/reportSection.totalReports)*100);
+                    pb.value(progress);
+                }else{
+                      pb = $("#" + reportSection.sectionId + "progress").kendoProgressBar({
+                        min: 0,
+                        max: 100,
+                        type: "value",
+                        animation: {
+                            duration: 500
+                        }
+                    }).data("kendoProgressBar");
+                    var progress = ((reportSection.totalReady/reportSection.totalReports)*100);
+                    pb.value(progress);
+                }
+            }
+        }        
+        
+        
+        
+        
+        function buildCalculatedSection(sectionWithSubsections, reportSectionDataWrapper){
+            var calcSubsectionGrid15 = reportSectionDataWrapper.reportSection.Id;
+            if (calcSubsectionGrid15.length > 15) {
+                calcSubsectionGrid15 = calcSubsectionGrid15.substring(0, 15);
+            }		           	
+           	
+            //get all the report section Ids in the formula for this calculated section
+            var formula = reportSectionDataWrapper.reportSection['{!NamespaceUU}Formula__c']; 
+            var sectionIds = formula.match(/\{\!.*?\}/g);
+            
+			if (sectionIds != null)	{
+				//strip the merge tags off, trim to 15 chars
+				for(i=0; i<sectionIds.length; i++){
+					sectionIds[i] = sectionIds[i].replace("{\!", "").replace("}", "");  
+					if (sectionIds[i].length > 15) {
+						sectionIds[i] = sectionIds[i].substring(0, 15);
+					}
+				}
+				//update our object that contains all the sections mapped to the calculated sections			
+				for (i=0; i<sectionIds.length; i++) {
+					if (sectionIds[i] in subsectionsToCalculatedSections) {
+						var tempObj = subsectionsToCalculatedSections[sectionIds[i]];
+						tempObj[reportSectionDataWrapper.reportSection.Id] = true;
+						subsectionsToCalculatedSections[sectionIds[i]] = tempObj;
+					} else {
+						var tempObj = new Object();
+						tempObj[reportSectionDataWrapper.reportSection.Id] = true;	
+						subsectionsToCalculatedSections[sectionIds[i]] = tempObj;
+					}		
+				}			
+			} else {
+				
+				//add in an entry for the calculated section pointing to itself in case the calculated section formula is just hard coded numbers
+				if (calcSubsectionGrid15 in subsectionsToCalculatedSections) {
+					var tempObj = subsectionsToCalculatedSections[calcSubsectionGrid15];
+					tempObj[reportSectionDataWrapper.reportSection.Id] = true;
+					subsectionsToCalculatedSections[calcSubsectionGrid15] = tempObj;
+				} else {
+					var tempObj = new Object();
+					tempObj[reportSectionDataWrapper.reportSection.Id] = true;	
+					subsectionsToCalculatedSections[calcSubsectionGrid15] = tempObj;
+				}
+				
+				
+			}		
+
+            //update our object that contains the formulas
+            calculatedSectionFormulas[reportSectionDataWrapper.reportSection.Id] = reportSectionDataWrapper.reportSection['{!NamespaceUU}Formula__c'];
+            //get all the numeric column headings
+            calcGridFieldTotals = {};
+            for (var key in reportItemToNameMap) {
+                calcGridFieldTotals[reportItemToNameMap[key]] = 0;  
+            }           
+
+            var sectionFooterFont = "sectionFooterFontNormal";
+            if (reportSectionDataWrapper.reportSection['{!NamespaceUU}Font_Size__c'] == "Large") {
+                sectionFooterFont = "sectionFooterFontLarge"
+            }
+
+            var headerAttrib = {style: "display: none"};
+            var columns = [];
+            var col = new Object();
+            col.field = "calcValues";
+            col.title = "Calculated Values";
+            col.width = "300px";
+            col.headerAttributes = headerAttrib;
+            col.template = '<span class="'+sectionFooterFont+'">#=calcValues#</span>';
+            columns.push(col);
+            var model = new Object();
+            var fields = new Object();
+            fields["calcValues"] = new Object();
+            fields["calcValues"]["type"] = "string";
+            model.fields = fields;
+
+            //build columns to hold the calculated values
+            var colCounter = 0;
+            for (var columnName in calcGridFieldTotals) {
+                var col = new Object();
+                var colName = 'column'+colCounter;
+                col.field = colName;                
+                col.title = colName;    
+                col.format = "{0:c}"; //{0:n2}
+                col.headerAttributes = headerAttrib;
+                //FIN-884 removing total string as it inteferes with User's Excel computation capabilitites
+               // col.template = "<span class='sectionFooterFontData'>Total: #=kendo.toString("+colName+", 'c') # </span>";    
+                col.template = "<span class='sectionFooterFontData'> #=kendo.toString("+colName+", 'c') # </span>";               
+                //col.footerTemplate = '<div style="text-align:right">#=kendo.toString(sum, "c")#</div>';   
+                //col.template = '<div style="text-align:right">#=kendo.toString('+col.field+', "c")#</div>';  
+                //col.template = "<div style="text-align:right" class='sectionFooterFontData'>Total: #=kendo.toString("+colName+", 'c') # </div>"; 
+                columns.push(col);
+                colCounter++;
+            }
+
+            
+            //set them as 0 to start            
+            var data = [];
+            var d = new Object();       
+            for(j=0; j<columns.length; j++){
+                if(columns[j].field == "calcValues"){
+                    d["calcValues"] = reportSectionDataWrapper.reportSection.Name;
+                }else{
+                    d[columns[j].field] = 0;
+                }
+            }
+            data.push(d);
+            
+            //hide the progress bar
+            $("#" + reportSectionDataWrapper.reportSection.Id + "progress").hide();
+    
+             //create grid
+             $("#" + reportSectionDataWrapper.reportSection.Id).kendoGrid({
+                 dataSource: {
+                     data: data,
+                     schema: {
+                         model: model
+                     }
+                 },
+                 scrollable: true,
+                 sortable: false,
+                 filterable: false,
+                 columns: columns
+             });
+            
+            //add a data attribute to indicate the section type
+             $("#" + reportSectionDataWrapper.reportSection.Id).attr('data-sectiontype', 'Calculated');
+             
+             if (sectionIds == null) {
+             	//this means the formula didn't have any other sections in it.  Perhaps just hard coded numbers.  So we can calculate the values immediately.
+             	calculateCalculatedSection(calcSubsectionGrid15);
+             }             
+            
+        }     
+        
+       function calculateCalculatedSection(subsectionGridId){
+       
+            var subsectionGrid15 = subsectionGridId;
+            if (subsectionGrid15.length > 15) {
+                subsectionGrid15 = subsectionGrid15.substring(0, 15);
+            }
+            
+            if (!subsectionGrid15 in subsectionsToCalculatedSections) {
+                return; //this section not part of any calculations
+            } 
+            
+            //get all the calculated sections this subsection is part of
+
+            var calculatedSectionIds = subsectionsToCalculatedSections[subsectionGrid15];
+            
+            //get all numeric column names
+            allNumericColumns = {};
+            for (var key in reportItemToNameMap) {
+                allNumericColumns[reportItemToNameMap[key]] = 0;    
+            }       
+
+            //loop over the sections to calculate
+            var calculatedSectionIdToCalculatedTotals = {};
+            
+            for (calculatedSectionId in calculatedSectionIds) {
+                
+                //get the formula
+                var formula = calculatedSectionFormulas[calculatedSectionId];
+
+                //get all the subsections in the formula
+                var sectionIds = formula.match(/\{\!.*?\}/g);               
+                //strip the merge tags off
+                
+                if (sectionIds != null) {
+	                for(i=0; i<sectionIds.length; i++){
+	                    sectionIds[i] = sectionIds[i].replace("{\!", "").replace("}", "");  
+	                }                 
+                }
+                
+                var sectionWithNumericGridFieldTotals = {}; //key is the sectionId, value if a sum of all the columns
+                //loop over the subsection grids
+                if (sectionIds != null) {
+	                for(i=0; i<sectionIds.length; i++){
+	                    //total up the bottom line numbers for each grid
+	                    var subsectionGrid = $("[id^="+sectionIds[i]+"]").data().kendoGrid.dataSource.view();
+	                    
+	                    var numericGridFieldTotals = {};
+	                    for (j=0; j<subsectionGrid.length; j++) { //the row in the subsection
+	                        for(var colName in subsectionGrid[j]) { //the field in the row
+	                            if (colName in reportItemToNameMap) {
+	                                var sectionTotalColName = reportItemToNameMap[colName];
+	                                if (sectionTotalColName in numericGridFieldTotals) {
+	                                    numericGridFieldTotals[sectionTotalColName] += subsectionGrid[j][colName];  
+	                                } else {
+	                                    numericGridFieldTotals[sectionTotalColName] = subsectionGrid[j][colName];
+	                                }                   
+	                            }   
+	                        }           
+	                    }                   
+	                    sectionWithNumericGridFieldTotals[sectionIds[i]] = numericGridFieldTotals;
+	                }                     
+                }
+                
+                //for each column we need to substitute in the sectionId in the formula for the sum of that column
+                
+                var columnToCalcNumber = {};
+                
+                var colCounter = 0;
+                for (var colKey in allNumericColumns) {
+
+                    colName = "column" + colCounter;
+  					var formulaWithNumbers = formula;
+
+                    for (sectionId in sectionWithNumericGridFieldTotals) { //each section's totals                     	
+                        if (isNaN(sectionWithNumericGridFieldTotals[sectionId][colName]) === false) {
+                            formulaWithNumbers = formulaWithNumbers.replace(sectionId, sectionWithNumericGridFieldTotals[sectionId][colName]); //replace the sectionId merge field with the actual number
+                            formulaWithNumbers = formulaWithNumbers.replace(/{\!/g, "(").replace(/}/g, ")"); //replace merge tags with parens
+                        }                    	
+                    }                   
+					
+					try {
+						columnToCalcNumber[colName] = calculator.parse(formulaWithNumbers); //pass to jison to parse the formula and calc the result
+					} catch (e) {
+						console.log('Formula Parse Error: ' + e);
+					}
+					                                                
+                    
+                    colCounter++;
+                }           
+                calculatedSectionIdToCalculatedTotals[calculatedSectionId] = columnToCalcNumber;
+            }
+            
+            //loop through the calc sections and update the grids
+            for (calculatedSectionId in calculatedSectionIdToCalculatedTotals) {
+
+                //get the section total grid
+                var calculatedGrid = $("#" + calculatedSectionId).data("kendoGrid");
+                var calculatedGridDataRow = calculatedGrid.dataSource.view();
+        
+                //copy the calculated totals into the calculated grid       
+                var calcData = [];
+                var d = {};     
+                for(var colName in calculatedGridDataRow[0]){
+                    if(colName == "calcValues"){
+                        d["calcValues"] = calculatedGridDataRow[0][colName];
+                    }else if(colName == "uid"){
+                        //do nothing
+                    } else {
+                        if (isNaN(calculatedGridDataRow[0][colName]) === false) {
+                            d[colName] = calculatedSectionIdToCalculatedTotals[calculatedSectionId][colName];
+                        }
+                        
+                    }
+                     d["dirty"] = true;
+                }
+                calcData.push(d);    
+                               
+				try {
+					calculatedGrid.dataSource.data(calcData);
+					calculatedGrid.refresh();
+				} catch (e) {
+					console.log('Grid data source update error: ' + e);
+				}                
+                
+                
+            }
+            
+
+            
+        }        
+        
+        
+        
+        function buildSectionTotalGrid(sectionWithSubsections, reportSectionDataWrapper) {
+            var headerAttrib = {style: "display: none"};
+
+            var columns = [];
+            var col = new Object();
+            col.field = "sectionTotal";
+            col.title = "Section Total";
+            col.width = "300px";
+            col.headerAttributes = headerAttrib;
+            col.template = '<span class="sectionFooterFontLarge">#=sectionTotal#</span>';
+            columns.push(col);
+            var model = new Object();
+            var fields = new Object();
+            fields["sectionTotal"] = new Object();
+            fields["sectionTotal"]["type"] = "string";
+            model.fields = fields;
+
+
+			//most total grids do all the columns
+			//cash flow just does 1, since the grid has 2 columns but we just want 1		
+           	var colLength = reportSectionDataWrapper.reportItems.length;
+            if (reportType == 'Cash Flow') {
+            	colLength = 1;	
+            }	           	
+
+	        for(i=0; i<colLength; i++){
+                var col = new Object();
+                var colName = 'column'+i;
+                col.field = colName;                
+                col.title = colName;    
+                col.format = "{0:c}"; //{0:n2}
+                col.headerAttributes = headerAttrib;
+                //FIN-884 removing total string as it inteferes with User's Excel computation capabilitites
+                //col.template = "<div class='sectionFooterFontData'>Total: #=kendo.toString("+colName+", 'c') # </div>";
+                  col.template = "<div class='sectionFooterFontData'>#=kendo.toString("+colName+", 'c') # </div>";
+
+                columns.push(col);
+            }
+            
+        
+            var data = [];
+            var d = new Object();       
+            for(j=0; j<columns.length; j++){
+                if(columns[j].field == "sectionTotal"){
+                    d["sectionTotal"] = sectionWithSubsections.reportSection.groupingSectionFooterSumName;
+                }else{
+                    d[columns[j].field] = 0;
+                }
+            }
+            data.push(d);
+    
+             //create grid
+             $("#" + sectionWithSubsections.reportSection.sectionId + "sectionFooterGrid").kendoGrid({
+                 dataSource: {
+                     data: data,
+                     schema: {
+                         model: model
+                     }
+                 },
+                 scrollable: true,
+                 sortable: false,
+                 filterable: false,
+                 columns: columns
+             });
+             
+            //add a data attribute to indicate the section type
+             $("#" + sectionWithSubsections.reportSection.sectionId + "sectionFooterGrid").attr('data-sectiontype', 'Grouping');             
+             
+        }              
+        
+    
+    function calculateSectionTotals(subsectionGridId) {
+        
+        //get the sectionId that this subsection is in
+        var sectionId = $("#"+subsectionGridId).closest("div[class='subsectionWrapper']").attr('id');
+
+        //select this subsection and its siblings, and iterate over them to build an array of the subsection Ids
+        //exclude the calculated subsections, as this will likely double count numbers
+        var subsectionIds = [];
+
+        $("#"+subsectionGridId).closest("div[class='subsectionWrapper']").find("div[data-sectiontype='Data']").each(function() {
+            subsectionIds.push(this.id);
+        });
+        
+        var numericGridFieldTotals = {};
+        
+        //start with 0
+        for (var key in reportItemToNameMap) {
+            numericGridFieldTotals[reportItemToNameMap[key]] = 0;   
+        }
+        
+        //loop over all the subsections in the section, and sum up the data columns into the array to store them
+        for(i=0; i<subsectionIds.length; i++){ //the subsection
+            var subsectionGrid = $("#" + subsectionIds[i]).data().kendoGrid.dataSource.view();
+            for (j=0; j<subsectionGrid.length; j++) { //the row in the subsection
+                for(var colName in subsectionGrid[j]) { //the field in the row
+                    if (colName in reportItemToNameMap) {
+                        var sectionTotalColName = reportItemToNameMap[colName];
+                        if (sectionTotalColName in numericGridFieldTotals) {
+                            numericGridFieldTotals[sectionTotalColName] += subsectionGrid[j][colName];  
+                        } else {
+                            numericGridFieldTotals[sectionTotalColName] = subsectionGrid[j][colName];
+                        }                   
+                    }   
+                }           
+            }
+        }
+        
+        //get the section total grid
+        var sectionTotalGrid = $("#" + sectionId + "sectionFooterGrid").data("kendoGrid");
+        var sectionTotalGridDataRow = sectionTotalGrid.dataSource.view();
+
+        //copy the subsection sums into the section total grid              
+        var sumData = [];
+        var d = {};     
+        for(var colName in sectionTotalGridDataRow[0]){
+            if(colName == "sectionTotal"){
+                d["sectionTotal"] = sectionTotalGridDataRow[0][colName];
+            }else if(colName == "uid"){
+                //do nothing
+            } else {
+                if (isNaN(sectionTotalGridDataRow[0][colName]) === false) {
+                    d[colName] = numericGridFieldTotals[colName];
+                }
+                
+            }
+             d["dirty"] = true;
+        }
+        sumData.push(d);        
+
+        sectionTotalGrid.dataSource.data(sumData);
+        sectionTotalGrid.refresh();
+
+    }             
+        
+    String.prototype.endsWith = function(pattern) {
+        var d = this.length - pattern.length;
+        return d >= 0 && this.lastIndexOf(pattern) === d;
+    };           
+   
+   
+    function checkErrors ( event ) { 
+        if (event.status) {            
+            // ok, clear error
+            $(".message").hide();
+            $("#responseErrors").text('');
+        } else if (event.type === 'exception') {
+            $("#responseErrors").text( event.message + ' : ' + event.type);
+             $(".message").show();
+        } else {
+            $("#responseErrors").text( event.message );
+        }
+    }   
+            
+	function zeroNullData(columns, dataIn) {
+		var dataOut = dataIn;		
+
+		if (dataIn.length == 0) {
+	        var d = new Object();
+ 			for(i=0; i<columns.length; i++){
+	            if (i == 0) {
+	            	d[columns[i].field] = ''; 	//row title get empty string
+	            } else {
+	            	d[columns[i].field] = 0;	//value gets zero
+	            }
+        	}         		
+			dataOut.push(d);
+		}			
+		return dataOut;
+	}            
+            
+	function addProgress() {
+		//block UI, show progress indicator
+		KenandyErp.BlockUI();
+		kendo.ui.progress($("#container"), true);    
+	}
+    
+	function removeProgress() {
+		//unblock UI, hide progress indicator
+		KenandyErp.UnBlockUI();
+		kendo.ui.progress($("#container"), false);      
+	}       
+
+ 	var allFiscalYears = {!allFiscalYearsJson};
+ 	var allPeriods = {!allFiscalPeriodsJson};
+ 	var searchFilters = JSON.parse('{!SearchFiltersJson}');
+ 	var defaultReportSpanType = ('{!fr.Report_Span__c}' == 'By Month') ? 'By Month' : 'Custom';
+ 	var defaultFiscalYear = '{!fr.Fiscal_Year__c}';
+ 	var defaultPeriod = '{!fr.Period__c}';
+ 	var defaultSegmentCriteria = JSONUtils.Parse('{!fr.Segment_Criteria__c}');
+ 		       
+   	$(document).ready(function() {
+       FinancialReportGenerateUtil.Init();
+    });  
+    
+    var FinancialReportGenerateUtil = function() {
+        	return {
+        		Init: function() {
+        			// Select the default report span type
+        			if (defaultReportSpanType == 'Custom') {
+        				$('#reportSpanTypeYtd').attr('checked', 'checked');
+        				this.DisplayReportSpanOptions($('#reportSpanTypeYtd'));
+        			}
+        			else {
+        				$('#reportSpanTypeMonthly').attr('checked', 'checked');
+        				this.DisplayReportSpanOptions($('#reportSpanTypeMonthly')); 
+        			}
+        			
+        			// Initialize Report Start/End Date filters
+        			$.fn.KendoDateTimePicker($('#reportStartDate'));
+        			$.fn.KendoDateTimePicker($('#reportEndDate'));
+        			
+	        		// Initialize Fiscal Years Lookup
+			       	var fiscalYearsFilter =  $('#fiscalYearsFilter').kendoDropDownList({
+			       		dataValueField: 'fiscalYear',
+				        dataTextField: 'fiscalYear',
+			        	dataSource: allFiscalYears,
+			        	value: (defaultFiscalYear) ? defaultFiscalYear : null
+			       	});
+			       	
+			       	// Initialize Fiscal Years Lookup
+			       	var fiscalYearsFilter =  $('#periodsFilter').kendoDropDownList({
+			       		cascadeFrom: "fiscalYearsFilter",
+			       		dataValueField: 'periodId',
+				        dataTextField: 'periodName',
+			        	dataSource: allPeriods,
+			        	value: (defaultPeriod) ? defaultPeriod : null
+			       	});
+			       	
+			       	$.each(searchFilters, function(index, item) {
+						// Initialize Segment Lookups
+			       		$.fn.KendoAutoComplete($("input[id='" + item.field + "Filter']"), { lookupSearchAction: '{!$RemoteAction.FinancialReportGenerateExt.lookupSearchFilter}', referenceTo: item.field, title: item.title, value: FinancialReportGenerateUtil.GetSegmentValueByName(item.field) });     	
+					});
+        		},
+        		
+        		DisplayReportSpanOptions: function(selector) {
+        			if ($(selector).val() == 'Custom') {
+        				$('#monthlyOptions').hide();
+        				$('#ytdOptions').show();
+        				$('#reportSpanTypeMonthly').removeAttr('checked');
+        				$('#reportSpanTypeYtd').attr('checked', 'checked');
+        				defaultReportSpanType = 'Custom';
+        			}
+        			else {
+        				$('#monthlyOptions').show();
+        				$('#ytdOptions').hide();
+        				$('#reportSpanTypeYtd').removeAttr('checked');
+        				$('#reportSpanTypeMonthly').attr('checked', 'checked');
+        				defaultReportSpanType = 'By Month';
+        			}
+        		},
+        		
+        		GetSegmentValueByName: function(name) {
+        			var segmentFilter = _.where(defaultSegmentCriteria, {field: name.replace(/__c/, '__r.Name')});
+					
+					return (segmentFilter.length > 0) ? segmentFilter[0].value : '';
+        		},
+        		
+        		GetSegmentFilters: function() {
+        			var filterCriteria = [];
+
+        			$.each(searchFilters, function(index, item) {
+						if ($("input[id='" + item.field + "Filter']").val().trim() != '') {																															
+							filterCriteria.push({ field: item.field.replace(/__c/, '__r.Name'), fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: $('#' + item.field + 'Filter').val(), operator: KenandyErp.KendoGridOptions.FilterOperatorType.Contains });
+					    }
+					});
+					
+					return filterCriteria;
+        		},
+        		
+        		Save: function() {
+        			KenandyErp.BlockUI();
+        			Visualforce.remoting.Manager.invokeAction(
+		                '{!$RemoteAction.FinancialReportGenerateExt.saveFilters}',
+		                '{!fr.Id}',
+		                $('#fiscalYearsFilter').val(),
+		                $('#periodsFilter').val(),
+		                $('#reportStartDate').val(),
+		                $('#reportEndDate').val(),
+		                defaultReportSpanType,
+		                FinancialReportGenerateUtil.GetSegmentFilters(),
+		                function (result, event) {
+		            		KenandyErp.UnBlockUI();    
+		            		
+							if (result.success) {
+								addProgress();
+								createReport();
+							}
+							else {
+								KenandyErp.Message(result.messages);
+							}
+		                },
+		                {escape: false}
+		            );
+        		}
+        	};
+		}();
+		
+			
+    </script> 
+</apex:outputPanel>     -->
+    <!--FIN-884 Changed sectionFooterFontData to align right-->
+    
+    <!--  
+    <style type="text/css">
+        .column-left {float: left; width: 33%;}     
+        .column-center {display: inline-block; width: 33%; text-align: center; font-size: 16px; font-weight: bold;}
+        .column-right {float: right; width: 33%;}
+        .column-center .sub {font-size: 12px;}
+        .sectionHeader {font-size: 14px; font-weight: bold; padding-left: 100px;}
+        .sectionFooter, .sectionFooterTotal {font-size: 14px; font-weight: bold;}
+        .sectionFooterFontNormal {font-size: 12px; font-weight: bold;}
+        .sectionFooterFontLarge {font-size: 14px; font-weight: bold;}
+        .sectionFooterFontData {font-size: 12px; font-weight: bold; float: right;}
+        .message {display: none;}
+        .message {display: none;}
+    </style>    
+    
+    <div class="page-container">
+    	<div class="page-message"></div>
+    	
+    	<apex:form id="form">
+    	<c:busyWait />
+    	    <apex:actionFunction name="refreshForm"  rerender="form" />
+	        <apex:actionPoller action="{!updateReportSections}" reRender="pbReport" interval="5" enabled="{!poller}" oncomplete="init('{!Financial_Report__c.Id}');"/>
+	        <apex:actionFunction name="displayOptions" action="{!displayOptions}"  rerender="form,pbReport" />
+	        <apex:actionFunction name="selectPeriod" action="{!selectPeriod}"  rerender="form" />
+	        <apex:actionFunction name="selectSegmentvalues" action="{!selectSegmentvalues}"  rerender="form" />
+	        <apex:actionFunction name="createReport" action="{!createReport}" rerender="pbReport" oncomplete="removeProgress();init('{!Financial_Report__c.Id}');" />
+	        <apex:pageBlock >
+	        -->
+	  
+             <!--FIN-884 hiding the filter panel as it destabilizes the page on user action-->
+	      <!--       <div id="container" style="display:none;">
+	        <apex:pageBlockSection title="Report Configurations" columns="1" > -->
+	<!--         <apex:outputLabel value="Financial Report Type"/> &nbsp;  &nbsp;  -->
+	<!--     <apex:selectList value="{!fr.Report_Type__c}" size="1" onchange="displayOptions();" rendered="{!showReportType}" > -->
+	<!--         <apex:selectOptions value="{!reportTypeOptionFields}"/>  -->
+	<!--     </apex:selectList><br/> --> 
+	<!--          <apex:outputLabel value="Fiscal Year"/> &nbsp;  &nbsp;  -->
+	<!-- 	        <apex:selectList value="{!fr.Fiscal_Year__c}" size="1" onchange="selectPeriod();" rendered="{!showReportType}" > -->
+	<!-- 	        <apex:selectList value="{!fr.Fiscal_Year__c}" size="1" onchange="selectPeriod();" > -->
+	<!-- 		        <apex:selectOptions value="{!fiscalYearsOptionFields}"/>  -->
+	<!-- 		    </apex:selectList> -->
+	<!--
+
+				<label>
+					<input type="radio" id="reportSpanTypeMonthly" name="reportSpanType" value="By Month" onchange="FinancialReportGenerateUtil.DisplayReportSpanOptions(this);"  /> Monthly
+				</label>
+				<label>
+					<input type="radio" id="reportSpanTypeYtd" name="reportSpanType" value="Custom" onchange="FinancialReportGenerateUtil.DisplayReportSpanOptions(this);"  /> Year To Date
+				</label>
+				 <br/><br/>
+				 <div id="monthlyOptions">
+				    <label class="FiscalYear-label" for="fiscalYearsFilter" >{!$ObjectType.Financial_Report__c.Fields.Fiscal_Year__c.Label}:</label>
+					<input id="fiscalYearsFilter" class="kendoWidgetSelector" rendered="{!!showReportSpanMonthly}"/>
+					
+					<label class="Periods-label" for="periodsFilter">{!$ObjectType.Financial_Report__c.Fields.Period__c.Label}:</label>
+					<input id="periodsFilter" class="kendoWidgetSelector" rendered="{!!showReportSpanMonthly}"/>
+				</div>
+				
+				<div id="ytdOptions">
+					<label class="ReportStartDate-label" for="reportStartDate">{!$ObjectType.Financial_Report__c.Fields.Report_Start_Date__c.Label}:</label>
+	 				<input id="reportStartDate" class="kendoWidgetSelector"  rendered="{!showReportSpanMonthly}"/>
+	 				
+	 				<label class="ReportEndDate-label" for="reportEndDate">{!$ObjectType.Financial_Report__c.Fields.Report_End_Date__c.Label}:</label>
+	 				<input id="reportEndDate" class="kendoWidgetSelector"  rendered="{!showReportSpanMonthly}"/>
+	 			</div>
+<!--  				<apex:InputField styleClass="reportStartDate" label="Report Start Date" value="{!fr.Report_Start_Date__c}"   />
+				<apex:InputField styleClass="reportEndDate" label="Report End Date" value="{!fr.Report_End_Date__c}"   /> -->
+				
+	<!--     <apex:selectList label="Trial Balance Period"  value="{!selectedTrialBalancePeriod}" size="1" onchange="displayOptions();" disabled="{!showComparePeriod}" rendered="{!!showReportType}"  > -->
+	<!--         <apex:selectOptions value="{!periodsOptionFields}"/>  -->
+	<!--     </apex:selectList> -->
+	<!--          <apex:outputLabel value="Period Options"/> -->
+				<!-- apex:InputField label="Trial Balance Period" value="{!fr.Period__c}" onchange="displayOptions();" rendered="{!!showReportType}"/-->
+	<!-- 		    <apex:selectList label="Segments"  value="{!selectedSegment}" size="1" onchange="selectSegmentvalues();"> -->
+	<!-- 		        <apex:selectOptions value="{!segmentsOptionFields}"/>   -->
+	<!-- 		    </apex:selectList>  -->
+	<!-- 		    <apex:selectList label="Value"  value="{!individualSegment}" size="1" > -->
+	<!-- 		        <apex:selectOptions value="{!individualSegmentsOptionFields}"/>  -->
+	<!-- 		    </apex:selectList>  --> 
+	<!--  
+				<apex:selectRadio label="Report Duration"   value="{!radioButtonReportType}" onclick="displayOptions();" rendered="{!showReportType}" >
+				    <apex:selectOption itemValue="Quarter" itemlabel="By Quarter"/>
+				    <apex:selectOption itemValue="Period" itemlabel="By Period"/>
+				</apex:selectRadio>
+	<!-- <apex:InputField label="By Quarters" value="{!fr.Compare_Quarters__c}" onclick="displayOptions();"  /> <br/>  -->
+	    <!--     <apex:outputLabel value="Quarters"/> &nbsp;  &nbsp;  -->
+	  <!--
+			    <apex:selectList value="{!fr.Quarters__c}" size="5" multiselect="true" rendered="{!!showCompareQuarter}"  >
+			        <apex:selectOptions value="{!quartersOptionFields}"/> 
+			    </apex:selectList>
+	<!--     <apex:InputField label="By Periods" value="{!fr.Compare_Periods__c}" onclick="displayOptions();" /> <br/>  -->
+	<!--     <apex:outputLabel value="Starting Period"/> &nbsp;  &nbsp;  -->
+	 <!--    		<apex:InputField label="Starting Period" value="{!fr.Start_Period__c}" rendered="{!showComparePeriod}"  /> 
+	<!--     <apex:outputLabel value="Ending Period"/> -->
+	<!--		<apex:InputField label="Ending Period" value="{!fr.End_Period__c}" rendered="{!showComparePeriod}" />
+	        </apex:pageBlockSection>
+	        
+	        <apex:pageBlock title="Segment Filters">	
+	        
+			<apex:variable var="cols" value="{!SearchFilters.size-1}" /> 
+			<apex:variable var="counter" value="{!0}" />
+			<apex:variable var="resetCounter" value="{!0}" /> 
+			<table class="kndy-table">
+			<apex:repeat value="{!SearchFilters}" var="item" >
+				<apex:variable var="label" value="{!item['title']}" />
+			    <apex:outputText escape="false" value="<tr>" rendered="{!resetCounter==0}" />
+			    
+			    <apex:outputPanel layout="none" rendered="{!resetCounter<=cols}">
+					<td class="column-label">
+						<div>{!label}</div>
+						<div><input id="{!item['field']}Filter" /></div>
+					</td>
+				</apex:outputPanel>
+			    
+			    <apex:outputPanel layout="none" rendered="{!SearchFilters.size-1==counter && resetCounter<cols}">
+			    	<td colspan="{!(cols-resetCounter)*2}">&nbsp;</td>
+			    </apex:outputPanel>
+	    
+		    	<apex:outputText escape="false" value="</tr>" rendered="{!counter==SearchFilters.size}" />
+		    	<apex:variable var="resetCounter" value="{!IF(resetCounter==cols, 0, resetCounter+1)}"/>
+				<apex:variable var="counter" value="{!counter+1}" />
+			</apex:repeat>
+	        </table>
+	        </apex:pageBlock>
+	        
+	        <apex:pageBlockSection title="Segment Filters" columns="2" rendered="false" >
+			    <apex:selectList label="{!selectedSegment1}"  value="{!selectedSegment1}" size="1" onchange="selectSegmentvalues();">
+			        <apex:selectOptions value="{!segmentsOptionFields}"/>  
+			    </apex:selectList> 
+			    <apex:selectList label="Value"  value="{!individualSegment1}" size="1" >
+			        <apex:selectOptions value="{!individualSegmentsOptionFields1}"/> 
+			    </apex:selectList> 
+			    <apex:selectList label="Segments"  value="{!selectedSegment2}" size="1" onchange="selectSegmentvalues();">
+			        <apex:selectOptions value="{!segmentsOptionFields}"/>  
+			    </apex:selectList>
+			    <apex:selectList label="Value"  value="{!individualSegment2}" size="1" >
+			        <apex:selectOptions value="{!individualSegmentsOptionFields2}"/> 
+			    </apex:selectList> 
+			    <apex:selectList label="Segments"  value="{!selectedSegment3}" size="1" onchange="selectSegmentvalues();">
+			        <apex:selectOptions value="{!segmentsOptionFields}"/>  
+			    </apex:selectList>
+			     <apex:selectList label="Value"  value="{!individualSegment3}" size="1" >
+			        <apex:selectOptions value="{!individualSegmentsOptionFields3}"/> 
+			    </apex:selectList> 
+			    <apex:selectList label="Segments"  value="{!selectedSegment4}" size="1" onchange="selectSegmentvalues();">
+			        <apex:selectOptions value="{!segmentsOptionFields}"/>  
+			    </apex:selectList>
+			    <apex:selectList label="Value"  value="{!individualSegment4}" size="1" >
+			        <apex:selectOptions value="{!individualSegmentsOptionFields4}"/> 
+			    </apex:selectList> 
+			    <apex:selectList label="Segments"  value="{!selectedSegment5}" size="1" onchange="selectSegmentvalues();">
+			        <apex:selectOptions value="{!segmentsOptionFields}"/>  
+			    </apex:selectList>
+			    <apex:selectList label="Value"  value="{!individualSegment5}" size="1" >
+			        <apex:selectOptions value="{!individualSegmentsOptionFields5}"/> 
+			    </apex:selectList> 
+			    <apex:selectList label="Segments"  value="{!selectedSegment6}" size="1" onchange="selectSegmentvalues();">
+			        <apex:selectOptions value="{!segmentsOptionFields}"/>  
+			    </apex:selectList>
+			     <apex:selectList label="Value"  value="{!individualSegment6}" size="1" >
+			        <apex:selectOptions value="{!individualSegmentsOptionFields6}"/> 
+			    </apex:selectList>
+			    <apex:selectList label="Segments"  value="{!selectedSegment7}" size="1" onchange="selectSegmentvalues();">
+			        <apex:selectOptions value="{!segmentsOptionFields}"/>  
+			    </apex:selectList>
+			     <apex:selectList label="Value"  value="{!individualSegment7}" size="1" >
+			        <apex:selectOptions value="{!individualSegmentsOptionFields7}"/> 
+			    </apex:selectList> 
+			    <apex:selectList label="Segments"  value="{!selectedSegment8}" size="1" onchange="selectSegmentvalues();">
+			        <apex:selectOptions value="{!segmentsOptionFields}"/>  
+			    </apex:selectList> 
+			    <apex:selectList label="Value"  value="{!individualSegment8}" size="1" >
+			        <apex:selectOptions value="{!individualSegmentsOptionFields8}"/> 
+			    </apex:selectList> 
+	        </apex:pageBlockSection>
+	        
+	        
+	        
+	        </div>
+	        <apex:pageBlockButtons location="top">
+<!-- 	            <apex:commandButton value="Run Report On-Demand" action="{!executeReportOnDemand}"/> -->
+<!-- 
+	            <input name="saveFilters" id="saveFilters" type="button" status="actionStatus" rerender="form" value="Run Report" onclick="FinancialReportGenerateUtil.Save();" class="btn save-filter-buttons" />
+				<!-- <apex:commandButton value="Save" action="{!save}" onclick="addProgress(); " onComplete="removeProgress();refreshForm();init('{!Financial_Report__c.Id}');"  rerender="form"/>  -->
+				<!-- apex:commandButton value="Save" action="{!saveReport}"  onclick="addProgress()" onComplete="removeProgress();init('{!Financial_Report__c.Id}');" rendered="{!reportTypeFlag}" /-->
+	<!-- 			<apex:commandButton value="Go Back" status="actionStatus" rerender="form" action="{!cancel}"/>
+	        </apex:pageBlockButtons>
+	<!--             <c:ReportConfig /> --> 
+	  <!--      </apex:pageBlock>
+	    </apex:form> 
+	    <apex:pageBlock id="pbReport"  >
+	        <apex:pageBlockSection columns="1"  >
+	            <div class="finHeader">
+	                <div class="column-left">
+	                    {!Financial_Report__c.Name} - {!Financial_Report__c.Company__r.Company_Currency__c} <br/>
+	                    Date/Time: {!reportDateTimeFormatted} <br/>
+	                    Company: {!Financial_Report__c.Company__r.Name}
+	                </div>
+	                <div class="column-center">
+	                    {!Financial_Report__c.Company__r.Name}<br/>
+	                    {!Financial_Report__c.Name}<br/>
+	                    <div class="sub">{!comparisonName}</div>
+	                </div>
+	                <div class="column-right"></div>
+	            </div> 
+	            <apex:pageBlockSection columns="1">
+	                <div class="message warningM4 ">
+	                    <img alt="warning" class="msgIcon" src="/s.gif" title="warning"  style="float: left;" />
+	                    <div id="responseErrors"></div>
+	                </div>                   
+	            </apex:pageBlockSection>
+	        </apex:pageBlockSection>
+	        <apex:repeat value="{!reportSectionsWithSubsections}" var="rs" >
+	            <br/>
+	            <div class="sectionHeader">{!rs.reportSection.sectionTitle}</div>
+	            <br/> 
+	            <div id="{!rs.reportSection.sectionId}" class="subsectionWrapper">
+	                <apex:repeat value="{!rs.reportSectionList}" var="rss">
+	                    <apex:pageBlockSection collapsible="false" columns="1">
+	                        <div class="grid-container">
+	                            <div class="grid-message"></div>
+	                            <div id="{!rss.sectionId}" class="{!rss.sectionType}"></div>
+	                        </div>  
+	                        <div id="{!rss.sectionId}progress"></div>
+	                    </apex:pageBlockSection>
+	                </apex:repeat>
+	            </div>
+	            <apex:pageBlockSection collapsible="false" columns="1">
+	                <div id="{!rs.reportSection.sectionId}sectionFooterGrid" class="sectionFooterGrid"></div>
+	            </apex:pageBlockSection>
+	            <br/> 
+	        </apex:repeat>   
+	    </apex:pageBlock>
+	    <div id="force" style="display: none; ">
+	<apex:outputField value="{!Financial_Report__c.Id}" />
+	<apex:outputField value="{!Financial_Report__c.Name}" />
+	<apex:outputField value="{!Financial_Report__c.Report_Type__c}" />
+	<apex:outputField value="{!Financial_Report__c.Company__r.Name}" />
+	<apex:outputField value="{!Financial_Report__c.Company__r.Company_Currency__c}" />
+	    </div>  
+	</div>  -->
+</apex:page>

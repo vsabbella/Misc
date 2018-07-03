@@ -1,0 +1,213 @@
+<apex:page showHeader="true" sidebar="true" standardcontroller="GL_Account__c" extensions="GLAcctsManageHierarchyExt" docType="html-5.0" recordSetVar="GLAccts">
+
+    <c:KendoResources />
+    
+        <div class="page-container">
+    	    <div class="page-message"></div>
+    	    
+            <apex:pageBlock >
+                <div id="treelist"></div>
+            </apex:pageBlock>
+        </div>
+    
+    <script type="text/javascript">
+
+        var GLList = [];
+        var fieldList = [];
+        var labelList = [];
+        var parentFieldHier = '';
+   
+        var data = [];
+		var treeList = null;
+    	var fieldInfoList = [];
+    	var dateFields = [];
+        var NamespaceUU = '';
+        var AccountNumberField = '';
+        var referenceFields = [];
+        
+        //Calls remoting read method which queries  GL Account fields in fieldset 'HierarchyView' for All active GLs.
+       var getTreeViewData = function() {
+            var deferred = $.Deferred();
+                
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.GLAcctsManageHierarchyExt.treeListRead}',
+                function (result, event) {
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+            );
+
+            return deferred.promise();
+        };
+    
+    	$(document).on('KenandyErpReady', function(e) {
+            var GLListSer = '{!GLListSer}';
+            var FieldListSer = '{!FieldListSer}';
+            var labelListSer = '{!LabelListSer}';
+            
+            NamespaceUU  = '{!NamespaceUU}';
+            parentFieldHier = '{!parentFieldHier}';
+            fieldInfoList = JSON.parse('{!JSENCODE(fieldInfoList)}'); //Namespace prefixed fieldinfo list.
+            dateFields = KenandyErp.KendoGridOptions.GetDateFields(fieldInfoList);
+            AccountNumberField = NamespaceUU + 'GL_Account_Number__c';
+                
+			//GLList = JSONUtils.Parse(GLListSer);                     
+ 			fieldList = JSONUtils.Parse(FieldListSer);   
+            labelList = JSONUtils.Parse(labelListSer);       
+            referenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(fieldInfoList);
+                                        
+            var getDataSource = function() {
+            
+                var dataSource = new kendo.data.TreeListDataSource({
+                
+                transport:{
+                    read:  function (options){
+                        var promise = getTreeViewData();
+						promise.done(function(result, event){
+                            if (event.type == 'exception') {
+                               					        		
+                               // trigger onreadfailure
+						       $('#treelist').trigger({
+						        type: "OnReadFailure",
+						        result: result, 
+						        event: event 
+						    }); 
+    
+                            } else {
+                                options.success(result.records);
+
+     					        // trigger onreadsuccess
+                                 $('#treelist').trigger({
+                                    type: "OnReadSuccess",
+                                    result: result, 
+                                    event: event 
+                                });
+                            }
+                        });
+
+                      },
+                      create: function(options){
+       						callRemoteCreate(options);
+                      },
+                      update: function(options) {
+       						callRemoteCreate(options);
+                      }
+                    },
+                    schema: {
+                        model: getModel(),
+                        parse: function (response) {
+                            $.each(response, function (idx, item) {
+                                item = Serializer.IncludeNulls(item, { fields: referenceFields });
+                                item = Serializer.ConvertFromSFDCDate(item, { dateFields: dateFields });
+                            });
+                            
+                            return response;
+        			    },    
+                        expanded: true
+                    }
+                });
+                
+                return dataSource;
+            };
+                            
+            treeList = $("#treelist").kendoTreeList({
+                //toolbar:kendo.template("<input type='button' class='create-command' value='Create parent GL Account' />"),
+                dataSource: getDataSource(),
+                filterable: true,
+                resizable: true,
+                editable: true,
+                //selectable:true,
+                //sortable: true,
+                columns: getColumns()
+            }).data('kendoTreeList');
+            
+            treeList.wrapper.on('click', '.create-command', function(e) {
+                treeList.addRow();//This fires edit event.
+            });
+        });
+               
+        function callRemoteCreate(options) {
+            //TODO:remove  manual hard delete.
+            if (!options.data.Id) {
+            	delete options.data.Id;
+            }
+            
+            delete options.data.hasChildren;
+            delete options.data.expanded;
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.GLAcctsManageHierarchyExt.treeListCreate}',
+                JSON.stringify(options.data),
+                function (result, event) { 
+                  if (result.message == 'Success') {
+                       var resultRecord = result.result;
+
+                       if (!resultRecord[parentFieldHier]) {
+                          resultRecord[parentFieldHier] = null;
+                       }
+                       
+                       resultRecord = Serializer.IncludeNulls(resultRecord, { fields: _.pluck(fieldInfoList, 'field') });
+                       resultRecord = Serializer.ConvertFromSFDCDate(resultRecord, { dateFields: dateFields });
+                       
+                       options.success(resultRecord);                                                     
+                  }
+                  else {
+                       KenandyErp.Message(result.message, KenandyErp.MessageType.Info);
+                  }
+                },
+                {escape: false}
+            );
+        }
+                 
+       function getModel() {
+            var model = {};
+
+            model.id = "Id";
+            model.fields = KenandyErp.KendoGridOptions.GetFields(fieldInfoList);
+            model.fields.parentId = { field: parentFieldHier, nullable: true };
+            
+            return model;
+        }  
+    
+        function getColumns() {
+            var columns = [];
+            var buttons = [];
+            buttons.push("edit");
+            buttons.push("createchild");
+
+            columns = KenandyErp.KendoGridOptions.GetColumns(fieldInfoList, {
+                lookupSearchAction: '{!$RemoteAction.GLAcctsManageHierarchyExt.lookupSearchFilter}',
+                lookupSearchFilters: []
+            });
+            columns.shift(0);//TODO:CHeck with Lakshman the implication.
+            
+            //Add Hyperlink for Name.
+            for(var i=0;i<columns.length;i++) {
+                
+                if (columns[i].field == AccountNumberField) {
+                    columns[i].template = function(data) {
+                        if (data[AccountNumberField]) {
+                            return '<span><a href="/' + data.Id + '">' + data[AccountNumberField] + '</a></span>';
+                        }
+                        else {
+                            return '';
+                        }
+                    };
+                }
+
+                //TODO:Check if we can exclude filters on system dates here.
+                if (!columns[i].hidden) {
+                    columns[i].filterable = true;
+                }
+            }
+            //Commenting out edit/add child capacity as they are not compatible with current kendo versions.
+          /*  var columnObj= {};   
+            
+            columnObj.command=buttons;
+            columns.push(columnObj); */    
+            
+            return columns;
+        }
+ 
+    </script>
+</apex:page>

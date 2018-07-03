@@ -1,0 +1,62 @@
+<apex:component controller="GenerateMRPExt" >
+<style>
+img.indicator { width: 12px; height: 12px; }
+img.indicator.Completed { 
+    background-image: url(/img/apex/test_queue_sprite.png);
+    background-position-y: 15px;
+}
+img.indicator.Processing { 
+    background-image: url(/img/apex/processing.gif);
+    background-position-y: 0px;     
+}
+img.indicator.Failed { 
+    background-image: url(/img/apex/test_queue_sprite.png);
+    background-position-y: 36px;        
+}
+img.indicator.Queued { 
+    background-image: url(/img/apex/test_queue_sprite.png);
+    background-position-y: 78px;        
+}
+</style>
+        <apex:actionPoller action="{!incrementCounter}" 
+            rerender="counter" interval="8"/>
+
+<apex:pageBlock id="counter" title="Recent Planning Jobs" >
+<apex:pageBlockTable value="{!ApexJobList}" var="job" id="theTable" 
+                        rowClasses="odd,even"
+                        styleClass="tableClass">
+
+        <apex:column value="{!job.ApexClass.Name}"  />
+
+        
+        <apex:column >
+            <apex:facet name="header">Ind</apex:facet>
+            <img src="/s.gif" class="{!job.status} indicator"  />
+        </apex:column>
+        
+        <apex:column value="{!job.status}"  />
+
+<!--        <apex:column headerValue="Method Name" >-->
+<!--            <apex:outputText value="{!job.methodName}" />-->
+<!--        </apex:column>-->
+
+        <apex:column value="{!job.TotalJobItems}" />
+        
+        <apex:column value="{!job.JobItemsProcessed}" />
+<!--        <apex:column value="{!job.LastProcessed}" />-->
+        <apex:column value="{!job.NumberOfErrors}" />
+        <apex:column value="{!job.CreatedDate}"  />
+        <apex:column value="{!job.CompletedDate}" />
+        
+        <apex:column value="{!job.jobType}" />
+        <apex:column value="{!job.ExtendedStatus}" />
+        
+<!--        <apex:column value="{!job.ApexClassId}"  />-->
+<!--        a.ApexClass.Name, a.ApexClass.NamespacePrefix,-->
+</apex:pageBlockTable>
+<p>
+  <a href="/apexpages/setup/listAsyncApexJobs.apexp">Monitor All Apex Jobs</a>
+  </p>
+  </apex:pageBlock>
+
+</apex:component>

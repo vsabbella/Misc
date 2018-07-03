@@ -1,0 +1,18 @@
+<apex:page standardController="Work_Order__c" extensions="NewEditCloneDeleteExt" action="{!errMsg}">
+    <apex:sectionHeader title="Work Order" />
+    <apex:form >
+        <apex:PageMessages />
+        <apex:outputpanel style="padding:20px;">
+        	<apex:outputLink onClick="goback(true)" >{!$Label.Click_to_go_back}</apex:outputLink>
+        </apex:outputpanel>
+    </apex:form>
+    <script>
+        function goback( refresh) {
+            if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+                sforce.one.back(refresh);
+            } else {
+                window.history.back();
+            }
+        }
+    </script>
+</apex:page>

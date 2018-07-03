@@ -1,0 +1,31 @@
+<apex:page standardController="Payment__c" 
+            tabStyle="Payment__c" 
+            sidebar="false"  
+            recordSetVar="Payment" 
+            extensions="PaymentAccountingExt">
+    <apex:form id="form">
+        <c:busyWait />
+        <apex:sectionHeader subtitle="{!$ObjectType.Payment__c.Label}" title="{!$Label.Generate_Payment_Accounting}"/>
+        <apex:pageBlock id="pblock">
+        <apex:pageMessages id="pageMessages" ></apex:pageMessages>
+            <apex:pageBlockTable value="{!objectList}" var="line" id="PaymentPBTableId" rendered="{!NOT(selecterror)}">
+                <apex:repeat value="{!$ObjectType.Payment__c.FieldSets.Payment_AE_RO}" var="f" >
+                    <apex:column headerValue="{!f.label}"  styleClass="{!f.Type}  {!f.FieldPath}"  rendered="{!f.FieldPath!='Line__c'}">
+                        <apex:outputField value="{!line[f]}" />
+                    </apex:column>
+                </apex:repeat>                      
+            </apex:pageBlockTable>
+            
+            <apex:pageBlockButtons >
+            
+                <apex:commandButton value="Go Back" action="{!cancel}" status="actionStatus" rerender="form"/>
+                <apex:commandButton value="{!$Label.Generate_Payment_Accounting}" 
+                                                        action="{!GeneratePaymentAccounting}" 
+                                                        status="actionStatus" rerender="form"
+                                                        disabled="{!selecterror}"
+                                                        rendered="{!NOT(requiredFielderror)}"/>
+            </apex:pageBlockButtons> 
+               
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

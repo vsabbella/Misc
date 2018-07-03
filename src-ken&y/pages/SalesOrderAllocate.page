@@ -1,0 +1,123 @@
+<apex:page standardController="Sales_Order__c"
+                tabStyle="Sales_Order__c" 
+                extensions="SalesOrderAllocateExt"
+                id="pageId">
+     
+<script>
+	$(document).ready(function() {       
+		afterPageRefresh();     		
+	});
+</script>     
+
+                
+    <apex:sectionHeader subtitle="{!Sales_Order__c.Name}" title="{!$ObjectType.Sales_Order__c.Label}"/>
+    
+    <apex:form id="mainFormId">
+    
+        <apex:actionFunction name="undoReleaseAF" action="{!undoRelease}" rerender="pageBlockId" status="actionStatus" />
+    
+        <c:busyWait />
+        
+        <apex:pageBlock mode="edit" id="pageBlockId"  title="{!$Label.Allocate_Sales_Order}">
+             <apex:pageMessages />
+             
+             <apex:pageBlockTable value="{!solWrapperList}" var="sw" id="SalesOrderLinePBTableId" >
+                
+                <apex:repeat value="{!$ObjectType.Sales_Order_Line__c.FieldSets.Fulfillment_RO}" var="f" >
+                    <apex:column headerValue="{!f.label}" styleClass="{!f.Type}  {!f.FieldPath}" value="{!sw.sol[f]}"  />
+                </apex:repeat>        
+                <apex:column breakBefore="true" colSpan="{!colSpanNum}">
+                    
+                    <apex:pageBlock mode="mainDetail" title="{!$ObjectType.Sales_Order_Line__c.Fields.Available_Inventory__c.Label}">
+                        <apex:pageBlockTable value="{!sw.skidList}" var="skidLine"  >
+                            
+                            <apex:repeat value="{!attributesForDisplay}" var="f" >
+                                <apex:column headerValue="{!$ObjectType.SKID__c.fields[f].Label}">
+                                    <apex:outputField value="{!skidLine[f]}" />
+                                </apex:column> 
+                            </apex:repeat>  
+                            
+                            <apex:repeat value="{!$ObjectType.SKID__c.FieldSets.Allocation_RO}" var="f" >
+                                <apex:column headerValue="{!f.label}" styleClass="{!f.Type}  {!f.FieldPath}" value="{!skidLine[f]}"  />
+                            </apex:repeat>  
+                            
+                            <apex:column headerValue="{!$ObjectType.Sales_Order_Line__c.Fields.Quantity_Allocated__c.Label}">
+                                <apex:inputField value="{!skidLine.Quantity_Allocated__c}" />
+                            </apex:column>
+                        
+                        </apex:pageBlockTable> 
+                        <br/>
+    	                <apex:commandButton value="Show Next Location" action="{!showNextLocation}" status="actionStatus" 
+                                            disabled="{!locationButtonDisabled[sw.sol.id]||disableSave}" rerender="pageBlockId,hiddenBlock" oncomplete="afterPageRefresh();">
+    	                    <apex:param name="headerLineId" value="{!sw.sol.id}" />
+    	                </apex:commandButton>     
+    	                
+                        <span style="display: inline-block;width: 5%;"></span>                        
+                        <apex:commandButton action="{!findLot}" value="{!$Label.Show_Lot_By_Number}" reRender="pageBlockId,hiddenBlock" 
+                                            disabled="{!disableSave}"
+                                            status="actionStatus" id="showLotByNumber" oncomplete="afterPageRefresh();"/>&nbsp;
+    	                <apex:inputField id="lots1" value="{!sw.lotSearch1.Name}" styleClass="lotfind" />&nbsp;
+                        <span class="extras" >{!sw.extraLots}</span>   
+    	                <apex:pageBlock id="hiddenBlock" rendered="false"></apex:pageBlock>
+                    </apex:pageBlock>   
+                    
+                    <apex:outputText value="<br/><hr style='color:#000;background-color:#000;height:3px;border:none;'/><br/><br/>" escape="false" />
+                </apex:column>
+             
+             </apex:pageBlockTable>
+             
+            <apex:pageBlockButtons id="btnoutpanel" >
+            	<apex:commandButton value="{!$Label.UndoRelease}" onclick="undoRelease();return false;" disabled="{!disableSave}" status="actionStatus" rerender="mainFormId" oncomplete="afterPageRefresh();"/>
+                <apex:commandButton value="{!$Label.Recalculate}" action="{!reCalculate}" rendered="{!!hideSave}" disabled="{!disableSave}" status="actionStatus" rerender="mainFormId" oncomplete="afterPageRefresh();"/>
+                <apex:commandButton value="{!$Label.Allocate}" action="{!allocate}" rendered="{!!hideSave}" disabled="{!disableSave}" status="actionStatus"  rerender="mainFormId" oncomplete="afterPageRefresh();"/>
+                <apex:commandButton value="{!$Label.Cancel}" action="{!cancel}"  immediate="true" status="actionStatus" rerender="mainFormId" />
+                
+                <apex:commandButton status="actionStatus" reRender="pageBlockId" value="Refresh" action="{!refresh}" title="Refresh Page" oncomplete="afterPageRefresh();"/>
+
+                <apex:commandButton status="actionStatus" reRender="pageBlockId" value="|<" action="{!first}" disabled="{!!hasPrevious}" title="First Page" oncomplete="afterPageRefresh();"/>
+                <apex:commandButton status="actionStatus" reRender="pageBlockId" value="<" action="{!previous}" disabled="{!!hasPrevious}" title="Previous Page" oncomplete="afterPageRefresh();"/>
+                <apex:commandButton status="actionStatus" reRender="pageBlockId" value=">" action="{!next}" disabled="{!!hasNext}" title="Next Page" oncomplete="afterPageRefresh();"/>
+                <apex:commandButton status="actionStatus" reRender="pageBlockId" value=">|" action="{!last}" disabled="{!!hasNext}" title="Last Page" oncomplete="afterPageRefresh();"/>
+                <apex:outputText >{!(pageNumber * size)+1-size}-{!IF((pageNumber * size)>noOfRecords, noOfRecords,(pageNumber * size))} of {!noOfRecords}</apex:outputText>
+                       
+            </apex:pageBlockButtons>
+           
+        </apex:pageBlock>
+        
+    </apex:form>    
+	
+	<script>
+        function undoRelease(){                  
+            result = window.confirm ('{!$Label.ConfirmUndo}');
+            if(result == true) {
+                undoReleaseAF();
+            }
+            return false;
+        }
+        
+        function disableOnClick(){
+            $(".btn").toggleClass('btnDisabled', true).attr('disabled', 'disabled');		
+            $('[id $=pageBlockId] input').prop('disabled', true);
+        }
+        
+        function afterPageRefresh() {
+        	showByLotNumberSubmit();
+        } 
+        
+		function showByLotNumberSubmit() {  
+			$('input.lotfind').keypress( function(e) {  
+				if (e.which == 13) {
+					return false;
+				} else {
+					return true;
+				}
+			});
+		}         
+    </script>        
+    <style>
+span.extras { 
+        display: inline-block; 
+        color: #AAA; 
+        }
+    </style>
+</apex:page>

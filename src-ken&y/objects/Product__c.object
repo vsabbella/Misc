@@ -1,0 +1,820 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpProducts</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Products are sellable Items with Selling Unit of Measure included</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableEnhancedLookup>true</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>Add_Product</fullName>
+        <description>Used in addchildProduct page on agreement view page</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Product_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Description__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Selling_UOM__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Billing_Category__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Add Product</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Create_Product</fullName>
+        <description>ManageItem.page</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Description__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Selling_UOM__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Create Product</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Manage_Products</fullName>
+        <description>Its used in Product related list screen named &quot;Manage products&quot;</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Product_Group__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Sales_Hierarchy__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Description__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Manage Products</label>
+    </fieldSets>
+    <fields>
+        <fullName>Billing_Category__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Billing Category</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Category__c.Type__c</field>
+                <operation>equals</operation>
+                <value>Billing</value>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Category__c</referenceTo>
+        <relationshipLabel>Products (Billing Category)</relationshipLabel>
+        <relationshipName>Products1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Bundle__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Determines whether this product is a bundle</description>
+        <externalId>false</externalId>
+        <label>Bundle</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Case_Equivalent__c</fullName>
+        <description>Fraction of a case, portion of a standard case that this product &amp; measure equals</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Fraction or portion of a standard case that this product occupies.</inlineHelpText>
+        <label>Case Equivalent</label>
+        <precision>7</precision>
+        <required>false</required>
+        <scale>4</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Company_Identifier__c</fullName>
+        <externalId>false</externalId>
+        <label>Company Identifier</label>
+        <length>32</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Company</description>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Products</relationshipLabel>
+        <relationshipName>Products</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Description__c</fullName>
+        <description>Product&apos;s description</description>
+        <externalId>false</externalId>
+        <label>Description</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>Dimension_UOM__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Dimension UOM</label>
+        <referenceTo>UOM__c</referenceTo>
+        <relationshipLabel>Products (Dimension UOM)</relationshipLabel>
+        <relationshipName>Products_Dimension_UOM</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Fulfillment_Category__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Fulfillment Category</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Category__c.Type__c</field>
+                <operation>equals</operation>
+                <value>Fulfillment</value>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Category__c</referenceTo>
+        <relationshipLabel>Products</relationshipLabel>
+        <relationshipName>Products</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Height__c</fullName>
+        <externalId>false</externalId>
+        <label>Height</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>2</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Invoiceable__c</fullName>
+        <defaultValue>true</defaultValue>
+        <externalId>false</externalId>
+        <label>Invoiceable</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Item_Identifier__c</fullName>
+        <description>Used to link Product to Item at data load time</description>
+        <externalId>false</externalId>
+        <label>Item Identifier</label>
+        <length>32</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Item_Specification__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to the Item Specification. This field&apos;s value will be used in Sales Order Lines object to populate the item spec of the Product&apos;s Item.</description>
+        <externalId>false</externalId>
+        <label>Item Specification</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Item_Specification__c.Item__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Item__c</valueField>
+            </filterItems>
+            <filterItems>
+                <field>Item_Specification__c.Active__c</field>
+                <operation>equals</operation>
+                <value>True</value>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Item_Specification__c</referenceTo>
+        <relationshipLabel>Products</relationshipLabel>
+        <relationshipName>Products</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Item__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Item</description>
+        <externalId>false</externalId>
+        <label>Item</label>
+        <lookupFilter>
+            <active>true</active>
+            <booleanFilter>1 OR 2</booleanFilter>
+            <filterItems>
+                <field>Item__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Company__c</valueField>
+            </filterItems>
+            <filterItems>
+                <field>Item__c.Company__c</field>
+                <operation>equals</operation>
+                <value></value>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Item__c</referenceTo>
+        <relationshipLabel>Products</relationshipLabel>
+        <relationshipName>Products</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Layers_per_Pallet__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>The number of product layers per shipping pallet.</inlineHelpText>
+        <label>Layers per Pallet</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Length__c</fullName>
+        <externalId>false</externalId>
+        <label>Length</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>2</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Lifecycle__c</fullName>
+        <description>Lifecycle or Product Lifecycle codes indicate new, active, retired products by code</description>
+        <externalId>false</externalId>
+        <label>Lifecycle</label>
+        <length>16</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Non_Taxable__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Non Taxable</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Pricebook_Line_Required__c</fullName>
+        <defaultValue>true</defaultValue>
+        <externalId>false</externalId>
+        <inlineHelpText>A check mark (default setting) indicates that product price override is not allowed on a sales order line.</inlineHelpText>
+        <label>Lock Price</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Primary_Key__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <description>Primary Key for upserting data to this table</description>
+        <externalId>true</externalId>
+        <label>Primary Key</label>
+        <length>80</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Primary__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Indicates whether the product is the primary product in the upc group i.e, if the product is actually registered for UPC.</description>
+        <externalId>false</externalId>
+        <label>Primary</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Product_Group_Code__c</fullName>
+        <description>code for the product group that this product belongs to, used to set links at dataload</description>
+        <externalId>false</externalId>
+        <label>Product Group Code</label>
+        <length>32</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Product_Group__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Product group to which this product belongs</description>
+        <externalId>false</externalId>
+        <label>Product Group</label>
+        <referenceTo>Product_Group__c</referenceTo>
+        <relationshipLabel>Products</relationshipLabel>
+        <relationshipName>Products</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Product_Image__c</fullName>
+        <description>Image of the product</description>
+        <externalId>false</externalId>
+        <label>Product Image</label>
+        <length>32768</length>
+        <trackTrending>false</trackTrending>
+        <type>Html</type>
+        <visibleLines>25</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Product_Type__c</fullName>
+        <externalId>false</externalId>
+        <label>Product Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Configurable</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Product</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Warranty</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Product_Unique_UPC__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>This field when populated (UPC code + &apos;true&apos;) when the user enters a UPC code and then checks the primary__c flag to true enforces the user to enter</description>
+        <externalId>false</externalId>
+        <label>Product Unique UPC</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Product_Unique__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>Product + Company for uniqueness check</description>
+        <externalId>false</externalId>
+        <label>Product Unique</label>
+        <length>160</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Sales_Hierarchy_Code__c</fullName>
+        <description>Code used to dataload products and join to Hierarchy lookup</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Code used to dataload products and join to Hierarchy lookup.</inlineHelpText>
+        <label>Sales Hierarchy Code</label>
+        <length>32</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Sales_Hierarchy__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Product spec within the Product Sales Hierarchy</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Product specification within the Product Sales Hierarchy.</inlineHelpText>
+        <label>Product Hierarchy</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Hierarchy__c.Type__c</field>
+                <operation>equals</operation>
+                <value>Product Hierarchy</value>
+            </filterItems>
+            <isOptional>true</isOptional>
+        </lookupFilter>
+        <referenceTo>Hierarchy__c</referenceTo>
+        <relationshipLabel>Products</relationshipLabel>
+        <relationshipName>Products</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Selling_UOM__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Unit of Measure</description>
+        <externalId>false</externalId>
+        <label>Selling UOM</label>
+        <referenceTo>UOM__c</referenceTo>
+        <relationshipLabel>Products</relationshipLabel>
+        <relationshipName>Products</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Special_Pack_Code__c</fullName>
+        <defaultValue>&quot;0&quot;</defaultValue>
+        <description>tells whether something is sold as open stock or by fcst only and whether assembled at factory or DC. allowed values 0, 100, 200, 300,310, 400</description>
+        <externalId>false</externalId>
+        <inlineHelpText>A code that indicates whether something is sold as open stock or by FCST only, and whether it is assembled at a factory or DC.</inlineHelpText>
+        <label>Special Pack Code</label>
+        <length>30</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Stackable__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Stackable</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Status__c</fullName>
+        <description>Status indicates if the product is active or retired</description>
+        <externalId>false</externalId>
+        <label>Status</label>
+        <length>32</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>UPC_Code__c</fullName>
+        <description>13 char UPC code</description>
+        <externalId>false</externalId>
+        <label>UPC Code</label>
+        <length>16</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Units_per_Layer__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>The number of product units that can comprise a layer on a pallet.</inlineHelpText>
+        <label>Units per Layer</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Units_per_Pallet__c</fullName>
+        <description>Calculated field (Units per Layer x Layers per Pallet)</description>
+        <externalId>false</externalId>
+        <formula>Units_per_Layer__c  *  Layers_per_Pallet__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <inlineHelpText>Units per Layer multiplied by Layers per Pallet.</inlineHelpText>
+        <label>Units per Pallet</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Usage_Based__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Used to signify whether the product is Usage-Based or not.</description>
+        <externalId>false</externalId>
+        <label>Usage-Based</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Used__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Used</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Warranty_Period_Term__c</fullName>
+        <externalId>false</externalId>
+        <label>Warranty Period Term</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Warranty_Period_Type__c</fullName>
+        <externalId>false</externalId>
+        <label>Warranty Period Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Days</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Weeks</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Months</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Years</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Weight_UOM__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Products weight unit of measure</description>
+        <externalId>false</externalId>
+        <label>Weight UOM</label>
+        <referenceTo>UOM__c</referenceTo>
+        <relationshipLabel>Products (Weight UOM)</relationshipLabel>
+        <relationshipName>Products1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Weight__c</fullName>
+        <description>Product&apos;s weight in weight uom units</description>
+        <externalId>false</externalId>
+        <label>Weight</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Width__c</fullName>
+        <externalId>false</externalId>
+        <label>Width</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>2</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <label>Product</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Company__c</columns>
+        <columns>Product_Group__c</columns>
+        <columns>Description__c</columns>
+        <columns>Item__c</columns>
+        <columns>Selling_UOM__c</columns>
+        <columns>Weight__c</columns>
+        <columns>Weight_UOM__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Product</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Products</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Company__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Description__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Item__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Selling_UOM__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Weight__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Weight_UOM__c</customTabListAdditionalFields>
+        <lookupDialogsAdditionalFields>Company__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Description__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Item__c</lookupDialogsAdditionalFields>
+        <searchResultsAdditionalFields>Company__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Description__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Item__c</searchResultsAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>Both_or_none_of_Units_per_layer_pallet</fullName>
+        <active>true</active>
+        <description>Either both or none of Units per layer and Units per pallet should be entered.</description>
+        <errorConditionFormula>OR
+( 
+   AND( ISBLANK(Units_per_Layer__c) ,   NOT(ISBLANK(Layers_per_Pallet__c)) ),
+   AND( ISBLANK(Layers_per_Pallet__c) , NOT(ISBLANK( Units_per_Layer__c )) )
+)</errorConditionFormula>
+        <errorDisplayField>Units_per_Layer__c</errorDisplayField>
+        <errorMessage>Please enter both &apos;Units per Layer&apos; and &apos;Layers per Pallet&apos;</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Company_must_not_change</fullName>
+        <active>true</active>
+        <description>Company cannot change once the record has been created</description>
+        <errorConditionFormula>PRIORVALUE(Company__c)!=null &amp;&amp; ISCHANGED(Company__c)</errorConditionFormula>
+        <errorMessage>Once set,  Product cannot change Company.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Item_must_not_change</fullName>
+        <active>true</active>
+        <description>Item cannot change once the product record has been created</description>
+        <errorConditionFormula>PRIORVALUE( Item__c )!=null &amp;&amp; ISCHANGED( Item__c)</errorConditionFormula>
+        <errorMessage>Item cannot be changed once product is created.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Layers_Pallet_should_be_positive_value</fullName>
+        <active>true</active>
+        <description>Negative values shouldn&apos;t be allowed in &quot;Layers / Pallet&quot; field</description>
+        <errorConditionFormula>Layers_per_Pallet__c &lt; 0</errorConditionFormula>
+        <errorDisplayField>Layers_per_Pallet__c</errorDisplayField>
+        <errorMessage>Must be a positive number</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>UPC_Check</fullName>
+        <active>true</active>
+        <errorConditionFormula>AND(NOT(ISBLANK(UPC_Code__c)),NOT(ISNULL(UPC_Code__c)),NOT(ISNUMBER( UPC_Code__c)))</errorConditionFormula>
+        <errorDisplayField>UPC_Code__c</errorDisplayField>
+        <errorMessage>UPC Code can only contain numerical digits</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Units_per_Layer_should_be_positive_value</fullName>
+        <active>true</active>
+        <description>Negative values shouldn&apos;t be allowed in &quot;Units per Layer&quot; field</description>
+        <errorConditionFormula>Units_per_Layer__c &lt; 0</errorConditionFormula>
+        <errorDisplayField>Units_per_Layer__c</errorDisplayField>
+        <errorMessage>Must be a positive number</errorMessage>
+    </validationRules>
+    <webLinks>
+        <fullName>Copy_Dimensions_From_Item</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Copy Dimensions From Item</masterLabel>
+        <openType>sidebar</openType>
+        <page>ProductCopyFromItem</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Manage_Allocation_Rules</fullName>
+        <availability>online</availability>
+        <displayType>link</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Manage Allocation Rules</masterLabel>
+        <openType>sidebar</openType>
+        <page>AllocationRuleManagement</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Manage_Products</fullName>
+        <availability>online</availability>
+        <description>Update product group in multiple products</description>
+        <displayType>massActionButton</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Manage Products</masterLabel>
+        <openType>noSidebar</openType>
+        <page>ProductGroupManage</page>
+        <protected>false</protected>
+        <requireRowSelection>true</requireRowSelection>
+    </webLinks>
+</CustomObject>

@@ -1,0 +1,625 @@
+<!-- Description: Create Work Orders for SOLines of type Build To Order or Item of Build To Order-->
+<apex:page controller="WorkOrderPlannerWorkbenchExt" sidebar="false" title="Work Order Planner Workbench" docType="html-5.0">
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+    
+    <style>
+        .k-panelbar {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .k-state-selected {
+            background: none;
+            box-shadow: 0;
+        }
+        .column-label {
+            vertical-align: middle !important;
+            width: 10%;
+        }
+        
+        .column-field {
+            vertical-align: middle !important;
+            width: 40%;
+        }
+        
+        .filter-operator {
+            
+        }
+        
+        .custom-filter-options {
+            width: 10%;
+        }
+        
+        .custom-filter-fields {
+            width: 85%;
+        }
+        
+        .critical {
+            border: 3px dashed red;
+            font-weight: bold;
+            padding-left: 5px;
+        }
+        .required {
+            border-left:3px solid red;
+        }
+    </style>
+    <apex:form >
+        <apex:sectionHeader title="Work Order Planner Workbench"  help="{!HelpURL}"/>
+        <div class="page-message" />
+        <apex:pageMessages id="msgs" />
+        
+        <apex:pageBlock title="{!$Label.Filters}" rendered="true">
+            <apex:pageBlockButtons location="top">
+                <button id="search" class ="k-button search-command" type="button">Search</button>
+                <button id="reset"  class ="k-button reset-command" type="button">Reset</button>
+            </apex:pageBlockButtons>
+            <div id="filters" >
+                <table class="kndy-table">
+                    <tr>
+                        <td class="column-label"><apex:outputLabel value="{!$ObjectType.Company__c.Label}" for="company" /></td>
+                        <td class="column-field"><input id="company" class="required"/></td>
+                        
+                        <td class="column-label"><apex:outputLabel value="{!$ObjectType.Facility__c.Label}" for="facility" /></td>
+                        <td class="column-field"><input id="facility" class="required"/></td>
+
+                    </tr>
+                    <tr>
+                        <td class="column-label"><apex:outputLabel value="{!$ObjectType.Customer__c.Label}" for="customer" /></td>
+                        <td class="column-field"><input id="customer" /></td>
+                        
+                        <td class="column-label"><apex:outputLabel value="{!$ObjectType.Sales_Order__c.Label}" for="salesOrder" /></td>
+                        <td class="column-field"><input id="salesOrder" /></td>
+                    </tr>
+                    <tr>
+                        <td class="column-label"><apex:outputLabel value="{!$ObjectType.Product__c.Label}" for="product" /></td>
+                        <td class="column-field"><input id="product" /></td>
+
+                        <td class="column-label"><apex:outputLabel value="{!$ObjectType.Item__c.Label}" for="item" /></td>
+                        <td class="column-field"><input id="item" /></td>
+                    </tr>
+                    <tr>
+                        <td class="column-label"><apex:outputLabel value="Work Order Status" for="status" /></td>
+                        <td class="column-field"><input id="statusFilter" /> 
+                        </td>
+                        <td class="column-label"><apex:outputLabel value="Required Date" for="requiredDate" /></td>
+                        <td class="column-field">
+                            <table class="kndy-table" cellspacing="0" cellpadding="0">
+								<tr>
+									<td>
+										<table class="kndy-table" cellspacing="0" cellpadding="0">
+											<tr>
+												<td class="custom-filter-options">
+													<select id="dateFilter" class="filter-operator">
+														<option value="lessThan">LessThanOrEquals</option>
+														<option value="greaterThan">GreaterThanOrEquals</option>
+														<option value="range">{!$Label.Range}</option>
+													</select>
+												</td>
+												<td>&nbsp;</td>
+												<td class="custom-filter-fields">
+							                        <span class="custom-date-range k-hidden">
+							                            <input id="FromNeedDate" />
+							                            &nbsp;{!$Label.to}&nbsp;
+							                            <input id="ToNeedDate" />
+							                        </span>
+							                        <span class="custom-date k-hidden">
+							                            <input id="NeedDateVal" />
+							                        </span>
+												</td>
+											</tr>
+										</table>
+									</td>  
+					    
+								</tr>	
+		   		    		</table>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </apex:pageBlock>
+        
+        <apex:pageBlock title="Sales Order Lines" id="soLines">
+            <apex:pageBlockButtons location="top">
+                <button id="saveButton" class ="k-button save-command" type="button" accesskey="s">Save</button>
+            </apex:pageBlockButtons>
+            
+            <div id="soLineGrid"></div>
+        </apex:pageBlock>
+        
+        <apex:pageBlock title="Work Orders">
+            <apex:pageBlockButtons location="top">
+                <button id="woUpdate" class ="k-button wo-update-command" type="button">Update</button>
+            </apex:pageBlockButtons>
+            
+            <div id="woGrid"></div>
+        </apex:pageBlock>
+    </apex:form>
+    
+    <script>
+        var SAVETYPE_INDIVIDUAL = 0,// 'SAVE',
+            SAVETYPE_CONSOLIDATE = 1; //'CONSOLIDATE_AND_SAVE';
+            
+       
+        var dateFields =[]
+        $(document).on("KenandyErpReady", function(e) {
+            dateFields = _.union ( KenandyErp.KendoGridOptions.GetDateFields(JSON.parse('{!JSENCODE(woFieldList)}')),KenandyErp.KendoGridOptions.GetDateFields( JSON.parse ('{!JSENCODE(soLinesFieldList)}') ) );
+                   
+            new MainViewController ();
+        });
+        
+        /** Filters **/
+        var FilterViewController = kendo.Class.extend( {
+            filterFields: null,
+            defaultFacility: null,
+            defaultCompany: null,
+            
+            init: function () {
+                this.defaultCompany = '{!defaultCompany}';
+                this.defaultFacility = '{!defaultFacility}';
+                this.statusSet = JSON.parse('{!woStatuses}');
+                this.renderFilter();
+            }, 
+            
+            renderFilter: function () {
+                var me = this;
+                
+                // Initializing the filter fields
+                // KNDY-15594 - adding company field,
+                $.fn.KendoComboBox($("#company"), { 
+                    lookupSearchAction: "{!$RemoteAction.WorkOrderPlannerWorkbenchExt.lookupSearchFilter}", 
+                    referenceTo: "Company__c",
+                    title: "{!$ObjectType.Company__c.Label}",
+                    value: me.defaultCompany
+                });
+                
+                $.fn.KendoComboBox($("#facility"), { 
+                    lookupSearchAction: "{!$RemoteAction.WorkOrderPlannerWorkbenchExt.lookupSearchFilter}", 
+                    referenceTo: "Facility__c",
+                    title: "{!$ObjectType.Facility__c.Label}",
+                    value: me.defaultFacility,
+                    cascadeFrom: 'company',
+                    filterCriteria: 'Company__c=\'#=Id#\''
+                });
+                
+                // KNDY-15594 - filtering the customer by company and RecordType=Sold_To
+                $.fn.KendoComboBox($("#customer"), { 
+                    lookupSearchAction: "{!$RemoteAction.WorkOrderPlannerWorkbenchExt.lookupSearchFilter}", 
+                    referenceTo: "Customer__c",
+                    title: "{!$ObjectType.Customer__c.Label}",
+                    cascadeFrom: 'company',
+                    filterCriteria:'RecordType.DeveloperName = \'Sold_To\' and Status__c =\'Approved\' and Company__c=\'#=Id#\' '
+                });
+                
+                $.fn.KendoComboBox($("#salesOrder"), { 
+                    lookupSearchAction: "{!$RemoteAction.WorkOrderPlannerWorkbenchExt.lookupSearchFilter}", 
+                    referenceTo: "Sales_Order__c",
+                    title: "{!$ObjectType.Sales_Order__c.Label}",
+                    cascadeFrom: 'company',
+                    filterCriteria:'Company__c=\'#=Id#\' '
+                });
+                
+                $.fn.KendoComboBox($("#item"), { 
+                    lookupSearchAction: "{!$RemoteAction.WorkOrderPlannerWorkbenchExt.lookupSearchFilter}", 
+                    referenceTo: "Item__c",
+                    title: "{!$ObjectType.Item__c.Label}",
+                    cascadeFrom: 'company',
+                    filterCriteria:'Company__c=\'#=Id#\' '
+                });
+                
+                $.fn.KendoComboBox($("#product"), { 
+                    lookupSearchAction: "{!$RemoteAction.WorkOrderPlannerWorkbenchExt.lookupSearchFilter}", 
+                    referenceTo: "Product__c",
+                    title: "{!$ObjectType.Product__c.Label}",
+                    cascadeFrom: 'company',
+                    filterCriteria:'Company__c=\'#=Id#\' '
+                });
+                
+                //Initialize date dropdown
+                $.fn.KendoDropDownList($('#dateFilter'));
+                
+                 //Initialize status dropdown
+                $.fn.KendoDropDownList($('#statusFilter'));
+                
+                // Initialize Transaction Custom From Date Lookup
+                $.fn.KendoDatePicker($("input[id='FromNeedDate']"));
+                            
+                // Initialize Transaction Custom To Date Lookup
+                $.fn.KendoDatePicker($("input[id='ToNeedDate']"));          
+                
+                // Initialize Transaction Custom Date Lookup      
+                $.fn.KendoDatePicker($("input[id='NeedDateVal']"));    
+                
+                $("#dateFilter").kendoDropDownList({ enable: true });
+                // $('.custom-date-range').hide();
+		      	$('.custom-date').show();
+		      	
+		      	
+		      	$("#statusFilter").kendoDropDownList({
+                  dataSource: {
+                    data: me.statusSet
+                  }
+                });
+		      
+		      	
+		      	 var operatorType = $('#dateFilter').val();
+		      	 
+		      	 var statusType = $('#statusFilter').val();
+		 
+        		 $('#dateFilter').on("change", function(e){
+        		      if($("#dateFilter").val() == 'range'){
+        		      
+        		      	  $('.custom-date-range').show();
+        		      	  $('.custom-date').hide();
+        		      }
+        		      else{
+        		      	$('.custom-date-range').hide();
+        		      	$('.custom-date').show();
+        		      }
+        		      
+        		 });
+            },
+            
+            reset: function () {
+                var me = this;
+                
+                $("#company").data('kendoComboBox').value(me.defaultCompany );
+                $("#facility").data('kendoComboBox').value(me.defaultFacility );
+                $("#salesOrder").data('kendoComboBox').value("");
+                $("#customer").data('kendoComboBox').value("");
+                $("#item").data('kendoComboBox').value("");
+                $("#product").data('kendoComboBox').value("");
+                $("#statusFilter").data('kendoDropDownList').value("");
+                if ( $("#FromNeedDate").data('kendoDatePicker') ) 
+                    $("#FromNeedDate").data('kendoDatePicker').value("");
+                if ( $("#ToNeedDate").data('kendoDatePicker') )
+                    $("#ToNeedDate").data('kendoDatePicker').value("");
+                if ( $("#NeedDateVal").data('kendoDatePicker') )
+                    $("#NeedDateVal").data('kendoDatePicker').value("");
+            }
+        });
+        
+        /** Dependent Work Order grid **/
+        var WorkOrderViewController = kendo.Class.extend ({
+            
+            namespace: null,
+            config: null,
+            fieldList: null,
+            grid: null,
+            
+            init: function (){
+                this.namespace = '{!NamespaceUU}';
+                this.config = JSON.parse('{!JSENCODE(woConfigJson)}');
+                this.fieldListJson = '{!JSENCODE(woFieldList)}';
+                this.fieldList = JSON.parse(this.fieldListJson);
+                this.renderGrid();
+            },
+            
+            renderGrid: function(){
+                var me = this;
+                
+                if ( !me.grid ) {
+                    $.each ( me.fieldList, function ( indx, itm ) {
+                        if ( itm.field == 'Scrapped__c' ) {
+                            itm.template ='<div #if(data.Scrapped__c && data.Scrapped__c != data.Order_Quantity__c ) {# class="critical" #}#  >#=kendo.toString(kendo.parseFloat(data.Scrapped__c) || 0, "n6")#</div>';
+                        }
+                    } );
+                    
+                    me.config.dateFields = dateFields;
+                    
+                    me.grid = $('#woGrid').kendoGridActionList({
+                        namespace: me.namespace, 
+                        dateFields: dateFields,
+                        config: JSON.stringify(me.config), 
+                        fieldList: JSON.stringify(me.fieldList),
+                        lookupSearchAction: '{!$RemoteAction.WorkOrderPlannerWorkbenchExt.lookupSearchFilter}',
+                        getActionListFunction: function() {
+                              	var deferred = $.Deferred(),
+                                  	remoteArgs = JSON.parse(JSON.stringify(me.config)),
+                                  	filterCriteria = [],
+                                  	facility = $("#facility").val() ? $("#facility").val() : null,
+                                    salesOrder = $("#salesOrder").val() ? $("#salesOrder").val() : null,
+                                    customer = $("#customer").val() ? $("#customer").val() : null,
+                                    product = $("#product").val() ? $("#product").val() : null,
+                                    item = $("#item").val() ? $("#item").val() : null,
+                                    needDateVal = $("input[id='NeedDateVal']").val(),
+                                    fromDate = $("input[id='FromNeedDate']").val(),
+                                    toDate = $("input[id='ToNeedDate']").val(),
+                                    operatorType = $('#dateFilter').val(),
+                                    statusType = $('#statusFilter').val(),
+                                    fieldString = 'Need_Date2__c',
+                                    time = ' 12:00 AM';
+                                delete remoteArgs.dateFields;
+                                if (operatorType == 'range' && fromDate != '' && toDate != '') {
+                                 	filterCriteria.push({ field:fieldString, fieldType: KenandyErp.KendoGridOptions.ColumnType.DateTime, value: fromDate + time, operator: KenandyErp.KendoGridOptions.FilterOperatorType.GreaterThanOrEquals });
+            						filterCriteria.push({ field:fieldString, fieldType: KenandyErp.KendoGridOptions.ColumnType.DateTime, value: toDate + time, operator: KenandyErp.KendoGridOptions.FilterOperatorType.LessThanOrEquals });
+                                }
+                                else if(operatorType == 'greaterThan' && needDateVal != ''){
+                               		filterCriteria.push({ field:fieldString, fieldType: KenandyErp.KendoGridOptions.ColumnType.DateTime, value: needDateVal + time, operator: KenandyErp.KendoGridOptions.FilterOperatorType.GreaterThanOrEquals });
+                                }
+                                else if(operatorType == 'lessThan' && needDateVal != ''){
+                                	filterCriteria.push({ field:fieldString, fieldType: KenandyErp.KendoGridOptions.ColumnType.DateTime, value: needDateVal + time, operator: KenandyErp.KendoGridOptions.FilterOperatorType.LessThanOrEquals });
+                                }
+                                
+                                Visualforce.remoting.Manager.invokeAction(
+                                    '{!$RemoteAction.WorkOrderPlannerWorkbenchExt.getWOData}',
+                                    remoteArgs,
+                                    facility,
+                                    salesOrder,
+                                    customer,
+                                    product,
+                                    item,
+                                    filterCriteria,
+                                    statusType,
+                                    function (result, event) {
+                                        deferred.resolve(result, event);
+                                    },
+                                    {escape: false}
+                                );
+                    
+                                return deferred.promise();
+                        },
+                        showIconButtons: true,
+                        allowMassDelete: false
+                    }).data('kendoGridActionList');
+                    $('.wo-update-command').off();
+                    $('.wo-update-command').on('click', $.proxy(this.update, this ));
+                }
+            },
+            
+            refreshGrid: function () {
+                var me= this;
+                if (me.grid) {
+                    me.grid.dataSource.read();
+                }
+            },
+            
+            update: function(){
+                var me = this;
+                var wosToUpdate = [];
+                var data = me.grid.dataSource.data();
+                var messageElement = $('.page-message');
+                
+                $.each( data, function (idx, line) {
+                    if ( line.IsSelected__custom ) {
+                        var item = JSON.parse(JSON.stringify (line) );
+                        delete item.IsSelected__custom;
+                        delete item.Need_Date2__c;
+                        wosToUpdate.push(item );
+                    }
+                });
+                
+                if ( wosToUpdate.length > 0) {
+                    KenandyErp.BlockUI('#woGrid');
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.WorkOrderPlannerWorkbenchExt.updateAndReReleaseWorkOrders}',
+                        wosToUpdate,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI('#woGrid');
+                            if ( result.success) {
+                                me.grid.dataSource.read();
+                            } else {
+                                KenandyErp.Messages(result.messages, messageElement);
+                            }
+                        },
+                        {escape: true}
+                    );
+                }
+                
+            }
+            
+        });
+        
+        var MainViewController = kendo.Class.extend ({
+            namespace: null,
+            config: null,
+            fieldList: null,
+            grid: null,
+            once: false,
+           
+            
+            filters: new FilterViewController (),           // filter view
+            dependentGrid: null,  // work order grid view
+            
+            init: function (){
+                var me = this;
+                
+                me.namespace = '{!NamespaceUU}';
+                me.config = JSON.parse('{!JSENCODE(solineConfigJson)}');
+                me.fieldList = JSON.parse('{!JSENCODE(soLinesFieldList)}');
+                
+                me.search();
+                me.renderButtons();
+                me.registerButtonEvents ();
+                me.registerFilterButtonEvents();
+                
+            },
+            
+            renderElements: function () {
+                var me = this;
+                
+                me.renderGrid();
+                if ( !me.dependentGrid )
+                    me.dependentGrid = new WorkOrderViewController ();
+            },
+            
+            renderGrid: function(){
+                var me = this;
+                if ( !me.grid ) {
+                    
+                    me.config.dateFields = dateFields;
+                    
+                    me.grid = $('#soLineGrid').kendoGridActionList({
+                        namespace: me.namespace, 
+                        config: JSON.stringify(me.config), 
+                        fieldList: JSON.stringify(me.fieldList),
+                        lookupSearchAction: '{!$RemoteAction.WorkOrderPlannerWorkbenchExt.lookupSearchFilter}',
+                        lookupSearchFilters: [
+                            { field: "Work_Order__c", filter: "Status__c NOT IN ('Closed', 'Cancelled')" }
+                        ],
+                        dateFields: dateFields,
+                        getActionListFunction: function() {
+                            var deferred = $.Deferred(),
+                              	remoteArgs = JSON.parse( JSON.stringify(me.config) ),
+                              	filterCriteria = [],
+                              	facility = $("#facility").val() ? $("#facility").val() : null,
+                                salesOrder = $("#salesOrder").val() ? $("#salesOrder").val() : null,
+                                customer = $("#customer").val() ? $("#customer").val() : null,
+                                product = $("#product").val() ? $("#product").val() : null,
+                                item = $("#item").val() ? $("#item").val() : null,
+                                needDateVal = $("input[id='NeedDateVal']").val(),
+                                fromDate = $("input[id='FromNeedDate']").val(),
+                                toDate = $("input[id='ToNeedDate']").val(),
+                                operatorType = $('#dateFilter').val(),
+                                fieldString = 'Required_Date__c';
+
+
+                            
+                            delete remoteArgs.dateFields;
+
+
+                            
+                            
+                            
+                            if (operatorType == 'range' && fromDate != '' && toDate != '') {
+                             	filterCriteria.push({ field:fieldString, fieldType: KenandyErp.KendoGridOptions.ColumnType.Date, value: fromDate, operator: KenandyErp.KendoGridOptions.FilterOperatorType.GreaterThanOrEquals });
+        						filterCriteria.push({ field:fieldString, fieldType: KenandyErp.KendoGridOptions.ColumnType.Date, value: toDate, operator: KenandyErp.KendoGridOptions.FilterOperatorType.LessThanOrEquals });
+                            }
+                            else if(operatorType == 'greaterThan' && needDateVal != ''){
+                           		filterCriteria.push({ field:fieldString, fieldType: KenandyErp.KendoGridOptions.ColumnType.Date, value: needDateVal, operator: KenandyErp.KendoGridOptions.FilterOperatorType.GreaterThanOrEquals });
+                            }
+                            else if(operatorType == 'lessThan' && needDateVal != ''){
+                            	filterCriteria.push({ field:fieldString, fieldType: KenandyErp.KendoGridOptions.ColumnType.Date, value: needDateVal, operator: KenandyErp.KendoGridOptions.FilterOperatorType.LessThanOrEquals });
+                            }
+                            
+                            Visualforce.remoting.Manager.invokeAction(
+                                '{!$RemoteAction.WorkOrderPlannerWorkbenchExt.getSOLineData}',
+                                remoteArgs,
+                                facility,
+                                salesOrder,
+                                customer,
+                                product,
+                                item,
+                                filterCriteria,
+                                function (result, event) {
+                                    deferred.resolve(result, event);
+                                },
+                                {escape: false}
+                            );
+                            
+                            return deferred.promise();
+                        },
+                        showIconButtons: true,
+                        allowMassDelete: false
+                    }).data('kendoGridActionList');
+                    
+                    
+                }
+            },
+            
+            renderButtons: function () {
+                $('#saveButton').kendoDropDownButton({
+                    type: 'splitButton',
+                    items: [
+                        {
+                            text: "Consolidate And Save",
+                            cssClass: "consolidate-save-command"
+                        }
+                    ]
+                });
+            },
+            
+            registerFilterButtonEvents: function () {
+                var me = this;
+                $('.search-command').off();
+                $('.reset-command').off();
+                $('.search-command').on('click', me.search.bind(me) );
+                $('.reset-command').on('click', me.reset.bind(me) );
+            },
+            
+            registerButtonEvents: function (){
+                var me = this;
+                $('.save-command').off();
+                $('.consolidate-save-command').off();
+                $('.save-command').on('click', $.proxy(me.save, me, SAVETYPE_INDIVIDUAL ));
+                $('.consolidate-save-command').on('click', $.proxy( me.save, me, SAVETYPE_CONSOLIDATE));
+            },
+            
+            save: function (saveType) {
+                var me =this,
+                    lines = [],
+                    messageElement = $('.page-message');
+                
+                $.each(me.grid.dataSource.data(), function (idx, line) {
+                    if ( line.IsSelected__custom || line.isDirty ) {
+                        line = Serializer.ConvertToSFDCDate(JSON.parse(JSON.stringify(line)), { dateFields: dateFields });
+                        lines.push(line);
+                    }
+                });
+                
+                lines= Serializer.ParameterMap (lines);
+                KenandyErp.ClearMessage();
+                
+                if ( lines.length > 0 ) {
+                    KenandyErp.BlockUI('#soLineGrid');
+                    Visualforce.remoting.Manager.invokeAction (
+                        '{!$RemoteAction.WorkOrderPlannerWorkbenchExt.save}',
+                        lines,
+                        saveType,
+                        function (result, events) {
+                            KenandyErp.UnBlockUI('#soLineGrid');
+                            if ( result.success) {
+                                me.grid.dataSource.read();
+                                me.dependentGrid.refreshGrid();
+                            } else {
+                                KenandyErp.Messages(result.messages, messageElement);
+                            }
+                        },
+                        {escape: false}
+                    );
+                } else {
+                    KenandyErp.Message('No lines to save');
+                }
+            },
+            
+            search: function () {
+                var me = this;
+                KenandyErp.ClearMessage();
+                // display error message if company and facility are blank.
+                var companyVal=$("#company").val();
+                var facilityVal = $("#facility").val();
+
+                if(!companyVal || !facilityVal ){
+                    KenandyErp.Message("Company and Facility are required.",KenandyErp.MessageType.Error, $("div.page-message"));
+                    return;
+                }
+                
+                // on initial load 
+                if ( !me.filters.defaultFacility && !me.once ) {
+                    
+                }
+                else {
+                    me.renderElements();
+                    if ( !me.once ) {
+                        
+                    } else {
+                        me.grid.dataSource.read();
+                        me.dependentGrid.refreshGrid(); 
+                    }
+                }
+                me.once = true;
+            },
+            
+            reset: function () {
+                KenandyErp.ClearMessage();
+                
+                var me = this;
+                if ( me.grid ) {
+                    this.filters.reset();
+                    me.grid.dataSource.read();
+                    me.dependentGrid.refreshGrid();
+                }
+            }
+        });
+        
+    </script>
+</apex:page>

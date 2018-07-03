@@ -1,0 +1,391 @@
+<apex:page standardController="Allowance_Type__c" 
+		showHeader="true" 
+		sidebar="false" 
+		extensions="AllowanceTypeNewExt" 
+		tabStyle="Allowance_Type__c" >
+	
+	<c:KendoResources />
+    <c:busyWait includeScripts="false" />
+
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+
+	<apex:form id="theForm" >
+        <div class="page-container">
+    	    <apex:sectionHeader subtitle="Create Allowance"/>
+
+            <div class="page-message"></div>
+    	    <apex:pageMessages id="msg" /> 
+         
+            <apex:pageBlock title="Allowance" >
+
+                <div id="header-message" />
+                <apex:pageBlockSection columns="2">
+                    <div class="header-container">
+                        <div id="HeaderDetailGrid" />
+                    </div>
+                </apex:pageBlockSection>
+
+                <apex:pageBlockButtons location="bottom">
+                    <apex:outputPanel layout="none">
+                    	<input type="button" class="btn create-at" value="Save" />
+						<apex:commandButton value="Cancel" action="{!cancel}" status="actionStatus" rerender="form"/>
+                        <!-- <input type="button" class="btn create-at" value="Save" />
+                        <apex:commandButton value="Cancel" action="{!cancel}" html-formnovalidate="formnovalidate" /> -->
+                    </apex:outputPanel>
+                </apex:pageBlockButtons>
+
+            </apex:pageBlock>
+	       
+        </div>
+	</apex:form>
+
+	<script type="text/javascript">  
+        "use strict";
+
+        var lookupSearchAction =  '{!$RemoteAction.AllowanceTypeNewExt.lookupSearchFilter}';
+        var saveListAction = '{!$RemoteAction.AllowanceTypeNewExt.saveList}';
+        var lookupSearchFilters = [];
+ 		
+ 		var AllowanceTypeData = function(readOptions) {
+            var deferred = $.Deferred();
+
+            var messageElement = $("#header-message");
+        
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.AllowanceTypeNewExt.getAllowanceType}',
+                '{!allowanceTypeId}',
+                '{!isClone}',
+                function (result, event) {
+                    var errorMessage = [];
+
+                    if (event.type == 'exception'){
+                        KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                    }
+                    else {
+                        KenandyErp.CleanNamespace(result.records, KenandyErp.NamespacePrefix);
+
+                        if (result.messages.length > 0){
+                            KenandyErp.Message(result.messages[0].message, KenandyErp.MessageType.Error, messageElement);
+                        }
+
+                        deferred.resolve(result, event);
+                    }
+                },
+                {escape: false}
+            );
+            return deferred.promise();
+        };
+
+        $(document).on('KenandyErpReady', function(e) {
+
+            // bind button to action
+            $('.create-at').on("click", $.proxy(Actions.CreateNewAllowanceType));
+
+
+            HeaderListUtil.Init({
+                HeaderFieldList: '{!HeaderFieldList}',
+            });
+        });
+          
+
+        var Actions = function(){ 
+            return {
+                CreateNewAllowanceType: function(e){
+                    var self = this;
+
+                    // handling header
+                    var messageElement = $("#header-message"); // using header message element if lines pageblock are hidden aren't available
+
+                    var HeaderDetailGrid = HeaderListUtil.HeaderDetailGrid;
+                    var headerDateFields = HeaderListUtil.HeaderDateFields;
+                    var headerRowsList = [];
+                    var headerRows = [];
+
+                    if (!HeaderDetailGrid.validate()) {
+                        KenandyErp.Message("Please fix the following errors.");
+                        e.preventDefault();
+                        return false;
+                    }
+
+                    KenandyErp.BlockUI();
+
+                    headerRowsList.push(HeaderDetailGrid.data);                    
+                    headerRows = $.map(headerRowsList, function(item, index) {
+                        item = item.toJSON();
+                        // item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+                        return item;
+                    });
+                    
+                    if (headerRows.length > 0) {
+                        headerRows = Serializer.ParameterMap(headerRows);
+                    }
+                    
+                    KenandyErp.ClearMessage( messageElement);
+
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.AllowanceTypeNewExt.createNewAllowance}',       
+                        headerRows[0],
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();
+                                        
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                                if (result.success) {
+                                    KenandyErp.NavigateToURL('/'+result.records[0].Id,true);
+                                }
+                                else {
+                                    KenandyErp.Messages(result.messages, messageElement);
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                }
+            };
+        }();
+
+        var HeaderListUtil = function () {
+            return {
+            	HeaderDetailGrid: null,
+            	HeaderFieldList: null,
+                HeaderFieldSet: null,
+                companyId: null,
+
+                Init: function(args){
+                	this.HeaderFieldList = JSON.parse(args.HeaderFieldList);
+
+                	this.RenderFieldHeaderDetailList();
+                },
+
+                RenderFieldHeaderDetailList: function (e) {
+                    var HeaderFieldList = this.HeaderFieldList;
+                    
+                    HeaderFieldList.splice(0, 1);
+
+                    if (this.HeaderDetailGrid) {
+                        this.HeaderDetailGrid.destroy();
+                        $('#HeaderDetailGrid').empty();
+                    }
+
+                    this.HeaderDetailGrid = $('#HeaderDetailGrid').kendoDetailList({
+                        namespace: '{!NamespaceUU}',
+                        sections: [
+                            {
+                                fields: HeaderFieldList
+                            }
+                        ],
+                        lookupSearchAction: lookupSearchAction,
+                        lookupSearchFilters: lookupSearchFilters,
+                        getDetailListFunction: AllowanceTypeData,
+                    }).data('kendoDetailList');
+
+                    $('#HeaderDetailGrid').data('kendoDetailList').options.columns = 1;
+
+                    this.HeaderDetailGrid.element.bind('OnReadSuccess', HeaderListUtil.OnFielderDetailListReadSuccess);
+                },
+
+                OnFielderDetailListReadSuccess: function (e) {
+
+                    // HeaderListUtil.RemoveFieldsFromPickList();
+                    if ('{!allowanceTypeId}'.length == 0 || '{!allowanceTypeId}' == null){
+                        // $('#Basis__c').data('kendoDropDownList').select(0);
+                        HeaderListUtil.clearOtherFields();
+                    }
+
+                    // bind actions when Manual field is changed
+
+                    $('#Basis__c').data('kendoDropDownList').bind('close', $.proxy(HeaderListUtil.OnBasisChange, { grid: this.grid }));
+                    $('#Type__c').data('kendoDropDownList').bind('close', $.proxy(HeaderListUtil.OnTypeChange, { grid: this.grid }));
+
+                    /* On initial load */
+                    HeaderListUtil.OnTypeChange();
+
+                    // selects all character when user clicks on input field
+                    HeaderListUtil.BindFocusSelectAll('#Amount__c');
+                    HeaderListUtil.BindFocusSelectAll('#Percent_Of_Target_Field__c');
+
+                },
+
+                OnTypeChange: function(e){
+                    var typeVal = $('#Type__c').val();
+                    var basisVal = $('#Basis__c').val();
+
+                    var basisDropDown = $('#Basis__c').data('kendoDropDownList');
+
+                    if (typeVal == 'New Price'){
+
+
+                        var data = [
+                            {text: 'Markdown', value: 'Markdown'},
+                            {text: 'Markup', value: 'Markup'},
+                            {text: 'Flat', value: 'Flat'},
+                            {text: 'Multiplier', value: 'Multiplier'}
+                        ];
+
+                        basisDropDown.setDataSource(data);
+                        
+                        // if (basisVal == null){
+                        //     basisDropDown.select(0);
+                        // }
+
+                        HeaderListUtil.HideAllowanceFields();
+                        HeaderListUtil.OnBasisChange();
+
+
+
+                        // $('#Target_Field__c').closest("tr").hide();
+                    } else {
+
+                        // to prevent overwriting user entered info on change, track previous Type__c value. Only enter this look if old value was New Price
+                        
+
+                        var data = [
+                            {text: 'Flat', value: 'Flat'},
+                            {text: 'Rate By', value: 'Rate By'},
+                            {text: 'Percentage', value: 'Percentage'}
+                        ];
+
+                        basisDropDown.setDataSource(data);
+
+                        HeaderListUtil.ShowAllowanceFields();
+                        HeaderListUtil.OnBasisChange();
+
+                        
+                    }
+                },
+
+                HideAllowanceFields: function(e){
+                    $('#Allowance_Class__c').closest("tr").hide();
+                    $('#Manual__c').closest("tr").hide();
+                    $('#One_Time__c').closest("tr").hide();
+                    $('#Apply_At_Header__c').closest("tr").hide();
+                    $('#Allow_Override__c').closest("tr").hide();
+                    $('#GL_Account__c').closest("tr").hide();
+                },
+
+                ShowAllowanceFields: function(e){
+                    $('#Allowance_Class__c').closest("tr").show();
+                    $('#Manual__c').closest("tr").show();
+                    $('#One_Time__c').closest("tr").show();
+                    $('#Apply_At_Header__c').closest("tr").show();
+                    $('#Allow_Override__c').closest("tr").show();
+                    $('#GL_Account__c').closest("tr").show();
+                },
+
+                OnBasisChange: function(e){
+                    var basisVal = $('#Basis__c').val();
+
+                    HeaderListUtil.HideFields();
+
+                    if (basisVal == 'Flat'){
+
+                        // hide all unnecessary fields and show necessary fields
+                        $('#Amount__c').closest("tr").closest("tr").show();
+
+                    } else if (basisVal == 'Percentage'){
+
+                        // hide all unnecessary fields and show necessary fields
+                        $('#Target_Field__c').closest("tr").show();
+                        $('#Percent_Of_Target_Field__c').closest("tr").show();
+
+
+                    } else if (basisVal == 'Rate By'){
+
+                        // hide all unnecessary fields and show necessary fields
+                        $('#Amount__c').closest("tr").closest("tr").show();
+                        $('#Rate_Field__c').closest("tr").show();
+
+                    } 
+                    else if (basisVal == 'Markup' || basisVal == 'Markdown' ){
+
+                        $('#Percent_Of_Target_Field__c').closest("tr").show();
+
+                    } else if ( basisVal == 'Multiplier' ){
+
+                        $('#Value__c').closest("tr").show();
+
+                    }
+
+                    HeaderListUtil.clearOtherFields();
+                },
+
+                BindFocusSelectAll: function(selectAllField){
+                     $(selectAllField).bind("focus", function () {
+                        var input = $(this);
+                        clearTimeout(input.data("selectTimeId")); //stop started time out if any
+
+                        var selectTimeId = setTimeout(function()  {
+                            input.select();
+                        });
+
+                        input.data("selectTimeId", selectTimeId);
+                    }).blur(function(e) {
+                        clearTimeout($(this).data("selectTimeId")); //stop started timeout
+                    });
+                },
+
+
+                HideFields: function(e){
+                    var basisVal = $('#Basis__c').val();
+
+                    $('#Target_Field__c').closest("tr").hide();
+                    $('#Percent_Of_Target_Field__c').closest("tr").hide();
+                    $('#Amount__c').closest("tr").hide();
+                    $('#Rate_Field__c').closest("tr").hide();
+                    $('#Value__c').closest("tr").hide();
+
+                },
+
+                clearOtherFields: function(e){
+                    // depending on the basis, set related fields to existing value. All other unrelated field values are set to null; Called when changing the basis.
+
+                    var targetFieldVal = null;
+                    var percentTargetField = null;
+                    var amountField = null;
+                    var rateField = null;
+                    var valueField = null;
+
+                    var basisVal = $('#Basis__c').val();
+
+                    if (basisVal == 'Flat' ){
+                        amountField = $('#Amount__c').val();
+                    } 
+                    else if (basisVal == 'Percentage'){
+                        percentTargetField = $('#Percent_Of_Target_Field__c').val();
+                        targetFieldVal = $('#Target_Field__c').val();
+                    } 
+                    else if (basisVal == 'Rate By'){
+                        rateField = $('#Rate_Field__c').val();
+                        amountField = $('#Amount__c').val();
+                    }
+                    else if (basisVal == 'Markup' || basisVal == 'Markdown'){
+                        percentTargetField = $('#Percent_Of_Target_Field__c').val();
+                    }
+                    else if (basisVal == 'Multiplier'){
+                        valueField = $('#Value__c').val();
+                    }
+
+                    $('#Target_Field__c').data('kendoDropDownList').value(targetFieldVal);
+                    $('#Percent_Of_Target_Field__c').data('kendoNumericTextBox').value(percentTargetField);
+                    $('#Amount__c').val(amountField);
+                    $('#Rate_Field__c').data('kendoDropDownList').value(rateField);
+                    $('#Value__c').val(valueField);
+
+                },
+
+                SetDefaults: function(e){
+                    $('#Target_Field__c').data('kendoDropDownList').value('Net');
+                    $('#Percent_Of_Target_Field__c').data('kendoNumericTextBox').value('0');
+                    $('#Amount__c').val(0);
+                    $('#Rate_Field__c').data('kendoDropDownList').value(0);
+                    $('#Value__c').val(0);
+                }
+            };
+        }();
+
+
+    </script>
+
+
+</apex:page>

@@ -1,0 +1,9 @@
+<apex:page standardController="Fulfillment__c" extensions="FulfillmentDisableButtonExt" action="{!errMsg}">
+    <apex:sectionHeader title="{!$ObjectType.Fulfillment__c.Label}" />
+    <apex:form >
+        <apex:PageMessages />
+        <apex:outputpanel style="padding:20px;">
+        	<apex:outputLink value="{!$CurrentPage.parameters.retURL}" >{!$Label.Click_to_go_back}</apex:outputLink>
+        </apex:outputpanel>
+    </apex:form>
+</apex:page>

@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpSubstitution</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>false</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>Substitution_Edit</fullName>
+        <description>SubstitutionEdit.page</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Block__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Reason_Code__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>UPC__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Primary__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Current_Product__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Substitute_Product__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Customer__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Facility__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Start_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>End_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Substitution Edit</label>
+    </fieldSets>
+    <fields>
+        <fullName>Block__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>If checked, the product is blocked from substitution for the matching customer(s) and/or warehouse(s).</description>
+        <externalId>false</externalId>
+        <inlineHelpText>A check mark indicates that  the system prevents the selected product from being shipped to a customer and/or facility.  If a customer and/or facility are not specified, the block applies to all customers and facilities.</inlineHelpText>
+        <label>Block</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Current_Product__c</fullName>
+        <deleteConstraint>Restrict</deleteConstraint>
+        <description>The current product that the substitution should apply to.</description>
+        <externalId>false</externalId>
+        <label>Current Product</label>
+        <referenceTo>Product__c</referenceTo>
+        <relationshipName>Product_Selections</relationshipName>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Customer__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The Sold-to / Ship-to Customer to which the substitution should apply to.</description>
+        <externalId>false</externalId>
+        <label>Customer</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Customer__c.RecordTypeId</field>
+                <operation>equals</operation>
+                <value>Sold To, Ship To</value>
+            </filterItems>
+            <isOptional>true</isOptional>
+        </lookupFilter>
+        <referenceTo>Customer__c</referenceTo>
+        <relationshipLabel>Substitutions</relationshipLabel>
+        <relationshipName>Product_Selections</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>End_Date__c</fullName>
+        <description>The date on which the substitution is effective until.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Date on which the block or substitution ends. The end date must be greater than the start date.</inlineHelpText>
+        <label>End Date</label>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Facility__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The facility to which the substitution should apply to.</description>
+        <externalId>false</externalId>
+        <label>Facility</label>
+        <referenceTo>Facility__c</referenceTo>
+        <relationshipName>Product_Selections</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Primary__c</fullName>
+        <externalId>false</externalId>
+        <formula>Current_Product__r.Primary__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <inlineHelpText>A check mark indicates that  the current product is the primary product.</inlineHelpText>
+        <label>Primary</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Product_Selection_Index__c</fullName>
+        <description>The index used to locate the record.</description>
+        <externalId>false</externalId>
+        <label>Product Selection Index</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Reason_Code__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The reason code for this substitution (or block, if the product is blocked from substitution.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Displays the list of reasons for the substitution.</inlineHelpText>
+        <label>Reason Code</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Reason_Code__c.Type__c</field>
+                <operation>equals</operation>
+                <value>Substitution</value>
+            </filterItems>
+            <isOptional>true</isOptional>
+        </lookupFilter>
+        <referenceTo>Reason_Code__c</referenceTo>
+        <relationshipLabel>Substitutions</relationshipLabel>
+        <relationshipName>Product_Selections</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Start_Date__c</fullName>
+        <description>The date on which the substitution is effective from.</description>
+        <externalId>false</externalId>
+        <label>Start Date</label>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Substitute_Product__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The product that should be substituted for the current product.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The substitute product must have the same UPC code as the current product.</inlineHelpText>
+        <label>Substitute Product</label>
+        <referenceTo>Product__c</referenceTo>
+        <relationshipLabel>Substitutions (Substitute Product)</relationshipLabel>
+        <relationshipName>Product_Selections1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>UPC__c</fullName>
+        <description>UPC Code from the Current Product.</description>
+        <externalId>false</externalId>
+        <formula>Current_Product__r.UPC_Code__c</formula>
+        <label>UPC</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <label>Substitution</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Block__c</columns>
+        <columns>Reason_Code__c</columns>
+        <columns>UPC__c</columns>
+        <columns>Primary__c</columns>
+        <columns>Current_Product__c</columns>
+        <columns>Substitute_Product__c</columns>
+        <columns>Facility__c</columns>
+        <columns>Customer__c</columns>
+        <columns>Start_Date__c</columns>
+        <columns>End_Date__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Substitution Name</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Substitutions</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Facility__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Customer__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Current_Product__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Substitute_Product__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Start_Date__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>End_Date__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Block__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Reason_Code__c</customTabListAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>Customer_type_validation</fullName>
+        <active>false</active>
+        <description>Customer must be either sold-to or ship-to.</description>
+        <errorConditionFormula>AND(
+  NOT(ISNULL(Customer__c) || ISBLANK(Customer__c)),
+  Customer__r.RecordType.Name &lt;&gt; &apos;Sold To&apos;,
+  Customer__r.RecordType.Name &lt;&gt; &apos;Ship To&apos;
+)</errorConditionFormula>
+        <errorDisplayField>Customer__c</errorDisplayField>
+        <errorMessage>Customer must be of type either Sold-to or Ship-to.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>End_date_must_be_after_Start_Date</fullName>
+        <active>true</active>
+        <description>End Date must occur after Start Date on the substitution rule.</description>
+        <errorConditionFormula>Start_Date__c   &gt;  End_Date__c</errorConditionFormula>
+        <errorDisplayField>End_Date__c</errorDisplayField>
+        <errorMessage>End date must be after the Start date.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Products_must_have_same_UPC_code</fullName>
+        <active>true</active>
+        <description>The current product and the substitute product must have the same UPC code.</description>
+        <errorConditionFormula>AND(
+NOT(ISNULL( Substitute_Product__c ) || ISBLANK( Substitute_Product__c )),
+Current_Product__r.UPC_Code__c &lt;&gt;       Substitute_Product__r.UPC_Code__c
+)</errorConditionFormula>
+        <errorDisplayField>Substitute_Product__c</errorDisplayField>
+        <errorMessage>Substitute product must have the same UPC code as current product.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Reason_code_must_be_of_type_substitution</fullName>
+        <active>true</active>
+        <description>Reason code must be of type &apos;Substitution&apos;.</description>
+        <errorConditionFormula>NOT(ISNULL(Reason_Code__c) || ISBLANK(Reason_Code__c))
+&amp;&amp;
+NOT(ISPICKVAL(Reason_Code__r.Type__c, &apos;Substitution&apos;))</errorConditionFormula>
+        <errorDisplayField>Reason_Code__c</errorDisplayField>
+        <errorMessage>Reason code must be of type &apos;Substitution&apos;</errorMessage>
+    </validationRules>
+    <webLinks>
+        <fullName>Manage_Substitutions</fullName>
+        <availability>online</availability>
+        <displayType>link</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Manage Substitutions</masterLabel>
+        <openType>noSidebar</openType>
+        <page>SubstitutionManage</page>
+        <protected>false</protected>
+    </webLinks>
+</CustomObject>

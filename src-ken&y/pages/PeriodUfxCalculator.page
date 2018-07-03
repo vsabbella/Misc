@@ -1,0 +1,1079 @@
+<apex:page id="thePage" standardController="Period__c" extensions="PeriodUfxCalculatorExt" >
+	<c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+
+	<apex:stylesheet value="{!$Resource.KenandyCommonStyles}" />
+	<style>
+        .panelLeft {
+            width: 20%;
+            vertical-align: top;
+        }
+        .panelRight {
+            width: 20%;
+            vertical-align: top;
+        }
+       
+    	.boldHighlight {
+        	background-color: yellow;
+        	font-weight: bold;
+   		 }
+   		 
+   		 /*added by Sohini -- KNDY-14994 Start*/
+  		.fxCalculation {
+  		 	font-weight: bold;
+  		 }
+  		 /*added by Sohini -- KNDY-14994 End*/
+  		 
+  		 .panelLeft .apexp{
+   		 	width: 50%;
+		    margin-left: auto;
+		    margin-right: auto;
+   		 }
+    </style>
+
+
+    <apex:sectionHeader title="{!$ObjectType.Period__c.Label}" subtitle="{!Period__c.Name} {!$Label.Close}" help="{!HelpURL}"/>
+
+    <apex:form >
+    	<c:busyWait />
+    	<apex:outputPanel id="messages" >
+    		<apex:pageMessages />
+    	</apex:outputPanel>
+
+        <apex:outputPanel layout="block" style="width:100%">
+        <apex:pageBlock >
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="{!$Label.Go_Back}" action="{!cancel}" status="actionStatus" rerender="form"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection >
+                <apex:repeat value="{!$ObjectType.Period__c.Fieldsets.Review}" var="f">
+                    <apex:outputField value="{!Period__c[f]}"/>
+                </apex:repeat>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        </apex:outputPanel>
+
+    	<apex:panelGrid columns="2" columnClasses="panelLeft,panelRight">
+    		<apex:pageBlock title="UFX Revaluation" rendered="{!(Period__c.Type__c != 'Historical')}">
+                <apex:pageBlockButtons location="top">
+                	<apex:commandButton id="createChunk" value="UFX Revaluation" disabled="{!OR(HasEndExchangeRate==false, HasGlAccounts==false)}" />
+                </apex:pageBlockButtons>
+                <!-- added by Sohini KNDY-14994 Start -->
+                <apex:outputPanel id="ufxDiv" rendered="{!ufxPanel}" layout="block">
+                	<div id="Ufx">
+	                <apex:outputText styleClass="fxCalculation" value="Journal Entry"></apex:outputText><br/>
+	                <apex:repeat value="{!journalEntries}" var="je">
+	                	<apex:outputLink value="/{!je.journal.id}" id="UfxJeLink" target="_blank">{!je.journal.name}</apex:outputLink><br/>
+	            	</apex:repeat>
+	            	</div>
+            	</apex:outputPanel>
+            	<!-- added by Sohini KNDY-14994 End -->
+            </apex:pageBlock>
+    	</apex:panelGrid>
+    	<apex:outputpanel >
+				<div id="progressBarFX"/>					
+		</apex:outputpanel>
+
+
+		<apex:actionFunction name="showPageMessage" action="{!showPageMessage}" rerender="messages">
+			<apex:param name="message" assignTo="{!message}" value="" />
+		</apex:actionFunction>
+    </apex:form>
+
+    <div id="totalResults"/>
+
+	<div style="display:none" id="status-message1"/>
+	<div style="display:none" id="status-message2"/>
+	<div style="display:none" id="responseErrors"/> 
+
+    <script type="text/javascript">
+		var __sfdcSessionId = '{!GETSESSIONID()}';
+	</script>	
+	
+	<script src="../../soap/ajax/38.0/connection.js" type="text/javascript" />
+
+	<script>	
+  	//=====================================
+  	// patching one function in the connection.js resource, so we don't get 
+  	// Refused to set unsafe header "User-Agent" errror
+  	//=====================================
+	//added by Sohini KNDY-14994 Start
+  	function hideUfx(){
+  		/*$("#Ufx").hide();*/
+  	}
+  	 
+  	//added by Sohini KNDY-14994 End
+ 
+	sforce.Transport = function(url) {
+	    this.url = url;
+	    this.connection = null;
+	
+	    this.newConnection = function() {
+	        try {
+	            this.connection = new ActiveXObject('Msxml2.XMLHTTP');
+	        } catch(e) {
+	            try {
+	                this.connection = new ActiveXObject('Microsoft.XMLHTTP');
+	            } catch(e) {
+	                this.connection = new XMLHttpRequest();
+	            }
+	        }
+	
+	        return this.connection;
+	    };
+	
+	    this.send = function (envelope, callback, async, timeout) {
+	        this.newConnection();
+	        if (async) {
+	            this.connection.onreadystatechange = this.httpConnectionCallback;
+	        }
+	        var holder = new sforce.internal.ConnectionHolder(this.connection, callback);
+	        sforce.internal._connections.push(holder);
+	        this.connection.open("POST", this.url, async);
+	        this.connection.setRequestHeader("Content-Type", "text/xml; charset=UTF-8");
+	        this.connection.setRequestHeader("SOAPAction", "\"\"");
+	        this.connection.setRequestHeader("Accept", "text/xml");
+	        //this.connection.setRequestHeader("User-Agent", "SFAJAX 1.0"); //here is the one line we are patching
+	        this.connection.send(envelope);
+	        if (async && typeof(timeout) !== "undefined") {
+	            this.setTimeoutOn(holder, timeout);
+	        }
+	        if (!async) {
+	            this.httpConnectionCallback();
+	        }
+	    };
+	
+	    this.setTimeoutOn = function (holder, timeout) {
+	        function abortConnection() {
+	            if (holder.connection.readyState !== 4) {
+	                holder.timedout = true;
+	                holder.connection.abort();
+	            }
+	        }
+	        setTimeout(abortConnection, timeout);
+	    };
+	
+	    this.httpConnectionCallback = function () {
+	
+	        for (var i = 0; i < sforce.internal._connections.length; i++) {
+	            var holder = sforce.internal._connections[i];
+	            if (holder !== null) {
+	                if (holder.timedout) {
+	                    sforce.internal._connections[i] = null;
+	                    sforce.internal._connections.slice(i,1);
+	                    holder.callback.httpCallback("Remote invocation timed out", false);
+	                } else  if (holder.connection.readyState == 4) {
+	                    sforce.internal._connections[i] = null;
+	                    sforce.internal._connections.slice(i,1);
+	                    var success = holder.connection.status == 200;
+	                    if (sforce.debug.trace) {
+	                        sforce.debug.log("Response : status - " + holder.connection.status);
+	                        sforce.debug.logXml(holder.connection.responseText);
+	                    }
+	                    if (sforce.debug.apexTrace) {
+	                        sforce.debug.logApex(holder.connection.responseText);
+	                    }
+	                    if (holder.connection.responseXML && holder.connection.responseXML.documentElement) {
+	                        holder.callback.httpCallback(holder.connection.responseXML.documentElement, success);
+	                    } else {
+	                        holder.callback.httpCallback("Remote invocation failed, due to: " + holder.connection.responseText +
+	                                                     " status code: ", holder.connection.status);
+	                    }
+	                }
+	            }
+	        }
+	    };
+	};
+	</script>	
+
+
+
+	<script type="text/javascript">
+	 
+		var ufxAccount = "{!UfxAccountId}";
+    	var namespaceUU = "{!NameSpaceUU}";
+		var availableRuns = {};
+
+		$(document).on("KenandyErpReady", function(){
+			ufx(); 
+			initFXProgressBar();
+		});
+		
+		//added by Sohini KNDY-14994 Start
+		function ufx(){
+       		$('[id$=createChunk]').on('click', function(e,arg){
+				e.preventDefault();
+				KenandyErp.BlockUI();
+	
+				var canCreateJe = {!canCreateJEs};
+				if(canCreateJe == true){
+				    $("#Ufx").html("");
+				}
+	
+				$("#totalResults").html("");
+				availableRuns ={
+				    actions :[
+                        '{!$RemoteAction.PeriodUfxCalculatorExt.getEntriesForUfx}'
+					],
+					resultProcess: processUfxChunckResult,
+					completeProcess: completeUfxProcess
+				};
+	
+				poAccounting = {};
+				initCallbacks();
+				
+				chunkEntireDB({!ChunkSize},namespaceUU + 'Accounting_Entry_Line__c');
+			});
+       	}
+
+		function initFXProgressBar(){
+			try{
+			/*
+				$("#progressBarFX").kendoProgressBar({
+	                min: 0,
+	                max: 100,
+	                type: "percent",
+	                value: 0,
+	                animation: {
+	                    duration: 600
+	                }
+	            });
+	            */
+			}catch(ex){
+				console.log(ex);
+			}
+		}
+
+		function processUfxChunckResult(result){
+			for(var i=0; i<result.length;i++){
+				if(poAccounting[result[i].AccountName] == null){
+					poAccounting[result[i].AccountName] = new TotalUfx(result[i]);
+				}
+				poAccounting[result[i].AccountName].addAe(result[i]);
+			}
+		}
+ 
+
+		function completeUfxProcess(){
+			console.log(poAccounting);
+	    	callbackHandler('parallelEndRT', true);
+			console.log('got the data.');
+
+			var ufxTable = $('<table class="list" style="width:100%" cellpadding="0" cellspacing="0">');
+			ufxTable.append(
+				$('<thead>').append(
+					$('<tr class="headerRow"></tr>')
+							.append($('<th>').text('GL Account'))
+							.append($('<th>').text('Revaluation rate'))
+							.append($('<th>').text('Total Docs with UFX'))
+							.append($('<th>').text('Total Ufx Revaluation'))
+							.append($('<th>').text('Journal Entry'))
+				)
+			);
+
+			for(var i in poAccounting){
+				var tbod = $('<table>');
+				tbod.append($('<thead>'+
+			'<tr>'+
+				'<th>Source Doc</th>'+
+				'<th>Trans Amount CR</th>'+
+				'<th>Trans Amount DR</th>'+
+				'<th>Trans Remaining</th>'+
+				'<th>Func Amount CR</th>'+
+				'<th>Func Amount DR</th>'+
+				'<th>Func Remaining</th>'+
+				'<th>Original Rate</th>'+
+				'<th>Ufx Revaluation</th>'+
+			'</tr>'+
+		'</thead>'));
+				var rowId = i.replace(/\W/g, '');
+				var childRec = $('<td id="' + rowId + '-child" colspan="4" style="display:none"></td>').append(tbod);
+
+				for(var e in poAccounting[i].UfxRevals){
+
+					if(poAccounting[i].UfxRevals[e].TotalCR != poAccounting[i].UfxRevals[e].TotalDR){
+						var row = $('<tr>');
+						row.append($('<td>').text(poAccounting[i].UfxRevals[e].ParentObj.Name));
+						row.append($('<td>').text(poAccounting[i].UfxRevals[e].TotalCR.toFixed(2)));
+						row.append($('<td>').text(poAccounting[i].UfxRevals[e].TotalDR.toFixed(2)));
+						row.append($('<td>').text(poAccounting[i].UfxRevals[e].Remaining()));
+						row.append($('<td>').text(poAccounting[i].UfxRevals[e].FunctTotalCR.toFixed(2)));
+						row.append($('<td>').text(poAccounting[i].UfxRevals[e].FunctTotalDR.toFixed(2)));
+						row.append($('<td>').text(poAccounting[i].UfxRevals[e].FunctRemaining()));
+						row.append($('<td>').text(poAccounting[i].UfxRevals[e].ExistingExRate != null ? poAccounting[i].UfxRevals[e].ExistingExRate.toFixed(2) : "--" ));
+						row.append($('<td>').text(
+							isNaN(poAccounting[i].RevalRate) == false ? poAccounting[i].UfxRevals[e].UfxRevaluation(poAccounting[i].RevalRate) : "--"
+						));
+						tbod.append(row);
+					}else{
+						delete poAccounting[i].UfxRevals[e];
+					}
+
+				}
+
+				if(isNaN(poAccounting[i].RevalRate) == false && isNaN(poAccounting[i].TotalUfxRevaluation()) == false){
+				ufxTable
+					.append($('<tr dataRow>')
+							.append($('<td class="sourceCell dataCell" id="' + rowId + '">').text(poAccounting[i].SourceDisplay))
+							.append($('<td class="dataCell">').text( poAccounting[i].RevalRate != undefined ? poAccounting[i].RevalRate : "Unable to calculate Reval Rate." ))
+						.append($('<td class="dataCell">').text(poAccounting[i].TotalUfxDocs()))
+							.append($('<td class="dataCell">').text(poAccounting[i].TotalUfxRevaluation()))
+							.append($('<td class="dataCell" id="' + rowId + '-jr">').text(""))
+					).append($('<tr>')
+						.append(childRec)
+					);
+				}else{
+					var errorMsg = "";
+					if(isNaN(poAccounting[i].RevalRate) == true){
+						errorMsg = "Unable to calculate Revaluation Rate. Please check exchange rates.";
+					}else{
+						errorMsg = "There is an issue with one or more of the source documents.";
+					}
+					ufxTable
+						.append($('<tr dataRow>')
+							.append($('<td class="sourceCell dataCell" id="' + rowId + '">').text(poAccounting[i].SourceDisplay))
+							.append($('<td class="dataCell" colspan="4">').text(errorMsg))
+				).append($('<tr>')
+					.append(childRec)
+				);
+			}
+			}
+
+			$("#totalResults").append(ufxTable);
+
+			$(".sourceCell").click(function(e){
+				$('#' +$(this).attr('id') + '-child').toggle();
+			});
+
+			var canCreateJEs = {!canCreateJEs};
+
+			if(canCreateJEs == true){
+				generateJeForUfx();
+			}else{
+			    KenandyErp.UnBlockUI();
+			}
+
+		}
+
+		function createJournalEntryLine(fxAmt, type, glId, jeId){
+			console.log(fxAmt);
+			var cr = 0;
+			var dr = 0;
+			
+				if(fxAmt < 0){
+					dr = fxAmt*-1;
+				}else{
+					cr = fxAmt;
+				}
+
+			var jje = new Object();
+			jje[namespaceUU + 'Amount_CR__c'] = cr;
+			jje[namespaceUU + 'Amount_DR__c'] = dr;
+			jje[namespaceUU + 'GL_Account__c'] = glId;
+			jje[namespaceUU + 'Journal_Entry__c'] = jeId;
+
+			return jje;
+
+		}
+
+		function generateJeForUfx(){
+			console.log('create jes');
+			console.log(poAccounting);
+
+			var comps = [];
+			for(var i in poAccounting){
+				if(poAccounting[i].TotalUfxDocs() > 0 && isNaN(poAccounting[i].TotalUfxRevaluation()) == false){
+					comps.push(poAccounting[i].Company);
+				}
+			}
+
+				Visualforce.remoting.Manager.invokeAction(
+			    '{!$RemoteAction.PeriodUfxCalculatorExt.createJournalEntryHeader}',
+				    comps, '{!Period__c.Id}', 'UFX',
+				    function (result, event) {
+					if(result != null){
+				    	var jel = [];
+				    	var counter = 0;
+
+				    	for(var i in poAccounting){
+				    		if(poAccounting[i].TotalUfxDocs() > 0 && isNaN(poAccounting[i].TotalUfxRevaluation()) == false){
+				    			var type = poAccounting[i].TransactionType;
+					    		for(var e in poAccounting[i].UfxRevals){
+					    			var ufxamount = poAccounting[i].UfxRevals[e].UfxRevaluation(poAccounting[i].RevalRate);
+					    			jel.push(createJournalEntryLine(ufxamount, type, poAccounting[i].GLAccount, result[counter].Id));
+					    		}
+
+					    		var totalufx = poAccounting[i].TotalUfxRevaluation();
+					    		jel.push(createJournalEntryLine(totalufx*-1, type, ufxAccount, result[counter].Id));
+								
+								var rowId = i.replace(/\W/g, '') + "-jr";
+								$("#"+rowId).text("");
+								$("#"+rowId).append($("<a></a>").attr("target", "_blank").attr("href", "/"+result[counter].Id).text(result[counter].Name));
+
+								counter++;
+				    		}
+				    	}
+
+				    	if(result == null){
+				    		result = [];
+				    	}
+
+				    	createJournalLines(jel, result);
+					}else{
+						KenandyErp.UnBlockUI();
+					}
+				},{escape: false, buffer: false}
+			);
+		}
+
+		function createJournalLines(jel, jes){
+
+			var temp = jel.splice(0,{!JELInsert});
+			console.log('Sending ' + temp.length + ' To do: ' + jel.length);
+			updateStatus2('Journal Entry Lines: Sending ' + temp.length + ' To do: ' + jel.length);
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.PeriodUfxCalculatorExt.createeJournalEntryLines}',
+				temp,
+				function(result, event){
+					console.log(result);
+					if(jel.length > 0){
+						createJournalLines(jel, jes);
+					}else{
+						//finalize JEs
+
+						for(var i=0; i<jes.length;i++){
+							jes[i][namespaceUU + 'Finalized__c'] = true;
+						}
+
+						Visualforce.remoting.Manager.invokeAction(
+							'{!$RemoteAction.PeriodUfxCalculatorExt.finalizeJournalEntries}',
+							jes,
+							function(result, event){
+								KenandyErp.UnBlockUI();
+
+								if(result != ''){
+									showPageMessage(result);
+								}
+							}
+						);
+					}
+
+				},{escape: false, buffer: false}
+			);
+
+		}
+
+
+
+
+
+
+
+
+
+
+		//QL chunking vars
+	var chunkList = {};
+	var offsetIdMap = {};
+	var totalQueryMoreSize = {};
+	var totalQueriesCompleted = {};    
+	var objectQueriesCompleted = {};
+	var objectAllQueriesCompleted = {};	
+
+
+	var realTimeList = [];
+	var realtimeData = {};
+
+	var numSimultaneous = 10//use custom setting;
+	var numberOfRetries = 10//use custom setting;
+	var realtimeRetries = {};
+	var realtimeStartTimestamp = {};	
+
+	var callbackObj;
+	var poAccounting;
+
+
+	function chunkEntireDB(chunkSize, objectName) {
+
+		initFXProgressBar();
+
+		chunkList[objectName] = [];
+		objectQueriesCompleted[objectName] = 0;
+		objectAllQueriesCompleted[objectName] = false;
+		
+		totalQueriesCompleted[objectName] = 0;
+		
+		var SOQL = ("SELECT Id FROM "+objectName+" ORDER BY Id");
+		
+		var result = sforce.connection.query(SOQL);
+		
+		var resultValues = getResultValues(result);
+		
+		//add the first result to our object before we fire off all the subsequent ones in parallel
+		if(resultValues.type in offsetIdMap) {
+			offsetIdMap[resultValues.type][resultValues.offset] = resultValues; 
+		} else {	
+			offsetIdMap[resultValues.type] = {};
+			offsetIdMap[resultValues.type][resultValues.offset] = resultValues; 
+		}
+
+		//get the loop size
+		var loopSize = Math.floor(resultValues.totalSize / chunkSize);
+		
+		//we need to know ahead of time how many times we are going to call doQueryMore, so when the 
+		//results come back async, we know if we are done or not
+		totalQueryMoreSize[objectName] = loopSize;
+
+		//in case it didn't divide evenly, will have to fire off one more query of a custom size
+		//the offset will be the total number of records in the querylocator minus the leftover
+		//EX: 100,002, R=2, offset = 100,002 - 2 = 100,000
+		var remainder = resultValues.totalSize % chunkSize;		
+		if (remainder > 0) {
+			totalQueryMoreSize[objectName] ++;
+		}	
+
+		//add in one more for the query of the last Id
+		totalQueryMoreSize[objectName] ++;
+
+		//fire off all the queryMore's for loopSize
+        for (var i=1; i<=loopSize; i++) {
+            var offset = chunkSize * i;
+            doQueryMore(resultValues.cursorId, offset); 
+        } 
+        
+        if (resultValues.cursorId=='') {
+	       	totalQueryMoreSize[objectName] = 1;
+	       	qmSuccess(result);
+        } else {  
+			//fire off one more if there was a remainder
+			if (remainder > 0) {
+				var offset = (resultValues.totalSize - remainder);
+				doQueryMore(resultValues.cursorId, offset); 	
+			}				
+	
+			//now fire off one more to get the last Id in the cursor
+			var offset = (resultValues.totalSize - 1);
+			doQueryMore(resultValues.cursorId, offset); 	
+		}
+
+	}
+
+	function doQueryMore(cursorId, offset) {
+		var ql = cursorId + '-' + offset;
+		console.log('queryMore ql');
+		console.log(ql);
+		sforce.connection.queryMore(ql, {
+			onSuccess: qmSuccess,
+			onFailure: queryError
+		});
+	}
+
+	function qmSuccess(result) {
+		var resultValues = getResultValues(result);
+		
+		if (resultValues.type in offsetIdMap) {
+			offsetIdMap[resultValues.type][resultValues.offset] = resultValues; 
+		} else {	
+			offsetIdMap[resultValues.type] = {};
+			offsetIdMap[resultValues.type][resultValues.offset] = resultValues; 
+		}
+		totalQueriesCompleted[resultValues.type] ++;
+
+		if (resultValues.type == '' || totalQueryMoreSize[resultValues.type] == totalQueriesCompleted[resultValues.type]) {
+			allQueriesComplete(resultValues.type);
+		}
+	}
+
+	function queryError(error) {
+		var qErr = {};
+		qErr.status = false;
+		qErr.type = 'exception';
+		qErr.message = 'error';
+		
+		checkErrors (qErr);
+	}
+
+	function allQueriesComplete(type) {
+		
+		//build an array of all the keys so we can sort them
+		var offsetArray = [];
+		for (var offset in offsetIdMap[type]) {
+			offsetArray.push(parseInt(offset));
+		}
+											
+		offsetArray.sort(function(a,b) { return a - b; });
+		
+		//loop from the beginning to the next to last one
+		//don't need the last since it just contains the very last Id - special case
+		
+		if(offsetArray.length==1) {
+			var range = {};
+			
+			range.first = offsetIdMap[type][offsetArray[0]].firstRecordId;
+			range.last = offsetIdMap[type][offsetArray[0]].lastRecordId;
+			range.isLast = true;
+			if(chunkList[type] != null){
+				chunkList[type].push(range);
+			}
+			
+		} else {
+			
+			for (var i=0; i<(offsetArray.length-1); i++) {
+				var range = {};
+				range.first = '';
+				range.last = '';
+				range.isLast = false;
+				
+				var currOffset = offsetArray[i];
+				var nextOffset = offsetArray[i+1];
+				range.first = offsetIdMap[type][currOffset].firstRecordId;
+			
+				var lastLoop = false;
+				if (i == (offsetArray.length-2)) {
+					lastLoop = true;
+				}
+	
+				if (lastLoop) {
+					range.isLast = true;
+					
+					//the last Id will be the actual last Id from the very last chunk
+					range.last  = offsetIdMap[type][nextOffset].lastRecordId;
+				} else {
+					//the last Id will be the first from the next chunk (have to use < logic)
+					range.last  = offsetIdMap[type][nextOffset].firstRecordId; 			
+				}
+				chunkList[type].push(range);
+				
+			}
+		}
+		
+		console.log('chunkList');
+		console.log(chunkList);
+
+		parallelStartRT();		
+	}	
+        //================================================================
+        // END query locator chunking
+		//================================================================	
+
+
+	function getResultValues(result) {
+		var retObj = {};
+		retObj.totalSize = -1;
+		retObj.cursorId = '';
+		retObj.offset = 999999999999; //~1T records.  using this to put last result at the end of the sort, it's QL will be null
+		retObj.firstRecordId = '';
+		retObj.lastRecordId = '';
+		retObj.type = '';
+		
+		//get the querylocator from the result
+		var ql = result.queryLocator;
+		
+		//ql will look like this:
+		//01gJ000000IYnYLIA1-2000
+		
+		//split the ql into cursorId and offset
+		if (ql != null) { //if there are no more records to get, ql will be null
+			var arrQL = ql.split('-');
+			if (arrQL.length == 2) {
+				retObj.cursorId = arrQL[0];
+				retObj.offset 	= arrQL[1];
+			}	
+		}
+
+		
+		//get the total size, convert to int
+		retObj.totalSize = parseInt(result['size']);		
+		
+		//get the first record Id
+		var firstRecordFound = false;
+		if ('records' in result) {
+			//see if it is in an array
+			if (Object.prototype.toString.call(result.records) === '[object Array]') {
+				if (result.records.length > 0) {
+					retObj.firstRecordId = result.records[0].Id;
+					retObj.type = result.records[0].type;
+					firstRecordFound = true;
+				}			
+			} else {
+				//or else just a single object
+				if ('Id' in result.records) {
+					retObj.firstRecordId = result.records.Id;
+					retObj.type = result.records.type;
+					firstRecordFound = true;				
+				}
+			}
+		}
+		
+		//get the last record Id
+		var lastRecordFound = false;
+		if ('records' in result) {
+			//see if it is in an array
+			if (Object.prototype.toString.call(result.records) === '[object Array]') {
+				if (result.records.length > 0) {
+					retObj.lastRecordId = result.records[result.records.length-1].Id;
+					lastRecordFound = true;
+				}			
+			} else {
+				//or else just a single object
+				if ('Id' in result.records) {
+					retObj.lastRecordId = result.records.Id;
+					lastRecordFound = true;				
+				}
+			}
+		}
+		return retObj;
+	}
+
+	//================================================================
+    // Begin realtime parallel
+	//================================================================
+	var numTotalRT = 0;
+	var numRemainingTotalRT = 0;
+	var numRemainingBatchRT = 0;
+	var currentRun = '';
+	
+	function parallelStartRT() {
+		callbackHandler('parallelEndRT', false);
+
+		currentRun = availableRuns.actions.pop();
+
+		realtimeData = {};
+		
+		realTimeList = chunkList[namespaceUU + 'Accounting_Entry_Line__c'];
+		
+		console.log('realTimeList');
+		console.log(realTimeList);
+		
+		numTotalRT = realTimeList.length;
+		numRemainingTotalRT = numTotalRT;
+		getNextBatchRT();
+	}		
+
+	function getNextBatchRT() {
+		if (numRemainingTotalRT == 0) {
+			parallelEndRT();
+		} else {
+			var nextBatchStartIndexRT = numTotalRT - numRemainingTotalRT;
+			
+			//get the number of simultaneous chunks, or whatever is left if it's less
+			numRemainingBatchRT = numSimultaneous;
+			if (numRemainingTotalRT < numRemainingBatchRT) {
+				numRemainingBatchRT = numRemainingTotalRT;
+			} 						
+			chunkWorkerRT(nextBatchStartIndexRT, numRemainingBatchRT);
+		}
+	}  		
+
+    function chunkWorkerRT(nextBatchStartIndexRT, numRemainingBatchRT) {
+		for (var i=0; i<numRemainingBatchRT; i++) {
+			updateStatus1('Requested Realtime Data ' + (nextBatchStartIndexRT+i) + '/' + numTotalRT +  '. ');				
+			getRealtimeChunk(nextBatchStartIndexRT+i);
+		}  		
+    }    
+		
+	function chunkCompleteRT() {
+		numRemainingBatchRT--;
+		numRemainingTotalRT--;
+		updateStatus2('Received: ' + (numTotalRT-numRemainingTotalRT) + '/' + numTotalRT + '.');	
+		if (numRemainingBatchRT == 0) {
+			getNextBatchRT();
+		}
+	}  
+
+	function getRealtimeChunk(startAt) {
+		var itemRange = new Object();
+		itemRange["first"] = realTimeList[startAt]["first"];
+		itemRange["last"] = realTimeList[startAt]["last"];
+
+		var isLast = startAt == realTimeList.length-1 ? true : false;
+		
+		realtimeStartTimestamp[startAt] = new Date().getTime();
+
+		//Invoke action with item range and anything else needed
+		Visualforce.remoting.Manager.invokeAction(
+                currentRun,
+                itemRange, '{!Period__c.Id}',isLast,
+                function (result, event) {
+
+                	 //trap any timeouts
+			        var isTimeout = false;
+			        if (event.type === 'exception') {
+			        	if (event.message.indexOf("timeout") > -1) {
+			        		isTimeout = true;	
+			        	}	
+			        }       
+	                    
+                    if (isTimeout == false) {
+                    	checkErrors(event);
+                    }
+
+                    if (event.status) {
+                    	console.log(result);
+                    	availableRuns.resultProcess(result);
+                    	chunkCompleteRT();
+                    }
+
+                    if (isTimeout) {
+						if (startAt in realtimeRetries) {
+							realtimeRetries[startAt]++;
+						} else {
+							realtimeRetries[startAt] = 1;
+						}
+						
+						if (realtimeRetries[startAt] <= numberOfRetries) {
+							var msExec = (new Date().getTime()) - realtimeStartTimestamp[startAt];
+						
+							console.log('retry: ' + realtimeRetries[startAt] + ', ' + itemRange["first"] + ' - ' + itemRange["last"] + ', ms: ' + msExec + ', curr time: ' + new Date());
+							getRealtimeChunk(startAt);
+						} else {
+							//we hit our number of retries, time to fail
+							checkErrors(event);
+							chunkCompleteRT();						
+						}
+					}
+                },{escape: false, buffer: false}
+         );  
+		
+    } 
+
+
+    function parallelEndRT() {
+
+    	if(availableRuns.actions.length > 0){
+    		parallelStartRT();
+    	}else{
+    		availableRuns.completeProcess();
+
+			//KenandyErp.UnBlockUI(); //commented by Sohini KNDY-14994
+
+			/*$('#totalCnt').text(TotalCnt);
+			$('#ufxCnt').text(UfxRequiredCnt);*/
+    	}
+	}
+
+	function TotalUfx(s){
+		this.SourceType = s.AccountName;
+		this.SourceDisplay = s.AccountDisplayName;
+		this.GLAccount = s.GLId;
+		this.Company = s.ParentObj[namespaceUU + 'Company__c'];
+		this.TotalUfxRevaluation = totalUfxReval;
+		this.UfxRevals = {};
+		this.RevalRate = s.RevalExchangeRate;
+		this.addAe = addAe;
+		this.TotalUfxDocs = totalUfxDocs
+		this.TransactionType = s.Type;
+
+		function totalUfxReval(){
+			var total = 0;
+			for(var i in this.UfxRevals){
+				total += this.UfxRevals[i].UfxRevaluation(this.RevalRate);
+			}
+
+			try{
+			return parseFloat(total.toFixed(2));
+			}catch(ex){
+				return "--";
+		}
+
+		}
+
+		function addAe(r){
+
+		    if(this.UfxRevals[r.ParentObj.Id] != null){
+                this.UfxRevals[r.ParentObj.Id].addDoc(r);
+			}else{
+		        var isfound = false;
+                for(var i in this.UfxRevals){
+		            if(this.UfxRevals[i].hasParent(r.ParentObj, r.ParentObj2) == true){
+                        this.UfxRevals[i].addDoc(r);
+                        isfound = true;
+                        break;
+					}
+				}
+
+				if(isfound == false){
+					this.UfxRevals[r.ParentObj.Id] = new UfxResult(r);
+                    this.UfxRevals[r.ParentObj.Id].addDoc(r);
+				}
+			}
+		}
+
+		function totalUfxDocs(){
+			var total = 0;
+
+			for(var i in this.UfxRevals){
+				if(this.UfxRevals[i].TotalCR != this.UfxRevals[i].TotalDR ){
+					total +=1;
+				}
+			}
+
+			return total;
+		}
+	}
+
+	function UfxResult(r){
+		this.ParentObj = r.ParentObj;
+
+		this.ParentObjList = {};
+		this.ParentObjList[r.ParentObj.Id] = r.ParentObj.Id;
+
+		this.AccountingEntryLines = [];
+		this.TotalCR = 0;
+		this.TotalDR = 0;
+		this.Remaining = calculateRemaining;
+		this.FunctTotalCR = 0;
+		this.FunctTotalDR = 0;
+		this.FunctRemaining = calculateFunctRemaining;
+		this.ExistingExRate = r.OriginalExchangeRate !== undefined ? r.OriginalExchangeRate : null;
+		this.UfxRevaluation = ufxRevaluation;
+		this.addDoc = addSourceDoc;
+		this.hasParent = hasParent;
+
+		function hasParent(p1, p2){
+
+		    if( this.ParentObjList[p1.Id] != null || ( p2 != null && this.ParentObjList[p2.Id] != null )  ){
+				return true;
+			}else{
+		        return false;
+			}
+
+		}
+
+		function calculateRemaining(){
+			return parseFloat((this.TotalCR - this.TotalDR).toFixed(2));
+		}
+
+		function calculateFunctRemaining(){
+			return parseFloat((this.FunctTotalCR - this.FunctTotalDR).toFixed(2));
+		}
+
+		function addSourceDoc(r){
+
+		    if(this.ParentObjList[r.ParentObj.Id] == null){
+                this.ParentObjList[r.ParentObj.Id] = r.ParentObj.Id;
+			}
+
+            if(r.ParentObj2 != null && this.ParentObjList[r.ParentObj2.Id] == null){
+                this.ParentObjList[r.ParentObj2.Id] = r.ParentObj2.Id;
+            }
+
+			this.TotalCR += r.TotalCR;
+			this.TotalDR += r.TotalDR;
+			this.FunctTotalCR += r.FunctTotalCR;
+			this.FunctTotalDR += r.FunctTotalDR;
+			this.AccountingEntryLines = this.AccountingEntryLines.concat(r.AccountingEntryLines);
+		}
+
+		function ufxRevaluation(revalRate){
+			if(this.ExistingExRate != null){
+			return parseFloat(((this.Remaining()*revalRate)- this.FunctRemaining()).toFixed(2));
+			}else{
+				return "--";
+			}
+			
+		}
+
+	}
+
+	//================================================================
+    // Begin callbacks
+	//================================================================        
+    
+
+	function initCallbacks() {
+
+		callbackObj = new Object();
+	   	var callbackDefs = new Array();
+/*
+	   	callbackDefs.push({
+   			preReqs: 			["getPoUfx"],
+   			callbackFunction: 	'getSiUfx'
+   		});
+
+   		callbackDefs.push({
+   			preReqs: 			["getSiUfx"],
+   			callbackFunction: 	'ufxCompleted'
+   		});
+*/
+	   	callbackObj["defs"] = callbackDefs;
+	   	callbackObj["complete"] = new Object();
+	   		
+
+	}
+
+    function callbackHandler(functionName, isComplete) {
+			
+		//console.log('callback: ' + functionName + ' - ' + isComplete);
+	
+		//this function checks the callback definitions and calls the callbacks as appropriate
+	
+		//if it's complete set a property telling us so
+		//if it isn't complete, remove the property if it exists			
+		if (isComplete) {
+				callbackObj.complete[functionName] = true;
+		} else {
+			if (functionName in callbackObj.complete) {
+				delete callbackObj.complete[functionName];	
+			}	
+		}
+					
+		//now find out which callback functions have this function as their prerequisite
+		//check if all the prereqs for the callback have completed.  if they have, call the callback
+		for (var i=0; i<callbackObj.defs.length; i++) {
+			if ((callbackObj.defs[i].preReqs).indexOf(functionName) != -1) {
+				var completeCount = 0;
+				for (var j=0; j<callbackObj.defs[i].preReqs.length; j++) {
+
+					
+					if (callbackObj.defs[i].preReqs[j] in callbackObj.complete) {
+						completeCount++;
+					} 	
+				}
+				if (callbackObj.defs[i].preReqs.length == completeCount) {
+					window[callbackObj.defs[i].callbackFunction]();	
+				}
+			}
+		}
+	}	
+
+	function updateStatus1 (statusMsg) { 
+    	window.setTimeout(function(){
+       		$("#status-message1").text(statusMsg);
+       	});
+       		
+    }  
+    function updateStatus2 (statusMsg) { 
+		window.setTimeout(function(){
+       		$("#status-message2").text(statusMsg);
+       	});       		
+    }         
+
+    var errors = [];       
+
+   
+    function checkErrors ( event ) { 
+        if (event.status) {            
+
+        } else if (event.type === 'exception') {
+            errors.push(event.message + ' : ' + event.type);
+        } else {
+         	errors.push(event.message);
+        }
+        
+        if (errors.length == 0) {
+            //$(".message").hide();
+            $("#responseErrors").html('');
+        } else {
+        	var errorText = errors.join("<br/>");
+			$("#responseErrors").html(errorText); 
+            $(".message").show();
+            //removeProgress();    			       
+        }
+    }
+
+
+	</script>
+
+	
+</apex:page>

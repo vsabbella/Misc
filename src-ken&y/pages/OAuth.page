@@ -1,0 +1,14 @@
+<apex:page standardController="User_Preference__c" extensions="GatewayExt" id="page" label="Authorize Kenandy Gateway">
+    <apex:form >
+        <apex:pageBlock id="pbBtns" >
+            <apex:pageMessages />
+        
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="Authorize" action="{!startDance1}" disabled="{!isButtonDisabled}" />
+                <!-- <apex:commandButton value="Revoke" action="{!revoketoken}" disabled="{!!isButtonDisabled}"/> -->
+                <apex:commandButton value="Go Back" action="{!cancel}"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </apex:form>
+    
+</apex:page>

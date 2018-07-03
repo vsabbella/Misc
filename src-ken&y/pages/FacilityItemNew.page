@@ -1,0 +1,24 @@
+<apex:page standardController="Facility_Item__c" extensions="CompanyDefaultExt,FacilityItemNewExt">
+    <apex:form id="theForm" >
+    <c:busyWait />
+        <apex:sectionHeader subtitle="{!$Label.New_Facility_Item}" title="{!$Label.New_Facility_Item}"/>
+        <apex:pagemessages />
+    <apex:pageBlock mode="edit"  >
+        <apex:pageBlockButtons >
+        <apex:commandButton value="{!$Label.Save} " action="{!SaveFI}" reRender="theForm"   status="actionStatus" accessKey="s" />
+        <apex:commandButton value="{!$Label.Cancel} " action="{!cancel}" immediate="true" reRender="theForm"   status="actionStatus"/>
+        </apex:pageBlockButtons>
+        
+        <apex:pageBlockSection title="{!$Label.Facility_Item_Information}" id="fiinfo" columns="1" collapsible="false" >
+            <apex:repeat value="{!$ObjectType.Facility_Item__c.FieldSets.New_Facility_Item}" var="f" > 
+            <apex:inputField value="{!Facility_Item__c[f]}" required="{!OR(f.required, f.dbrequired)}">
+            </apex:inputField>
+            </apex:repeat>            
+        </apex:pageBlockSection>
+  
+    </apex:pageBlock>
+    </apex:form>  
+    <div id="ensurefield" style="display:none;">
+        <apex:outputText value="{!Facility_Item__c.Company__c}" />
+    </div>
+</apex:page>

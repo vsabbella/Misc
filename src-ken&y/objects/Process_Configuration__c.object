@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customSettingsType>List</customSettingsType>
+    <description>Configuration settings for Kenandy processing in this organization</description>
+    <enableFeeds>false</enableFeeds>
+    <fields>
+        <fullName>Active__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Identify this setting is active and in use to specify behavior or not</description>
+        <externalId>false</externalId>
+        <inlineHelpText>.</inlineHelpText>
+        <label>Active</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Field_Name__c</fullName>
+        <description>Name of the field that controls this process</description>
+        <externalId>false</externalId>
+        <inlineHelpText>.</inlineHelpText>
+        <label>Field Name</label>
+        <length>64</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Field_Value__c</fullName>
+        <description>The value that will control execution of this process step</description>
+        <externalId>false</externalId>
+        <inlineHelpText>.</inlineHelpText>
+        <label>Field Value</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Line_Value__c</fullName>
+        <description>This field is used to check against the Line Type attribute.</description>
+        <externalId>false</externalId>
+        <label>Line Value</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Object_Name__c</fullName>
+        <description>Name of the Object this process is attached to</description>
+        <externalId>false</externalId>
+        <inlineHelpText>.</inlineHelpText>
+        <label>Object Name</label>
+        <length>64</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <label>Process Configuration</label>
+    <visibility>Public</visibility>
+</CustomObject>

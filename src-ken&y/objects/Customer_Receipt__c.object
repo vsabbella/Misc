@@ -1,0 +1,1320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <content>CustomerReceiptNewEditCloneDelete</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <content>CustomerReceiptNewEditCloneDelete</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <content>CustomerReceiptManage</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <comment>Adds the current default company to the page</comment>
+        <content>CustomerReceiptManage</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpReceipts</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Records all customer receipts (checks, credit cards, EFT, etc) against invoice.</description>
+    <enableActivities>true</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableEnhancedLookup>true</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>Apply_Payment</fullName>
+        <availableFields>
+            <field>Deposit_Identifier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <description>This field set groups fields used in the Payment Information region of the CustomerReceiptManage page.</description>
+        <displayedFields>
+            <field>Amount_Received__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Bank_Account_2__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Payment_Method_G__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Reference_Number__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Apply Payment</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Cash_App_Additional</fullName>
+        <description>used in cash app</description>
+        <label>Cash App Additional</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Cash_App_Header</fullName>
+        <description>Cash App page</description>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Customer__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Date_Received__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <label>Cash App Header</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Customer_Receipt_AE_RO</fullName>
+        <description>ReceiptAccountingEntriesPage</description>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Customer__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Amount_Received__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Amount_Unapplied__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Finalized__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Customer Receipt AE RO</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Customer_Receipt_AutoApply</fullName>
+        <description>CashReceiptAutoApply.page</description>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Customer__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Amount_Received__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Finalized__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Customer Receipt AutoApply</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Finalize</fullName>
+        <availableFields>
+            <field>Transaction_Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <description>FinalizeService.cls</description>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Customer__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Amount_Received__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Reference_Number__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Reference__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Payee__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Exception_Detail__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Exception__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Date_Received__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Historical__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Company_Identifier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Claim__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Autonumber__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Amount_Unapplied__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Amount_To_Apply__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Transaction_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Status_Reason__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Finalize</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>New_Record</fullName>
+        <description>Used when creating a new customer receipt record</description>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Customer__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Date_Received__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Reference__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Bank_Account_2__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Reference_Number__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Amount_Received__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <label>New Record</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Refund_Method</fullName>
+        <description>Refund Method popup field list</description>
+        <displayedFields>
+            <field>Bank_Account_2__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Date_Received__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Payment_Method_G__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Reference_Number__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Refund Method</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Unfinalize</fullName>
+        <description>SourceDocumentUnfinalize.page</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Finalized__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Unfinalize</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Void</fullName>
+        <description>This FieldSet is used for Voiding the Customer Receipt.</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Finalized__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Transaction_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Finalized_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Posting_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Status__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Void__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Historical__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Void_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Void</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Void_Cancel</fullName>
+        <description>used in CustomerReceipt.trigger to skip validation for fields in this fieldset</description>
+        <displayedFields>
+            <field>Balance__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Amount_Received__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Void_Cancel</label>
+    </fieldSets>
+    <fields>
+        <fullName>Amount_In_Words__c</fullName>
+        <description>Amount on check in words</description>
+        <externalId>false</externalId>
+        <label>Amount In Words</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Amount_Received__c</fullName>
+        <description>Amount received</description>
+        <externalId>false</externalId>
+        <label>Amount Received</label>
+        <precision>14</precision>
+        <required>false</required>
+        <scale>2</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Amount_To_Apply__c</fullName>
+        <description>The total amount (bank file lines + credit memos + general deductions) available to pay off invoices and claims.</description>
+        <externalId>false</externalId>
+        <label>Amount To Apply</label>
+        <precision>14</precision>
+        <required>false</required>
+        <scale>2</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Amount_Unapplied__c</fullName>
+        <defaultValue>0</defaultValue>
+        <description>Amount not applied to any invoices.</description>
+        <externalId>false</externalId>
+        <label>Amount Unapplied</label>
+        <precision>14</precision>
+        <required>false</required>
+        <scale>2</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Autonumber__c</fullName>
+        <displayFormat>{0000000000}</displayFormat>
+        <externalId>false</externalId>
+        <label>Autonumber</label>
+        <trackTrending>false</trackTrending>
+        <type>AutoNumber</type>
+    </fields>
+    <fields>
+        <fullName>Balance__c</fullName>
+        <externalId>false</externalId>
+        <formula>Amount_Received__c + Total_Payment__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Balance</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>2</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Bank_Account_2__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Bank Account</label>
+        <referenceTo>Bank_Account__c</referenceTo>
+        <relationshipLabel>Customer Receipts</relationshipLabel>
+        <relationshipName>Customer_Receipts1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Claim__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Claim</label>
+        <referenceTo>Claim__c</referenceTo>
+        <relationshipLabel>Customer Receipts</relationshipLabel>
+        <relationshipName>Customer_Receipts</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Company_Identifier__c</fullName>
+        <description>Company Identifier</description>
+        <externalId>false</externalId>
+        <label>Company Identifier</label>
+        <length>32</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Company associated with this Customer Receipt. It should be populated with the default value for the user logged in.</description>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Customer Receipts</relationshipLabel>
+        <relationshipName>Customer_Receipts</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Currency__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Currency</label>
+        <referenceTo>Currency__c</referenceTo>
+        <relationshipLabel>Customer Receipts</relationshipLabel>
+        <relationshipName>Customer_Receipts</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Customer_City__c</fullName>
+        <description>Customer City</description>
+        <externalId>false</externalId>
+        <label>Customer_City</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Customer_Country__c</fullName>
+        <description>Customer Country</description>
+        <externalId>false</externalId>
+        <label>Customer Country</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Customer_State__c</fullName>
+        <description>Customer State</description>
+        <externalId>false</externalId>
+        <label>Customer State</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Customer_Street__c</fullName>
+        <description>Customer Street</description>
+        <externalId>false</externalId>
+        <label>Customer Street</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Customer_Zip_Code__c</fullName>
+        <description>Customer ZIP Code</description>
+        <externalId>false</externalId>
+        <label>Customer Zip Code</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Customer__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Customer</description>
+        <externalId>false</externalId>
+        <label>Customer</label>
+        <lookupFilter>
+            <active>true</active>
+            <booleanFilter>1 OR 2</booleanFilter>
+            <errorMessage>The user must enter either a corporate or a bill to customer</errorMessage>
+            <filterItems>
+                <field>Customer__c.RecordTypeId</field>
+                <operation>equals</operation>
+                <value>Corporate Parent</value>
+            </filterItems>
+            <filterItems>
+                <field>Customer__c.RecordTypeId</field>
+                <operation>equals</operation>
+                <value>Bill To</value>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Customer__c</referenceTo>
+        <relationshipLabel>Customer Receipts</relationshipLabel>
+        <relationshipName>Customer_Receipts</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Date_Deposited__c</fullName>
+        <description>Date this payment was deposited</description>
+        <externalId>false</externalId>
+        <label>Date Deposited</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Date_Printed__c</fullName>
+        <description>The date when check is printed/ re-printed.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Date on which the check was printed/reprinted.</inlineHelpText>
+        <label>Date Printed</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Date_Received__c</fullName>
+        <description>Date of receipt</description>
+        <externalId>false</externalId>
+        <label>Date Received</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Deposit_Identifier__c</fullName>
+        <externalId>false</externalId>
+        <label>Deposit Identifier</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Exception_Detail__c</fullName>
+        <description>Describes the exception in greater detail</description>
+        <externalId>false</externalId>
+        <label>Exception Detail</label>
+        <length>1000</length>
+        <trackTrending>false</trackTrending>
+        <type>LongTextArea</type>
+        <visibleLines>3</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Exception__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Set to true if Exception during data load</description>
+        <externalId>false</externalId>
+        <label>Exception</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Exceptions_Count__c</fullName>
+        <externalId>false</externalId>
+        <label>Exceptions Count</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Finalized_Date__c</fullName>
+        <description>Finalized Date is the date when the document is finalized.</description>
+        <externalId>false</externalId>
+        <label>Finalized Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Finalized__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Finalized check box is set to true when the customer receipt is finalized and ready for accounting entries to be generated.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>A checkmark indicates that the record is finalized and ready for accounting (the &quot;Payment Applied&quot; checkbox is selected and the &quot;Amount Unapplied&quot; is &quot;0&quot;.</inlineHelpText>
+        <label>Finalized</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Finalized_hidden__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>DO NOT PUT on page layout, it is hidden field to control user click.</description>
+        <externalId>false</externalId>
+        <label>Finalized Hidden</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Has_Exceptions__c</fullName>
+        <externalId>false</externalId>
+        <formula>OR(
+
+Exceptions_Count__c &gt; 0,
+
+Line_Exceptions__c &gt; 0
+
+)</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Has Exceptions</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Historical__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Historical</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Line_Exceptions__c</fullName>
+        <externalId>false</externalId>
+        <label>Line Exceptions</label>
+        <summaryFilterItems>
+            <field>Customer_Receipt_Line__c.Has_Exceptions__c</field>
+            <operation>equals</operation>
+            <value>True</value>
+        </summaryFilterItems>
+        <summaryForeignKey>Customer_Receipt_Line__c.Customer_Receipt__c</summaryForeignKey>
+        <summaryOperation>count</summaryOperation>
+        <trackTrending>false</trackTrending>
+        <type>Summary</type>
+    </fields>
+    <fields>
+        <fullName>Payee__c</fullName>
+        <description>Company receiving the payment</description>
+        <externalId>false</externalId>
+        <label>Payee</label>
+        <length>100</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Payment_Method_2__c</fullName>
+        <externalId>false</externalId>
+        <label>DEPRECATED</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Check</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>EFT</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Cash</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Credit card</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Online</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Wire</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Payment_Method_3__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Payment Method</label>
+        <referenceTo>Payment_Method__c</referenceTo>
+        <relationshipLabel>Customer Receipts</relationshipLabel>
+        <relationshipName>Customer_Receipts</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Payment_Method_G__c</fullName>
+        <description>Mode of payment</description>
+        <externalId>false</externalId>
+        <label>Payment Method</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <restricted>true</restricted>
+            <valueSetName>Payment_Method</valueSetName>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Posting_Date__c</fullName>
+        <externalId>false</externalId>
+        <label>Posting Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Reference_Number__c</fullName>
+        <description>Reference number from the source transmission</description>
+        <externalId>false</externalId>
+        <label>Reference Number</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Reference__c</fullName>
+        <description>Reference document, e.g., check number</description>
+        <externalId>false</externalId>
+        <label>Reference</label>
+        <length>50</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Related_Customer_Receipt__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Related Customer Receipt</label>
+        <referenceTo>Customer_Receipt__c</referenceTo>
+        <relationshipLabel>Customer Receipts</relationshipLabel>
+        <relationshipName>Customer_Receipts</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Status_Reason__c</fullName>
+        <description>detail reasons for status will be stored</description>
+        <externalId>false</externalId>
+        <label>Status Reason</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <restricted>true</restricted>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Void from Overflow Advice</fullName>
+                    <default>false</default>
+                    <label>Void from Overflow Advice</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Status__c</fullName>
+        <externalId>false</externalId>
+        <label>Status</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Open</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Authorized</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Closed</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Cancelled</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Void</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Total_Number_Of_Lines__c</fullName>
+        <description>Total Number of lines for this record.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Total Number of lines for this record.</inlineHelpText>
+        <label>Total Number Of Lines</label>
+        <summaryForeignKey>Customer_Receipt_Line__c.Customer_Receipt__c</summaryForeignKey>
+        <summaryOperation>count</summaryOperation>
+        <trackTrending>false</trackTrending>
+        <type>Summary</type>
+    </fields>
+    <fields>
+        <fullName>Total_Payment__c</fullName>
+        <externalId>false</externalId>
+        <label>Total Payment</label>
+        <summarizedField>Customer_Receipt_Line__c.Payment_Amount__c</summarizedField>
+        <summaryForeignKey>Customer_Receipt_Line__c.Customer_Receipt__c</summaryForeignKey>
+        <summaryOperation>sum</summaryOperation>
+        <trackTrending>false</trackTrending>
+        <type>Summary</type>
+    </fields>
+    <fields>
+        <fullName>Transaction_Currency__c</fullName>
+        <externalId>false</externalId>
+        <label>Transaction Currency</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>CAD</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>EUR</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>GBP</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>USD</fullName>
+                    <default>true</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Transaction_Date__c</fullName>
+        <description>Date of the transaction, this could be populated from any source using a workflow depending on customer need.</description>
+        <externalId>false</externalId>
+        <label>Transaction Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Transaction_ID__c</fullName>
+        <externalId>false</externalId>
+        <label>Transaction ID</label>
+        <length>50</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Transaction_Type__c</fullName>
+        <description>Accounting process uses this field to as one of the criteria to determine the accounting rule to be used to book this transaction.</description>
+        <externalId>false</externalId>
+        <label>Transaction Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>--None--</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Type__c</fullName>
+        <externalId>false</externalId>
+        <label>Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Receipt</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Prepayment</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Refund</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Void_Date__c</fullName>
+        <externalId>false</externalId>
+        <label>Void Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Void__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Void</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <label>Customer Receipt</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Customer__c</columns>
+        <columns>Date_Received__c</columns>
+        <columns>Type__c</columns>
+        <columns>Amount_Received__c</columns>
+        <columns>Finalized__c</columns>
+        <columns>Exception__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <listViews>
+        <fullName>Today_Receipts</fullName>
+        <columns>NAME</columns>
+        <columns>Date_Received__c</columns>
+        <columns>Amount_Received__c</columns>
+        <columns>CREATED_DATE</columns>
+        <columns>Finalized__c</columns>
+        <columns>Amount_Unapplied__c</columns>
+        <columns>Exception__c</columns>
+        <filterScope>Everything</filterScope>
+        <filters>
+            <field>Date_Received__c</field>
+            <operation>equals</operation>
+            <value>TODAY</value>
+        </filters>
+        <label>Today&apos;s Receipts</label>
+    </listViews>
+    <nameField>
+        <label>Customer Receipt</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Customer Receipts</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Customer__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Date_Received__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Type__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Amount_Received__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Finalized__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Exception__c</customTabListAdditionalFields>
+        <listViewButtons>Generate_Accounting</listViewButtons>
+        <lookupPhoneDialogsAdditionalFields>Company__c</lookupPhoneDialogsAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>Amount_Received_and_Bank_Account</fullName>
+        <active>true</active>
+        <errorConditionFormula>OR(
+NOT(ISBLANK(Amount_Received__c )) &amp;&amp; Amount_Received__c &gt; 0 &amp;&amp; AND(ISBLANK(Bank_Account_2__c), ISBLANK(Payment_Method_3__c)),
+NOT(ISBLANK(Bank_Account_2__c)) &amp;&amp;  ISBLANK(Amount_Received__c )
+) 
+&amp;&amp; Finalized__c = false &amp;&amp; NOT(ISCHANGED(Finalized__c))</errorConditionFormula>
+        <errorMessage>Need to populate both Amount Received and Bank Account</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Bank_Account_should_match_with_Company</fullName>
+        <active>true</active>
+        <errorConditionFormula>AND(Bank_Account_2__c != null, 
+Bank_Account_2__r.Company__c &lt;&gt; Company__c)</errorConditionFormula>
+        <errorMessage>Bank Account should be associated with the Company mentioned on this receipt. Please update it accordingly.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Bank_account_have_same_currency</fullName>
+        <active>true</active>
+        <errorConditionFormula>NOT(ISBLANK( Bank_Account_2__c )) &amp;&amp;   Currency__r.ISO_Code__c  !=   Bank_Account_2__r.Currency__r.ISO_Code__c</errorConditionFormula>
+        <errorMessage>You can&apos;t create a receipt using a different currency from the bank account&apos;s currency.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Bank_account_must_have_same_currency</fullName>
+        <active>false</active>
+        <errorConditionFormula>NOT(ISBLANK( Bank_Account_2__c )) &amp;&amp;     
+TEXT( Transaction_Currency__c ) !=    
+TEXT( Bank_Account_2__r.Transaction_Currency__c )</errorConditionFormula>
+        <errorMessage>Bank account must have the same transaction currency as the customer receipt</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Cancelled_not_Finalized</fullName>
+        <active>true</active>
+        <errorConditionFormula>TEXT(Status__c) == &apos;Cancelled&apos; &amp;&amp; Finalized__c</errorConditionFormula>
+        <errorMessage>You cannot Finalize a Customer Receipt that has been cancelled.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Finalized_Check</fullName>
+        <active>true</active>
+        <description>Finalized checkbox should not be checked when there is amount unapplied left on the record.</description>
+        <errorConditionFormula>IF( AND( ISPICKVAL(Type__c, &apos;Receipt&apos;), Amount_Unapplied__c != 0,  Finalized__c == TRUE), TRUE, FALSE )</errorConditionFormula>
+        <errorMessage>This customer receipt is not ready to be finalized yet. The entire amount should be applied!</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Payment_Method_Validation</fullName>
+        <active>false</active>
+        <errorConditionFormula>false</errorConditionFormula>
+        <errorMessage>Please enter a payment method</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Payment_method_and_Reference_Numvber</fullName>
+        <active>true</active>
+        <errorConditionFormula>NOT(ISBLANK( Bank_Account_2__c )) &amp;&amp; ISBLANK( TEXT(Payment_Method_G__c)) &amp;&amp; ISBLANK( Reference_Number__c )</errorConditionFormula>
+        <errorMessage>Please specify payment method and reference number</errorMessage>
+    </validationRules>
+    <visibility>Public</visibility>
+    <webLinks>
+        <fullName>Add_Deposit_Identifier</fullName>
+        <availability>online</availability>
+        <displayType>massActionButton</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Add Deposit Identifier</masterLabel>
+        <openType>sidebar</openType>
+        <page>CustomerReceiptAddDespositID</page>
+        <protected>false</protected>
+        <requireRowSelection>true</requireRowSelection>
+    </webLinks>
+    <webLinks>
+        <fullName>Cancel</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Cancel</masterLabel>
+        <openType>sidebar</openType>
+        <page>CustomerReceiptCancel</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Generate_Accounting</fullName>
+        <availability>online</availability>
+        <description>To Generate Accounting for the selected Customer Receipt records</description>
+        <displayType>massActionButton</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Generate Accounting</masterLabel>
+        <openType>noSidebar</openType>
+        <page>CustomerReceiptAccounting</page>
+        <protected>false</protected>
+        <requireRowSelection>true</requireRowSelection>
+    </webLinks>
+    <webLinks>
+        <fullName>Manage_Payment_Gateway</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <linkType>page</linkType>
+        <masterLabel>Refund</masterLabel>
+        <openType>replace</openType>
+        <page>CustomerReceiptManageGateway</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Preview_Accounting_Entry</fullName>
+        <availability>online</availability>
+        <description>Generate Accounting Entry</description>
+        <displayType>link</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Generate Accounting Entry</masterLabel>
+        <openType>sidebar</openType>
+        <page>CustomerReceiptAEPreview</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Unapply_Payment</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Unapply Payment</masterLabel>
+        <openType>sidebar</openType>
+        <page>CustomerReceiptUnapplyPayment</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Unfinalize</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Unfinalize</masterLabel>
+        <openType>noSidebar</openType>
+        <page>CustomerReceiptUnfinalize</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Unfinalize_Receipts</fullName>
+        <availability>online</availability>
+        <displayType>massActionButton</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Unfinalize</masterLabel>
+        <openType>noSidebar</openType>
+        <page>CustomerReceiptsUnfinalize</page>
+        <protected>false</protected>
+        <requireRowSelection>true</requireRowSelection>
+    </webLinks>
+    <webLinks>
+        <fullName>Void</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Void</masterLabel>
+        <openType>sidebar</openType>
+        <page>CustomerReceiptVoid</page>
+        <protected>false</protected>
+    </webLinks>
+</CustomObject>

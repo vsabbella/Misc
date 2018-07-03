@@ -1,0 +1,73 @@
+<apex:page controller="CashForecastExt" id="thePg" >
+    
+    <apex:form id="theForm">
+        <apex:sectionHeader title="Cash Forecast As of {!currdate}" help="{!HelpURL}"/>
+
+
+        <apex:pageBlock >
+            
+            <apex:pageBlockSection title="Previously Anticipated" collapsible="false">
+
+            </apex:pageBlockSection>
+           
+			<table border="0" styleclass="grid">
+
+
+                   <tr>
+                <apex:repeat value="{!prevcashreport}" var="k">
+                 
+                       <td  width="15%">
+                            <div style="text-align: left;font-weight:bold;">{!k.forecastdate}</div> 
+                            <apex:outputText value="{0, number,###,###,##0.00}" style="float:left;" >
+	                            <apex:param value="{!k.CashExpected}" />
+                            </apex:outputText>
+                        </td>    
+                       
+                    
+                </apex:repeat>
+                       </tr>
+            </table>
+            
+            <apex:pageBlockSection title="Future Forecast" collapsible="false">
+
+            </apex:pageBlockSection>    
+			
+            <table border="0" cellpadding="5">
+                
+ 
+                <apex:repeat var="r" value="{!cashreport}">
+
+                    <tr >
+                        <apex:repeat value="{!cashreport[r]}" var="key">
+                            
+                            <td width="15%" > 
+                                <div style="text-align: left;font-weight:bold;">{!key.forecastdate}</div> 
+                                <apex:outputText value="{0, number,###,###,##0.00}" style="float:left;" >
+		                         <apex:param value="{!key.CashExpected}" />
+                                </apex:outputText>
+                            </td>
+                        </apex:repeat> 
+                    </tr>
+                    
+                </apex:repeat>
+                
+                <tr>
+                    <td style="font-weight: bold;font-size: 18px;">Grand Total</td>
+                    <td colspan="7" style="text-align: right;font-size: 18px;font-weight:bold;">
+                    
+                        <apex:outputText value="{0, number,###,###,##0.00}">
+                         <apex:param value="{!GrandTotal}" />
+                        </apex:outputText>
+                    </td>
+                </tr>
+                
+            </table>
+            
+            
+        </apex:pageBlock>
+        
+        
+    </apex:form>
+
+
+</apex:page>

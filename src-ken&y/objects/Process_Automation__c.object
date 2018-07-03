@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customSettingsType>List</customSettingsType>
+    <description>Automate a series of operations</description>
+    <enableEnhancedLookup>false</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <fields>
+        <fullName>Active__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Checked to include in automation, unchecked to exclude from all automation</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Checked to include in automation, unchecked to exclude from all automation</inlineHelpText>
+        <label>Active</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Field_Name__c</fullName>
+        <externalId>false</externalId>
+        <label>Field Name</label>
+        <length>32</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Field_Value__c</fullName>
+        <externalId>false</externalId>
+        <label>Field Value</label>
+        <length>64</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Latency__c</fullName>
+        <defaultValue>300</defaultValue>
+        <description>Specify the number of seconds to re-schedule the next run of this process</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Specify the number of seconds to re-schedule the next run of this process</inlineHelpText>
+        <label>Latency</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Method_DML__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Select this checkbox if the Apex Method will perform DML operations, otherwise system will perform DML</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Select this checkbox if the Apex Method will perform DML operations, otherwise system will perform DML</inlineHelpText>
+        <label>Method DML</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Method_Name__c</fullName>
+        <externalId>false</externalId>
+        <label>Method Name</label>
+        <length>64</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Next_Run_After__c</fullName>
+        <description>calculated time in the future when this job may be run again</description>
+        <externalId>false</externalId>
+        <inlineHelpText>calculated time in the future when this job may be run again</inlineHelpText>
+        <label>Next Run After</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Object_Name__c</fullName>
+        <externalId>false</externalId>
+        <label>Object Name</label>
+        <length>64</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Priority__c</fullName>
+        <defaultValue>100</defaultValue>
+        <description>Indicates the relative order 1-999, 1 is highest priority</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Indicates the relative order 1-999, 1 is highest priority</inlineHelpText>
+        <label>Priority</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <label>Process Automation</label>
+    <visibility>Public</visibility>
+</CustomObject>

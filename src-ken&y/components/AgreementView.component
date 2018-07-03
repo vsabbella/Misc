@@ -1,0 +1,227 @@
+<apex:component controller="AgreementViewCon">
+	<apex:attribute name="Agreement" type="String" required="false" description="String" assignTo="{!agreementId}" />
+	<apex:attribute name="Plan" type="String" required="false" description="String" assignTo="{!planId}" />
+
+	<c:KendoResources includeJquery="true" kendoLibraryVersion="2015.1.318"/>
+    <apex:stylesheet value="{!URLFOR($Resource.agreementViewCSS)}" />
+    <apex:includeScript value="{!URLFOR($Resource.KenandyWidgets)}" />
+    <apex:includeScript value="{!URLFOR($Resource.agreementView)}" />
+
+    <div id="mainpage" >
+   	<apex:sectionHeader subtitle="Agreement View" help="{!$Page.HelpAgreementView}"/>
+    <div class="page-message"></div>
+        <ul id="panelBar">
+            <li class="k-state-active">
+                {!$ObjectType.Agreement__c.LabelPlural}
+                <div style="padding: 10px;">
+                    <apex:pageBlock >
+                    	<div class="grid-container">
+                    		<div class="grid-message"></div>
+	                        <div id="promotions"></div>
+	                        <div id="except_promotions" class="exception"></div>
+	                        <div id="releaseAgreement"></div>
+	                        <div id="agreementConsole"></div>
+	                        <div id="reviseAgreement"></div>
+	                        <div id="revisionApproval"></div>
+	                        <div id="configureProducts"></div>
+	                        <div id="addChildProducts"></div>
+	                        <div id="generateDownPayment"></div>
+                            <div id="cloneAgreement"></div>
+	                        <div id="agreementReturn"></div>
+	                        <div id="agreementExchange"></div>
+                        <div id="generateInvoice"></div>
+	                        <apex:repeat value="{!CustomAgreementActionIds}" var="promoActionId">
+	                            <div id="{!promoActionId}"></div>
+	                        </apex:repeat>
+	                        <apex:repeat value="{!CustomAgreementLineActionIds}" var="promoProdActionId">
+	                            <div id="{!promoProdActionId}"></div>
+	                        </apex:repeat>
+	                    </div>
+                    </apex:pageBlock>
+                </div>
+            </li>
+            <li class="k-state-active">
+                {!$ObjectType.Agreement_Line__c.LabelPlural}
+                <div style="padding: 10px;">
+                    <apex:pageBlock >
+                    	<div class="grid-container">
+                    		<div class="grid-message"></div>
+	                        <div id="pprod" ></div>
+	                        <div id="except_pprod" class="exception"></div>
+	                        <div id="addproducts"></div>
+	                    </div>
+                    </apex:pageBlock>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <script>
+    	'use strict';
+
+    	//Initialize Namespace and variables to be used in the agreementView static resource 
+	    var AgreementViewComponent = {};
+
+		$( document ).on( "KenandyErpReady", function( e ) {
+			var modalHeight = $( window ).outerHeight() * 0.75 + "px";
+            var modalWidth = $( window ).outerWidth() * 0.75 + "px";
+			AgreementViewComponent = {
+
+		    theAgreement: {Id:''},
+	    	agreementId: '{!JSENCODE(agreementId)}',
+	        planId: '{!JSENCODE(planId)}',
+	        expandedRows: {},
+	        agreementGrid: {},
+	        promotedProd: '',
+	        stay_msg: 'You have unsaved changes, click save',
+	        no_rows_selected: 'No Rows Selected',
+	        namespaceUU: '{!JSENCODE(NamespaceUU)}',
+	        addPromotionLabel: 'Add Agreement',
+	        actionLabel: 'Action',
+	        goLabel: 'Go',
+	        promotionPrefix: '{!agreementPrefix}000000000000',
+	        promoProdPrefix: '{!agreementLinePrefix}000000000000',
+	        addProductsLabel: 'Add Lines',
+	        addPromotedProductsLabel: 'Add Agreement Lines',
+	        getAgreementData: '{!$RemoteAction.AgreementViewCon.getAgreementData}',
+	        getAgreementLineData: '{!$RemoteAction.AgreementViewCon.getAgreementLineData}',
+	        saveAgreementAction: '{!$RemoteAction.AgreementViewCon.saveAgreementList}',
+	        saveAgreementLinesAction: '{!$RemoteAction.AgreementViewCon.saveAgreementLine}',
+	        getAglDetailsFromProduct: '{!$RemoteAction.AgreementViewCon.getAglDetailsFromProduct}',
+	        getAglDetailsFromCrossRef: '{!$RemoteAction.AgreementViewCon.getAglDetailsFromCrossRef}',
+	        allFields: {!AllFields},
+	        agreementFieldList: '{!agreementFieldList}',
+	        agreementLineFieldList: '{!agreementLineFieldList}',
+	        agreementLineFieldNames: _.pluck(JSON.parse('{!agreementLineFieldList}'), 'field'),
+	        agreementDateFields: function() { var datefields = KenandyErp.KendoGridOptions.GetDateFields(JSONUtils.Parse(this.agreementFieldList)); return datefields;},
+	        agreementLineDateFields: function() { var datefields = KenandyErp.KendoGridOptions.GetDateFields(JSONUtils.Parse(this.agreementLineFieldList)); return datefields;},
+	        agreementGridConfig: JSONUtils.Parse('{!JSEncode(AgreementConfigJson)}'),
+	        agreementLinesGridConfig: '{!JSEncode(AgreementLinesConfigJson)}',
+	        lookupSearchAction:'{!$RemoteAction.AgreementViewCon.lookupSearchFilter}',
+	        agreementLineLookupSearchFilters: [],
+	        agreementLookupSearchFilters: [],
+	        pprodGridViews: JSON.parse('{!JSENCODE(GridViews)}'),
+	        pprodGridViewFields: JSON.parse('{!JSENCODE(GridViewFields)}'),
+			thresholdpercentagevalue: '{!thresholdpercentage}',
+	    	promoActionConfig: {
+	                 'releaseAgreement': 
+	                {
+	                    'div': 'releaseAgreement', 
+	                    'title': 'Create Sales Order', 
+	                    'width': modalWidth,
+	                    'height': modalHeight, 
+	                    'content': "{!JSENCODE(AgreementReleasePage)}?"
+	                },
+	                'agreementConsole':
+	                {
+	                    'div': 'agreementConsole',
+	                    'title': 'Agreement Console',
+	                    'width': modalWidth,
+	                    'height': modalHeight,
+	                    'content': "{!JSENCODE(AgreementConsole)}?"
+	                },
+                    'reviseAgreement':
+	                {
+	                    'div': 'reviseAgreement', 
+	                    'title': 'Revise Agreement', 
+	                    'width': modalWidth, 
+	                    'height': modalHeight, 
+	                    'content': "{!JSENCODE(AgreementRevise)}?"
+	                },
+                     'generateDownPayment': 
+	                {
+	                    'div': 'generateDownPayment', 
+	                    'title': 'Generate One Time Charge', 
+	                    'width': modalWidth, 
+	                    'height': modalHeight, 
+	                    'content': "{!JSENCODE(DownPaymentInvoice)}?"
+	                },
+	                'generateInvoice': 
+	                {
+	                    'div': 'generateInvoice', 
+	                    'title': '{!$Label.Create_Ad_hoc_Invoice}',//'Create Ad hoc Invoice', 
+	                    'width': modalWidth, 
+	                    'height': modalHeight, 
+	                    'content': "{!JSENCODE(GenerateInvoice)}?id="
+	                },
+                     'revisionApproval': 
+	                {
+	                    'div': 'revisionApproval', 
+	                    'title': 'Approve Agreement Revision', 
+	                    'width': modalWidth, 
+	                    'height': modalHeight, 
+	                    'content': "{!JSENCODE(AgreementRevisionApproval)}?"
+	                },
+                     'cloneAgreement': 
+	                {
+	                    'div': 'cloneAgreement', 
+	                    'title': 'Agreement Clone', 
+	                    'width': modalWidth, 
+	                    'height': modalHeight, 
+	                    'content': "{!JSENCODE(AgreementClone)}?"
+					},
+	                 'agreementReturn': 
+	                {
+	                    'div': 'agreementReturn', 
+	                    'title': 'Process Return ', 
+	                    'width': modalWidth, 
+	                    'height': modalHeight, 
+	                    'content': "{!JSENCODE(AgreementReturn)}?"
+	                },
+	                'agreementExchange': 
+	                {
+	                    'div': 'agreementExchange', 
+	                    'title': 'Process Exchange ', 
+	                    'width': modalWidth, 
+	                    'height': modalHeight, 
+	                    'content': "{!JSENCODE(AgreementExchange)}?"
+	                }
+	                {!CustomAgreementActionsConfig}
+	            },
+	            
+	    	promotionActionDatasource: [
+	         { text: "Create Sales Order",  value: "releaseAgreement" },
+	         { text: "Agreement Console",  value: "agreementConsole" },
+             { text: "Revise Agreement",  value: "reviseAgreement" },
+             { text: "Approve Agreement Revision",  value: "revisionApproval" } ,
+			 { text: '{!$Label.Create_Ad_hoc_Invoice}',  value: "generateInvoice" },  
+			 { text: "Generate One Time Charge",  value: "generateDownPayment" },
+             { text: "Agreement Clone",  value: "cloneAgreement" },
+             { text: "Process Return",  value: "agreementReturn" },
+             { text: "Process Exchange",  value: "agreementExchange" }  
+			 {!CustomAgreementActionsDropdown}
+		     ],
+	            
+	    	promoProdActionConfig: {
+	                'addChildProducts': 
+	                {
+	                    'div': 'addChildProducts', 
+	                    'title': 'Add Child Products', 
+	                    'width': modalWidth, 
+	                    'height': modalHeight, 
+	                    'content': "{!JSENCODE(AddChildProducts)}?"
+	                }
+	                {!CustomAgreementLineActionsConfig}
+	            },
+	            
+	    	promodProdActionDatasource: [
+	         { text: "Add Child Products",   value: "addChildProducts" }
+	         {!CustomAgreementLineActionsDropdown}
+		        ]
+		}      
+
+			$(document).trigger('AgreementViewReady');
+		} );
+    </script>
+
+
+    <div id="Loading"  >
+    </div>
+    <style>
+        /* for hscroll, need to constrain something in the dom KNDY-4781 
+        div.apexp { max-width: 1350px; }*/
+        .outer td.oRight { padding-left: 1px; } 
+		
+    </style>
+
+</apex:component>

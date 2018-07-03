@@ -1,0 +1,2436 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <content>PurchaseOrderLineNewEditCloneDelete</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <content>PurchaseOrderLineNewEditCloneDelete</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <content>PurchaseOrderLineNewEditCloneDelete</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <content>PurchaseOrderLineNewEditCloneDelete</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpPurchaseOrders</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Line items on a purchase order document</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableEnhancedLookup>false</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>ASN_New</fullName>
+        <description>ASNAddManage.page Used in Copy PO on the ASN UI</description>
+        <displayedFields>
+            <field>Purchase_Order__r.Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Purchase_Order__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Order_Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Unit_Price__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Delivery_Location__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Purchase_UOM__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>ASN New</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Additional_Info</fullName>
+        <availableFields>
+            <field>Consigned__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Delivery_Facility__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Delivery_Location__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Description__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Invoice_Matching__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Item_Specification__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Line_Value__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Line__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Need_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Purchase_UOM__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Status__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <description>Custom Views for Purchase Order Lines Grid in Purchase Order Manage page</description>
+        <displayedFields>
+            <field>Item__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Order_Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Unit_Price__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Promise_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Latest_Promise_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Overage_Percentage__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Memo__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Additional Info</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>All_Fields</fullName>
+        <availableFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Invoice_Status__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Item_Cross_Reference__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Latest_Promise_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Line_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Memo__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Promise_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Quantity_Matched__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Sales_Order_Line__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Sales_Order__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Sales_Tax_Amount__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Sales_Tax_Rate__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>VAT_Amount__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>VAT_Rate__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <description>PurchaseOrderManage page</description>
+        <displayedFields>
+            <field>Line__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Requestor_Notes__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Description__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item_Specification__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Delivery_Facility__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Delivery_Location__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Invoice_Matching__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Need_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Purchase_UOM__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Order_Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Unit_Price__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Line_Value__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Overage_Percentage__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Status__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Consigned__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>DEPRECATED</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Default</fullName>
+        <availableFields>
+            <field>Contract_Line__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Contracted__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Days_from_Promised__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Invoice_Status__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Item_Cross_Reference__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Latest_Promise_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Line_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>MRP_Plan__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Memo__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Promise_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Quantity_Matched__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Quantity_Received__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Quantity_Returned_to_Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Quantity_Returned_to_Supplier_for_Credit__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Quantity_Shipped__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Quantity_Still_Due__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Remit_To_Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Sales_Order_Line__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Sales_Order__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Sales_Tax_Amount__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Sales_Tax_Rate__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Subtransaction_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>VAT_Amount__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>VAT_Rate__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Work_Order__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Rental__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <description>Custom View of Purchase Order Lines grid in Purchase Order Manage Page</description>
+        <displayedFields>
+            <field>Line__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Requestor_Notes__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Description__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item_Specification__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Delivery_Facility__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Delivery_Location__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Invoice_Matching__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Need_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Purchase_UOM__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Order_Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Unit_Price__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Line_Value__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Overage_Percentage__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Status__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Consigned__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Default</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Finalize</fullName>
+        <description>Finalize Validation</description>
+        <displayedFields>
+            <field>Accounting_Segment__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Consigned__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Delivery_Facility__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Line_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Purchase_Order__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Subtransaction_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>DEPRECATED</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>FlipPOApprovalStatus</fullName>
+        <description>Used in PO Line Trigger. If any of the fields in this fieldset is changed then flip the PO Approval status to &apos;Pending Approval&apos;</description>
+        <displayedFields>
+            <field>Item__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Delivery_Facility__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Delivery_Location__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item_Specification__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Need_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Order_Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Consigned__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Overage_Percentage__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Purchase_Order__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Remit_To_Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Unit_Price__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Overage_Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Invoice_Matching__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>FlipPOApprovalStatus</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>HiddenField</fullName>
+        <description>Used to store the conract line valuie</description>
+        <displayedFields>
+            <field>Contract_Line__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>HiddenField</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Line_Edit</fullName>
+        <description>ManageAllPODetailPage</description>
+        <displayedFields>
+            <field>Invoice_Matching__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item_Specification__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Description__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Order_Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Unit_Price__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Line_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Line_Value__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Short_Close__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Purchase_UOM__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Need_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Delivery_Facility__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Delivery_Location__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>true</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Promise_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Latest_Promise_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Overage_Percentage__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Memo__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>DEPRECATED</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Line_Edit_RO</fullName>
+        <description>ManageAllPODetail</description>
+        <displayedFields>
+            <field>Line__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Status__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Consigned__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>DEPRECATED</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Receiving_RO</fullName>
+        <availableFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Delivery_Facility__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Memo__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Overage_Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Short_Close__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Work_Order__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Requestor_Notes__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <description>PurchaseOrderReceipt.page</description>
+        <displayedFields>
+            <field>Item__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Description__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Purchase_Order__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Operation_Tracking__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Purchase_Order__r.FOB_Term__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Order_Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Unit_Price__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Need_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Purchase_UOM__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Packaging_UOM__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Quantity_Received__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Quantity_Still_Due__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Delivery_Location__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Putaway_Location__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>        
+        <label>Receiving RO</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Receiving_RO_EditableFields</fullName>
+        <availableFields>
+            <field>Short_Close__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <description>Used in PurchaseOrderReceive.page to specify the editable fields on the grid</description>
+        <displayedFields>
+            <field>Putaway_Location__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Receiving RO EditableFields</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Requisition_Release</fullName>
+        <description>This is used in Requisition release</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Purchase_Order__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Contract_Line__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Need_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Order_Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Unit_Price__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Requisition Release</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Return_To_Vendor</fullName>
+        <description>Used in the return to vendor page on purchase order.</description>
+        <displayedFields>
+            <field>Purchase_Order__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Purchase_Order__r.Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Purchase_Order__r.Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Line__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Purchase_UOM__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Order_Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Quantity_Received__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Quantity_Returned_to_Supplier__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Quantity_Returned_to_Supplier_for_Credit__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Return To Vendor</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Supplier_Invoice_New</fullName>
+        <availableFields>
+            <field>Purchase_Order__r.Currency__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Invoice_Matching__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <description>Used in the Match to Purchase Order window in the Supplier Invoice Manage page</description>
+        <displayedFields>
+            <field>Purchase_Order__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Line__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Order_Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Quantity_Matched__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Quantity_Received__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Unit_Price__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Purchase_UOM__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Line_Value__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Description__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Match Invoice to Purchase Order</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Void_Cancel</fullName>
+        <description>Field set is used in associated trigger to skip validating certain fields that change during the cancel/void process.</description>
+        <displayedFields>
+            <field>Quantity_To_Stock__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Quantity_Still_Due__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Status__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Void/Cancel</label>
+    </fieldSets>
+    <fields>
+        <fullName>Accounting_Segment__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Accounting Default.</description>
+        <externalId>false</externalId>
+        <label>Accounting Segment</label>
+        <referenceTo>Accounting_Default__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Amount_Credited__c</fullName>
+        <externalId>false</externalId>
+        <label>Amount Credited</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Amount_Matched__c</fullName>
+        <defaultValue>0</defaultValue>
+        <description>will capture the invoiced amount (SIL.Invoice Quantity * SIL.Invoice Price) where the invoice has been approved</description>
+        <externalId>false</externalId>
+        <label>Amount Matched</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>2</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Approved__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Approved</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Autonumber__c</fullName>
+        <displayFormat>{0000000000}</displayFormat>
+        <externalId>false</externalId>
+        <label>Autonumber</label>
+        <trackTrending>false</trackTrending>
+        <type>AutoNumber</type>
+    </fields>
+    <fields>
+        <fullName>Company_Identifier__c</fullName>
+        <description>Foreign Key: used to link lines to Company record</description>
+        <externalId>false</externalId>
+        <label>Company Identifier</label>
+        <length>32</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Consigned__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Consigned</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Contract_Line__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Which contract line was the price details pulled from</description>
+        <externalId>false</externalId>
+        <label>Contract Line</label>
+        <referenceTo>Contract_Line__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Contracted__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Indicates whether this was a contracted or off-contract purchase</description>
+        <externalId>false</externalId>
+        <inlineHelpText>A checkmark indicates that this was a contracted purchase. If this field is clear, then the purchase was off-contract.</inlineHelpText>
+        <label>Contracted</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Currency__c</fullName>
+        <externalId>false</externalId>
+        <formula>Purchase_Order__r.Currency__r.ISO_Code__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Currency</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Date_Added__c</fullName>
+        <defaultValue>Today()</defaultValue>
+        <description>Date this PO line item was added</description>
+        <externalId>false</externalId>
+        <label>Date Added</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Date_Closed__c</fullName>
+        <description>Date this line item was closed or cancelled</description>
+        <externalId>false</externalId>
+        <label>Date Closed</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Date_Last_Changed__c</fullName>
+        <defaultValue>today()</defaultValue>
+        <description>Date this line item was last changed</description>
+        <externalId>false</externalId>
+        <label>Date Last Changed</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Days_from_Promised__c</fullName>
+        <externalId>false</externalId>
+        <formula>Date_Closed__c - Promise_Date__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Days from Promised</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Delivery_Facility__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Delivery Facility</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Facility__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Company__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Facility__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Delivery_Location__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Location</description>
+        <externalId>false</externalId>
+        <label>Delivery Location</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>Location doesn&apos;t belong to facility</errorMessage>
+            <filterItems>
+                <field>$Source.Company__c</field>
+                <operation>equals</operation>
+                <valueField>Location__c.Facility__r.Company__c</valueField>
+            </filterItems>
+            <filterItems>
+                <field>Location__c.Facility__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Delivery_Facility__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Location__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines (Delivery Location)</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Description__c</fullName>
+        <description>Add description for non inventoried items;  the description will be added automatically for inventoried items. Use the notes field for other information about this detail line</description>
+        <externalId>false</externalId>
+        <label>Description</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Exception_Details__c</fullName>
+        <externalId>false</externalId>
+        <label>Exception Details</label>
+        <length>32768</length>
+        <trackTrending>false</trackTrending>
+        <type>LongTextArea</type>
+        <visibleLines>3</visibleLines>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Historical__c</fullName>
+        <externalId>false</externalId>
+        <formula>Purchase_Order__r.Historical__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Historical</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Indirect__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>This field designates when an order is made for indirect goods, services, assets, or expenses.  This should be set by the system.</description>
+        <externalId>false</externalId>
+        <label>Indirect</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Invoice_Matching__c</fullName>
+        <description>2 way -  matches SI quantity to PO quantity, 3 way -  matches SI quantity to RL quantities for PO</description>
+        <externalId>false</externalId>
+        <label>Invoice Matching</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Three Way</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Two Way</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Invoice_Status__c</fullName>
+        <description>indicates if the line is available for invoicing</description>
+        <externalId>false</externalId>
+        <formula>IF( (Order_Quantity__c + ( Order_Quantity__c * IF( ISNULL(Purchase_Order__r.Quantity_Tolerance_Over__c),0,Purchase_Order__r.Quantity_Tolerance_Over__c)))  &lt;=  Quantity_Matched__c , &apos;Closed for Invoicing&apos;, &apos;Open for Invoicing&apos;)</formula>
+        <label>Invoice Status</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Item_Cross_Reference__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <inlineHelpText>The record that defines the relationship between your internal item ID and the supplier&apos;s ID, if applicable.</inlineHelpText>
+        <label>Item Cross Reference</label>
+        <referenceTo>Item_Cross_Reference__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Item_Name__c</fullName>
+        <externalId>false</externalId>
+        <label>Item Name</label>
+        <length>32</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Item_Specification__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Item Specification</label>
+        <referenceTo>Item_Specification__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Item__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Item being purchased</description>
+        <externalId>false</externalId>
+        <label>Item</label>
+        <lookupFilter>
+            <active>true</active>
+            <booleanFilter>1 AND (2 OR 3)</booleanFilter>
+            <errorMessage>Item is not active, or company does not match</errorMessage>
+            <filterItems>
+                <field>Item__c.Active__c</field>
+                <operation>equals</operation>
+                <value>True</value>
+            </filterItems>
+            <filterItems>
+                <field>$Source.Company__c</field>
+                <operation>equals</operation>
+                <valueField>Item__c.Company__c</valueField>
+            </filterItems>
+            <filterItems>
+                <field>Item__c.Company__c</field>
+                <operation>equals</operation>
+                <value></value>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Item__c</referenceTo>
+        <relationshipLabel>PurchaseOrder Lines</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Latest_Promise_Date__c</fullName>
+        <description>Latest promise date by the vendor for this item</description>
+        <externalId>false</externalId>
+        <label>Latest Promise Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Line_Type__c</fullName>
+        <externalId>false</externalId>
+        <label>Line Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Standard</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Line_Value__c</fullName>
+        <description>Order Quantity on this line x quoted unit Price</description>
+        <externalId>false</externalId>
+        <formula>ROUND((Order_Quantity__c * Unit_Price__c), 2)</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Line Value</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>2</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Line__c</fullName>
+        <description>Line number on the purchase order</description>
+        <externalId>false</externalId>
+        <label>Line</label>
+        <precision>5</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>MRP_Plan__c</fullName>
+        <description>MRP Plan reference</description>
+        <externalId>false</externalId>
+        <label>MRP Plan</label>
+        <length>80</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Manufacturers_Part__c</fullName>
+        <externalId>false</externalId>
+        <formula>Item_Cross_Reference__r.Cross_Reference_Value__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Manufacturer&apos;s Part</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Material_Tracking__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Material Tracking</label>
+        <referenceTo>Material_Tracking__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Memo__c</fullName>
+        <externalId>false</externalId>
+        <label>Memo</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Need_Date__c</fullName>
+        <description>Need date from MRP if this is an MRP scheduled Item</description>
+        <externalId>false</externalId>
+        <label>Need Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Operation_Tracking__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Operation Tracking</label>
+        <referenceTo>Operation_Tracking__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Order_Quantity__c</fullName>
+        <description>Quantity of items ordered on this line</description>
+        <externalId>false</externalId>
+        <label>Order Quantity</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Overage_Percentage__c</fullName>
+        <defaultValue>0</defaultValue>
+        <description>Percentage of overage allowed upon receipt:0 to 100% allowed</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Percentage of overage allowed upon receipt for this PO line. Whole numbers only.</inlineHelpText>
+        <label>Overage Percentage</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Percent</type>
+    </fields>
+    <fields>
+        <fullName>Overage_Quantity__c</fullName>
+        <description>Quantity allowed in access of order quantity</description>
+        <externalId>false</externalId>
+        <formula>Overage_Percentage__c * Order_Quantity__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <inlineHelpText>Quantity allowed in excess of ordered quantity for this PO line. Supports up to six decimal places.</inlineHelpText>
+        <label>Overage Quantity</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Packaging_UOM__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Packaging UOM</label>
+        <referenceTo>UOM__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines (Packaging UOM)</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines3</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Primary_Key__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>Primary Key</label>
+        <length>32</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Promise_Date__c</fullName>
+        <description>Supplier&apos;s original promise date</description>
+        <externalId>false</externalId>
+        <label>Promise Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Purchase_Order_Number__c</fullName>
+        <description>The number of the parent PO for this line, used for uploading</description>
+        <externalId>false</externalId>
+        <label>Purchase Order Number</label>
+        <length>12</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Purchase_Order__c</fullName>
+        <description>Purchase order number</description>
+        <externalId>false</externalId>
+        <label>Purchase Order</label>
+        <referenceTo>Purchase_Order__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines</relationshipName>
+        <relationshipOrder>0</relationshipOrder>
+        <reparentableMasterDetail>false</reparentableMasterDetail>
+        <trackTrending>false</trackTrending>
+        <type>MasterDetail</type>
+        <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    </fields>
+    <fields>
+        <fullName>Purchase_UOM__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Purchase unit of measure; if different from stocking UOM, you must enter a conversion factor in the appropriate field (default is units of measure are the same)</description>
+        <externalId>false</externalId>
+        <label>Purchase UOM</label>
+        <referenceTo>UOM__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Putaway_Location__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The location at which the item is going to be putaway to on the Receiving screen. Hidden field to be used only on the receiving screen.</description>
+        <externalId>false</externalId>
+        <label>Putaway Location</label>
+        <referenceTo>Location__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines (Putaway Location)</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Quantity_Credited__c</fullName>
+        <defaultValue>0.000000</defaultValue>
+        <externalId>false</externalId>
+        <label>Quantity Credited</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Quantity_Matched__c</fullName>
+        <defaultValue>0</defaultValue>
+        <description>Stores the total quantity of all validated supplier invoices (status = Approved) matched to the po line.</description>
+        <externalId>false</externalId>
+        <label>Quantity Matched</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Quantity_Received__c</fullName>
+        <defaultValue>0</defaultValue>
+        <description>Total quantity received on this purchase order</description>
+        <externalId>false</externalId>
+        <label>Quantity Received</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Quantity_Returned_to_Supplier__c</fullName>
+        <defaultValue>0</defaultValue>
+        <description>Quantity returned to supplier for replacement</description>
+        <externalId>false</externalId>
+        <label>Quantity Returned for Replacement</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Quantity_Returned_to_Supplier_for_Credit__c</fullName>
+        <defaultValue>0</defaultValue>
+        <description>Quantity returned to supplier for credit only. This amount is subtracted from quantity still due.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Quantity returned to supplier for credit only. This amount is subtracted from quantity still due.</inlineHelpText>
+        <label>Quantity Returned for Credit</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Quantity_Shipped__c</fullName>
+        <defaultValue>0</defaultValue>
+        <description>The quantity shipped for this po line. populated  when the ASN is released and fob point is origin</description>
+        <externalId>false</externalId>
+        <label>Quantity Shipped</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Quantity_Still_Due__c</fullName>
+        <description>Quantity Still Due equals Order Quantity minus Quantity in Received Quantity Returned to Supplier minus Quantity Returned to Supplier for Credit</description>
+        <externalId>false</externalId>
+        <formula>IF(  NOT(ISPICKVAL(Status__c, &apos;Open&apos;))  , 0, 
+
+IF( (Order_Quantity__c - Quantity_Received__c + Quantity_Returned_to_Supplier__c) &lt;=0 , 0 , 
+
+Order_Quantity__c - Quantity_Received__c + Quantity_Returned_to_Supplier__c ))</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <inlineHelpText>Quantity Still Due equals (=) Order Quantity minus (-) Quantity Received plus (+) Quantity Returned to Supplier minus (-) Quantity Returned to Supplier for Credit.</inlineHelpText>
+        <label>Quantity Still Due</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Quantity_To_Stock__c</fullName>
+        <externalId>false</externalId>
+        <label>Quantity To Stock</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Remit_To_Supplier__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The supplier that the payment should be made to.</description>
+        <externalId>false</externalId>
+        <label>Remit To Supplier</label>
+        <referenceTo>Supplier__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines (Remit to Supplier)</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Rental__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Rental</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Requestor_Notes__c</fullName>
+        <description>Requester Notes holds the information of the item that is not available in the items list of the company.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Requester Notes holds the information of the item that is not available in the items list of the company.</inlineHelpText>
+        <label>Requestor Notes</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Requisition_Number__c</fullName>
+        <description>Requisition number for Items not planned by MRP</description>
+        <externalId>false</externalId>
+        <label>Requisition Number</label>
+        <length>25</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Rush_Line__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>are the items on this line needed urgently</description>
+        <externalId>false</externalId>
+        <label>Rush Line</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Sales_Order_Line__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Sales Order Line</label>
+        <referenceTo>Sales_Order_Line__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Sales_Order__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Sales Order</label>
+        <referenceTo>Sales_Order__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Sales_Tax_Amount__c</fullName>
+        <externalId>false</externalId>
+        <label>Sales Tax Amount</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Sales_Tax_Rate__c</fullName>
+        <externalId>false</externalId>
+        <label>Sales Tax Rate</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Percent</type>
+    </fields>
+    <fields>
+        <fullName>Short_Close__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>This allows the use to short close the PO Line</description>
+        <externalId>false</externalId>
+        <label>Short Close</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Special_Notes__c</fullName>
+        <description>Special notes about this line item</description>
+        <externalId>false</externalId>
+        <label>Special Notes</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>Standard_Cost__c</fullName>
+        <description>This field gets set by the system and is a read-only for users. The value is true as of the time the field gets set which is during creation time of the PO Line or when the Item gets changed on the PO line.</description>
+        <externalId>false</externalId>
+        <label>Standard Cost</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Status__c</fullName>
+        <description>Select PO status: open, closed, cancelled, blanket planned, blanket released</description>
+        <externalId>false</externalId>
+        <label>Status</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Open</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Closed</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Cancelled</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Stocking_UOM__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Stocking UOM</label>
+        <referenceTo>UOM__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines (Stocking UOM)</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines2</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Subtransaction_Type__c</fullName>
+        <externalId>false</externalId>
+        <label>Subtransaction Type</label>
+        <length>100</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Supplier_Part__c</fullName>
+        <description>Supplier&apos;s part number</description>
+        <externalId>false</externalId>
+        <label>Supplier Part</label>
+        <length>80</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Supplier__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Refers to the Supplier on the PO Header. Needed for setting the lookup filter for manufacturing cross reference.</description>
+        <externalId>false</externalId>
+        <label>Purchase From Supplier</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Supplier__c.Type__c</field>
+                <operation>equals</operation>
+                <value>Purchasing</value>
+            </filterItems>
+            <isOptional>true</isOptional>
+        </lookupFilter>
+        <referenceTo>Supplier__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Suppliers_Part_Description__c</fullName>
+        <description>Supplier&apos;s part description</description>
+        <externalId>false</externalId>
+        <label>Supplier&apos;s Part Description</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Total_Weight__c</fullName>
+        <externalId>false</externalId>
+        <formula>Order_Quantity__c  *  Weight__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Total Weight</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Type__c</fullName>
+        <externalId>false</externalId>
+        <label>Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Goods</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Service</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Expense</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Asset</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Drop Ship</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Back To Back</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Unit_Price__c</fullName>
+        <defaultValue>0</defaultValue>
+        <description>Quoted unit price</description>
+        <externalId>false</externalId>
+        <label>Unit Price</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>VAT_Amount__c</fullName>
+        <externalId>false</externalId>
+        <label>VAT Amount</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>VAT_Rate__c</fullName>
+        <externalId>false</externalId>
+        <label>VAT Rate</label>
+        <precision>7</precision>
+        <required>false</required>
+        <scale>4</scale>
+        <trackTrending>false</trackTrending>
+        <type>Percent</type>
+    </fields>
+    <fields>
+        <fullName>Weight_UOM__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Total Weight UOM</description>
+        <externalId>false</externalId>
+        <label>Weight UOM</label>
+        <referenceTo>UOM__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines (Weight UOM)</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Weight__c</fullName>
+        <description>Weight of the Item</description>
+        <externalId>false</externalId>
+        <label>Weight</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Work_Order__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Work Order</label>
+        <referenceTo>Work_Order__c</referenceTo>
+        <relationshipLabel>Purchase Order Lines</relationshipLabel>
+        <relationshipName>Purchase_Order_Lines</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <label>Purchase Order Line</label>
+    <nameField>
+        <label>Purchase Order Line</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Purchase Order Lines</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Purchase_Order__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Line__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Item__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Order_Quantity__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Latest_Promise_Date__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Need_Date__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Status__c</customTabListAdditionalFields>
+        <excludedStandardButtons>New</excludedStandardButtons>
+        <excludedStandardButtons>Accept</excludedStandardButtons>
+        <excludedStandardButtons>ChangeOwner</excludedStandardButtons>
+        <lookupDialogsAdditionalFields>Purchase_Order__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Line__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Item__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Order_Quantity__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Need_Date__c</lookupDialogsAdditionalFields>
+        <searchFilterFields>NAME</searchFilterFields>
+        <searchResultsAdditionalFields>Purchase_Order__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Line__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Item__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Order_Quantity__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Need_Date__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Requisition_Number__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Unit_Price__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Status__c</searchResultsAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ControlledByParent</sharingModel>
+    <validationRules>
+        <fullName>Cannot_Edit_Order_Qty_less_Qty_Received</fullName>
+        <active>true</active>
+        <errorConditionFormula>AND(((Order_Quantity__c+Overage_Quantity__c ) &lt;  (Quantity_Received__c -  Quantity_Returned_to_Supplier__c )),  ISCHANGED(Order_Quantity__c) )</errorConditionFormula>
+        <errorMessage>Cannot reduce the Purchase Order Quantity less than the Quantity Received</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Cannot_edit_order_qty_less_qty_invoiced</fullName>
+        <active>true</active>
+        <description>Validation rule to throw an error when the order qty goes below the qty invoiced</description>
+        <errorConditionFormula>AND (ISCHANGED(Order_Quantity__c) , Order_Quantity__c &lt; ( Quantity_Matched__c ))</errorConditionFormula>
+        <errorMessage>Cannot reduce the order quantity less than the quantity invoiced</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Cannot_update_Back_To_Back_POL</fullName>
+        <active>true</active>
+        <description>Cannot update a back to back Purchase Order Line.</description>
+        <errorConditionFormula>ISPICKVAL( Purchase_Order__r.Type__c , &apos;Standard&apos;) &amp;&amp; 
+ISPICKVAL(  Type__c , &apos;Back To Back&apos;) &amp;&amp;    
+
+NOT(ISBlank( Sales_Order_Line__c ))   &amp;&amp; 
+
+( 
+
+ISCHANGED( Order_Quantity__c )|| 
+
+ISCHANGED( Unit_Price__c )|| 
+
+ISCHANGED( Need_Date__c )||
+
+ISCHANGED( Delivery_Facility__c )||
+
+ISCHANGED( Delivery_Location__c) 
+
+)</errorConditionFormula>
+        <errorMessage>Back To Back Purchase Order Line cannot be updated.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Cannot_update_Drop_Ship_POL</fullName>
+        <active>true</active>
+        <description>Cannot update a drop ship Purchase Order Line.</description>
+        <errorConditionFormula>ISPICKVAL( Purchase_Order__r.Type__c , &apos;Drop Ship&apos;) &amp;&amp;    
+
+NOT(ISBlank( Sales_Order_Line__c ))   &amp;&amp; 
+
+( 
+
+ISCHANGED( Order_Quantity__c )|| 
+
+ISCHANGED( Unit_Price__c )|| 
+
+ISCHANGED( Need_Date__c )||
+
+ISCHANGED( Delivery_Facility__c )||
+
+ISCHANGED( Delivery_Location__c) 
+
+)</errorConditionFormula>
+        <errorMessage>Drop Ship Purchase Order Line cannot be updated.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Cannot_update_invoice_matching</fullName>
+        <active>true</active>
+        <description>Validation rule to prevent changing the invoice matching on an approved purchase order line</description>
+        <errorConditionFormula>AND( ISCHANGED( Invoice_Matching__c ) ,Approved__c )</errorConditionFormula>
+        <errorMessage>Cannot update invoice matching field on an approved purchase order line</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Closed_line_update_validation</fullName>
+        <active>true</active>
+        <description>Cannot update a closed purchase order line</description>
+        <errorConditionFormula>AND( NOT(ISCHANGED( Status__c )), ISPICKVAL(Status__c,&quot;Closed&quot;),NOT(Consigned__c),OR( ISCHANGED( Item__c ),  ISCHANGED( Description__c ) , ISCHANGED( Need_Date__c ),  ISCHANGED( Order_Quantity__c ),  ISCHANGED( Unit_Price__c ) ) )</errorConditionFormula>
+        <errorMessage>You cannot update a closed line.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Closed_line_update_validation_header</fullName>
+        <active>true</active>
+        <description>Check the header status and if it is closed then do not allow updating the line</description>
+        <errorConditionFormula>AND( ISPICKVAL(Purchase_Order__r.Status__c,&quot;Closed&quot;),NOT(Consigned__c),OR( ISCHANGED( Item__c ),  ISCHANGED( Description__c ) , ISCHANGED( Need_Date__c ),  ISCHANGED( Order_Quantity__c ),  ISCHANGED( Unit_Price__c ) ) )</errorConditionFormula>
+        <errorMessage>Cannot update purchase order line as the Purchase Order is closed.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Invoice_Matching_for_Non_Inventory_POL</fullName>
+        <active>true</active>
+        <description>Invoice Matching for Non Inventory Purchase Order Line can only be Two Way.</description>
+        <errorConditionFormula>ISPICKVAL( Purchase_Order__r.Type__c , &apos;Drop Ship&apos;) &amp;&amp; Item__r.Non_Inventory__c  = true  &amp;&amp;
+NOT(ISPICKVAL(Invoice_Matching__c, &apos;Two Way&apos;))</errorConditionFormula>
+        <errorMessage>Invoice Matching for Non Inventory Purchase Order Line can only be Two Way.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Item_Cross_Reference</fullName>
+        <active>false</active>
+        <description>The Item and Supplier from the Item Cross Reference must match the Item and Supplier on this Purchase Order Line.</description>
+        <errorConditionFormula>false</errorConditionFormula>
+        <errorMessage>The Item and Supplier from the Item Cross Reference must match the Item and Supplier on this Purchase Order Line.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Item_cannot_change_on_an_approved_POL</fullName>
+        <active>true</active>
+        <description>Item cannot be changed on an approved Purchase Order Line.</description>
+        <errorConditionFormula>Approved__c &amp;&amp; ISCHANGED(Item__c)</errorConditionFormula>
+        <errorDisplayField>Item__c</errorDisplayField>
+        <errorMessage>Item cannot be changed on an approved Purchase Order Line.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Need_Date_required</fullName>
+        <active>true</active>
+        <description>ensure that the need date on a line is set</description>
+        <errorConditionFormula>ISNULL(Need_Date__c)</errorConditionFormula>
+        <errorMessage>The Need Date is required</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Need_date_should_be_greater_than_today</fullName>
+        <active>true</active>
+        <description>Need date should be greater than or equal to today.</description>
+        <errorConditionFormula>Not(IsBlank(Need_Date__c)) &amp;&amp; 
+IsChanged(Need_Date__c) &amp;&amp; 
+Need_Date__c &lt; today()</errorConditionFormula>
+        <errorDisplayField>Need_Date__c</errorDisplayField>
+        <errorMessage>Need date should be greater than or equal to today.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Order_quantity_required</fullName>
+        <active>true</active>
+        <description>Order quantity is required</description>
+        <errorConditionFormula>IF(AND (OR(ISCHANGED( Order_Quantity__c ),ISNEW()),OR(ISNULL(Order_Quantity__c ),Order_Quantity__c  &lt;= 0)) ,true,false)</errorConditionFormula>
+        <errorDisplayField>Order_Quantity__c</errorDisplayField>
+        <errorMessage>Order quantity should be greater than zero.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Overage_Percentage</fullName>
+        <active>true</active>
+        <errorConditionFormula>AND(NOT(ISNULL(Overage_Percentage__c )), OR(Overage_Percentage__c &lt;0,Overage_Percentage__c &gt;1))</errorConditionFormula>
+        <errorMessage>Overage Percentage must be greater than or equal to 0% and less than or equal to 100%</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Unit_price_required</fullName>
+        <active>true</active>
+        <description>Unit_price_required</description>
+        <errorConditionFormula>IF(AND (OR(ISCHANGED(Unit_Price__c),ISNEW()),OR(ISNULL(Unit_Price__c),Unit_Price__c &lt; 0)) ,true,false)</errorConditionFormula>
+        <errorDisplayField>Unit_Price__c</errorDisplayField>
+        <errorMessage>Unit price cannot be negative</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Validate_Supplier</fullName>
+        <active>true</active>
+        <errorConditionFormula>IF( 
+   AND(NOT(ISNULL(Supplier__c)),NOT(ISBLANK(Supplier__c)),
+   ISPICKVAL(Status__c, &apos;Open&apos;), 
+   OR(Supplier__r.RecordType.DeveloperName != &apos;Purchase_From&apos;,
+      Supplier__r.Hold_Purchasing__c)),
+TRUE,FALSE)</errorConditionFormula>
+        <errorMessage>Cannot update Purchase Order Lines when Supplier is not of type Purchase From or on Purchasing Hold.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>match_company</fullName>
+        <active>true</active>
+        <errorConditionFormula>NOT(ISBLANK(Item__r.Company__c)) &amp;&amp;
+NOT(ISNULL(Item__r.Company__c)) &amp;&amp; 
+Purchase_Order__r.Company__c  !=  Item__r.Company__c  &amp;&amp; Indirect__c==false</errorConditionFormula>
+        <errorDisplayField>Company__c</errorDisplayField>
+        <errorMessage>Purchase Order Line Company must match Purchase Order Company</errorMessage>
+    </validationRules>
+    <webLinks>
+        <fullName>PTP_Cleanup</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>PTP Cleanup</masterLabel>
+        <openType>sidebar</openType>
+        <page>PTPCleanupPOLine</page>
+        <protected>false</protected>
+    </webLinks>
+</CustomObject>

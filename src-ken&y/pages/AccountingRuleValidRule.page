@@ -1,0 +1,11 @@
+<apex:page standardController="Accounting_Rule__c" 
+	extensions="AccountingRuleExt"  >
+
+<apex:pageMessage summary="{!thewrap.exceptionMsg}" severity="error" strength="3"  rendered="{!hasErrors}" />
+<apex:pageMessage summary="{!$Label.Rule_Validated}" severity="info" strength="3"  rendered="{!NOT(hasErrors)}" />
+
+<div style="display:none;" >
+ <apex:outputText value="{!Accounting_Rule__c.name}" />
+ <apex:outputText value="{!Accounting_Rule__c.Transaction__c}" />
+</div>
+</apex:page>

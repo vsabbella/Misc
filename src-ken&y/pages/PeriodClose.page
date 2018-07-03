@@ -1,0 +1,340 @@
+<apex:page standardController="Period__c" extensions="PeriodCloseExt" action="{!refresh}">
+	<apex:stylesheet value="{!$Resource.KenandyCommonStyles}" />
+    <style>
+        .panelLeft {
+            width: 20%;
+            vertical-align: top;
+        }
+        .panelRight {
+            width: 20%;
+            vertical-align: top;
+        }
+       
+    	.boldHighlight {
+        	background-color: yellow;
+        	font-weight: bold;
+   		 }
+    </style>
+    
+    <apex:sectionHeader title="{!$ObjectType.Period__c.Label}" subtitle="{!Period__c.Name} {!$Label.Close}"/>
+    <c:KendoResources />
+	<apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+	
+    <apex:form id="form">
+    <c:busyWait />
+        <apex:pageMessages ></apex:pageMessages>
+        <apex:actionPoller action="{!refresh}" oncomplete="onRefreshComplete();" reRender="form,scriptPanel" interval="30" enabled="{!NOT(ISNULL(Period__c.AR_Subledger_Job__c)) || NOT(ISNULL(Period__c.AP_Subledger_Job__c)) || NOT(ISNULL(Period__c.FA_Subledger_Job__c)) || NOT(ISNULL(Period__c.JE_Subledger_Job__c)) || NOT(ISNULL(Period__c.Shipment_Subledger_Job__c)) || NOT(ISNULL(Period__c.Inventory_Subledger_Job__c)) || NOT(ISNULL(Period__c.Receiving_Subledger_Job__c))}"/>
+        <apex:outputPanel layout="block" style="width:100%">
+        <apex:pageBlock >
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="{!$Label.Go_Back}" action="{!cancel}" status="actionStatus" rerender="form"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection >
+                <apex:repeat value="{!$ObjectType.Period__c.Fieldsets.Review}" var="f">
+                    <apex:outputField value="{!Period__c[f]}"/>
+                </apex:repeat>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        </apex:outputPanel>
+        <apex:panelGrid columns="2" columnClasses="panelLeft,panelRight">
+            
+            <apex:pageBlock title="{!$Label.Accounts_Receivable_Subledger}" rendered="{!(Period__c.Type__c != 'Historical')}">
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton value="{!$Label.AR_Subledger_Validation}" action="{!runAR}" rendered="{!ISNULL(Period__c.AR_Subledger_Job__c) && ISNULL(Period__c.AR_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}"/>
+                    <apex:commandButton value="{!$Label.Reopen_AR_Subledger}" action="{!reopenAR}" rendered="{!ISNULL(Period__c.AR_Subledger_Job__c) && NOT(ISNULL(Period__c.AR_Subledger_Closed__c))}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}"/>
+                </apex:pageBlockButtons>
+                <apex:pageBlockSection columns="3">
+                    <apex:outputField value="{!Period__c.AR_Subledger_Cutoff__c}"/>
+                    <apex:outputField value="{!Period__c.AR_Subledger_Closed__c}" rendered="{!NOT(ISNULL(Period__c.AR_Subledger_Closed__c))}"/>
+					<apex:outputPanel rendered="{!NOT(ISNULL(Period__c.AR_Subledger_Closed__c))}">
+						<div class="kndy-green">&#10004;</div>
+					</apex:outputPanel>
+                    <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.AR_Subledger_Job__c))}">
+                        <apex:outputLabel value="{!$Label.AR_Subledger_Validation}"/>
+                        <apex:outputpanel >
+							<div id="progressBarAR"/>					
+                        </apex:outputpanel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+            
+            <apex:pageBlock title="{!$Label.Accounts_Payable_Subledger}" rendered="{!(Period__c.Type__c != 'Historical')}">
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton value="{!$Label.AP_Subledger_Validation}" action="{!runAP}" rendered="{!ISNULL(Period__c.AP_Subledger_Job__c) && ISNULL(Period__c.AP_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}"/>
+                    <apex:commandButton value="{!$Label.Reopen_AP_Subledger}" action="{!reopenAP}" rendered="{!ISNULL(Period__c.AP_Subledger_Job__c) && NOT(ISNULL(Period__c.AP_Subledger_Closed__c))}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}"/>                    
+                </apex:pageBlockButtons>
+                <apex:pageBlockSection columns="3">
+                    <apex:outputField value="{!Period__c.AP_Subledger_Cutoff__c}"/>
+                    <apex:outputField value="{!Period__c.AP_Subledger_Closed__c}" rendered="{!NOT(ISNULL(Period__c.AP_Subledger_Closed__c))}"/>
+ 					<apex:outputPanel rendered="{!NOT(ISNULL(Period__c.AP_Subledger_Closed__c))}">
+						<div class="kndy-green">&#10004;</div>
+					</apex:outputPanel>
+                    <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.AP_Subledger_Job__c))}">
+                        <apex:outputLabel value="{!$Label.AP_Subledger_Validation}"/>
+                        <apex:outputpanel >
+							<div id="progressBarAP"/>					
+                        </apex:outputpanel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+            
+             <apex:pageBlock title="{!$Label.Shipment_Subledger}" rendered="{!(Period__c.Type__c != 'Historical')}">
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton value="{!$Label.Shipment_Subledger_Validation}" action="{!runShipment}" rendered="{!ISNULL(Period__c.Shipment_Subledger_Job__c) && ISNULL(Period__c.Shipment_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}"/>
+                    <apex:commandButton value="{!$Label.Reopen_Shipment_Subledger}" action="{!reopenShipment}" rendered="{!ISNULL(Period__c.Shipment_Subledger_Job__c) && NOT(ISNULL(Period__c.Shipment_Subledger_Closed__c))}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}"/>                
+                </apex:pageBlockButtons>
+                <apex:pageBlockSection columns="3" >
+                    <apex:outputField value="{!Period__c.Shipment_Subledger_Cutoff__c}"/>
+                    <apex:outputField value="{!Period__c.Shipment_Subledger_Closed__c}" rendered="{!NOT(ISNULL(Period__c.Shipment_Subledger_Closed__c))}"/>
+					<apex:outputPanel rendered="{!NOT(ISNULL(Period__c.Shipment_Subledger_Closed__c))}">
+						<div class="kndy-green">&#10004;</div>
+					</apex:outputPanel>
+                    <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.Shipment_Subledger_Job__c))}">
+                        <apex:outputLabel value="{!$Label.Shipment_Subledger_Validation}"/>
+                        <apex:outputpanel >
+							<div id="progressBarSH"/>					
+                        </apex:outputpanel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+            
+             <apex:pageBlock title="{!$Label.Receiving_Subledger}" rendered="{!(Period__c.Type__c != 'Historical')}">
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton value="{!$Label.Receiving_Subledger_Validation}" action="{!runReceiving}" rendered="{!ISNULL(Period__c.Receiving_Subledger_Job__c) && ISNULL(Period__c.Receiving_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}"/>
+                    <apex:commandButton value="{!$Label.Reopen_Receiving_Subledger}" action="{!reopenReceiving}" rendered="{!ISNULL(Period__c.Receiving_Subledger_Job__c) && NOT(ISNULL(Period__c.Receiving_Subledger_Closed__c))}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}"/>
+                </apex:pageBlockButtons>
+                <apex:pageBlockSection columns="3" >
+                    <apex:outputField value="{!Period__c.Receiving_Subledger_Cutoff__c}"/>
+                    <apex:outputField value="{!Period__c.Receiving_Subledger_Closed__c}" rendered="{!NOT(ISNULL(Period__c.Receiving_Subledger_Closed__c))}"/>
+ 					<apex:outputPanel rendered="{!NOT(ISNULL(Period__c.Receiving_Subledger_Closed__c))}">
+						<div class="kndy-green">&#10004;</div>
+					</apex:outputPanel>
+                    <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.Receiving_Subledger_Job__c))}">
+                        <apex:outputLabel value="{!$Label.Receiving_Subledger_Validation}"/>
+                        <apex:outputpanel >
+							<div id="progressBarRC"/>					
+                        </apex:outputpanel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+            
+               <apex:pageBlock title="{!$Label.InterCompany_Subledger}" rendered="{!(Period__c.Type__c != 'Historical')}">
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton value="{!$Label.InterCompany_Subledger_Validation}" action="{!runIC}" rendered="{!ISNULL(Period__c.InterCompany_Subledger_Job__c) && ISNULL(Period__c.InterCompany_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}"/>
+                    <apex:commandButton value="{!$Label.Reopen_InterCompany_Subledger}" action="{!reopenIC}" rendered="{!ISNULL(Period__c.InterCompany_Subledger_Job__c) && NOT(ISNULL(Period__c.InterCompany_Subledger_Closed__c))}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}"/>                    
+                </apex:pageBlockButtons>
+                <apex:pageBlockSection columns="3">
+                    <apex:outputField value="{!Period__c.InterCompany_Subledger_Cutoff__c}"/>
+                    <apex:outputField value="{!Period__c.InterCompany_Subledger_Closed__c}" rendered="{!NOT(ISNULL(Period__c.InterCompany_Subledger_Closed__c))}"/>
+ 					<apex:outputPanel rendered="{!NOT(ISNULL(Period__c.InterCompany_Subledger_Closed__c))}">
+						<div class="kndy-green">&#10004;</div>
+					</apex:outputPanel>
+                    <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.InterCompany_Subledger_Job__c))}">
+                        <apex:outputLabel value="{!$Label.InterCompany_Subledger_Validation}"/>
+                        <apex:outputpanel >
+							<div id="progressBarIC"/>					
+                        </apex:outputpanel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+            
+             <apex:pageBlock title="{!$Label.Inventory_Subledger}" rendered="{!(Period__c.Type__c != 'Historical')}">
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton value="{!$Label.Inventory_Subledger_Validation}" action="{!runInventory}" rendered="{!ISNULL(Period__c.Inventory_Subledger_Job__c) && ISNULL(Period__c.Inventory_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}"/>
+                    <apex:commandButton value="{!$Label.Reopen_Inventory_Subledger}" action="{!reopenInventory}" rendered="{!ISNULL(Period__c.Inventory_Subledger_Job__c) && NOT(ISNULL(Period__c.Inventory_Subledger_Closed__c))}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}"/>                
+                </apex:pageBlockButtons>
+                <apex:pageBlockSection columns="3">
+                    <apex:outputField value="{!Period__c.Inventory_Subledger_Cutoff__c}"/>
+                    <apex:outputField value="{!Period__c.Inventory_Subledger_Closed__c}" rendered="{!NOT(ISNULL(Period__c.Inventory_Subledger_Closed__c))}"/>
+ 					<apex:outputPanel rendered="{!NOT(ISNULL(Period__c.Inventory_Subledger_Closed__c))}">
+						<div class="kndy-green">&#10004;</div>
+					</apex:outputPanel>
+                    <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.Inventory_Subledger_Job__c))}">
+                        <apex:outputLabel value="{!$Label.Inventory_Subledger_Validation}"/>
+                        <apex:outputpanel >
+							<div id="progressBarIN"/>					
+                        </apex:outputpanel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+            
+              <apex:pageBlock title="{!$Label.Fixed_Asset_Subledger}" rendered="{!(Period__c.Type__c != 'Historical')}">
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton value="{!$Label.FA_Subledger_Validation}" action="{!runFA}" rendered="{!ISNULL(Period__c.FA_Subledger_Job__c) && ISNULL(Period__c.FA_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}"/>
+                    <apex:commandButton value="{!$Label.Reopen_FA_Subledger}" action="{!reopenFA}" rendered="{!ISNULL(Period__c.FA_Subledger_Job__c) && NOT(ISNULL(Period__c.FA_Subledger_Closed__c))}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}"/>                    
+                </apex:pageBlockButtons>
+                <apex:pageBlockSection columns="3">
+                    <apex:outputField value="{!Period__c.FA_Subledger_Cutoff__c}"/>
+                    <apex:outputField value="{!Period__c.FA_Subledger_Closed__c}" rendered="{!NOT(ISNULL(Period__c.FA_Subledger_Closed__c))}"/>
+ 					<apex:outputPanel rendered="{!NOT(ISNULL(Period__c.FA_Subledger_Closed__c))}">
+						<div class="kndy-green">&#10004;</div>
+					</apex:outputPanel>
+                    <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.FA_Subledger_Job__c))}">
+                        <apex:outputLabel value="{!$Label.FA_Subledger_Validation}"/>
+                        <apex:outputpanel >
+							<div id="progressBarFA"/>					
+                        </apex:outputpanel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+            
+        <apex:pageBlock title="Journal Entry" rendered="{!(Period__c.Type__c != 'Historical')}">
+        		<apex:pageBlockButtons location="top">
+            		<apex:commandButton value="JE Validation" action="{!runJE}" rendered="{!ISNULL(Period__c.JE_Subledger_Job__c) && ISNULL(Period__c.GL_Close__c) }"  status="actionStatus" rerender="form"/>
+                    <apex:commandButton value="Reopen JE" action="{!reopenJE}" rendered="{!ISNULL(Period__c.JE_Subledger_Job__c) && NOT(ISNULL(Period__c.GL_Close__c))}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}"/>
+                </apex:pageBlockButtons>
+                <apex:pageBlockSection columns="3">
+                    <apex:outputField value="{!Period__c.JE_Cutoff__c}"/>
+                    <apex:outputField rendered="{!NOT(ISNULL(Period__c.GL_Close__c))}" value="{!Period__c.GL_Close__c}"/>
+					<apex:outputPanel rendered="{!NOT(ISNULL(Period__c.GL_Close__c))}">
+						<div class="kndy-green">&#10004;</div>
+					</apex:outputPanel>
+                	<apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.JE_Subledger_Job__c))}">
+                		<apex:outputLabel value="JE Validation"/>
+                	<apex:outputpanel >
+							<div id="progressBarJE"/>					
+            		</apex:outputpanel>
+        		</apex:pageBlockSectionItem>
+        	</apex:pageBlockSection>
+        </apex:pageBlock>
+
+        </apex:panelGrid>
+        
+    </apex:form>
+	<apex:outputPanel id="scriptPanel">
+    <script type="text/javascript">
+
+        var jobId = '{!ISNULL(Period__c.Receiving_Subledger_Job__c) }';
+        var jobId1 = '{!Period__c.Receiving_Subledger_Job__c}';
+		
+        function onRefreshComplete() {
+	       ARProgressBar();
+	       APProgressBar();
+	       JEProgressBar();
+	       INProgressBar();
+	       FAProgressBar();
+	       RCProgressBar();
+	       SHProgressBar();			
+	       ICProgressBar();			
+        }
+        	    
+    	$(document).ready(function() {
+	       ARProgressBar();
+	       APProgressBar();
+	       JEProgressBar();
+	       INProgressBar();
+	       FAProgressBar();
+	       RCProgressBar();
+	       SHProgressBar();			
+	       ICProgressBar();			
+		});
+		
+		function ARProgressBar(){
+			$("#progressBarAR").kendoProgressBar({
+                min: 0,
+                max: 100,
+                type: "percent",
+                value: '{!ARprogress}',
+                animation: {
+                    duration: 600
+                }
+                
+            });
+		}
+		
+		function APProgressBar(){
+			$("#progressBarAP").kendoProgressBar({
+                min: 0,
+                max: 100,
+                type: "percent",
+                value: '{!APprogress}',
+                animation: {
+                    duration: 600
+                }
+                
+            });
+		}
+		
+		
+		function FAProgressBar(){
+			$("#progressBarFA").kendoProgressBar({
+                min: 0,
+                max: 100,
+                type: "percent",
+                value: '{!FAprogress}',
+                animation: {
+                    duration: 600
+                }
+                
+            });
+		}
+		
+		function JEProgressBar(){
+			$("#progressBarJE").kendoProgressBar({
+                min: 0,
+                max: 100,
+                type: "percent",
+                value: '{!JEprogress}',
+                animation: {
+                    duration: 600
+                }
+                
+            });
+		}
+		
+		function INProgressBar(){
+			$("#progressBarIN").kendoProgressBar({
+                min: 0,
+                max: 100,
+                type: "percent",
+                value: '{!INprogress}',
+                animation: {
+                    duration: 600
+                }
+                
+            });
+		}
+		
+		function RCProgressBar(){
+			$("#progressBarRC").kendoProgressBar({
+                min: 0,
+                max: 100,
+                type: "percent",
+                value: '{!RCprogress}',
+                animation: {
+                    duration: 600
+                }
+                
+            });
+		}
+		
+		function ICProgressBar(){
+			$("#progressBarIC").kendoProgressBar({
+                min: 0,
+                max: 100,
+                type: "percent",
+                value: '{!ICprogress}',
+                animation: {
+                    duration: 600
+                }
+                
+            });
+		}
+		
+		function SHProgressBar(){
+			$("#progressBarSH").kendoProgressBar({
+                min: 0,
+                max: 100,
+                type: "percent",
+                value: '{!SHprogress}',
+                animation: {
+                    duration: 600
+                }
+                
+            });
+		}
+		
+    </script>
+    </apex:outputPanel>
+    
+</apex:page>

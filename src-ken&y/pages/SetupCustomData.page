@@ -1,0 +1,21 @@
+<apex:page standardController="Company__c"  extensions="SetupSampleData" >  
+    <apex:sectionHeader title="{!$Label.Configuration_and_Setup}" subtitle="{!Company__c.Name}" />
+    <div class="bPageTitle bCrumb" >
+        <div class="ptBreadcrumb">&nbsp;&laquo;&nbsp;
+            <a href="/{!company__c.id}">{!$Label.Go_Back}</a></div>
+    </div>
+
+    <apex:form id="theForm">
+    <apex:pagemessages />
+        <apex:pageBlock >  
+            <apex:pageBlockSection > 
+                <apex:inputFile value="{!document.body}" filename="{!document.name}"/>
+                <p>
+                    Select a file to load under this company
+                </p>
+                <apex:commandButton value="Load Custom Data for {!Company__c.Name}"  action="{!CustomDataLoad}"   />
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+
+</apex:page>

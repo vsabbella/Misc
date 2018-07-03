@@ -1,0 +1,22 @@
+<apex:page controller="FixedAssetWorkbenchCon" id="page" tabStyle="Fixed_Asset__c">
+	<apex:sectionHeader title="{!$ObjectType.Fixed_Asset__c.LabelPlural}" subtitle="{!$Label.Home}"/>
+	<apex:form id="form">
+		
+		<apex:pageBlock title="{!$Label.Fixed_Asset_Workbench}">
+			<apex:pageBlockSection collapsible="false">
+				<apex:commandLink value="{!$Label.Manage_Fixed_Assets}" action="{!manageAdjustments}"/>
+				<!-- <apex:commandLink value="Split Asset(s)" action="{!splitAsset}"/> -->
+				<apex:commandLink value="{!$Label.Run_Depreciation}" action="{!runDepreciation}" title="{!$Label.This_action_allows_to_run_depreciation_by_company_and_tax_book}"/>
+				
+				<apex:commandLink value="{!$Label.Undo_Asset_Adjustments}" action="{!undoSplit}"/>
+				<apex:commandLink value="{!$Label.Rollback_Depreciation}" action="{!rollbackDepreciation}" title="{!$Label.This_action_allows_you_to_rollback_the_most_recent_depreciation_cycle}"/>
+			</apex:pageBlockSection>
+		</apex:pageBlock>
+		
+	</apex:form>
+	
+	
+	<apex:enhancedList type="Fixed_Asset__c" height="500" />
+	
+
+</apex:page>

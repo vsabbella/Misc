@@ -1,0 +1,190 @@
+<!-- Commenting based on KNDY-10059 -->
+<apex:page >
+Deprecated
+<!-- 
+<apex:page standardController="Report_Item__c" extensions="FilterCriteria">
+
+<style>
+.detailList textarea { width: 250px; height: 45px; }
+</style>
+<apex:form id="theForm" >
+<c:busyWait />
+<apex:pageMessages id="pageErrors" />
+
+	<apex:sectionHeader title="Filter Criteria "/> 
+	
+	<apex:pageMessages id="err" />
+		<apex:pageBlock >
+		 
+			<apex:pageBlockButtons >
+				<apex:commandButton value="Add More Filters" 
+					action="{!addFilter}"  
+					status="actionStatus"
+					rerender="theForm"  />
+				<apex:commandButton value="Save" 
+					action="{!save}"  
+					status="actionStatus" 
+					rerender="theForm"  />
+				<apex:commandButton value="Cancel" 
+					action="{!cancel}"  
+					status="actionStatus"
+					rerender="theForm"  />  
+				<apex:commandButton value="Delete Filters" 
+					action="{!deleteCriteria}"  
+					status="actionStatus"
+					rerender="theForm"  />  
+			</apex:pageBlockButtons> 
+	         
+		 
+		<apex:pageBlockSection title="Filters- 1" columns="3" collapsible="true" > 
+            
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Filter 1"/>
+			    <apex:selectList value="{!reportItem.Filter_1__c}" size="1">
+			        <apex:selectOptions value="{!filterFields}"/>
+			    </apex:selectList> 
+			</apex:pageBlockSectionItem>
+			<apex:InputField value="{!reportItem.Filter_Operator_1__c}" /> 
+			<apex:InputField value="{!reportItem.Filter_Value_1__c}" /> 
+
+		</apex:pageBlockSection> 
+		<apex:pageBlockSection title="Filter - 2" columns="3" collapsible="true" rendered="{!IF(reportFilterCounter>1,true,false)}">
+
+			<apex:pageBlockSectionItem >
+                <apex:outputLabel value="Filter 2"/>
+			    <apex:selectList value="{!reportItem.Filter_2__c}" size="1">
+			        <apex:selectOptions value="{!filterFields}"/>
+			    </apex:selectList> 
+			</apex:pageBlockSectionItem>
+			<apex:InputField value="{!reportItem.Filter_Operator_2__c}" /> 
+			<apex:InputField value="{!reportItem.Filter_Value_2__c}" /> 
+		</apex:pageBlockSection>
+
+		<apex:pageBlockSection title="Filter - 3" columns="3" collapsible="true" rendered="{!IF(reportFilterCounter>2,true,false)}">
+
+			<apex:pageBlockSectionItem >
+                <apex:outputLabel value="Filter 3"/>
+			    <apex:selectList value="{!reportItem.Filter_3__c}" size="1">
+			        <apex:selectOptions value="{!filterFields}"/>
+			    </apex:selectList> 
+			</apex:pageBlockSectionItem>
+			<apex:InputField value="{!reportItem.Filter_Operator_3__c}" /> 
+			<apex:InputField value="{!reportItem.Filter_Value_3__c}" /> 
+		</apex:pageBlockSection>
+
+		<apex:pageBlockSection title="Filter - 4" columns="3" collapsible="true" rendered="{!IF(reportFilterCounter>3,true,false)}">
+
+			<apex:pageBlockSectionItem >
+                <apex:outputLabel value="Filter 4"/>
+			    <apex:selectList value="{!reportItem.Filter_4__c}" size="1">
+			        <apex:selectOptions value="{!filterFields}"/>
+			    </apex:selectList> 
+			</apex:pageBlockSectionItem>
+			<apex:InputField value="{!reportItem.Filter_Operator_4__c}" /> 
+			<apex:InputField value="{!reportItem.Filter_Value_4__c}" /> 
+		</apex:pageBlockSection>
+
+		<apex:pageBlockSection title="Filter - 5" columns="3" collapsible="true" rendered="{!IF(reportFilterCounter>4,true,false)}">
+
+			<apex:pageBlockSectionItem >
+                <apex:outputLabel value="Filter 5"/>
+			    <apex:selectList value="{!reportItem.Filter_5__c}" size="1">
+			        <apex:selectOptions value="{!filterFields}"/>
+			    </apex:selectList> 
+			</apex:pageBlockSectionItem>
+			<apex:InputField value="{!reportItem.Filter_Operator_5__c}" /> 
+			<apex:InputField value="{!reportItem.Filter_Value_5__c}" /> 
+		</apex:pageBlockSection>
+
+		<apex:pageBlockSection title="Filter - 6" columns="3" collapsible="true" rendered="{!IF(reportFilterCounter>5,true,false)}">
+
+			<apex:pageBlockSectionItem >
+                <apex:outputLabel value="Filter 6"/>
+			    <apex:selectList value="{!reportItem.Filter_6__c}" size="1">
+			        <apex:selectOptions value="{!filterFields}"/>
+			    </apex:selectList> 
+			</apex:pageBlockSectionItem>
+			<apex:InputField value="{!reportItem.Filter_Operator_6__c}" /> 
+			<apex:InputField value="{!reportItem.Filter_Value_6__c}" /> 
+		</apex:pageBlockSection>
+
+		<apex:pageBlockSection title="Filter - 7" columns="3" collapsible="true" rendered="{!IF(reportFilterCounter>6,true,false)}">
+
+			<apex:pageBlockSectionItem >
+                <apex:outputLabel value="Filter 7"/>
+			    <apex:selectList value="{!reportItem.Filter_7__c}" size="1">
+			        <apex:selectOptions value="{!filterFields}"/>
+			    </apex:selectList> 
+			</apex:pageBlockSectionItem>
+			<apex:InputField value="{!reportItem.Filter_Operator_7__c}" /> 
+			<apex:InputField value="{!reportItem.Filter_Value_7__c}" /> 
+		</apex:pageBlockSection>
+
+		<apex:pageBlockSection title="Filter - 8" columns="3" collapsible="true" rendered="{!IF(reportFilterCounter>7,true,false)}">
+
+			<apex:pageBlockSectionItem >
+                <apex:outputLabel value="Filter 8"/>
+			    <apex:selectList value="{!reportItem.Filter_8__c}" size="1">
+			        <apex:selectOptions value="{!filterFields}"/>
+			    </apex:selectList> 
+			</apex:pageBlockSectionItem>
+			<apex:InputField value="{!reportItem.Filter_Operator_8__c}" /> 
+			<apex:InputField value="{!reportItem.Filter_Value_8__c}" /> 
+		</apex:pageBlockSection>
+
+		<apex:pageBlockSection title="Filter - 9" columns="3" collapsible="true" rendered="{!IF(reportFilterCounter>8,true,false)}">
+
+			<apex:pageBlockSectionItem >
+                <apex:outputLabel value="Filter 9"/>
+			    <apex:selectList value="{!reportItem.Filter_9__c}" size="1">
+			        <apex:selectOptions value="{!filterFields}"/>
+			    </apex:selectList> 
+			</apex:pageBlockSectionItem> 
+			<apex:InputField value="{!reportItem.Filter_Operator_9__c}" /> 
+			<apex:InputField value="{!reportItem.Filter_Value_9__c}" /> 
+		</apex:pageBlockSection>
+
+		<apex:pageBlockSection title="Filter - 10" columns="3" collapsible="true" rendered="{!IF(reportFilterCounter>9,true,false)}">
+
+			<apex:pageBlockSectionItem >
+                <apex:outputLabel value="Filter 10"/>
+			    <apex:selectList value="{!reportItem.Filter_10__c}" size="1">
+			        <apex:selectOptions value="{!filterFields}"/>
+			    </apex:selectList> 
+			</apex:pageBlockSectionItem>
+			<apex:InputField value="{!reportItem.Filter_Operator_10__c}" /> 
+			<apex:InputField value="{!reportItem.Filter_Value_10__c}" /> 
+		</apex:pageBlockSection>
+
+		<apex:pageBlockSection title="Filter - 11" columns="3" collapsible="true" rendered="{!IF(reportFilterCounter>10,true,false)}">
+
+			<apex:pageBlockSectionItem >
+                <apex:outputLabel value="Filter 11"/>
+			    <apex:selectList value="{!reportItem.Filter_11__c}" size="1">
+			        <apex:selectOptions value="{!filterFields}"/>
+			    </apex:selectList> 
+			</apex:pageBlockSectionItem>
+			<apex:InputField value="{!reportItem.Filter_Operator_11__c}" /> 
+			<apex:InputField value="{!reportItem.Filter_Value_11__c}" /> 
+		</apex:pageBlockSection>
+
+		<apex:pageBlockSection title="Filter - 12" columns="3" collapsible="true" rendered="{!IF(reportFilterCounter>11,true,false)}">
+
+			<apex:pageBlockSectionItem >
+                <apex:outputLabel value="Filter 12"/>
+			    <apex:selectList value="{!reportItem.Filter_12__c}" size="1">
+			        <apex:selectOptions value="{!filterFields}"/>
+			    </apex:selectList> 
+			</apex:pageBlockSectionItem> 
+			<apex:InputField value="{!reportItem.Filter_Operator_12__c}" /> 
+			<apex:InputField value="{!reportItem.Filter_Value_12__c}" /> 
+		</apex:pageBlockSection>
+
+	</apex:pageBlock>
+
+	<c:busyWait />
+	<div style="display:none;">
+	<apex:outputField value="{!Report_Item__c.Report_Id__c}"/>
+	</div>
+</apex:form>-->
+</apex:page>

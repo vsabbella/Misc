@@ -1,0 +1,134 @@
+<apex:component controller="ExceptionTasksExtNew" extensions="TasksMassOverride">
+	<apex:attribute name="parentsObject" type="sObject" assignTo="{!parent}" description="parent sObject" />
+<c:KendoResources />
+<apex:includeScript value="{!$Resource.GridActionListJS}" />
+	
+	<div class="grid-container">
+		<div class="grid-message"></div>
+		<div id="{!config.uniqueId}" > </div>
+	</div>    
+	
+	<script type="text/javascript">      
+	    function getKendoGridDomId() {
+	        return '{!config.uniqueId}';
+	    }  
+	
+		$(document).on('KenandyErpReady', function(e) {
+		    var loadRelatedData = function() {
+	          	var deferred = $.Deferred();
+	            var remoteArgs = JSON.parse('{!configJson}');
+	            // The stuff returned from Salesforce has extra properties like "attributes"
+	            // which couldn't be deserialised back
+	            remoteArgs.parentRecord = { Id: '{!parent}' };
+	            
+	            Visualforce.remoting.Manager.invokeAction(
+	                '{!$RemoteAction.ExceptionTasksExtNew.getTaskRelatedList}',
+	                remoteArgs, 
+	                function (result, event) {
+	                    deferred.resolve(result, event);
+	                    // KNDY-10372: Subject Column that opens up the Task when you click on it
+	                    // shows a 'url does not exist' pop-up when you hover over it
+	                    // As a workaround to this issue and because no other lookups on grid
+	                    // cells display a mini-page on hover,
+	                    // The below code blocks all mini-pages on hover 
+	                    var arr =  $('a[id^="lookup"]');
+	                    for(var i = 0 ;i<arr.length;i++){
+	                       arr[i].onmouseover = null;
+	                    }
+	                },
+	                {escape: false}
+	            );
+	
+	            return deferred.promise();
+	        }
+		    
+		    /**
+		     * Need to pass lookup filters to avoid showing unrelated lookup items
+		     */
+
+	    	var grid = $('#{!config.uniqueId}').kendoGridActionList({
+                            namespace: '{!NamespaceUU}', 
+                            config: '{!configJson}', 
+                            fieldList: ExceptionTasksUtils.GetFieldList('{!fieldList}'),
+                            lookupSearchAction: '{!$RemoteAction.ExceptionTasksExtNew.lookupSearchFilter}', 
+                            getActionListFunction: loadRelatedData,
+                            height:500,
+                            toolbarButtons: [ 
+                                { name: "grid-mass-override-custom-command", text:"", template: "<input type='button' value='Mass Override' class='btn grid-mass-override-custom-command' />" }
+                            ],
+                        }).data('kendoGridActionList');
+                        
+          //BINDING EVENTS
+		  grid.wrapper.on("click", ".grid-mass-override-custom-command", $.proxy(ExceptionTasksUtils.MassOverride, { grid: grid })); 
+		});
+		
+		
+		
+		
+		var whatIdNameMap = {!whatIdNameMapJson};
+		var ExceptionTasksUtils = function() {
+        	return {
+        	
+        		MassOverride: function(e) {
+        			debugger;
+        			var self = this;
+                    var grid = self.grid;
+                    var columns = grid.columns;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                    
+                    var gridUtils = new KendoGridUtils(grid);
+		            var selectedRows = gridUtils.SelectedRows();
+		            
+		            if (selectedRows.length == 0) {
+                        KenandyErp.Message("No Rows Selected", KenandyErp.MessageType.Error, messageElement);
+                        return;
+                    }
+                    
+                    KenandyErp.BlockUI(grid.element);
+                    
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.TasksMassOverride.massOverrideTasks}',
+                         selectedRows,
+                         function (result, event) {
+                            
+                                        
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                                if (result.success) {
+                                    KenandyErp.Messages(result.messages, messageElement);
+                                }
+                                else {
+                                    KenandyErp.Messages(result.messages, messageElement);
+                                }
+                                                                    
+								grid.dataSource.read();
+                            }
+                            KenandyErp.UnBlockUI(grid.element);
+                        },
+                        {escape: false}
+                    );
+        		},
+        		
+        		GetFieldList: function(fieldList) {
+        			fieldList = JSON.parse(fieldList);
+        			
+        			$.each(fieldList, function() { 
+			            if (this.field == 'relatedToLink') {
+			            	this.template = '<a target="_top" href="/#=sanitize(WhatId)#">#=getRelatedToName(WhatId)#</a>';
+			            }
+        			});
+        
+        			return JSON.stringify(fieldList);
+        		}
+        	};
+		}();
+		
+		function getRelatedToName(Id) {
+		    var returnStr = (whatIdNameMap[Id]) ? whatIdNameMap[Id] : '';
+		    return sanitize(returnStr); //KNDY-10372
+		}
+	</script>
+    
+    
+</apex:component>

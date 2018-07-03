@@ -1,0 +1,37 @@
+<!--
+ - Created by zainab_shikari on 11/6/17.
+ -->
+
+<apex:page id="SupplierInvoiceValidate" standardController="Supplier_Invoice__c" title="{!$Label.Validate}"
+           extensions="SupplierInvoiceValidateExt">
+
+    <apex:sectionHeader subtitle="{!Supplier_Invoice__c.Name}"
+                        title="{!$Label.Validate}"/>
+
+    <apex:form id="form" > <c:busyWait />
+        <apex:pagemessages />
+
+        <apex:inputHidden value="{!Supplier_Invoice__c.Hold__c}" />
+        <apex:inputHidden value="{!Supplier_Invoice__c.Status__c}"/>
+        <apex:pageBlock >
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="{!$Label.Inspect}" action="{!inspect}" disabled="{!onholdflag}" rerender="form, navigateURL" status="actionStatus" oncomplete="goBack();"/>
+                <apex:commandButton value="{!$Label.Go_Back}" action="{!close}" rerender="form" status="actionStatus"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </apex:form>
+    <apex:outputPanel id="navigateURL">
+        <script>
+
+        var goBack = function() {
+             if({!redirect}) {
+                if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+                    sforce.one.back(true);
+                } else {
+                    window.location.href = '/' + '{!JSENCODE(Supplier_Invoice__c.Id)}';
+                }
+            }
+        }
+    </script>
+    </apex:outputPanel>
+</apex:page>

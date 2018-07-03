@@ -1,0 +1,24 @@
+<apex:page standardController="Sales_Order__c" extensions="SalesOrderAdjustmentExt">
+    <apex:form id="form">
+    	<c:busyWait />
+        <apex:sectionHeader subtitle="{!$Label.Adjustment_Sales_Order}" title="{!$Label.Adjustment_Sales_Order}" />
+        <apex:pagemessages ></apex:pagemessages>
+	    <apex:pageBlock >
+	        <apex:pageBlockButtons >
+		        <apex:commandButton value="{!$Label.Save} " action="{!save}" disabled="{!disableSave}" status="actionStatus" rerender="form" accessKey="s"/>
+		        <apex:commandButton value="{!$Label.Cancel} " action="{!cancel}" status="actionStatus" rerender="form"/>
+	        </apex:pageBlockButtons>
+	        <apex:variable var="typeName" value="{! $ObjectType.Sales_Order__c.Fields.Type__c.Name }" /> 
+	        <apex:pageBlockSection title="{!$Label.Sales_Order_Information}" columns="2" collapsible="false" rendered="{!NOT(disableSave)}">
+	            <apex:repeat value="{!$ObjectType.Sales_Order__c.FieldSets.Adjustment_Order}" var="f" > 
+	            	<apex:inputField value="{!adjustmentSO[f]}" required="{!OR(f.required, f.dbrequired)}" 
+	            					 rendered="{! f.fieldPath != typeName }" />
+	            	<apex:selectList size="1" value="{!adjustmentSO['Type__c']}" required="{!OR(f.required, f.dbrequired)}" 
+	            					 rendered="{! f.fieldPath == typeName }">
+	            		<apex:selectOptions value="{!adjustmentTypes}"/>
+	            	</apex:selectList>
+	            </apex:repeat>            
+	        </apex:pageBlockSection>
+	    </apex:pageBlock>
+    </apex:form>  
+</apex:page>

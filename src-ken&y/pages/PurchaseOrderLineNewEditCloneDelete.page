@@ -1,0 +1,27 @@
+<apex:page standardController="Purchase_Order_Line__c" extensions="NewEditCloneDeleteExt" action="{!errMsg}">
+    <script type="text/javascript">
+	  function goback(){
+		if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+			sforce.one.back(true);
+		} else {
+			window.history.back();
+		}
+	  }
+	</script>
+    <apex:sectionHeader title="{!$ObjectType.Purchase_Order_Line__c.Label}" />
+    <apex:form >
+        <apex:PageMessages />
+        <apex:outputpanel style="padding:20px;">
+        	<apex:outputLink onClick="goback();return false;" >{!$Label.Click_to_go_back}</apex:outputLink>
+        </apex:outputpanel>
+    </apex:form>
+    <script>
+        function goback( refresh) {
+            if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+                sforce.one.back(refresh);
+            } else {
+                window.history.back();
+            }
+        }
+    </script>
+</apex:page>

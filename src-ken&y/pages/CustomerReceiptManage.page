@@ -1,0 +1,2273 @@
+<apex:page standardController="Customer_Receipt__c" 
+           extensions="CustomerReceiptManageExt,KSE" 
+           sidebar="false" 
+           docType="html-5.0" title="Cash App">
+    <apex:sectionHeader title="Manage Cash Application" help="{!URLFOR($Page.HelpCustomerReceipt)}" />
+    <style>
+	li[name="customer-receipt-payment-total"] .kndy-data-column{
+		text-align: center;
+		
+	}
+
+
+	.disab {
+		opacity: 0.4;
+		cursor: default; 
+		pointer-events: none;
+	}
+	.messageText a {  
+		color:#333;
+		font-size:91%;
+		margin: 0px !important;
+	} 
+	</style>
+	<script src="../../soap/ajax/38.0/connection.js" type="text/javascript"></script>
+    <script>
+         sforce.connection.sessionId='{!GETSESSIONID()}';
+    
+    </script>
+    <script>	
+  	//=====================================
+  	// patching one function in the connection.js resource, so we don't get 
+  	// Refused to set unsafe header "User-Agent" errror
+  	//=====================================
+	
+	sforce.Transport = function(url) {
+	    this.url = url;
+	    this.connection = null;
+	
+	    this.newConnection = function() {
+	        try {
+	            this.connection = new ActiveXObject('Msxml2.XMLHTTP');
+	        } catch(e) {
+	            try {
+	                this.connection = new ActiveXObject('Microsoft.XMLHTTP');
+	            } catch(e) {
+	                this.connection = new XMLHttpRequest();
+	            }
+	        }
+	
+	        return this.connection;
+	    };
+	
+	    this.send = function (envelope, callback, async, timeout) {
+	        this.newConnection();
+	        if (async) {
+	            this.connection.onreadystatechange = this.httpConnectionCallback;
+	        }
+	        var holder = new sforce.internal.ConnectionHolder(this.connection, callback);
+	        sforce.internal._connections.push(holder);
+	        this.connection.open("POST", this.url, async);
+	        this.connection.setRequestHeader("Content-Type", "text/xml; charset=UTF-8");
+	        this.connection.setRequestHeader("SOAPAction", "\"\"");
+	        this.connection.setRequestHeader("Accept", "text/xml");
+	        //this.connection.setRequestHeader("User-Agent", "SFAJAX 1.0"); //here is the one line we are patching
+	        this.connection.send(envelope);
+	        if (async && typeof(timeout) !== "undefined") {
+	            this.setTimeoutOn(holder, timeout);
+	        }
+	        if (!async) {
+	            this.httpConnectionCallback();
+	        }
+	    };
+	
+	    this.setTimeoutOn = function (holder, timeout) {
+	        function abortConnection() {
+	            if (holder.connection.readyState !== 4) {
+	                holder.timedout = true;
+	                holder.connection.abort();
+	            }
+	        }
+	        setTimeout(abortConnection, timeout);
+	    };
+	
+	    this.httpConnectionCallback = function () {
+	
+	        for (var i = 0; i < sforce.internal._connections.length; i++) {
+	            var holder = sforce.internal._connections[i];
+	            if (holder !== null) {
+	                if (holder.timedout) {
+	                    sforce.internal._connections[i] = null;
+	                    sforce.internal._connections.slice(i,1);
+	                    holder.callback.httpCallback("Remote invocation timed out", false);
+	                } else  if (holder.connection.readyState == 4) {
+	                    sforce.internal._connections[i] = null;
+	                    sforce.internal._connections.slice(i,1);
+	                    var success = holder.connection.status == 200;
+	                    if (sforce.debug.trace) {
+	                        sforce.debug.log("Response : status - " + holder.connection.status);
+	                        sforce.debug.logXml(holder.connection.responseText);
+	                    }
+	                    if (sforce.debug.apexTrace) {
+	                        sforce.debug.logApex(holder.connection.responseText);
+	                    }
+	                    if (holder.connection.responseXML && holder.connection.responseXML.documentElement) {
+	                        holder.callback.httpCallback(holder.connection.responseXML.documentElement, success);
+	                    } else {
+	                        holder.callback.httpCallback("Remote invocation failed, due to: " + holder.connection.responseText +
+	                                                     " status code: ", holder.connection.status);
+	                    }
+	                }
+	            }
+	        }
+	    };
+	};
+	</script>
+    <c:KendoResources />
+    <c:busyWait includeScripts="false" />
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+    
+    <div class="page-message"></div>
+    
+    <div id="customerReceipt" class="page-container">
+    	 <apex:pageBlock mode="maindetail" id="mainpage"> 
+	         <apex:pageBlockSection title="{!$ObjectType.Customer_Receipt__c.Label} : {!Customer_Receipt__c.Name}" collapsible="true" columns="1" >
+	        	<div class="grid-container"  >
+	                <div class="grid-message"></div>
+	                <div id="CustomerReceiptHeaderUI"></div>
+	            </div>
+	           <apex:outputPanel style="text-align: left;" layout="block" >
+	                    <br/>
+	                        <input name="saveReceipt" id="saveReceipt" type="button" value="{!$Label.Save}" class="btn" style="margin-left: 40%;" accesskey="s" />
+	                        <input name="saveAndNewReceipt" id="saveAndNewReceipt" type="button" value="{!$Label.Save_and_New}" class="btn"/>
+	                        <input name="cancelReceipt" id="cancelReceipt" type="button" value="{!$Label.Go_Back}" class="btn" />
+	                    <br/>
+	                </apex:outputPanel>     
+	       </apex:pageBlockSection>
+	                
+	                
+	                
+	                
+	           
+	         
+	        </apex:pageBlock>   
+        <script type="text/javascript"> 
+            var isRenderGrid = ('{!renderGrid}' === 'true') ? true : false; 
+            var customerReceiptId = '{!Customer_Receipt__c.ID}';
+             /***************** MODEL BINDINGS *******************/
+            
+            
+           
+            $(document).ready(function() {
+            
+            	//Render Header Detail List
+            	CustomerReceiptManageUtils.InitializeHeaderDetailList();
+                
+               // Bind button Events
+                $('#saveReceipt').on("click", $.proxy(CustomerReceiptManageActions.Save));
+                
+                $('#saveAndNewReceipt').on("click", $.proxy(CustomerReceiptManageActions.SaveAndNew)); 
+                
+                $('#cancelReceipt').on("click", $.proxy(CustomerReceiptManageActions.Cancel));
+                
+            });
+                    
+            var CustomerReceiptManageUtils = function() {
+                return {
+                    GetFieldList: function(fieldList) {
+                        fieldList = JSON.parse(fieldList);
+                        return JSON.stringify(fieldList);
+                    },
+                    InitializeHeaderDetailList: function(options) {
+                    		var crHeaderView = $('#CustomerReceiptHeaderUI').data('kendoDetailList');
+                    		if (crHeaderView) { //if it was rendered before destroy and recreate it. 
+			                    crHeaderView.destroy();
+			                    $('#CustomerReceiptHeaderUI').off();
+			                    $('#CustomerReceiptHeaderUI').empty();
+			                }
+			                var lookupSearchFilters = [];
+			                lookupSearchFilters.push({ field: "Customer__c", filter: "RecordType.DeveloperName in (\'Bill_To\', \'Corporate_Parent\')" });
+			                 crHeaderView = $('#CustomerReceiptHeaderUI').kendoDetailList({
+				                    namespace: '{!NamespaceUU}',  
+				                    autoExpandSections: true,  //this will by default expand all the sections. TODO on widget: push this option to each section giving users more control. 
+				                    sections: [
+				                        {
+				                        	fields: JSON.parse('{!CustomerReceiptHeaderFieldList}') //the main sections
+				                        },
+				                        {
+				                            name: 'customer-receipt-payment-total', //keep adding as many sections as required. 
+				                            title: 'Totals',
+				                            fields: JSON.parse('{!CustomerReceiptPaymentTotalFieldList}')
+				                        },
+				                        {
+				                        	name: 'customer-receipt-additional-info',  
+				                            title: 'Additional Information',
+				                        	fields: JSONUtils.Parse('{!CustomerReceiptHeaderAdditionalFieldList}') 
+				                        }
+				                    ],
+				                    lookupSearchAction: '{!$RemoteAction.CustomerReceiptManageExt.lookupSearchFilter}',
+				                    lookupSearchFilters: lookupSearchFilters,
+				                    getDetailListFunction: function() {
+				                        var deferred = $.Deferred();
+				                        
+				                        Visualforce.remoting.Manager.invokeAction(
+				                                '{!$RemoteAction.CustomerReceiptManageExt.getCustomerReceipt}',
+				                                customerReceiptId,
+				                                'HeaderDetailList',
+				                                function (result, event) {
+				                                    if(result.success)
+				                                    	KenandyErp.Messages(result.messages);
+				                                    deferred.resolve(result, event);
+				                                    
+				                                },
+				                                {escape: false}
+				                            );
+				                        
+				                        return deferred.promise();
+				                    } 
+				                }).data('kendoDetailList');
+				                crHeaderView.element.bind('OnReadSuccess', this.CRHeaderReadSuccess);
+			                
+                    },
+                    DisableButtons: function(){//KNDY-16404
+                        var detailList = $('#CustomerReceiptHeaderUI').data('kendoDetailList');
+                        var cr = detailList.data;
+                        if (cr.Status__c == 'Void' || cr.Status__c == 'Cancelled'){
+                            $('#saveReceipt').addClass("disab");
+                            $('#saveAndNewReceipt').addClass("disab");
+                        }
+                    },
+                    DisableHeaderFields: function(options) {
+                    		var hasLines = (options.hasLines) ? options.hasLines : false;
+		                    var isEnabled = !hasLines;
+		                    var disabledFields = [];
+		                    var disabledHeaderFields = [];
+		                    var detailList = $('#CustomerReceiptHeaderUI').data('kendoDetailList');
+		                   
+		                    if (hasLines && detailList.data.get('Id')) {
+		                        disabledFields = [ 'Customer__c', 'Company__c', 'Currency__c' ];
+		                        
+	                            var headerFields = detailList.getFieldList();
+	                            
+	                            for (var i = 0; i < headerFields.length; i++) {
+	                                var field = headerFields[i].field;
+	                                
+	                                if (_.contains(disabledFields, field)) {
+	                                    disabledHeaderFields.push(field);
+	                                }
+	                            }
+		                        
+		                        
+		                        disabledHeaderFields = _.union(disabledFields, disabledHeaderFields);
+		                    }
+		                    
+		                    // Disable Header Fields
+		                    if (detailList) {
+		                        detailList.enable(isEnabled, { 
+		                            disabledFields: disabledHeaderFields 
+		                        });
+		                    }
+                    	
+                    },
+                    
+                    CRHeaderReadSuccess: function () {
+                    	// Bind customer change event
+	                    $('input[name="Customer__c"]').bind('change', 
+	                        CustomerReceiptManageUtils.OnCustomerChange
+	                    );
+
+	                    $('input[name="Company__c"]').bind('change', 
+	                        CustomerReceiptManageUtils.OnCompanyChange
+	                     );
+	                     $('input[name="Currency__c"]').bind('change', 
+	                        CustomerReceiptManageUtils.OnCurrencyChange
+	                    );
+	                    
+	                     $('input[name="Date_Received__c"]').bind('change', 
+	                        CustomerReceiptManageUtils.OnDateReceivedChange
+	                    );
+	                    var numberOfLines = $('#CustomerReceiptHeaderUI').data('kendoDetailList').data.get('Total_Number_Of_Lines__c');
+	                    var hasReceiptLines = numberOfLines  && numberOfLines > 0? true : false;
+	                    CustomerReceiptManageUtils.DisableHeaderFields({hasLines : hasReceiptLines});
+	                    CustomerReceiptManageUtils.DisableButtons();//KNDY-16404
+                    },
+                    OnCompanyChange: function(e) {
+                    	if ( $('input[name="Company__c"]').length > 0) {
+                    	 	var companyId = $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Company__c').val();
+                    	 	KenandyErp.BlockUI();
+                    	 	Visualforce.remoting.Manager.invokeAction(
+                                '{!$RemoteAction.CustomerReceiptManageExt.getCompanyDefaultBankAndCurrency}',
+                                companyId,
+                                function (result, event) {
+                                   if (event.type == 'exception' ) {
+                                   		KenandyErp.Message(event.message);
+                                   		KenandyErp.UnBlockUI();
+                                   }else {
+                                   		KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                          if (result.success ) {
+                                          	//KNDY-14482
+                                          	/*var currency = result.records[0];
+                                          	$('#CustomerReceiptHeaderUI').data('kendoDetailList').data.set('Currency__c', currency.Id);
+                                          	$('#CustomerReceiptHeaderUI').data('kendoDetailList').data.set('Currency__r', {Id: currency.Id, Name: currency.Name });
+                                          	*/
+                                          	if(result.records.length > 0){
+	                                          	var defaultBank = result.records[0];
+												$(CustomerReceiptManageUtils.bankAccountLookup).data('kendoLookup').value (  '' );
+	                                          	$('#CustomerReceiptBankInfo').data('kendoDetailList').data.set('Bank_Account_2__c', '') ;
+	                                          	$('#CustomerReceiptBankInfo').data('kendoDetailList').data.set('Bank_Account_2__r', {Id: '', Name: '' });
+	                                          	$('#CustomerReceiptHeaderUI').data('kendoDetailList').data.set('Bank_Account_2__c', '') ;
+	                                          	$('#CustomerReceiptHeaderUI').data('kendoDetailList').data.set('Bank_Account_2__r', {Id: '', Name: ''});
+	                                          	if (defaultBank.Deposit_Bank_Account__c != undefined){
+		                                          	$(CustomerReceiptManageUtils.bankAccountLookup).data('kendoLookup').value ( defaultBank.Deposit_Bank_Account__r.Name );
+		                                          	$('#CustomerReceiptBankInfo').data('kendoDetailList').data.set('Bank_Account_2__c', defaultBank.Deposit_Bank_Account__c) ;
+		                                          	$('#CustomerReceiptBankInfo').data('kendoDetailList').data.set('Bank_Account_2__r', {Id: defaultBank.Deposit_Bank_Account__c, Name: defaultBank.Deposit_Bank_Account__r.Name });
+		                                          	$('#CustomerReceiptHeaderUI').data('kendoDetailList').data.set('Bank_Account_2__c', defaultBank.Deposit_Bank_Account__c) ;
+		                                          	$('#CustomerReceiptHeaderUI').data('kendoDetailList').data.set('Bank_Account_2__r', {Id: defaultBank.Deposit_Bank_Account__c, Name: defaultBank.Deposit_Bank_Account__r.Name });
+
+	                                        		$('#CustomerReceiptHeaderUI').data('kendoDetailList').data.set('Currency__c', defaultBank.Deposit_Bank_Account__r.Currency__r.Id);
+	                                          		$('#CustomerReceiptHeaderUI').data('kendoDetailList').data.set('Currency__r', {Id: defaultBank.Deposit_Bank_Account__r.Currency__r.Id, Name: defaultBank.Deposit_Bank_Account__r.Currency__r.Name });
+	                                          	}else{
+	                                          		$('#CustomerReceiptHeaderUI').data('kendoDetailList').data.set('Currency__c', defaultBank.Default_Transaction_Currency__c);
+	                                          		$('#CustomerReceiptHeaderUI').data('kendoDetailList').data.set('Currency__r', {Id: defaultBank.Default_Transaction_Currency__c, Name: defaultBank.Default_Transaction_Currency__r.Name });
+	                                          	}
+	                                          	CustomerReceiptManageUtils.UpdateBankAccountFilters();
+											}else{
+											    CustomerReceiptManageUtils.FetchDefaultCompanyCurrency(e);
+	                                        }
+
+                                          	CustomerReceiptManageUtils.OnCustomerChange(e);
+                                           	KenandyErp.UnBlockUI();
+
+                                          }else {
+			                                KenandyErp.Messages(result.messages);
+			                                KenandyErp.UnBlockUI();
+			                              }
+                                   }
+                                },
+                                {escape: false}
+                            );
+                    	}
+                    },
+                    //KNDY-14482
+                    FetchDefaultCompanyCurrency: function(e){
+                    	KenandyErp.BlockUI();
+                    	var companyId = $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Company__c').val();
+                    	Visualforce.remoting.Manager.invokeAction(
+                                '{!$RemoteAction.CustomerReceiptManageExt.getCompanyDefaultCurrency}',
+                                companyId,
+                                function (result, event) {
+                                   if (event.type == 'exception' ) {
+                                   		KenandyErp.Message(event.message);
+                                   		KenandyErp.UnBlockUI();
+                                   }else {
+                                   		KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                          if (result.success ) {
+	                                          	var currency = result.records[0];
+	                                          	$('#CustomerReceiptHeaderUI').data('kendoDetailList').data.set('Currency__c', currency.Id);
+	                                          	$('#CustomerReceiptHeaderUI').data('kendoDetailList').data.set('Currency__r', {Id: currency.Id, Name: currency.Name });
+                                          		KenandyErp.UnBlockUI();
+											} else {
+				                                KenandyErp.Messages(result.messages);
+				                                KenandyErp.UnBlockUI();
+			                              }
+			                              CustomerReceiptManageUtils.UpdateBankAccountFilters();
+                                   }
+                                },
+                                {escape: false}
+                            );
+                    },
+                    //KNDY-18029 on change of bank account fetch default deposit payment method 
+	                OnBankAccountChange:function(){
+	                	KenandyErp.BlockUI();
+	                	console.log('onBankAccountChange');
+                    
+			            var bankAccountId = $('input[id="Bank_Account_2__r.Id"]').val();
+                        if(bankAccountId){
+                            Visualforce.remoting.Manager.invokeAction(
+                               '{!$RemoteAction.CustomerReceiptManageExt.getBankAccountDetails}',
+                               bankAccountId,
+                               function (result, event) {
+                                   if(result.records.length > 0){
+                                       KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                       console.log('result  :' + result);
+                                       var bankAccount = result.records[0];
+                                       var paymentMethod = bankAccount.Primary_Deposit_Payment_Method__c ? bankAccount.Primary_Deposit_Payment_Method__c : '';
+                                       $('#CustomerReceiptBankInfo').data('kendoDetailList').data.set('Payment_Method_G__c', paymentMethod);
+                                       $('#CustomerReceiptBankInfo').data('kendoDetailList').data.set('Bank_Account_2__c', bankAccountId);
+                                   }else {
+                                     KenandyErp.Messages(result.messages);
+                                    }
+                                    KenandyErp.UnBlockUI();
+                               },
+                               {escape: false}
+			                );
+                        }else {
+                            KenandyErp.UnBlockUI();
+                        }
+	                },
+                
+                    OnCustomerChange: function(e) {
+                    	KenandyErp.BlockUI();
+                    	$('#{!creditMemosGridConfig.uniqueId}').data('kendoGrid').dataSource.read();
+                        $('#{!deductionsGridConfig.uniqueId}').data('kendoGrid').dataSource.read();
+                        $('#{!customerInvoicesGridConfig.uniqueId}').data('kendoGrid').dataSource.read();
+                        $('#{!claimsGridConfig.uniqueId}').data('kendoGrid').dataSource.read();
+                        $('#{!additionalPaymentsGridConfig.uniqueId}').data('kendoGrid').dataSource.read();
+                        KenandyErp.UnBlockUI();
+                    },
+                    
+                    OnDateReceivedChange: function(e){ //KNDY-17349
+                        console.log('>>> OnDateReceivedChange here....');
+                        KenandyErp.ClearMessage();
+                        var displayMessage =false;
+                        var grid = $({!customerInvoicesGridConfig.uniqueId}).data('kendoGrid');
+                        $.each(grid.dataSource.data(), function (idx, item) {
+                            if ( item.selected == true){
+                                if ( !displayMessage) displayMessage = true;
+                                item["calculateEarnedDiscountAmount"] = true;
+                            }
+                            else{
+                                item["calculateEarnedDiscountAmount"] = false;
+                            }
+                        });
+                        if ( displayMessage){
+                            //KNDY-17349 message display if a selected CI has a neagtive balance due to date received change
+                            KenandyErp.Messages([{message:'{!$Label.Recalculate_discount_after_date_received_change}', severity:'INFO'}]);
+                        }
+                        console.log('>>> OnDateReceivedChange calling setEarnedDiscountAmount....');
+                        setEarnedDiscountAmount();
+                    },
+                    
+                    OnCurrencyChange: function(e) {
+                    	CustomerReceiptManageUtils.OnCustomerChange(e);
+                    	CustomerReceiptManageUtils.UpdateBankAccountFilters();
+                    	$(CustomerReceiptManageUtils.bankAccountLookup).data('kendoLookup').value (  '' );
+	                    $('#CustomerReceiptBankInfo').data('kendoDetailList').data.set('Bank_Account_2__c', '') ;
+	                    $('#CustomerReceiptBankInfo').data('kendoDetailList').data.set('Bank_Account_2__r', {Id: '', Name: '' });
+	                    $('#CustomerReceiptHeaderUI').data('kendoDetailList').data.set('Bank_Account_2__c', '') ;
+	                    $('#CustomerReceiptHeaderUI').data('kendoDetailList').data.set('Bank_Account_2__r', {Id: '', Name: ''});
+                    	CustomerReceiptManageUtils.UpdateBankAccountFilters(e);
+                    },
+                    //KNDY-14482
+                    bankAccountLookup: null,
+                    UpdateBankAccountFilters: function() {
+                    	 var self = this;
+                    	 var grid = self.grid;
+                    	 var filterText= [];
+                    	 if ( $('input[name="Currency__c"]').length > 0) {
+                    	 	var currencyId = $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Currency__c').val();
+                    	 	filterText.push("Currency__c = \'"+currencyId+"\'");
+                    	 }
+                    	 if($('input[name="Company__c"]').length > 0) {
+                    	 	var companyId = $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Company__c').val();
+                    	 	filterText.push("Company__c = \'"+companyId+"\'");
+                    	 }
+                    	  $(CustomerReceiptManageUtils.bankAccountLookup).data('kendoLookup').options.criteria = filterText.join(' and '); 
+
+                    	 //KNDY-18029 bank account change event to fetch payment method		                   
+						  $('input[name="Bank_Account_2__c"]').off().on('change', 
+		                      CustomerReceiptManageUtils.OnBankAccountChange
+		                  );
+                    },
+                    getGridChanges: function(gridUniqueId, fieldList){
+                        var grid = $('#' + gridUniqueId).data('kendoGrid');
+                        var options = grid.options;
+                        
+                        var gridData = grid.dataSource.data();
+                        var updatedRows = [];
+                        var newRows = [];
+                        var columns = grid.columns;
+                        var dateFields = KenandyErp.KendoGridOptions.GetDateFields(JSONUtils.Parse(fieldList)); // get the list of date fields
+                                        
+                        $.each(gridData, function(index, item) {
+                           
+                            var wrapperName = columns[2].field.split('.')[0];
+                            
+                            if(wrapperName == 'customerInvoice'){
+                                var invoiceDeductions = CustomerInvoicesManageUtils.GetInvoiceDeductionsById(item.uid);
+                                var masterRow = grid.table.find("tr[data-uid='" + item.uid + "']");
+                                var detailGrid = masterRow.next('tr.k-detail-row').find(".grid-customer-invoice-details").data('kendoGrid');
+                                
+                                if(detailGrid){
+                                    
+                                    if(deletedInvoiceDeductions[item.customerInvoice.Id])
+                                    {
+                                        $.each(deletedInvoiceDeductions[item.customerInvoice.Id], function(index,value)
+                                        {
+                                            var model = value;
+                                            model.set('Amount__c',0);
+                                            invoiceDeductions.push(model);
+                                        });
+                                    }
+                                    if(invoiceDeductions.length == 0 && detailGrid && item.selected == false) // push back all the invoice deductions to the controller when user deselects the CI box
+                                    {
+                                        invoiceDeductions = detailGrid.dataSource._data;
+                                    }
+                                    
+                                    if ((invoiceDeductions.length > 0 && _.contains(_.pluck(detailData, 'Id'), item.uid)) || item.customerInvoice.Amount_Applied__c != 0 ) {
+                                        item.invoiceDeductions = invoiceDeductions; 
+                                        item.dirty = true;
+                                    }
+                                }
+                                
+                                
+                            }
+                            
+                            if (! item[wrapperName]['Id'] || item.dirty) {
+                                var isNewRow = (!item[wrapperName]['Id']);
+                                item = item.toJSON();
+                                item = Serializer.ConvertToSFDCDate(item, { dateFields: dateFields });
+                                
+                                delete item['calculateEarnedDiscountAmount']; //KNDY-17349
+
+                                for (var i = 0; i < columns.length; i++) {
+                                    var name = columns[i].field;
+                                    
+                                    if(name != 'selected' && name != 'amountApplied' && name != 'ciEarnedDiscountAmount' && name != 'ciUnearnedDiscountAmount'){
+                                        delete item[name];
+                                    }
+                                }
+                                
+                                if (isNewRow) {
+                                    delete item['Id'];
+                                    newRows.push(item);
+                                }
+                                else {
+                                    updatedRows.push(item);
+                                }
+                            }
+                        });
+                        
+                        var deletedRows = $.map(grid.dataSource._destroyed, function(item, index) {
+                            var wrapperName = columns[1].field.split('.')[0];
+                            if (item[wrapperName]['Id']) {
+                                item = item.toJSON();
+                                item = Serializer.ConvertToSFDCDate(item, { dateFields: dateFields });
+                            
+                                for (var i = 0; i < columns.length; i++) {
+                                    var name = columns[i].field;
+                                    
+                                    delete item[name];
+                                }
+                                
+                                return item;
+                            }
+                        });
+                        
+                        if (newRows.length > 0) {
+                            newRows = Serializer.ParameterMap(newRows);
+                        }
+                        
+                        if (updatedRows.length > 0) {
+                            updatedRows = Serializer.ParameterMap(updatedRows);
+                        }
+                        
+                        if (deletedRows.length > 0) {
+                            deletedRows = Serializer.ParameterMap(deletedRows);
+                        }
+                        
+                        var dataWrapper = new Object();
+                        dataWrapper.newRows = newRows;
+                        dataWrapper.updatedRows = updatedRows;
+                        dataWrapper.deletedRows = deletedRows;
+                        return dataWrapper;
+                    }
+                };
+            }();
+            
+            var CustomerReceiptManageActions = function() {
+                return { 
+                    Save: function(e) {
+                   
+                            e.stopPropagation();
+                            
+                            var cnfrm = window.confirm('{!$Label.ConfirmSave}');
+                            
+                            if(cnfrm){
+                            
+                                var returnUrl = '{!ReturnUrl}';
+                                var detailListHeader = $('#CustomerReceiptHeaderUI').data('kendoDetailList');
+                                var detailListPayment = $('#CustomerReceiptBankInfo').data('kendoDetailList');
+				                var messageElementPopup = detailListHeader.element.closest("div.grid-container").find("div.grid-message:first");// todo
+				                var isNewRule = (!detailListHeader.data.get('Id')) ? true : false;
+				                
+				                var headerDateFields = detailListHeader.getDateFields();
+				                var paymentDateFields = detailListPayment.getDateFields();
+				                var headerRowsList = [];
+				                var headerRows = [];
+				                
+				                var paymentRowsList = [];
+				                var paymentRows = [];
+				                
+				                 if (!detailListHeader.validate()) {
+				                     KenandyErp.Message("Please fix the highlighted errors.",messageElementPopup);
+				                    	e.preventDefault();
+										return false;
+								}
+								
+								if (!detailListPayment.validate()) {
+				                     KenandyErp.Message("Please fix the highlighted errors.",messageElementPopup);
+				                    	e.preventDefault();
+										return false;
+								}
+								paymentRowsList.push(detailListPayment.data);
+								paymentRows = $.map(paymentRowsList, function(item, index) {
+				                    item = item.toJSON();
+				                    item = Serializer.ConvertToSFDCDate(item, { dateFields: paymentDateFields });
+				                    
+				                    return item;
+				                });
+				                var paymentData = paymentRows[0];
+				                
+				                headerRowsList.push(detailListHeader.data);
+				                //need to convert the date time issues in kendo
+				                headerRows = $.map(headerRowsList, function(item, index) {
+				                    item = item.toJSON();
+				                    item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+				                    delete item['amountToApply'];
+				                    delete item['amountUnapplied'];
+				                    delete item['totalPayment'];
+				                    var keysInItem = Object.keys(item);
+				                    for (var key in paymentData) {
+									  if (paymentData.hasOwnProperty(key) && !item.hasOwnProperty(key)) {
+									    item[key] = paymentData[key];
+									  }
+									  //KNDY-14482
+									  if (paymentData.hasOwnProperty(key) && (key == 'Bank_Account_2__c' || key == 'Bank_Account_2__r' || key == 'Payment_Method_G__c')) {
+									    item[key] = paymentData[key];
+									  }
+									}
+									if(customerReceiptId) {//KNDY-8587 if user saves new record and continues editing, then item should append the ID (as we do not refresh detailHeader's model)
+                                        item['Id'] = customerReceiptId;
+                                    }
+                                
+				                    return item;
+				                });
+				                
+				                if (headerRows.length > 0) {
+				                    headerRows = Serializer.ParameterMap(headerRows);
+				                }
+				                
+				                headerDateFields = headerDateFields ? _.pluck(headerDateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+				                paymentDateFields= paymentDateFields ? _.pluck(paymentDateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+                                var dateFields = headerDateFields.concat(paymentDateFields);
+                                var amountToApply = detailListHeader.data.get('amountToApply');
+                                
+                                KenandyErp.BlockUI();
+                                
+                                
+                                var creditMemoChanges = CustomerReceiptManageUtils.getGridChanges('{!creditMemosGridConfig.uniqueId}', CreditMemosManageUtils.GetFieldList('{!CreditMemoFieldList}'));
+                                var deductionsChanges = CustomerReceiptManageUtils.getGridChanges('{!deductionsGridConfig.uniqueId}', DeductionsManageUtils.GetFieldList('{!DeductionFieldList}'));
+                                var customerInvoicesChanges = CustomerReceiptManageUtils.getGridChanges('{!customerInvoicesGridConfig.uniqueId}', CustomerInvoicesManageUtils.GetFieldList('{!customerInvoiceFieldList}'));
+                                var claimsChanges = CustomerReceiptManageUtils.getGridChanges('{!claimsGridConfig.uniqueId}', ClaimsManageUtils.GetFieldList('{!ClaimFieldList}'));
+                                var additionalPaymentsChanges = CustomerReceiptManageUtils.getGridChanges('{!additionalPaymentsGridConfig.uniqueId}', AdditionalPaymentsManageUtils.GetFieldList('{!AdditionalPaymentFieldList}'));
+                                
+                                Visualforce.remoting.Manager.invokeAction(
+                                    '{!$RemoteAction.CustomerReceiptManageExt.save}', 
+                                    headerRows[0], 
+                                    dateFields,
+                                    creditMemoChanges,
+                                    deductionsChanges,
+                                    customerInvoicesChanges,
+                                    claimsChanges,     
+                                    additionalPaymentsChanges,    
+                                    function (result, event) {
+                                                    
+                                        if (event.type == 'exception' ) {
+                                            KenandyErp.Message(event.message);
+                                            KenandyErp.UnBlockUI();
+
+                                        } else {
+                                            KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                             if (result.success ) {
+                                            		var customerReceipt;
+                                            		customerReceipt = result.records[0];
+                                            		customerReceiptId = customerReceipt.Id;
+                                            		Visualforce.remoting.Manager.invokeAction(
+								                    '{!$RemoteAction.CustomerReceiptManageExt.getCustomerReceipt}',
+								                    customerReceiptId, 
+								                    '',
+								                    function (result, event) {
+								                        if (event.type == 'exception') {
+								                           KenandyErp.Message(event.message);
+                                           				   KenandyErp.UnBlockUI();
+								                        } else {
+								                        	KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                            
+								                        	customerReceipt = result.records[0];
+								                            if (result.success) {
+								                                isRenderGrid = ('{!renderGrid}' === 'true') ? true : false; 
+								                                if(isRenderGrid && customerReceipt.Finalized__c == true  ) {
+				                                                   // NavigateToURL will show outdated CR with finalized flag still false
+				                                                   // back will take you to the list view if CR was edited from list view
+				                                                   KenandyErp.back(true, '/' + result.records[0].Id );
+				                                                }
+				                                                else {
+				                                                	var hasReceiptLines= customerReceipt.Total_Number_Of_Lines__c > 0;
+				                                                	CustomerReceiptManageUtils.DisableHeaderFields({hasLines: hasReceiptLines});
+					                                                $('#{!creditMemosGridConfig.uniqueId}').data('kendoGrid').dataSource.read();
+					                                                $('#{!deductionsGridConfig.uniqueId}').data('kendoGrid').dataSource.read();
+					                                                $('#{!customerInvoicesGridConfig.uniqueId}').data('kendoGrid').dataSource.read();
+					                                                $('#{!claimsGridConfig.uniqueId}').data('kendoGrid').dataSource.read();
+					                                                $('#{!additionalPaymentsGridConfig.uniqueId}').data('kendoGrid').dataSource.read();
+					                                                if (isRenderGrid){ //KNDY-16404 
+					                                                     // CR is not closed after save
+					                                                     var crLink = '<a href="/'+customerReceipt.Id+'">' + customerReceipt.Name + '</a>';
+					                                                     var crCreateMsg = crLink + " was saved. " + "{!$Label.You_must_apply_the_total_payment_before_you_can_complete_and_finalize_the_CR}";
+					                                                     var changesSavedMsg = "{!$Label.Changes_saved}" + " " + "{!$Label.You_must_apply_the_total_payment_before_you_can_complete_and_finalize_the_CR}";
+					                                                     var msg;
+					                                                     var uri = URI('{!$CurrentPage.URL}');
+					                                                     if (uri.hasQuery("id") === true) {
+					                                                         msg = changesSavedMsg;
+					                                                     }
+					                                                     else{
+					                                                         msg = crCreateMsg;
+					                                                     }
+					                                                     KenandyErp.Message(msg, KenandyErp.MessageType.Success); 
+					                                                }
+
+					                                            }
+				                                                
+								                            }
+								                            else {
+								                                KenandyErp.Messages(result.messages);
+								                                KenandyErp.UnBlockUI();
+								                            }
+								                        }
+								                    },
+								                    {escape: false}
+								                );
+                                          		KenandyErp.Messages(result.messages);
+                                                KenandyErp.UnBlockUI();
+                                                
+                                            }
+                                            else {
+                                                KenandyErp.Messages(result.messages);
+                                                KenandyErp.UnBlockUI();
+                                            }
+                                        }
+                                    },
+                                    {escape: false}
+                                );
+                            }else{
+                            	return false;
+                            }
+                    },
+                    
+                    SaveAndNew: function(e){
+                    	var isSuccess = CustomerReceiptManageActions.Save(e); //calling save method 
+                    	if(isSuccess != false){
+                    		KenandyErp.NavigateToURL('/apex/CustomerReceiptManage', true);
+                    	}
+                    },
+                    
+                    Cancel: function(e){
+                            e.stopPropagation();
+                            //var isNewCustomerReceipt = (!detailList.data.get('Id')) ? true : false;           
+                            var cnfrm = window.confirm('{!$Label.ConfirmGoBack} ');
+                            var retunUrl = customerReceiptId && customerReceiptId != '' ? '/'+customerReceiptId :'/{!KeyPrefix}';
+                            if(cnfrm){
+                                KenandyErp.BlockUI();
+                                KenandyErp.back(true, retunUrl);
+                            }
+                    },
+                    
+                    refresh: function(e){
+                        
+                        if(e != undefined){
+                            
+                            // Calculate the amount received
+                            var amountToApply = 0;
+                            
+                            var amountReceived = (isRenderGrid) ?  $('#CustomerReceiptBankInfo').data('kendoDetailList').element.find('#Amount_Received__c').val() :  $('#CustomerReceiptBankInfo').data('kendoDetailList').data.get('Amount_Received__c');
+                            amountReceived = (amountReceived) ? amountReceived : 0;
+                            amountToApply = (amountToApply + parseFloat(amountReceived)).round(2);
+                            
+                            var creditMemosGridData = $({!creditMemosGridConfig.uniqueId}).data('kendoGrid').dataSource.data();
+                            $.each( creditMemosGridData, function(indx,valu) { 
+                                amountToApply = (amountToApply + valu.creditMemo.Amount_To_Apply__c).round(2);
+                            });
+                            
+                            var deductionsGridData = $({!deductionsGridConfig.uniqueId}).data('kendoGrid').dataSource.data();
+                            $.each( deductionsGridData, function(indx,valu) { 
+                                amountToApply = (amountToApply + valu.deduction.Amount__c).round(2);
+                            });
+                            
+                            $('#CustomerReceiptHeaderUI').data('kendoDetailList').data.set('amountToApply',parseFloat(amountToApply).toFixed(2));
+                            
+                            // Calculate the total payment
+                            var paymentTotal = 0;
+                            
+                            var customerInvoicesGridData = $({!customerInvoicesGridConfig.uniqueId}).data('kendoGrid').dataSource.data();
+                            $.each( customerInvoicesGridData, function(indx,valu) { 
+                                if(customerInvoicesGridData[indx].selected == true){
+                                    paymentTotal = (paymentTotal + customerInvoicesGridData[indx].customerInvoice.Amount_Applied__c).round(2);
+                                }
+                                
+                            });
+                            
+                            var claimsGridData = $({!claimsGridConfig.uniqueId}).data('kendoGrid').dataSource.data();
+                            $.each( claimsGridData, function(indx,valu) { 
+                                if(valu.selected){
+                                    paymentTotal = (paymentTotal + valu.amountApplied).round(2);
+                                }
+                            });
+                            
+                            var additionalPaymentsGridData = $({!additionalPaymentsGridConfig.uniqueId}).data('kendoGrid').dataSource.data();
+                            $.each( additionalPaymentsGridData, function(indx,valu) { 
+                                paymentTotal = (paymentTotal + valu.additionalPayment.Amount__c).round(2);
+                            });
+                            
+                            $('#CustomerReceiptHeaderUI').data('kendoDetailList').data.set('totalPayment',parseFloat(paymentTotal).toFixed(2));
+                            
+                            // Calculate Amount Unapplied
+                            var diff = (amountToApply - paymentTotal) == 0 ? 0.00 : (amountToApply - paymentTotal);
+                            $('#CustomerReceiptHeaderUI').data('kendoDetailList').data.set('amountUnapplied', parseFloat((amountToApply - paymentTotal)).toFixed(2));
+                            if(diff == 0)
+                            	$('li[name=customer-receipt-payment-total]').find('.kndy-data-column').children().eq(1).css("color", "green");
+                            else if(diff < 0)
+                            	$('li[name=customer-receipt-payment-total]').find('.kndy-data-column').children().eq(1).css("color", "red");
+                            else
+                            	$('li[name=customer-receipt-payment-total]').find('.kndy-data-column').children().eq(1).css("color", "black");
+                        }
+                    }             
+                };
+            }();
+            
+        </script>
+        
+        <apex:pageBlock mode="mainDetail">
+            <div id="tabstrip" accesskey="w">
+                <ul>
+                    <li class="k-state-active">
+                       {!$Label.X1}.{!$Label.Payment_Sources}
+                    </li>
+                    <li>
+                        {!$Label.X2}.{!$ObjectType.Customer_Invoice__c.LabelPlural}
+                    </li>
+                    <li>
+                        {!$Label.X3}.{!$ObjectType.Claim__c.LabelPlural}
+                    </li>
+                    <li>
+                        {!$Label.X4}.{!$Label.Additional_Payments}
+                    </li>
+                </ul>
+                <div>
+                	<apex:pageBlockSection title="Payment Information" collapsible="true" columns="1">
+                		<div class="grid-container">
+                            <div class="grid-message"></div>
+                            <div id="CustomerReceiptBankInfo" ></div>
+                        </div>
+                        
+                	</apex:pageBlockSection>
+                    <apex:pageBlockSection title="{!$Label.Credits}" collapsible="true" columns="1">
+                        <div class="grid-container">
+                            <div class="grid-message"></div>
+                            <div id="{!creditMemosGridConfig.uniqueId}" ></div>
+                        </div>
+                    </apex:pageBlockSection>
+                    <apex:pageBlockSection title="{!$Label.General_Deductions}" collapsible="true" columns="1">
+                        <div class="grid-container">
+                            <div class="grid-message"></div>
+                            <div id="{!deductionsGridConfig.uniqueId}" ></div>
+                        </div>
+                    </apex:pageBlockSection>
+                </div>
+                <div>
+                    <apex:pageBlockSection collapsible="false" columns="1">
+                        <div class="grid-container">
+                            <div class="grid-message"></div>
+                            <div id="{!customerInvoicesGridConfig.uniqueId}" ></div>
+                        </div>
+                    </apex:pageBlockSection>
+                </div>
+                <div>
+                    <apex:pageBlockSection collapsible="false" columns="1">
+                        <div class="grid-container">
+                            <div class="grid-message"></div>
+                            <div id="{!claimsGridConfig.uniqueId}" ></div>
+                        </div>
+                    </apex:pageBlockSection>
+                </div>
+                <div>
+                    <apex:pageBlockSection collapsible="false" columns="1">
+                        <div class="grid-container">
+                            <div class="grid-message"></div>
+                            <div id="{!additionalPaymentsGridConfig.uniqueId}" ></div>
+                        </div>
+                    </apex:pageBlockSection>
+                </div>
+            </div>
+        </apex:pageBlock>
+    </div>
+    
+    <script type="text/javascript">  
+        
+        $(document).ready(function() {
+            $("#tabstrip").kendoTabStrip({
+                animation:  {
+                    open: {
+                        duration: 0,
+                        effects: "fadeIn"
+                    }
+                }
+            });
+        });
+        
+        /*************** GLOBAL VARIABLES **********************/
+        var detailData = [];
+        var expandedRows = [];
+        var deletedInvoiceDeductions = new Array();
+        var customerReceiptId = '{!Customer_Receipt__c.ID}';
+        /*************** PAYMENT SOURCES **********************/
+        $(document).ready(function() {
+           
+            var lookupSearchFilters = [];
+            
+            var crPaymentDetailList = $('#CustomerReceiptBankInfo').kendoDetailList({
+                    namespace: '{!NamespaceUU}',  
+                    autoExpandSections: true,  //this will by default expand all the sections. TODO on widget: push this option to each section giving users more control.
+                    sections: [
+                        {
+                        	fields: crPaymentsActions.GetInvoiceHeaderFieldList(JSON.parse('{!CustomerReceiptPaymentFieldList}')) //the main sections
+                        }
+                    ],
+                    lookupSearchAction: '{!$RemoteAction.CustomerReceiptManageExt.lookupSearchFilter}',
+                    getDetailListFunction: function() {
+                        var deferred = $.Deferred();
+                        
+                        Visualforce.remoting.Manager.invokeAction(
+                                '{!$RemoteAction.CustomerReceiptManageExt.getCustomerReceipt}',
+                                customerReceiptId,
+                                'PaymentDetailList',
+                                function (result, event) {
+                                    deferred.resolve(result, event);
+                                },
+                                {escape: false}
+                            );
+                        
+                        return deferred.promise();
+                    } 
+                }).data('kendoDetailList');
+            
+            crPaymentDetailList.element.bind("OnReadSuccess",crPaymentsActions.BindEvents);
+            var lookupSearchFilterForCreditMemo = [];
+            var filterTextForCreditMemo = "Type__c = \'Resolution\'";
+            lookupSearchFilterForCreditMemo.push({ field: "creditMemo.Resolution_Code__c", referenceTo: "Reason_Code__c", filter: filterTextForCreditMemo });
+            
+                 
+            // Initialize Credit Memos Grid
+            var creditMemosGrid = $.fn.GridRelatedList($('#{! creditMemosGridConfig.uniqueId}'), { 
+                                       namespace: '{!NamespaceUU}', 
+                                       config: '{! creditMemosGridConfigJson}', 
+                                       fieldList: CreditMemosManageUtils.GetFieldList('{!CreditMemoFieldList}'), 
+                                       lookupSearchAction:  '{!$RemoteAction.CustomerReceiptManageExt.lookupSearchFilter}', 
+                                       lookupSearchFilters: lookupSearchFilterForCreditMemo, 
+                                       saveRelatedListAction: '{!$RemoteAction.CustomerReceiptManageExt.saveList}',
+                                       getRelatedListFunction: getCreditMemosData,
+                                       modelIdField: 'creditMemo.Id',
+                                       reorderable: true, //KNDY-17349 drag and drop columns to reorder them
+                                       beforeEdit: function(e) {
+                                                CreditMemosManageUtils.BeforeEditOverride.call(this, e);
+                                       },
+                                     editable: isRenderGrid
+                                  });
+            
+            // Bind Grid Events
+            $('.add-command').on("click", $.proxy(CreditMemosManageActions.Add, { grid: creditMemosGrid }));
+            creditMemosGrid.dataSource.bind("change", CustomerReceiptManageActions.refresh);
+            creditMemosGrid.dataSource.bind("change", CreditMemosManageActions.refresh);
+            creditMemosGrid.bind('edit', $.proxy(CreditMemosManageUtils.EditOverride, { grid: this.creditMemosGrid }));
+            // Initialize Deductions Grid
+            var lookupSearchFilters3 = [];
+            var filterText3 = "Type__c = \'Deductions\'";
+            lookupSearchFilters3.push({ field: "deduction.Reason_Code__c", referenceTo: "Reason_Code__c", filter: filterText3 });
+            
+            var deductionsGrid = $.fn.GridRelatedList($('#{! deductionsGridConfig.uniqueId}'), { 
+                                      namespace: '{!NamespaceUU}', 
+                                      config: '{! deductionsGridConfigJson}', 
+                                      fieldList: DeductionsManageUtils.GetFieldList('{!DeductionFieldList}'), 
+                                      lookupSearchAction: '{!$RemoteAction.CustomerReceiptManageExt.lookupSearchFilter}',
+                                      lookupSearchFilters: lookupSearchFilters3, 
+                                      saveRelatedListAction: '{!$RemoteAction.CustomerReceiptManageExt.saveList}',
+                                      getRelatedListFunction: getDeductionsData,
+                                      reorderable: true, //KNDY-17349 drag and drop columns to reorder them
+                                      modelIdField: 'deduction.Id',
+                                     editable: isRenderGrid
+                                 });
+            
+            // Bind Grid Events
+            $('.add-command').on("click", $.proxy(DeductionsManageActions.Add, { grid: deductionsGrid }));
+            deductionsGrid.dataSource.bind("change", CustomerReceiptManageActions.refresh);
+            deductionsGrid.bind('edit', $.proxy(DeductionsManageActions.EditOverride, { grid: this.deductionsGrid }));
+        });
+        
+        var crPaymentsActions = function() {
+            	return {
+            		BindEvents: function(e) {
+            			$('input[name="Amount_Received__c"]').bind('change', 
+	                        CustomerReceiptManageActions.refresh
+	                    );
+	                    //Bind Type change event
+		                $.each($(".k-autocomplete input"), function(){
+		                        $(this).data("kendoLookup").options.minLength = 1;
+		                            if(this.id=='Bank_Account_2__r.Name'){
+                            			//KNDY-14482
+		                               CustomerReceiptManageUtils.bankAccountLookup=this;
+                               			CustomerReceiptManageUtils.UpdateBankAccountFilters();
+		                            }
+		                });
+            		},
+            		
+            		GetInvoiceHeaderFieldList: function(fieldList) {
+                    
+	                    $.each(fieldList, function() { 
+	                        if (this.field == 'Amount_Received__c') {
+	                        	this.min = 0;
+	                        }
+	                    });
+	
+	                    return fieldList;
+	                }
+            	};
+            }();  
+        
+        var setEarnedDiscountAmount = function(){ //KNDY-17349 refresh, and date recv change
+              console.log('>>> setEarnedDiscountAmount here....');
+              var grid = $({!customerInvoicesGridConfig.uniqueId}).data('kendoGrid');
+              var refreshGrid = false;
+              $.each(grid.dataSource.data(), function (idx, item) {
+                   if (item["calculateEarnedDiscountAmount"] && !refreshGrid){
+                       console.log('>>>> setEarnedDiscountAmount refreshGrid is true');
+                       refreshGrid = true;
+                   }
+                   CustomerInvoicesManageUtils.setRowEarnedDiscountAmount (item);
+             });
+
+             if (refreshGrid){
+                 grid.refresh();
+             }
+        }
+        
+        var setResolutionCode = function(result, event){
+              var namespace = '{!JSENCODE(NspaceUU)}';
+              if(result != null && result.records.length > 0){
+                  for (var i=0; i<result.records.length; i++){
+                  var reasonobj = {};
+                  reasonobj = eval('result.records[i].writeOffLine.'+ namespace +'Reason_Code__r');
+                  if(result.records[i].creditMemo != null){
+                    result.records[i].creditMemo.Resolution_Code__r = reasonobj;
+                  }
+                  if(result.records[i].customerInvoice != null){
+                    result.records[i].customerInvoice.Resolution_Code__r = reasonobj;
+                  }
+                }  
+              }
+        } 
+        
+        var getCreditMemosData = function() {
+            var deferred = $.Deferred();
+    		var customerId = ($('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Customer__c').val()) ? $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Customer__c').val() : '{!Customer_Receipt__c.Customer__c}';
+            var currencyId = ($('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Currency__c').val()) ? $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Currency__c').val() : '{!Customer_Receipt__c.Currency__c}';
+            var companyId = ($('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Company__c').val()) ? $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Company__c').val() : '{!Customer_Receipt__c.Company__c}';
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.CustomerReceiptManageExt.getCreditMemos}',
+                companyId,
+                customerId,
+                currencyId,
+                customerReceiptId,
+                function (result, event) {
+                    setResolutionCode(result, event);
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+            );
+
+            return deferred.promise();
+        }
+            
+        var CreditMemosManageUtils = function() {
+            return {
+                GetFieldList: function(fieldList) {
+                    fieldList = JSON.parse(fieldList);
+                    
+                     
+                    $.each(fieldList, function() { 
+                        
+                        if (this.field == 'creditMemo.Amount_To_Apply__c') {
+                            this.min = 0;
+                        }else if(this.field == 'creditMemo.Write_Off_Amount__c'){
+                            this.min = 0;
+                        }
+                        else if (this.field == 'creditMemo.Balance__c') {
+                            this.template = '#= CreditMemosManageUtils.SetBalanceAmount(data) #';
+                        }
+                    });
+
+                    
+                    return JSON.stringify(fieldList);
+                },
+                
+                SetBalanceAmount: function(data) {
+                    var rowUid = '';
+                    var balanceAmount = 0;
+                    
+                    if (data && data.get('creditMemo')) {
+                        rowUid = data.uid;
+                        
+                        var ciBalance = (data.get('creditMemo.Balance__c')) ? data.get('creditMemo.Balance__c') : 0;
+                        var ciAmountToApply = (data.get('creditMemo.Amount_To_Apply__c')) ? data.get('creditMemo.Amount_To_Apply__c') : 0;
+                        var ciWriteOffAmount = (data.get('creditMemo.Write_Off_Amount__c')) ? data.get('creditMemo.Write_Off_Amount__c') : 0
+                          
+                      balanceAmount = !isRenderGrid ?ciBalance : (ciBalance + ciAmountToApply + ciWriteOffAmount).round(2); 
+                    }
+                    
+                    return '<span id="' + rowUid + 'BalanceAmount">' + KenandyErp.FormatNumbersToCommas(balanceAmount.round(2)) + '</span>';
+                 },
+                 
+                 BeforeEditOverride: function(e) { //we use this function to ensure that Sold To Cusotmer is read only if Bill To information is not entered. 
+                    
+                    var grid = this;
+                    var columnIndex = grid.cellIndex(e.container);
+                    var fieldName = grid.thead.find("th").eq(columnIndex).data("field");
+                    var isDefaultPrevented = false;
+        
+                    if (!e.model.get('creditMemo.Write_Off_Amount__c')) {
+                        if (fieldName == 'creditMemo.Resolution_Code__c') {
+                            isDefaultPrevented = true;
+                		}
+                    }
+                    
+                    if (isDefaultPrevented) {
+                        e.preventDefault();
+                    }
+                    
+                 },
+                 EditOverride: function(e) {
+                    if ($(e.container).find('input[name="creditMemo.Resolution_Code__c"]').length > 0) { //checking if the field being edited is the Bill To
+                        var resaonCode = $(e.container).find('input[name="creditMemo.Resolution_Code__c"]');
+                        var lookupSearchFilters = [];
+                        var filterCriteria = [];
+
+                        var companyID = $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Company__c').val();
+                        if(!companyID || companyID == '')
+                        	KenandyErp.Message("Please enter a Company for the receipt");
+
+                        filterCriteria.push("Type__c = \'Resolution\' and  (Company__c = \'"+companyID+"\' OR Company__c = null)"); //OTC-290
+
+
+                        if (filterCriteria.length > 0) {
+                            lookupSearchFilters.push({ field: "creditMemo.Resolution_Code__c", filter: filterCriteria.join(' AND ') });
+                        }
+
+                        resaonCode.data('kendoLookup').options.criteria = lookupSearchFilters; //bind the lookup to the field and kendo grid.
+                    }
+                 }
+            };
+        }();
+        
+        
+        var CreditMemosManageActions = function() {
+            return { 
+                Search: function() {
+                    KenandyErp.ClearMessage();
+                    $('#{! creditMemosGridConfig.uniqueId}').data('kendoGrid').dataSource.read();
+                    return true;
+                },
+                
+                refresh: function(e){
+                    if(e != undefined && e.items.length > 0){
+                   
+                      var balanceAmount;
+                        if (e.action == 'remove' || (e.action == 'itemchange' )) {
+                            if(e.field == 'creditMemo.Amount_To_Apply__c' || e.field == 'creditMemo.Write_Off_Amount__c'){
+                                var creditMemosGridData = $({!creditMemosGridConfig.uniqueId}).data('kendoGrid').dataSource.data();
+                                $.each( creditMemosGridData, function(indx,valu) { 
+                                    var rowUid =  valu.uid ;
+                                    if(valu.creditMemo.Credit_Applied__c){
+                                        valu.creditMemo.Credit_Applied__c = 0;
+                                    }
+                                    // Adding the credit memo applied and amount to apply instead of subtracting since the total amount is negative amount.
+                                     balanceAmount = (valu.creditMemo.Balance__c + valu.creditMemo.Amount_To_Apply__c + valu.creditMemo.Write_Off_Amount__c).round(2);
+                                     
+                                     if(rowUid){
+                                        
+                                        $('#' + rowUid + 'BalanceAmount').text(KenandyErp.FormatNumbersToCommas(balanceAmount.round(2)));
+                                    }
+                                      
+                                });
+                                
+                              //  $({!creditMemosGridConfig.uniqueId}).data('kendoGrid').dataSource.data(creditMemosGridData);
+                            }
+                        }
+                    }
+                }
+            };
+        }();
+        
+        var getDeductionsData = function() {
+            var deferred = $.Deferred();
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.CustomerReceiptManageExt.getDeductions}',
+                customerReceiptId,
+                function (result, event) {
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+            );
+
+            return deferred.promise();
+        }
+            
+        var DeductionsManageUtils = function() {
+            return {
+                GetFieldList: function(fieldList) {
+                    fieldList = JSON.parse(fieldList);
+                    $.each(fieldList, function() {
+                        
+                        if (this.field == 'deduction.Amount__c') {
+                            this.min = 0;
+                        }
+                    });
+                    return JSON.stringify(fieldList);
+                }
+            };
+        }();
+        
+        var DeductionsManageActions = function() {
+            return { 
+                Search: function() {
+                    KenandyErp.ClearMessage();
+                    $('#{! deductionsGridConfig.uniqueId}').data('kendoGrid').dataSource.read();
+                    return true;
+                },
+                EditOverride: function(e) {
+                    if ($(e.container).find('input[name="deduction.Reason_Code__c"]').length > 0) { //checking if the field being edited is the Bill To
+                        var resaonCode = $(e.container).find('input[name="deduction.Reason_Code__c"]');
+                        var lookupSearchFilters = [];
+                        var filterCriteria = [];
+
+                        var companyID = $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Company__c').val();
+                        if(!companyID || companyID == '')
+                        	KenandyErp.Message("Please enter a Company for the receipt");
+
+                        filterCriteria.push("Type__c = \'Deductions\' and  (Company__c = \'"+companyID+"\' OR Company__c = null)"); //OTC-290
+
+
+                        if (filterCriteria.length > 0) {
+                            lookupSearchFilters.push({ field: "deduction.Reason_Code__c", filter: filterCriteria.join(' AND ') });
+                        }
+
+                        resaonCode.data('kendoLookup').options.criteria = lookupSearchFilters; //bind the lookup to the field and kendo grid.
+                    }
+                 }
+            };
+        }();
+        
+        /************ CUSTOMER INVOICES ********************/
+        $(document).ready(function() {
+            var lookupSearchFilters = [];
+                        
+            lookupSearchFilters.push({ field: "Customer_Invoice__c", filter: "Customer__c = \'{!Customer_Receipt__c.Customer__c}\'" });
+            var reasonCodeLookupFilter = "Type__c = \'Resolution\'";
+            lookupSearchFilters.push({ field: "customerInvoice.Resolution_Code__c", referenceTo: "Reason_Code__c", filter: reasonCodeLookupFilter });
+            var customerInvoicesGrid = $.fn.GridAddManageCustomerInvoices($('#{! customerInvoicesGridConfig.uniqueId}'), {
+                                             namespace: '{!NamespaceUU}', 
+                                             config: '{!customerInvoicesGridConfigJson}', 
+                                             masterFieldList: CustomerInvoicesManageUtils.GetFieldList('{!customerInvoiceFieldList}'), 
+                                             detailFieldList: '{!customerInvoiceDetailFieldList}', 
+                                             lookupSearchAction: '{!$RemoteAction.CustomerReceiptManageExt.lookupSearchFilter}', 
+                                             getCustomerInvoicesAction: getCustomerInvoicesData, 
+                                             lookupSearchFilters: lookupSearchFilters,
+                                             editable: isRenderGrid
+                                        });
+            
+            customerInvoicesGrid.dataSource.bind("change", CustomerReceiptManageActions.refresh);
+            
+            customerInvoicesGrid.one("dataBound", function() {
+                $.each(this.dataSource.data(), function() {
+                    if (this.get('invoiceDeductions') && this.get('invoiceDeductions').length > 0) {
+                        expandedRows.push(this.uid);
+                    }
+                });
+                
+                if (expandedRows.length > 0) {
+                    CustomerInvoicesManageActions.ExpandCollapseRow();
+                }
+            });
+            
+            customerInvoicesGrid.tbody.on("change", ".grid-select-one", function (e) {
+			    var row = $(e.target).closest("tr");
+			    var item = customerInvoicesGrid.dataItem(row);
+			    item.set("selected", $(e.target).is(":checked") ? 1 : 0);
+			});
+                
+        });
+        
+        (function ($) {
+            $.fn.GridAddManageCustomerInvoices = function(selector, options) {
+                var config = JSON.parse(options.config);
+                var masterFieldList = options.masterFieldList;
+                var detailFieldList = JSON.parse(options.detailFieldList);
+                var buttons = $.map(config.buttons.split(','), $.trim);             
+                var namespace = options.namespace;
+                var lookupSearchAction = options.lookupSearchAction;
+                var getCustomerInvoicesAction = options.getCustomerInvoicesAction;
+                var masterReferenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(masterFieldList); // get the list of reference fields for the master grid
+                var dateFields = KenandyErp.KendoGridOptions.GetDateFields(masterFieldList); // get the list of date fields for the master grid
+                var lookupSearchFilters = (options.lookupSearchFilters) ? options.lookupSearchFilters : [];
+                
+                var getMasterModel = function() {
+                    var fields = KenandyErp.KendoGridOptions.GetFields(masterFieldList);    
+                    var model = kendo.data.Model.define({ id: "Id", fields: fields });
+                    return model;
+                };
+                        
+                var getMasterColumns = function() {
+                    var columns = KenandyErp.KendoGridOptions.GetColumns(masterFieldList, { lookupSearchAction: lookupSearchAction, buttons: buttons, lookupSearchFilters: lookupSearchFilters });
+                    return columns;
+                };
+                
+                var getMasterToolbarButtons = function() {
+                    return KenandyErp.KendoGridOptions.GetToolbarButtons(buttons);
+                };
+                    
+                var getMasterDataSource = function() {
+                    var dataSource = new kendo.data.DataSource({
+                        transport: {
+                            read: function (options) {
+                                    KenandyErp.BlockUI(selector);
+                                    
+                                    var promise = getCustomerInvoicesAction();
+                                    
+                                    promise.done(function(result, event){
+                                        KenandyErp.UnBlockUI(selector);
+                                        
+                                        if (event.type == 'exception') {
+                                            KenandyErp.Alert("{!$Label.Error_occurred_contact_support}");
+                                        } else {
+                                            KenandyErp.CleanNamespace(result.records, namespace);
+                                            options.success(result.records);
+                                        }
+                                    });
+                                  }
+                        },
+                        batch: true,
+                        pageSize: KenandyErp.KendoGridOptions.DefaultPageSize,
+                        schema: {
+                            model: getMasterModel(),
+                            parse: function (response) {
+                                       $.each(response, function (idx, item) {
+                                            item = Serializer.ConvertFromSFDCDate(item, { dateFields: dateFields });
+                                       });
+                                        
+                                       return response;
+                                   }
+                        }           
+                    });
+        
+                    return dataSource;
+                };
+                
+                var masterGrid = $(selector).kendoGrid({
+                                    dataSource: getMasterDataSource(), 
+                                    navigatable: true,
+                                    pageable: { 
+                                        input: true,
+                                        numeric: false,
+                                        pageSizes: KenandyErp.KendoGridOptions.PageSizes 
+                                    },  
+                                    toolbar: getMasterToolbarButtons(), 
+                                    columns: getMasterColumns(),
+                                    sortable: true,
+                                    filterable: true,
+                                    resizable: true,
+                                    detailTemplate: kendo.template($("#detailTemplate").html()),
+                                    detailInit: $.proxy(CustomerInvoicesManageActions.DetailInit, { detailFieldList: detailFieldList, lookupSearchAction: lookupSearchAction }),
+                                    editable: isRenderGrid,
+                                    modelIdField: 'customerInvoice.Id',
+                                    reorderable: true, //KNDY-17349 drag and drop columns to reorder them
+                                    beforeEdit: function(e) {
+                                       CustomerInvoicesManageUtils.BeforeEditOverride.call(this, e);
+                                    },
+                                    edit: $.proxy(KenandyErp.KendoGridActions.Edit, { referenceFields: masterReferenceFields })
+                                }).data('kendoGrid');
+                
+                
+                // bind click events to the custom buttons
+                KenandyErp.KendoGridOptions.BindEvents(masterGrid, buttons, 
+                                        { 
+                                            referenceFields: masterReferenceFields, 
+                                            config: config, 
+                                            dateFields: dateFields 
+                                        }
+                                    );
+                
+                // bind grid detailExpand/detailCollapse events
+                masterGrid.bind("detailExpand", $.proxy(CustomerInvoicesManageActions.DetailExpand, { grid: masterGrid }));
+                masterGrid.bind("detailCollapse", $.proxy(CustomerInvoicesManageActions.DetailCollapse, { grid: masterGrid }));
+                
+                masterGrid.dataSource.bind("change", $.proxy(CustomerInvoicesManageActions.refresh, { masterGrid: masterGrid, isMasterGrid: true }));
+                masterGrid.bind('edit', $.proxy(CustomerInvoicesManageUtils.EditOverride, { grid: masterGrid }));  
+                return masterGrid;
+            };
+        })(jQuery);
+        
+        var getCustomerInvoicesData = function() {
+            var deferred = $.Deferred();
+    		var customerId = ($('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Customer__c').val()) ? $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Customer__c').val() : '{!Customer_Receipt__c.Customer__c}';
+            var currencyId = ($('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Currency__c').val()) ? $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Currency__c').val() : '{!Customer_Receipt__c.Currency__c}';
+            var companyId = ($('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Company__c').val()) ? $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Company__c').val() : '{!Customer_Receipt__c.Company__c}'; 
+            
+            //KNDY-17349
+            var dateReceived = ($('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Date_Received__c').val()) ? $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Date_Received__c').val() : '{!Customer_Receipt__c.Date_Received__c}';
+            if (!dateReceived){
+                dateReceived = new Date();
+            }
+            dateReceived = new Date(moment(dateReceived).tz(KenandyErp.TimeZone).utc().format('M/D/YYYY'));
+            dateReceived = new Date(moment.utc(dateReceived)).toUTCString();
+
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.CustomerReceiptManageExt.getCustomerInvoices}',
+                companyId,
+                customerId,
+                currencyId,
+                customerReceiptId,
+                dateReceived,
+                function (result, event) {
+                    console.log(result.records);
+                    
+                    //KNDY-17349 
+                    for (var i = 0; i < result.records.length; i ++){ 
+                        // do not calculate discount after cis are queried, discount is set in controller
+                        (result.records[i])["calculateEarnedDiscountAmount"] =  false;
+                        // set fieldinfo value
+                        result.records[i].earnedDiscountAmount = 0;
+                        result.records[i].unearnedDiscountAmount = 0;
+                        if(customerReceiptId){
+                            if (result.records[i].selected){
+                                result.records[i].earnedDiscountAmount = result.records[i].ciEarnedDiscountAmount;
+                                result.records[i].unearnedDiscountAmount = result.records[i].ciUnearnedDiscountAmount;
+                            }
+                        }
+                    }
+                    setResolutionCode(result, event);
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+            );
+
+            return deferred.promise();
+        }
+            
+        var CustomerInvoicesManageUtils = function() {
+            return {
+                GetFieldList: function(fieldList) {
+                    fieldList = JSON.parse(fieldList);
+                    
+                    $.each(fieldList, function() {
+                        
+                        if ( this.field == 'customerInvoice.Amount_Applied__c' || this.field == 'customerInvoice.Write_Off_Amount__c') {
+                            this.min = 0;
+                        }
+                        else if (this.field == 'customerInvoice.Balance__c') {
+                            this.template = '#= CustomerInvoicesManageUtils.SetBalanceAmount(data) #';
+                            this.sortable = {
+                                compare: function(a, b) { 
+                                    var aBalanceAmount = parseFloat($('#' + a.uid + 'BalanceAmount').text());
+                                    var bBalanceAmount = parseFloat($('#' + b.uid + 'BalanceAmount').text());
+                                    
+                                    return aBalanceAmount - bBalanceAmount;
+                                }
+                            };
+                        }
+                        else if (this.field == 'earnedDiscountAmount') {//KNDY-17349
+                            this.min = 0;
+                        }
+                        else if (this.field == 'selected') {
+                            this.template = "<input type='checkbox' data-bind='selected' #= selected ? checked='checked': '' # class='grid-select-one' />";
+                        }
+                    });
+
+                    return fieldList;
+                },
+                
+                GetInvoiceDeductionsById: function(id) {
+                    var data = _.where(detailData, {Id: id});
+                    var invoiceDeductionsData = [];
+                    
+                    if (data.length > 0) {
+                        invoiceDeductionsData = data[0].invoiceDeductions;
+                    }
+                    
+                    return invoiceDeductionsData;
+                },
+                
+                SetInvoiceDeductions: function(id, invoiceDeductionsData) {
+                
+                    var found = false;
+                    
+                    $.each(detailData, function() {
+                        if (this.Id == id) {
+                            this.invoiceDeductions = invoiceDeductionsData;
+                            found = true;
+                            return false;
+                        }
+                    });
+                    
+                    if (!found) {
+                        detailData.push({ Id: id, invoiceDeductions: invoiceDeductionsData });
+                        found = false; // Reset found for next round
+                    }
+                },
+                
+                EditOverride:function(e){ //KNDY-17349
+                    var self = this;
+                    var grid = self.grid;
+                    var columnIndex = grid.cellIndex(e.container);
+                    var fieldName = grid.thead.find("th").eq(columnIndex).data("field");
+                    var row = e.container.closest('tr');
+                    var dataItem = this.grid.dataItem(row);
+                    var maxDiscount = CustomerInvoicesManageUtils.GetMaxEarnedDiscountAmount(dataItem);
+                    var container = e.container; 
+                    // set max value for earnedDiscountAmount
+                    if (container.find('input[name="earnedDiscountAmount"]') && container.find('input[name="earnedDiscountAmount"]').data("kendoNumericTextBox")){
+                         container.find('input[name="earnedDiscountAmount"]').data("kendoNumericTextBox").max(maxDiscount);
+                    }
+                    // if not selected, cells are not editable
+                    if (!dataItem.selected){
+                         grid.closeCell();
+                    }
+                    if ($(e.container).find('input[name="customerInvoice.Resolution_Code__c"]').length > 0) { //checking if the field being edited is the Bill To
+                        var resaonCode = $(e.container).find('input[name="customerInvoice.Resolution_Code__c"]');
+                        var lookupSearchFilters = [];
+                        var filterCriteria = [];
+
+                        var companyID = $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Company__c').val();
+                        if(!companyID || companyID == '')
+                        	KenandyErp.Message("Please enter a Company for the receipt");
+
+                        filterCriteria.push("Type__c = \'Resolution\' and  (Company__c = \'"+companyID+"\' OR Company__c = null)"); //OTC-290
+
+
+                        if (filterCriteria.length > 0) {
+                            lookupSearchFilters.push({ field: "customerInvoice.Resolution_Code__c", filter: filterCriteria.join(' AND ') });
+                        }
+
+                        resaonCode.data('kendoLookup').options.criteria = lookupSearchFilters; //bind the lookup to the field and kendo grid.
+                    }
+
+
+
+
+                },
+                
+                BeforeEditOverride: function(e) { //we use this function to ensure that Sold To Cusotmer is read only if Bill To information is not entered. 
+                    
+                    var grid = this;
+                    var columnIndex = grid.cellIndex(e.container);
+                    var fieldName = grid.thead.find("th").eq(columnIndex+1).data("field");
+                    var isDefaultPrevented = false;
+        
+                    if (!e.model.get('customerInvoice.Write_Off_Amount__c')) {
+                        if (fieldName == 'customerInvoice.Resolution_Code__c') {
+                            isDefaultPrevented = true;
+                        }
+                    }
+                    
+                    if (isDefaultPrevented) {
+                        e.preventDefault();
+                    }
+                    
+                },
+                
+                // called from refresh grid , date receveid change
+                getEarnedDiscountAmount: function(data){ //KNDY-17349
+                    console.log('>>>> getEarnedDiscountAmount here....');
+                    var discount = 0.0;
+                    var namespace = '{!JSENCODE(NspaceUU)}';
+                    var crId = $('#CustomerReceiptHeaderUI').data('kendoDetailList').data.get('Id'); 
+                    
+                    // get utc date received
+                    var dateReceived = ($('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Date_Received__c').val()) ? $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Date_Received__c').val() : '{!Customer_Receipt__c.Date_Received__c}';
+                    dateReceived = new Date(dateReceived);
+                    dateReceived = new Date(dateReceived.getUTCFullYear(), dateReceived.getUTCMonth(), dateReceived.getUTCDate(), dateReceived.getUTCHours(), dateReceived.getUTCMinutes(), dateReceived.getUTCSeconds());
+                    var crDateReceived = moment(dateReceived).toDate().getTime();
+                    if(!(crDateReceived instanceof Date)) {
+                        crDateReceived= moment(crDateReceived);
+                    }
+                    crDateReceived = crDateReceived.startOf('day'); //set time to 0:0:0
+                    
+                    if (data && data.get('customerInvoice')) {
+                        KenandyErp.CleanNamespace(data, namespace);
+                        var ciBalance = data.get('customerInvoice').Balance__c;
+                        var paymentTerm = data.get('customerInvoice').Payment_Term__r;
+                        var discountOnBalance = 0;
+                        if(typeof paymentTerm != 'undefined' && typeof paymentTerm.Discount_Percent__c  != 'undefined')
+                            discountOnBalance  = ((data.get('customerInvoice').Payment_Term__r.Discount_Percent__c/100) * ciBalance).round(2);
+                        discount = discountOnBalance;
+                        
+                        // get utc discount date
+                        var discountDate = data.get('customerInvoice').Early_Payment_Discount_Date__c;
+                        disocuntDate = new Date(discountDate);
+                        discountDate = new Date(disocuntDate.getUTCFullYear(), disocuntDate.getUTCMonth(), disocuntDate.getUTCDate(), disocuntDate.getUTCHours(), disocuntDate.getUTCMinutes(), disocuntDate.getUTCSeconds());
+                        discountDate= moment(discountDate);
+                        var discountDateEnd = discountDate.endOf('day'); //set time to 23:59:59;
+                        
+                        // if date received is beyond the discount date, set discount to 0
+                        if( crDateReceived > discountDateEnd){
+                            discount = 0.0;
+                        }
+                        // if ci is partially paid, set discount to 0
+                        else if ( data.get('customerInvoice').Total_Amount__c != ciBalance){
+                            discount = 0.0;
+                        }
+                        
+                        // if discount is not to be re-calculated, reset it to value in fieldinfo
+                        // required for cancel changes
+                        if(data.customerInvoice != null){
+                           if (data.get("calculateEarnedDiscountAmount") == false){
+                               discount = data.get('ciEarnedDiscountAmount');
+                           }
+                        }
+                        if (data.selected == false){
+                            discount = 0.0;
+                        }  
+                    }
+                    return discount;
+                },
+                
+                // called by grid refresh and date received change
+                setRowEarnedDiscountAmount: function (data){ //KNDY-17349
+                    console.log('>>>> setRowEarnedDiscountAmount here...');
+                    var rowUid = data.get('uid');
+                    var currentdiscount = data.get('earnedDiscountAmount'); //user entered value in column
+                    var discount = CustomerInvoicesManageUtils.getEarnedDiscountAmount(data);
+                    // keep user entered UI value
+                    if(data.customerInvoice != null){
+                        if ( data.get("calculateEarnedDiscountAmount") == false  && data.selected == true){
+                            discount = currentdiscount;
+                        }
+                    }
+                    data["calculateEarnedDiscountAmount"] = false;
+                    data["earnedDiscountAmount"] = discount;
+                    data["ciEarnedDiscountAmount"] = discount;
+                    return '<span id="' + rowUid + 'ciEarnedDiscountAmount">' + KenandyErp.FormatNumbersToCommas(discount.round(2)) + '</span>';
+                },
+                
+                GetMaxEarnedDiscountAmount: function (data){//KNDY-17349
+                    var maxEarnedDiscountAmount = 0;
+                    if (data && data.get('customerInvoice')) {
+                        var ciBalance = data.get('customerInvoice').Balance__c;
+                        var paymentTerm = data.get('customerInvoice').Payment_Term__r;
+                        if(typeof paymentTerm == 'undefined' || typeof paymentTerm.Discount_Percent__c  == 'undefined')
+                            return 0;
+                        var discountOnBalance  = (paymentTerm.Discount_Percent__c/100) * ciBalance;
+                        maxEarnedDiscountAmount = discountOnBalance;
+                    }
+                    return maxEarnedDiscountAmount;
+                },
+                
+                SetBalanceAmount: function(data) {
+                    var rowUid = '';
+                    var balanceAmount = 0;
+                    if (data && data.get('customerInvoice')) {
+                        rowUid = data.uid;
+                        
+                        var ciBalance = (data.get('customerInvoice.Balance__c')) ? data.get('customerInvoice.Balance__c') : 0;
+                        var ciTotalAmount = (data.get('customerInvoice.Total_Amount__c')) ? data.get('customerInvoice.Total_Amount__c') : 0;
+                        var ciAmountPaid = (data.get('customerInvoice.Amount_Paid__c')) ? data.get('customerInvoice.Amount_Paid__c') : 0;
+                        var ciAmountApplied = (data.get('customerInvoice.Amount_Applied__c')) ? data.get('customerInvoice.Amount_Applied__c') : 0;
+
+                        var ciEarnedDiscountAmount = (data.get('earnedDiscountAmount')) ? data.get('earnedDiscountAmount') : 0;//KNDY-17349
+                        var ciUnearnedDiscountAmount = (data.get('unearnedDiscountAmount')) ? data.get('unearnedDiscountAmount') : 0;//KNDY-17349
+ 
+                        var ciWriteOffAmount = (data.get('customerInvoice.Write_Off_Amount__c')) ? data.get('customerInvoice.Write_Off_Amount__c') : 0;
+                        var ciDebitApplied = (data.get('customerInvoice.Debit_Applied__c')) ? data.get('customerInvoice.Debit_Applied__c') : 0;
+                        var ciCreditApplied = (data.get('customerInvoice.Credit_Applied__c')) ? data.get('customerInvoice.Credit_Applied__c') : 0;
+                        var ciDiscountTaken =  (data.get('customerInvoice.Discount_Taken__c')) ? data.get('customerInvoice.Discount_Taken__c') : 0;   
+                        var ciDeductionAmount = (data.get('customerInvoice.Deduction_Amount__c')) ? data.get('customerInvoice.Deduction_Amount__c') : 0;
+                        
+                        var invoiceDeductions = CustomerInvoicesManageUtils.GetInvoiceDeductionsById(rowUid);
+                        
+                        if (invoiceDeductions.length == 0 && (!_.contains(_.pluck(detailData, 'Id'), rowUid))) {
+                            invoiceDeductions = data.get('invoiceDeductions');
+                        }
+                        
+                        var deductionsAmounts = (invoiceDeductions) ? _.pluck(invoiceDeductions, 'Amount__c') : [];
+                        var totalDeductionAmount = 0;
+                        
+                        if (deductionsAmounts.length > 0) {
+                            totalDeductionAmount = _.reduce(deductionsAmounts, function(result, item) {
+                                    return result + item;
+                                }, 0);
+                        }
+                            
+                        ciBalance = !isRenderGrid ? ciBalance : (ciBalance - ciAmountApplied - ciEarnedDiscountAmount - ciUnearnedDiscountAmount - ciWriteOffAmount).round(2); //OTC-668
+                        balanceAmount = !isRenderGrid ? ciBalance : (ciBalance - totalDeductionAmount).round(2);
+                    }
+                    
+                    return '<span id="' + rowUid + 'BalanceAmount">' + KenandyErp.FormatNumbersToCommas(balanceAmount.round(2)) + '</span>';
+                }
+            };
+        }();
+        
+        var CustomerInvoicesManageActions = function() {
+            return { 
+            
+                
+                
+                refresh: function(e){
+                    
+                    var that = this;
+                    var masterGrid = that.masterGrid;
+                    var rowUid = (that.isMasterGrid && e.items.length > 0) ? e.items[0].uid : that.rowUid;
+                    var masterRow = masterGrid.table.find("tr[data-uid='" + rowUid + "']");
+                    var detailGrid = (that.isMasterGrid) ? masterRow.next('tr.k-detail-row').find(".grid-customer-invoice-details").data('kendoGrid') : that.detailGrid;
+                    var fields = [ 'selected','Amount__c', 'customerInvoice.Amount_Applied__c', 'earnedDiscountAmount','unearnedDiscountAmount', 'customerInvoice.Write_Off_Amount__c' ];
+
+                        
+                    if (e.action == 'remove' || (e.action == 'itemchange' && _.contains(fields, e.field))) {
+                        KenandyErp.ClearMessage(); //KNDY-17349
+                        
+                        if (e.action == 'remove')
+                        {       
+                                $.each( detailGrid.dataSource._destroyed, function(indx,valu) { 
+                                //console.log(valu);
+                                
+                                var invId = valu['Customer_Invoice__c'];
+                                var tempList = (deletedInvoiceDeductions[invId]) ? deletedInvoiceDeductions[invId] : [];
+                                if(tempList.length == 0){
+                                    tempList.push(valu);
+                                    deletedInvoiceDeductions[invId] = tempList;
+                                }
+                                else {
+                                    var found = false;
+                                    $.each( tempList, function(i,v){
+                                        if(tempList[i].Id == valu.Id){
+                                            
+                                            found= true;
+                                        }
+                                        
+                                    });
+                                    if(!found)
+                                        deletedInvoiceDeductions[invId].push(valu); //OTC-694
+                                }
+                                
+                            });
+                        }
+                        //console.log( deletedInvoiceDeductions);
+                        var deductionsAmount;
+                        deductionsAmount = (detailGrid && detailGrid.dataSource._data.length > 0) ? detailGrid.dataSource.aggregates().Amount__c.sum : 0;
+                        
+                        var masterDataItem = masterGrid.dataItem(masterRow);
+                        var balanceAmount = 0;
+                        
+                        if (masterDataItem) {
+                            // calculate discount if row is selected
+                            var earnedDiscountFields = ['selected']; //KNDY-17349
+                            if ((e.action == 'itemchange' && _.contains(earnedDiscountFields, e.field))) {
+                                console.log('>>> calculateEarnedDiscountAmount as selected or amount applied changed')
+                                masterDataItem["calculateEarnedDiscountAmount"] =  true;
+                            }
+                            else{
+                                masterDataItem["calculateEarnedDiscountAmount"] =  false;
+                            }
+                            setEarnedDiscountAmount();//KNDY-17349
+                            
+                            // calculate balance  and amount applied when selected
+                            var ciBalance = (masterDataItem.get('customerInvoice.Balance__c')) ? masterDataItem.get('customerInvoice.Balance__c') : 0;
+                            var ciTotalAmount = (masterDataItem.get('customerInvoice.Total_Amount__c')) ? masterDataItem.get('customerInvoice.Total_Amount__c') : 0;
+                            var ciAmountPaid = (masterDataItem.get('customerInvoice.Amount_Paid__c')) ? masterDataItem.get('customerInvoice.Amount_Paid__c') : 0;
+                            
+                            var ciAmountApplied = (masterDataItem.get('customerInvoice.Amount_Applied__c')) ? masterDataItem.get('customerInvoice.Amount_Applied__c') : 0;
+                            
+                            //KNDY-17349
+                            var ciEarnedDiscountAmount = (masterDataItem.get('earnedDiscountAmount')) ? masterDataItem.get('earnedDiscountAmount') : 0;
+                            var ciUnearnedDiscountAmount = (masterDataItem.get('unearnedDiscountAmount')) ? masterDataItem.get('unearnedDiscountAmount') : 0;
+                            
+                            //KNDY-17349 Unearned discount amount change in ui fieldInfo, copy value in ci wrapper
+                            if ( e.field == "unearnedDiscountAmount"){
+                                 masterDataItem["ciUnearnedDiscountAmount"] = masterDataItem.get('unearnedDiscountAmount');
+                            }
+                            
+                            var ciWriteOffAmount = (masterDataItem.get('customerInvoice.Write_Off_Amount__c')) ? masterDataItem.get('customerInvoice.Write_Off_Amount__c') : 0;
+                            var ciDiscountTaken =  (masterDataItem.get('customerInvoice.Discount_Taken__c')) ? masterDataItem.get('customerInvoice.Discount_Taken__c') : 0; 
+                            var ciDebitApplied = (masterDataItem.get('customerInvoice.Debit_Applied__c')) ? masterDataItem.get('customerInvoice.Debit_Applied__c') : 0;
+                            var ciCreditApplied = (masterDataItem.get('customerInvoice.Credit_Applied__c')) ? masterDataItem.get('customerInvoice.Credit_Applied__c') : 0;
+                            var ciDeductionAmount = (masterDataItem.get('customerInvoice.Deduction_Amount__c')) ? masterDataItem.get('customerInvoice.Deduction_Amount__c') : 0;
+                            
+                          
+                            
+                            ciBalance =  (ciBalance - ciAmountApplied - ciEarnedDiscountAmount - ciUnearnedDiscountAmount - ciWriteOffAmount).round(2); //OTC-547 and OTC-668
+                            balanceAmount =  (ciBalance - deductionsAmount).round(2);
+                            
+                            if(rowUid){
+                                
+                                $('#' + rowUid + 'BalanceAmount').text(KenandyErp.FormatNumbersToCommas(balanceAmount.round(2)));
+                                
+                            }
+                            if(e.action == 'itemchange' && e.field == 'selected') {
+                        		if(masterDataItem.get('selected') == true) {
+                        		    if(ciAmountApplied == 0){
+                        			  masterDataItem.set('customerInvoice.Amount_Applied__c', balanceAmount);
+                        			}  
+                        		}
+                        		else {
+                        			masterDataItem.set('customerInvoice.Amount_Applied__c', 0);
+                        		}
+                        	}
+                    }
+                    }
+                    
+                    if (!that.isMasterGrid) {
+                        
+                        CustomerInvoicesManageUtils.SetInvoiceDeductions(rowUid,detailGrid.dataSource.data());
+                    }
+                    else {
+                        CustomerInvoicesManageActions.ExpandCollapseRow();
+                    }
+                   
+                },
+
+                Search: function() {
+                    KenandyErp.ClearMessage();
+                    $('#{! customerInvoicesGridConfig.uniqueId}').data('kendoGrid').dataSource.read();
+                    return true;
+                },
+                
+                Edit: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    
+                    /*
+                    
+                    // Show/Hide tier based pricing on Type selection
+                    $(e.container).find('input[name="Type__c"]').bind('change', 
+                        $.proxy(ContractLinesAddManageActions.ExpandCollapseRow, { grid: grid })
+                    );
+                    
+                    */
+                },
+                
+                ExpandCollapseRow: function() {
+                    var grid = $({!customerInvoicesGridConfig.uniqueId}).data('kendoGrid');
+                    var customerInvoicesGridData = $({!customerInvoicesGridConfig.uniqueId}).data('kendoGrid').dataSource.data();
+                    
+                    // Collapse and expand the row if the row is already expanded
+                    $.each( customerInvoicesGridData, function(indx,valu) { 
+                        if (_.contains(expandedRows, valu.uid)) {
+                            var row = grid.tbody.find("tr[data-uid='" + valu.uid + "']");
+                            grid.collapseRow(row);
+                            grid.expandRow(row); 
+                        }
+                    });
+                },
+                
+                DetailExpand: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    var masterDataItem = grid.dataItem(e.masterRow);
+                    
+                    e.detailRow.find("#{!customerInvoiceDetailsGridConfig.uniqueId}").show();
+                    e.detailRow.find(".grid-payment-sources-message").hide();
+                        
+                    // add row uid to the expandedRows list
+                    expandedRows.push(masterDataItem.uid);
+                },
+                
+                DetailCollapse: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    var masterDataItem = grid.dataItem(e.masterRow);
+                    
+                    // remove row uid to the expandedRows list
+                    expandedRows.pop(masterDataItem.uid);
+                },
+                
+                DetailInit: function(e) {
+                    var self = this;
+                    var detailRow = e.detailRow;
+                    var detailFieldList = self.detailFieldList;
+                    var lookupSearchAction = self.lookupSearchAction;
+                    var uid = e.data.uid;
+                    var detailReferenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(detailFieldList); // get the list of reference fields for the detail grid
+                    var invoiceDeductionsData = CustomerInvoicesManageUtils.GetInvoiceDeductionsById(uid);
+                    var detailButtons = isRenderGrid ? [ KenandyErp.KendoGridOptions.CommandType.Create, KenandyErp.KendoGridOptions.CommandType.Delete, KenandyErp.KendoGridOptions.CommandType.Cancel, KenandyErp.KendoGridOptions.CommandType.Search ] : [];
+                    
+                    var lookupSearchFilters = [];
+                    var reasonCodeLookupFilterText = "Type__c = \'Deductions\'";
+                    lookupSearchFilters.push({ field: "Reason_Code__c", referenceTo: "Reason_Code__c", filter: reasonCodeLookupFilterText });
+                    
+                    if (invoiceDeductionsData.length == 0 && (!_.contains(_.pluck(detailData, 'Id'), uid))) {
+                        if (e.data.get('invoiceDeductions')) {
+                            invoiceDeductionsData = JSON.parse(JSON.stringify(e.data.get('invoiceDeductions')));
+                        }
+                    }
+                    
+                    var getDetailModel = function() {
+                        var fields = KenandyErp.KendoGridOptions.GetFields(detailFieldList); 
+                        var model = kendo.data.Model.define({ id: "Id", fields: fields });
+                                
+                        return model;
+                    };
+                    
+                    var getDetailToolbarButtons = function() {
+                        return KenandyErp.KendoGridOptions.GetToolbarButtons(detailButtons);
+                    };
+                            
+                    var getDetailColumns = function() {
+                        return KenandyErp.KendoGridOptions.GetColumns(detailFieldList, { lookupSearchAction: lookupSearchAction, buttons: detailButtons, lookupSearchFilters: lookupSearchFilters });
+                    };
+                    
+                    var getDetailDataSource = function() {
+                        var dataSource = new kendo.data.DataSource({
+                            data: invoiceDeductionsData, 
+                            batch: true,
+                            aggregate: [{ field: "Amount__c", aggregate: "sum" }],
+                            schema: {
+                                model: getDetailModel()
+                            }
+                        });
+            
+                        return dataSource;
+                    };
+                    
+                    var detailsGrid = detailRow.find(".grid-customer-invoice-details").kendoGrid({
+                                        dataSource: getDetailDataSource(), 
+                                        navigatable: true,
+                                        toolbar: getDetailToolbarButtons(),
+                                        columns: getDetailColumns(),
+                                        sortable: false,
+                                        filterable: true,
+                                        resizable: true,
+                                        editable: isRenderGrid,
+                                        reorderable: true, //KNDY-17349 drag and drop columns to reorder them
+                                        edit: $.proxy(KenandyErp.KendoGridActions.Edit, { referenceFields: detailReferenceFields }),
+                                        dataBound: function(e) {
+                                          this.footer.hide();
+                                        }
+                                      }).data('kendoGrid');
+                    
+                    // bind click events to the custom buttons
+                    KenandyErp.KendoGridOptions.BindEvents(detailsGrid, detailButtons, 
+                        { 
+                            referenceFields: detailReferenceFields
+                        }
+                    );
+                    
+                    detailsGrid.dataSource.bind("change", CustomerReceiptManageActions.refresh);
+                    detailsGrid.dataSource.bind("change", $.proxy(CustomerInvoicesManageActions.refresh, { masterGrid: e.sender, detailGrid: detailsGrid, rowUid: uid, isMasterGrid: false }));
+                    detailsGrid.bind('edit', $.proxy(CustomerInvoicesManageActions.InvoiceDeductionEditOverride, { grid: this.detailsGrid }));
+                    
+                },
+                InvoiceDeductionEditOverride: function(e) {
+                    if ($(e.container).find('input[name="Reason_Code__c"]').length > 0) { //checking if the field being edited is the Bill To
+                        var resaonCode = $(e.container).find('input[name="Reason_Code__c"]');
+                        var lookupSearchFilters = [];
+                        var filterCriteria = [];
+
+                        var companyID = $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Company__c').val();
+                        if(!companyID || companyID == '')
+                        	KenandyErp.Message("Please enter a Company for the receipt");
+
+                        filterCriteria.push("Type__c = \'Deductions\' and (Company__c = \'"+companyID+"\' OR Company__c = null)"); //OTC-290
+
+
+                        if (filterCriteria.length > 0) {
+                            lookupSearchFilters.push({ field: "Reason_Code__c", filter: filterCriteria.join(' AND ') });
+                        }
+
+                        resaonCode.data('kendoLookup').options.criteria = lookupSearchFilters; //bind the lookup to the field and kendo grid.
+                    }
+                 }
+            };
+        }();
+        
+    </script>
+    <script type="text/x-kendo-template" id="detailTemplate">
+        <div class="grid-container grid-detail-container k-block k-info-colored">
+            <apex:pageBlock title="{!$Label.Invoice_Deductions}" mode="mainDetail">
+                <apex:pageBlockSection collapsible="false" columns="1">
+                    <div class="grid-customer-invoice-details-message k-hidden">
+                        <table class="kndy-table">
+                            <tr>
+                                <td>{!$Label.No_payment_sources_added}</td>
+                            </tr>
+                        </table>
+                    </div>
+            
+                    <div class="grid-customer-invoice-details" ></div>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+        </div>
+    </script>
+    
+    <script>
+        /************ CLAIMS ********************/
+        
+        $(document).ready(function() {
+            // Initialize Claims Grid
+            var claimsLookupSearchFilters = [];
+            var filterTextClaims = "RecordType.DeveloperName = \'Bill_To\' AND (Parent_Customer__c = \'{!Customer_Receipt__c.Customer__c}\' OR Id= \'{!Customer_Receipt__c.Customer__c}\')" ;
+            claimsLookupSearchFilters.push({ field: "claim.Bill_to_Customer__c", filter: filterTextClaims });
+            var claimsGrid = $.fn.GridRelatedList($('#{! claimsGridConfig.uniqueId}'), { 
+                                  namespace: '{!NamespaceUU}', 
+                                  config: '{!claimsGridConfigJson}', 
+                                  fieldList: ClaimsManageUtils.GetFieldList('{!ClaimFieldList}'), 
+                                  lookupSearchAction: '{!$RemoteAction.CustomerReceiptManageExt.lookupSearchFilter}', 
+                                  saveRelatedListAction: '{!$RemoteAction.CustomerReceiptManageExt.saveList}',
+                                  getRelatedListFunction: getClaimsData,
+                                  reorderable: true, //KNDY-17349 drag and drop columns to reorder them
+                                  lookupSearchFilters: claimsLookupSearchFilters,
+                                  editable: isRenderGrid 
+                             });
+            
+            // Bind Grid Events
+            $('.add-command').on("click", $.proxy(ClaimsManageActions.Add, { grid: claimsGrid }));
+            claimsGrid.dataSource.bind("change", CustomerReceiptManageActions.refresh);
+            
+            claimsGrid.tbody.on("change", ".grid-select-one", function (e) {
+			    var row = $(e.target).closest("tr");
+			    var item = claimsGrid.dataItem(row);
+			    item.set("selected", $(e.target).is(":checked") ? 1 : 0);
+			});
+            
+            
+        });
+        
+        var getClaimsData = function() {
+            var deferred = $.Deferred();
+            var customerId = ($('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Customer__c').val()) ? $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Customer__c').val() : '{!Customer_Receipt__c.Customer__c}';
+            var currencyId = ($('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Currency__c').val()) ? $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Currency__c').val() : '{!Customer_Receipt__c.Currency__c}';
+            var companyId = ($('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Company__c').val()) ? $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Company__c').val() : '{!Customer_Receipt__c.Company__c}';
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.CustomerReceiptManageExt.getClaims}',
+                companyId,
+                customerId,
+                currencyId,
+                customerReceiptId,
+                function (result, event) {
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+            );
+
+            return deferred.promise();
+        }
+            
+        var ClaimsManageUtils = function() {
+            return {
+                GetFieldList: function(fieldList) {
+                    fieldList = JSON.parse(fieldList);
+                    $.each(fieldList, function() {
+                    
+                    	if (this.field == 'selected') { //KNDY-7738
+                            this.template = "<input type='checkbox' data-bind='selected' #= selected ? checked='checked': '' # class='grid-select-one' />";
+                        }
+                        
+                        if(this.field == 'amountApplied') {
+                        	this.min = 0;
+                        }
+                    });
+                    
+                    return JSON.stringify(fieldList);
+                }
+            };
+        }();
+        
+        var ClaimsManageActions = function() {
+            return { 
+                Search: function() {
+                    KenandyErp.ClearMessage();
+                    $('#{! claimsGridConfig.uniqueId}').data('kendoGrid').dataSource.read();
+                    return true;
+                }
+            };
+        }();
+        
+        /************ Additional Payments ********************/
+        
+        $(document).ready(function() {
+            // Initialize Additional Payments Grid
+            var lookupSearchFilters2 = [];
+            var filterText = "(RecordType.DeveloperName = \'Bill_To\')" ; //OTC-290
+            var filterText1 = "(RecordType.DeveloperName = \'Sold_To\')" ; //AR-122
+            lookupSearchFilters2.push({ field: "additionalPayment.Customer__c", filter: filterText});
+            lookupSearchFilters2.push({ field: "additionalPayment.Sold_To_Customer__c", filter: filterText1}); //AR-122
+            
+            var additionalPaymentsGrid = $.fn.GridRelatedList($('#{! additionalPaymentsGridConfig.uniqueId}'), { 
+                                              namespace: '{!NamespaceUU}', 
+                                              config: '{! additionalPaymentsGridConfigJson}', 
+                                              fieldList: AdditionalPaymentsManageUtils.GetFieldList('{!AdditionalPaymentFieldList}'), 
+                                              lookupSearchAction: '{!$RemoteAction.CustomerReceiptManageExt.lookupSearchFilter}', 
+                                              saveRelatedListAction: '{!$RemoteAction.CustomerReceiptManageExt.saveList}',
+                                              getRelatedListFunction: getAdditionalPaymentsData,
+                                              lookupSearchFilters: lookupSearchFilters2,
+                                              modelIdField: 'additionalPayment.Id',
+                                              reorderable: true, //KNDY-17349 drag and drop columns to reorder them
+                                              beforeEdit: function(e) {
+                                                AdditionalPaymentsManageUtils.BeforeEditOverride.call(this, e);
+                                              },
+                                              editable: isRenderGrid
+                                         });
+            
+            // Bind Grid Events
+            $('.add-command').on("click", $.proxy(AdditionalPaymentsManageActions.Add, { grid: additionalPaymentsGrid }));
+            additionalPaymentsGrid.dataSource.bind("change", CustomerReceiptManageActions.refresh);
+            
+            
+            additionalPaymentsGrid.bind('edit', $.proxy(AdditionalPaymentsManageUtils.EditOverride, { grid: this.additionalPaymentsGrid }));
+           
+        });
+        
+        var getAdditionalPaymentsData = function() {
+            var deferred = $.Deferred();
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.CustomerReceiptManageExt.getAdditionalPayments}',
+                customerReceiptId,
+                function (result, event) {
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+            );
+
+            return deferred.promise();
+        }
+            
+        var AdditionalPaymentsManageUtils = function() {
+            return {
+                GetFieldList: function(fieldList) {
+                    fieldList = JSON.parse(fieldList);
+                    $.each(fieldList, function() {
+                    	if(this.field == 'additionalPayment.Amount__c') {
+                        	this.min = 0;
+                        }
+                    });
+                    return JSON.stringify(fieldList);
+                },
+                
+                BeforeEditOverride: function(e) { //we use this function to ensure that Sold To Cusotmer is read only if Bill To information is not entered. 
+                    var grid = this;
+                    var columnIndex = grid.cellIndex(e.container);
+                    var fieldName = grid.thead.find("th").eq(columnIndex).data("field");
+                    var isDefaultPrevented = false;
+        
+                    if (!e.model.get('additionalPayment.Customer__c')) {
+                        if (fieldName == 'additionalPayment.Sold_To_Customer__c') {
+                            isDefaultPrevented = true;
+                        }
+                    }
+                    
+                    if (isDefaultPrevented) {
+                        e.preventDefault();
+                    }
+                    if (e.model.get('additionalPayment.Type__c') != 'Prepayment') {
+                        if (fieldName == 'additionalPayment.Sales_Order__c') {
+                            e.preventDefault();
+                        }
+                    }
+                },
+                
+                EditOverride: function(e) { //passing our custom lookup filters based on who is the Customer on the CR
+                // if the Customer on CR is a Bill To, then the Bill to on the Additional payment must be the same and the Sold to should be the child of the Bill To
+                // if the Customer on CR is a corporate Parent, then the Bill to on the Additional payment must be the child of the Customer on CR, and the Sold to must the child of the Bill To entered. 
+                    
+                    var self = this;
+                    var grid = self.grid;
+                    if ($(e.container).find('input[name="additionalPayment.Customer__c"]').length > 0) { //checking if the field being edited is the Bill To
+                        var billToCustomerLookup = $(e.container).find('input[name="additionalPayment.Customer__c"]');
+                        var lookupSearchFilters = [];
+                        var filterCriteria = [];
+
+                        var customerId = $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Customer__c').val();
+                        if(!customerId || customerId == '')
+                        	KenandyErp.Message("Please enter a Customer for the receipt");
+	                    var query = "Select Id, RecordType.DeveloperName from {!NamespaceUU}Customer__c where Id = \'"+customerId+"\' limit 1";
+	                    var result = sforce.connection.query(query);
+	                    KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+	                    var isCustomerBillTo = result.records && result.records.RecordType.DeveloperName == "Bill_To" ? true : false;
+
+                        filterCriteria.push("(RecordType.DeveloperName = \'Bill_To\')"); //OTC-290
+
+                        if (isCustomerBillTo) {
+                            filterCriteria.push("(Id = \'"+customerId+"\')");
+                        }
+                        else {
+                            filterCriteria.push("(Parent_Customer__c = \'"+customerId+"\')");
+                        }
+
+                        if (filterCriteria.length > 0) {
+                            lookupSearchFilters.push({ field: "additionalPayment.Customer__c", filter: filterCriteria.join(' AND ') });
+                        }
+
+                        billToCustomerLookup.data('kendoLookup').options.criteria = lookupSearchFilters; //bind the lookup to the field and kendo grid.
+                    }
+                    
+                    if ($(e.container).find('input[name="additionalPayment.Sold_To_Customer__c"]').length > 0) {
+                        var soldToCustomerLookup = $(e.container).find('input[name="additionalPayment.Sold_To_Customer__c"]');
+                        var lookupSearchFilters = [];
+                        var filterCriteria = [];
+                        var customerId = $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Customer__c').val();
+	                    var query = "Select Id, RecordType.DeveloperName from {!NamespaceUU}Customer__c where Id = \'"+customerId+"\' limit 1";
+	                    var result = sforce.connection.query(query);
+	                    KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+	                    var isCustomerBillTo = result.records && result.records.RecordType.DeveloperName == "Bill_To" ? true : false;
+	                    
+                        filterCriteria.push("(RecordType.DeveloperName = \'Sold_To\')"); //OTC-290
+                        
+                        if (isCustomerBillTo) {
+                            filterCriteria.push("(Parent_Customer__c = \'"+customerId+"\')");
+                        }
+                        else {
+                            if (e.model.get('additionalPayment.Customer__c')) {
+                                filterCriteria.push("(Parent_Customer__c = \'"+ e.model.get('additionalPayment.Customer__c') +"\')");
+                            }
+                        }
+                        
+                        if (filterCriteria.length > 0) {
+                            lookupSearchFilters.push({ field: "additionalPayment.Sold_To_Customer__c", filter: filterCriteria.join(' AND ') });
+                        }
+                        
+                        soldToCustomerLookup.data('kendoLookup').options.criteria = lookupSearchFilters;
+                    }
+                    
+                    if ($(e.container).find('input[name="additionalPayment.Sales_Order__c"]').length > 0) {
+                        var salesOrderLookup = $(e.container).find('input[name="additionalPayment.Sales_Order__c"]');
+                        var lookupSearchFilters = [];
+                        var filterCriteria = [];
+                        var customerId = $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Customer__c').val();
+                        var currencyId = $('#CustomerReceiptHeaderUI').data('kendoDetailList').element.find('#Currency__c').val();
+	                    var query = "Select Id, RecordType.DeveloperName from {!NamespaceUU}Customer__c where Id = \'"+customerId+"\' limit 1";
+	                    var result = sforce.connection.query(query);
+	                    KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+	                    var isCustomerBillTo = result.records && result.records.RecordType.DeveloperName == "Bill_To" ? true : false; 
+                        filterCriteria.push("(Status__c != \'Cancelled\')");                     
+                        filterCriteria.push("(Currency__c = \'"+currencyId+"\')");
+                        if (isCustomerBillTo) {
+                            filterCriteria.push("(Bill_to__c = \'"+customerId+"\')");
+                        }
+                        else {
+                            filterCriteria.push("(Bill_to__r.Parent_Customer__c = \'"+ customerId +"\')");
+                        }
+                        
+                        if (filterCriteria.length > 0) {
+                            lookupSearchFilters.push({ field: "additionalPayment.Sales_Order__c", filter: filterCriteria.join(' AND ') });
+                        } 
+                        
+                        salesOrderLookup.data('kendoLookup').options.criteria = lookupSearchFilters;
+                    }
+                }
+            };
+        }();
+        
+        var AdditionalPaymentsManageActions = function() {
+            return { 
+                Search: function() {
+                    KenandyErp.ClearMessage();
+                    $('#{! additionalPaymentsGridConfig.uniqueId}').data('kendoGrid').dataSource.read();
+                    return true;
+                }
+            };
+        }();
+    </script>
+    
+    <div style="display:none;">
+        <apex:outputField value="{!Customer_Receipt__c.Name}" />
+        <apex:outputField value="{!Customer_Receipt__c.Company__c}" />
+        <apex:outputField value="{!Customer_Receipt__c.Customer__c}" />
+        <apex:outputField value="{!Customer_Receipt__c.Finalized__c}" />                        
+        <apex:outputField value="{!Customer_Receipt__c.Currency__c}" />
+        <apex:outputField value="{!Customer_Receipt__c.Date_Received__c}" />
+    </div>
+</apex:page>

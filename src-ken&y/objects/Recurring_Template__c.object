@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpRecurringTemplates</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <enableActivities>true</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fields>
+        <fullName>Autonumber__c</fullName>
+        <displayFormat>{0000000000}</displayFormat>
+        <externalId>false</externalId>
+        <label>Autonumber</label>
+        <trackTrending>false</trackTrending>
+        <type>AutoNumber</type>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Recurring Templates</relationshipLabel>
+        <relationshipName>Recurring_Templates</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Currency__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to currency</description>
+        <externalId>false</externalId>
+        <label>Currency</label>
+        <referenceTo>Currency__c</referenceTo>
+        <relationshipLabel>Recurring Template Currency</relationshipLabel>
+        <relationshipName>Recurring_Template_Currency</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Description__c</fullName>
+        <externalId>false</externalId>
+        <label>Description</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>End_Period__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The period in which this recurring template stops creating journal entries.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The period in which this recurring template stops creating journal entries.</inlineHelpText>
+        <label>End Period</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Period__c.Closed__c</field>
+                <operation>equals</operation>
+                <value>False</value>
+            </filterItems>
+            <filterItems>
+                <field>Period__c.Permanently_Closed__c</field>
+                <operation>equals</operation>
+                <value>False</value>
+            </filterItems>
+            <isOptional>true</isOptional>
+        </lookupFilter>
+        <referenceTo>Period__c</referenceTo>
+        <relationshipLabel>Recurring Templates (End Period)</relationshipLabel>
+        <relationshipName>Recurring_Templates1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Exceptions_Count__c</fullName>
+        <externalId>false</externalId>
+        <label>Exceptions Count</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Frequency__c</fullName>
+        <externalId>false</externalId>
+        <label>Frequency</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Quarterly</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Monthly</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Bi Weekly</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Weekly</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Daily</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Beginning of Period</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Middle of Period</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Has_Exceptions__c</fullName>
+        <externalId>false</externalId>
+        <formula>OR(
+Exceptions_Count__c &gt; 0,
+Line_Exceptions__c &gt; 0
+)</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Has Exceptions</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Line_Exceptions__c</fullName>
+        <description>Lines on this recurring template that have exceptions.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The line number in this recurring template that generated an exception.</inlineHelpText>
+        <label>Line Exceptions</label>
+        <summaryFilterItems>
+            <field>Recurring_Template_Line__c.Has_Exceptions__c</field>
+            <operation>equals</operation>
+            <value>True</value>
+        </summaryFilterItems>
+        <summaryForeignKey>Recurring_Template_Line__c.Recurring_Template__c</summaryForeignKey>
+        <summaryOperation>count</summaryOperation>
+        <trackTrending>false</trackTrending>
+        <type>Summary</type>
+    </fields>
+    <fields>
+        <fullName>Recurring_Transaction_Start_Date__c</fullName>
+        <description>The date you want your first transaction to occur.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The date you want your first transaction to occur.</inlineHelpText>
+        <label>Recurring Transaction Start Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Start_Period__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The period in which this recurring template begins creating journal entries.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The period in which this recurring template begins creating journal entries.</inlineHelpText>
+        <label>Start Period</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Period__c.Closed__c</field>
+                <operation>equals</operation>
+                <value>False</value>
+            </filterItems>
+            <filterItems>
+                <field>Period__c.Permanently_Closed__c</field>
+                <operation>equals</operation>
+                <value>False</value>
+            </filterItems>
+            <isOptional>true</isOptional>
+        </lookupFilter>
+        <referenceTo>Period__c</referenceTo>
+        <relationshipLabel>Recurring Templates</relationshipLabel>
+        <relationshipName>Recurring_Templates</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Status__c</fullName>
+        <externalId>false</externalId>
+        <label>Status</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Active</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Draft</fullName>
+                    <default>true</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Template_End_Date__c</fullName>
+        <externalId>false</externalId>
+        <label>Template End Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Total_Credit__c</fullName>
+        <externalId>false</externalId>
+        <label>Total Credit</label>
+        <summarizedField>Recurring_Template_Line__c.Amount_CR__c</summarizedField>
+        <summaryForeignKey>Recurring_Template_Line__c.Recurring_Template__c</summaryForeignKey>
+        <summaryOperation>sum</summaryOperation>
+        <trackTrending>false</trackTrending>
+        <type>Summary</type>
+    </fields>
+    <fields>
+        <fullName>Total_Debit__c</fullName>
+        <externalId>false</externalId>
+        <label>Total Debit</label>
+        <summarizedField>Recurring_Template_Line__c.Amount_DR__c</summarizedField>
+        <summaryForeignKey>Recurring_Template_Line__c.Recurring_Template__c</summaryForeignKey>
+        <summaryOperation>sum</summaryOperation>
+        <trackTrending>false</trackTrending>
+        <type>Summary</type>
+    </fields>
+    <fields>
+        <fullName>Total_Number_Of_Lines__c</fullName>
+        <externalId>false</externalId>
+        <label>Total Number Of Lines</label>
+        <summaryForeignKey>Recurring_Template_Line__c.Recurring_Template__c</summaryForeignKey>
+        <summaryOperation>count</summaryOperation>
+        <trackTrending>false</trackTrending>
+        <type>Summary</type>
+    </fields>
+    <fields>
+        <fullName>Transaction_Currency__c</fullName>
+        <externalId>false</externalId>
+        <label>Transaction Currency</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>USD</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>GBP</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>EUR</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>CAD</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>INR</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Type__c</fullName>
+        <externalId>false</externalId>
+        <label>Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Journal Entry</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>isJECreated__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>isJECreated</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <label>Recurring Template</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Status__c</columns>
+        <columns>Company__c</columns>
+        <columns>Start_Period__c</columns>
+        <columns>End_Period__c</columns>
+        <columns>Frequency__c</columns>
+        <columns>Recurring_Transaction_Start_Date__c</columns>
+        <columns>Transaction_Currency__c</columns>
+        <columns>Template_End_Date__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Recurring Template</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Recurring Templates</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>End_Period_Validation</fullName>
+        <active>true</active>
+        <description>End period&apos;s period start can not be less than the Start period&apos;s period start.</description>
+        <errorConditionFormula>End_Period__r.Period_Start__c &lt;  Start_Period__r.Period_Start__c</errorConditionFormula>
+        <errorDisplayField>End_Period__c</errorDisplayField>
+        <errorMessage>End period can not be prior to the Start period</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Recurring_Trans_Start_Date_Validation</fullName>
+        <active>true</active>
+        <errorConditionFormula>Recurring_Transaction_Start_Date__c &lt;  Start_Period__r.Period_Start__c</errorConditionFormula>
+        <errorDisplayField>Recurring_Transaction_Start_Date__c</errorDisplayField>
+        <errorMessage>Recurring transaction start date can not be less that the start period&apos;s beginning..</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Start_Period_Validation</fullName>
+        <active>true</active>
+        <description>Validate if the start period selected has the cut off passed.</description>
+        <errorConditionFormula>IF(CreatedDate == null, Start_Period__r.JE_Cutoff__c &lt; now(), Start_Period__r.JE_Cutoff__c &lt; CreatedDate)</errorConditionFormula>
+        <errorDisplayField>Start_Period__c</errorDisplayField>
+        <errorMessage>Template start period&apos;s period cut off is passed.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Status_Check</fullName>
+        <active>true</active>
+        <errorConditionFormula>(Total_Number_Of_Lines__c == 0 &amp;&amp;
+ISPICKVAL(Status__c, &apos;Active&apos;)) ||
+Total_Number_Of_Lines__c == 0 &amp;&amp;
+ISPICKVAL(Status__c, &apos;Closed&apos;)</errorConditionFormula>
+        <errorMessage>Template should be in Draft status when no template lines created.</errorMessage>
+    </validationRules>
+    <webLinks>
+        <fullName>Manage_Lines</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <linkType>page</linkType>
+        <masterLabel>Manage Lines</masterLabel>
+        <openType>replace</openType>
+        <page>RecurringTemplateLinesAddManage</page>
+        <protected>false</protected>
+    </webLinks>
+</CustomObject>

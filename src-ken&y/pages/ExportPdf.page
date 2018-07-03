@@ -1,0 +1,69 @@
+<apex:page controller="ExportPdfController" renderAs="{!renderAs}" standardStylesheets="false" applyHtmlTag="false" showHeader="false">
+	<head>
+		<style type="text/css"> 
+			<apex:outputPanel rendered="{!!isPrintableView}">
+				@page {
+				    size:landscape;
+				
+				    @bottom-right {
+				      content: "Page " counter(page);
+				    }
+				}
+			</apex:outputPanel>
+			
+			body {
+                font-family: 'Arial Unicode MS', 'Verdana';         
+            }
+            
+            table {
+            	font-family: 'Arial Unicode MS', 'Verdana';         
+            	width: 100%
+            }
+			
+			th {
+				font-family: 'Arial Unicode MS', 'Verdana';
+				font-size: 8pt; 
+			    font-weight: bold;
+			    white-space: nowrap;
+			} 
+			
+			td { 
+				font-family: 'Arial Unicode MS', 'Verdana'; 
+				font-size: 8pt; 
+			}  
+		</style>
+		<apex:outputPanel rendered="{!isPrintableView}">
+			<style type="text/css" media="print">
+				@page {
+					size: landscape;
+				}
+			</style>
+			<script type="text/javascript">
+		  		window.print()
+		 	</script>
+		</apex:outputPanel>
+	</head>
+	<body>
+		<table class="kndy-table">
+			<apex:repeat value="{!headerRows}" var="headerRow">
+				<tr>
+			 		<th colspan="{!colSpan}">{!headerRow}</th>
+			 	</tr>
+			</apex:repeat>
+			<tr>
+		 		<apex:repeat value="{!gridColumns}" var="col">
+		 		<th>{!col['title']}</th>
+		 		</apex:repeat>
+		 	</tr>
+			<apex:repeat value="{!gridRows}" var="chunkOfRows">
+				<apex:repeat value="{!chunkOfRows}" var="row">
+				<tr>
+					<apex:repeat value="{!gridColumns}" var="col">
+					<td>{!row[col['field']]}</td>
+					</apex:repeat>
+				</tr>
+				</apex:repeat>
+			</apex:repeat>
+		</table>
+	</body>
+</apex:page>

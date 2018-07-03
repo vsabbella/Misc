@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fields>
+        <fullName>Destination_Entity__c</fullName>
+        <description>Supplier 1099 object</description>
+        <externalId>false</externalId>
+        <fieldManageability>SubscriberControlled</fieldManageability>
+        <label>Destination Entity</label>
+        <referenceTo>EntityDefinition</referenceTo>
+        <relationshipLabel>Supplier_1099_Box_Mappings1</relationshipLabel>
+        <relationshipName>Supplier_1099_Box_Mappings1</relationshipName>
+        <required>false</required>
+        <type>MetadataRelationship</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Destination_Field__c</fullName>
+        <description>Supplier 1099 field</description>
+        <externalId>false</externalId>
+        <fieldManageability>SubscriberControlled</fieldManageability>
+        <label>Destination Field</label>
+        <metadataRelationshipControllingField>Supplier_1099_Box_MappingMDT__mdt.Destination_Entity__c</metadataRelationshipControllingField>
+        <referenceTo>FieldDefinition</referenceTo>
+        <relationshipLabel>Supplier_1099_Box_Mappings1</relationshipLabel>
+        <relationshipName>Supplier_1099_Box_Mappings1</relationshipName>
+        <required>false</required>
+        <type>MetadataRelationship</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Source_Entity__c</fullName>
+        <description>Supplier Payment Line Object</description>
+        <externalId>false</externalId>
+        <fieldManageability>SubscriberControlled</fieldManageability>
+        <label>Source Entity</label>
+        <referenceTo>EntityDefinition</referenceTo>
+        <relationshipLabel>Supplier_1099_Box_Mappings</relationshipLabel>
+        <relationshipName>Supplier_1099_Box_Mappings</relationshipName>
+        <required>false</required>
+        <type>MetadataRelationship</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Source_Field__c</fullName>
+        <description>1099 Box on Supplier Payment Line</description>
+        <externalId>false</externalId>
+        <fieldManageability>SubscriberControlled</fieldManageability>
+        <label>Source Field</label>
+        <metadataRelationshipControllingField>Supplier_1099_Box_MappingMDT__mdt.Source_Entity__c</metadataRelationshipControllingField>
+        <referenceTo>FieldDefinition</referenceTo>
+        <relationshipLabel>Supplier_1099_Box_Mappings</relationshipLabel>
+        <relationshipName>Supplier_1099_Box_Mappings</relationshipName>
+        <required>false</required>
+        <type>MetadataRelationship</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Source_Picklist_Value__c</fullName>
+        <description>1099 Box value on Supplier Payment Line</description>
+        <externalId>false</externalId>
+        <fieldManageability>SubscriberControlled</fieldManageability>
+        <label>Source Picklist Value</label>
+        <length>255</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <label>Supplier 1099 Box Mapping</label>
+    <pluralLabel>Supplier 1099 Box Mappings</pluralLabel>
+    <validationRules>
+        <fullName>Destination_Entity_must_be_1099_Object</fullName>
+        <active>true</active>
+        <description>Destination Entity must always be Supplier 1099 object</description>
+        <errorConditionFormula>if ( Destination_Entity__r.DeveloperName != &quot;Supplier_1099&quot;, true, false)</errorConditionFormula>
+        <errorDisplayField>Destination_Entity__c</errorDisplayField>
+        <errorMessage>You must select Supplier 1099 in the Destination Entity field.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Source_Entity_must_always_be_SPL_object</fullName>
+        <active>true</active>
+        <description>Source Entity must always be Supplier Payment Line Object</description>
+        <errorConditionFormula>if (Source_Entity__r.DeveloperName != &quot;Supplier_Payment_Line&quot;, true, false)</errorConditionFormula>
+        <errorDisplayField>Source_Entity__c</errorDisplayField>
+        <errorMessage>You must select Supplier Payment Line in the Source Entity field.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Source_Field_must_always_be_the_1099_Box</fullName>
+        <active>true</active>
+        <description>Source Field must always be the 1099 Box field</description>
+        <errorConditionFormula>if (Source_Field__r.DeveloperName != &apos;X1099_Box_G&apos;, true, false)</errorConditionFormula>
+        <errorDisplayField>Source_Field__c</errorDisplayField>
+        <errorMessage>You must select 1099 Box in the Source Field field.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>You_must_enter_info_into_all_fields</fullName>
+        <active>true</active>
+        <description>You must enter information into all fields to complete this form.</description>
+        <errorConditionFormula>Destination_Entity__c == null ||  Source_Entity__c == null || 
+Source_Field__c == null || Destination_Field__c == null ||
+Source_Picklist_Value__c == null</errorConditionFormula>
+        <errorMessage>You must enter information into all fields to complete this form.</errorMessage>
+    </validationRules>
+    <visibility>Public</visibility>
+</CustomObject>

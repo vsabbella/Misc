@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <columns>
+        <field>Item__c$Name</field>
+    </columns>
+    <columns>
+        <field>Item__c$Description__c</field>
+    </columns>
+    <columns>
+        <field>Item__c.Item_Specifications__r$Name</field>
+    </columns>
+    <crossFilters>
+        <operation>without</operation>
+        <primaryTableColumn>Item__c$Id</primaryTableColumn>
+        <relatedTable>Item_Specification__c</relatedTable>
+        <relatedTableJoinColumn>Item__c</relatedTableJoinColumn>
+    </crossFilters>
+    <description>Manufactured items without an item specification</description>
+    <filter>
+        <criteriaItems>
+            <column>Item__c$Source__c</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>equals</operator>
+            <value>Manufactured</value>
+        </criteriaItems>
+    </filter>
+    <format>Summary</format>
+    <groupingsDown>
+        <dateGranularity>Day</dateGranularity>
+        <field>Item__c$Company__c</field>
+        <sortOrder>Asc</sortOrder>
+    </groupingsDown>
+    <name>Manufactured Items without Item Spec.</name>
+    <params>
+        <name>co</name>
+        <value>1</value>
+    </params>
+    <reportType>Items_with_or_without_Item_Specifications__c</reportType>
+    <scope>organization</scope>
+    <showDetails>true</showDetails>
+    <timeFrameFilter>
+        <dateColumn>Item__c$CreatedDate</dateColumn>
+        <interval>INTERVAL_CUSTOM</interval>
+    </timeFrameFilter>
+</Report>

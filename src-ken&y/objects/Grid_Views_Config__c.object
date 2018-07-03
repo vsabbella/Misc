@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customSettingsType>List</customSettingsType>
+    <description>Config to control the different views on the grid.</description>
+    <enableFeeds>false</enableFeeds>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Fieldset_name__c</fullName>
+        <description>Name of the field set the view should point to get the list of fields to display.</description>
+        <externalId>false</externalId>
+        <label>Fieldset name</label>
+        <length>255</length>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Grid_Name__c</fullName>
+        <description>Unique name of the Kendo grid.</description>
+        <externalId>false</externalId>
+        <label>Grid Name</label>
+        <length>255</length>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Show__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Flag to determine if the view should be displayed on the grid view dropdown list.</description>
+        <externalId>false</externalId>
+        <label>Show</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>View_Dropdown_Index__c</fullName>
+        <description>Order in which the field should be listed on the dropdown list. The index 1 will be listed on top and index n will be listed at the bottom (Given n &gt; 1). Index 1 will always be the default view.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Enter the position on the drop down list this view should be listed.</inlineHelpText>
+        <label>View Dropdown Index</label>
+        <precision>2</precision>
+        <required>true</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>View_name__c</fullName>
+        <description>Name of the view to be displayed on the (Grid view) drop down list on the grid.</description>
+        <externalId>false</externalId>
+        <label>View name</label>
+        <length>255</length>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <label>Grid Views Config</label>
+    <visibility>Public</visibility>
+</CustomObject>

@@ -1,0 +1,25 @@
+<apex:page standardController="Item_Cost__c" extensions="ActivateProposedCostsExt" action="{!activate}">
+    <style>
+        .requiredField{ BORDER-LEFT: #c11b17 3px solid }
+        th{text-align:center;}
+        .saveButton{text-align:center;}
+    </style>   
+   
+    <apex:form id="reportFormId">
+        <apex:sectionHeader subtitle="{!$Label.Activate_Proposed_Costs}" title="{!$Label.Activate_Proposed_Costs}"/>
+        <apex:pagemessages ></apex:pagemessages>
+        
+        <apex:pageBlock id="mainPb">
+            <apex:pageBlockButtons location="top" >
+            <apex:commandButton value="{!$Label.Go_Back}" action="{!cancel}"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    
+        <apex:outputField value="{!Item_Cost__c.Item__c}" rendered="false"/>
+        <apex:outputField value="{!Item_Cost__c.Status__c}" rendered="false"/>
+        <apex:outputField value="{!Item_Cost__c.Facility__c}" rendered="false"/>
+        <apex:outputField value="{!Item_Cost__c.Company__c}" rendered="false"/>
+    
+    </apex:form>  
+    
+</apex:page>

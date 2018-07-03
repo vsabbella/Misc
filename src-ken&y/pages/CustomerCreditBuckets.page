@@ -1,0 +1,16 @@
+<apex:page standardController="Company__c" extensions="CustomerCreditBucketExt">
+    <apex:form id="form">
+    	<c:busyWait />
+        <apex:sectionHeader subtitle="{!$Label.Customer_Credit_Buckets}" title="{!$Label.Customer_Credit_Buckets}"/>
+        <apex:pagemessages ></apex:pagemessages>
+    <apex:pageBlock >
+        <apex:pageBlockButtons >
+        <apex:commandButton value="{!$Label.Calculate}" action="{!calculate}" status="actionStatus" rerender="form" rendered="{!have_jobid == false}"/>
+        <apex:commandButton value="{!$Label.Cancel}" action="{!cancel}" status="actionStatus" rerender="form"/>
+        </apex:pageBlockButtons>
+        
+    </apex:pageBlock>
+    </apex:form>  
+      <div id="responseErrors" >
+    </div>
+</apex:page>

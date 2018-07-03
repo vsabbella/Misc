@@ -1,0 +1,14 @@
+<apex:page standardController="Claim__c" extensions="ClaimWriteOffExt" >
+	
+	<apex:sectionHeader title="Claim" subtitle="Write Off"/>
+	<apex:form id="form">
+		<apex:pageMessages />
+		<apex:pageBlock >
+			<apex:pageBlockButtons location="top">
+				<apex:commandButton value="Return to {!Claim__c.Name}" action="{!cancel}" status="actionStatus" reRender="form"/>
+			</apex:pageBlockButtons>
+		</apex:pageBlock>
+	
+	</apex:form>
+
+</apex:page>

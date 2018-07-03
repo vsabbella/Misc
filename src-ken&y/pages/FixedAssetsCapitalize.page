@@ -1,0 +1,37 @@
+<apex:page standardController="Fixed_Asset__c" extensions="FixedAssetCapitalizeExt" recordSetVar="fixedAssets" id="page" >
+
+	<apex:sectionHeader title="{!$ObjectType.Fixed_Asset__c.Label}" subtitle="{!$Label.Capitalize}"/>
+	<apex:form id="form">
+		<c:busyWait />
+		<apex:pageMessages id="msgs"/>
+		<apex:pageBlock title="{!$Label.Capitalize_Fixed_Assets}">
+			
+			<apex:pageBlockButtons location="top">
+				<apex:commandButton value="{!$Label.Go_Back}" action="{!cancel}" status="actionStatus" rerender="form" />
+				<apex:commandButton value="{!$Label.Capitalize_Valid_Assets}" action="{!btn_CapitalizeAssets}" status="actionStatus" rerender="form" disabled="{!!isValid}"/>
+			</apex:pageBlockButtons>
+			
+			<apex:pageBlockTable value="{!ssCon.selected}" var="fa" rendered="{!missingRecs}">
+				<apex:column headerValue="{!$Label.Valid}">
+					<apex:inputcheckbox value="{!mValidations[fa.Id]}" disabled="true"/>
+				</apex:column>
+				<!-- 
+				<apex:column headerValue="Fixed Asset">
+					<a href="/{!fa.Id}" id="{!fa.Id}" onblur="LookupHoverDetail.getHover('{!fa.Id}').hide();" 
+														onfocus="LookupHoverDetail.getHover('{!fa.Id}', '/{!fa.Id}/m?retURL=%2F{!fa.Id}&isAjaxRequest=1').show();" 
+														onmouseout="LookupHoverDetail.getHover('{!fa.Id}').hide();" 
+														onmouseover="LookupHoverDetail.getHover('{!fa.Id}', '/{!fa.Id}/m?retURL=%2F{!fa.Id}&isAjaxRequest=1').show();">
+						{!fa['name']}
+					</a>
+				</apex:column>
+				 -->
+				<apex:repeat value="{!$Objecttype.Fixed_Asset__c.Fieldsets.Fixed_Asset_Detail}" var="f">
+					<apex:column value="{!fa[f]}"/>
+				</apex:repeat>
+			</apex:pageBlockTable>
+			<apex:outputText value="{!$Label.No_selected_assets_for_capitalization}" style="font-weight:bold;" rendered="{!!missingRecs}"/>
+		</apex:pageBlock>
+	
+	</apex:form>
+
+</apex:page>

@@ -1,0 +1,22 @@
+<apex:page >
+<!--   standardController="Company__c" extensions="GenerateAccountingBatchExt">
+    <apex:form id="form">
+    <c:busyWait />
+        <apex:sectionHeader subtitle="{!$Label.Generate_Accounting}" title="{!$Label.Generate_Accounting}"/>
+        <apex:pagemessages ></apex:pagemessages>
+    <apex:pageBlock >
+        <apex:pageBlockButtons >
+        <apex:commandButton value="{!$Label.Generate_Shipment_Accounting}" action="{!generateShipmentAccounting}" rendered="{!have_jobid == false}" status="actionStatus" rerender="form"/>
+        <apex:commandButton value="{!$Label.Generate_CustomerInvoice_Accounting}" action="{!generateInvoiceAccounting}" rendered="{!have_jobid == false}" status="actionStatus" rerender="form"/>
+        <apex:commandButton value="{!$Label.Generate_Customer_Receipt_Accounting}" action="{!generateReceiptAccounting}" rendered="{!have_jobid == false}" status="actionStatus" rerender="form"/>
+        <apex:commandButton value="{!$Label.Generate_PurchaseReceipt_Accounting}" action="{!generatePOReceiptAccounting}" rendered="{!have_jobid == false}" status="actionStatus" rerender="form"/>
+        <apex:commandButton value="{!$Label.Generate_SupplierInvoice_Accounting}" action="{!generateSupplierInvoiceAccounting}" rendered="{!have_jobid == false}" status="actionStatus" rerender="form"/>
+        <apex:commandButton value="{!$Label.Generate_SupplierPayment_Accounting}" action="{!generateSupplierPaymentAccounting}" rendered="{!have_jobid == false}" status="actionStatus" rerender="form"/>
+        <apex:commandButton value="{!$Label.Cancel} " action="{!cancel}"/>
+        </apex:pageBlockButtons>
+    </apex:pageBlock>
+    </apex:form>  
+      <div id="responseErrors" >
+    </div>
+    -->
+</apex:page>

@@ -1,0 +1,356 @@
+<apex:page standardController="Supplier_Payment__c" tabStyle="Supplier_Payment__c" 
+           showHeader="true" title="{!$Label.Supplier_1099_Payments}" extensions="Supplier1099PaymentsExt">
+    <c:KendoResources /> 
+    <script src="../../soap/ajax/38.0/connection.js" type="text/javascript"> </script>
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+    <apex:sectionHeader title="{!$ObjectType.Supplier_Payment__c.Label}" subtitle="{!$Label.Supplier_1099_Payments}"/>
+
+    <style>
+        .disab {
+            opacity: 0.4;
+            cursor: default;
+            pointer-events: none;
+        }
+        
+        .button-text-bold{
+           font-weight: bold;
+        }
+        
+        .pbTitle{
+           display: none; //Needed to centralize the buttons. Uncomment to show the pageblock title
+        }
+        
+        .k-tooltip{
+           left: 0;
+           top: 100%;
+        }
+        
+        span.k-tooltip{
+           position: absolute;
+        }
+        
+        .k-grid-header th.k-header>.k-link{
+           overflow: initial;
+        }
+
+    </style>
+    <apex:form id="form">
+        <apex:pageMessages />
+        <div class="page-message" ></div>
+        <apex:pageBlock >  
+            <div style="text-align: center;">
+                    <div style="display: inline;">
+                        <span  class="">{!$ObjectType.Company__c.Label}</span>
+                        &nbsp;
+                        <div style="display: inline;" class="kndy-required-input">
+                            <div class="kndy-required-block"></div>
+                            <div style="display: inline;" id="companyLookup" />
+                            <select id="companySelector" class="kendoWidgetSelector"></select>
+                        </div>
+                    </div>
+                    &nbsp; &nbsp;
+                    <div  style="display: inline;">
+                        <span class="">Year </span>
+                        &nbsp;
+                        <div style="display: inline;" class="kndy-required-input">
+                            <div class="kndy-required-block"></div>
+                            <input id="yearPicker" required="true"/>
+                            <span class="k-invalid-msg" data-for="yearPicker"></span>   
+                        </div>
+                    </div>
+                    &nbsp; &nbsp;
+                    <input id="searchBtn" type="button" value="{!$Label.Search}"  class="k-button kndy-btn search-btn-cls button-text-bold" />
+            </div>
+            <apex:pageBlockButtons location="top" style="text-align: center;">
+                  <button id="goBackBtn" type="button" class="k-button kndy-btn button-text-bold" >{!$Label.Go_Back}</button>
+            </apex:pageBlockButtons>            
+            <br/>
+            <br/>
+            <div class="grid-container">
+                  <div class="grid-message"></div>
+                  <div id="GridSPLs"></div>
+            </div>
+        </apex:pageBlock>
+    </apex:form>
+    <script>
+        var splinesFieldList = '{!JSENCODE(SPLinesFieldList)}';
+        var splsConfigJson = JSON.parse('{!JSENCODE(SPLinesConfigJson)}');
+        var isHideResults = true;
+
+        //CJF - KNDY-18784 fix added        
+        $(window).resize(function() {
+            var x = $(window).width() - $('#sidebarDiv').width() - 100;
+            $('#{!SPLinesConfig.uniqueId}').width(x);     
+        })
+        
+        function getWidth(len){
+            if(len < 12){return '120px';}
+            else{ return (len*10)+'px';}
+        }
+
+        var GetSPLinesData = function() {
+            KenandyErp.BlockUI();
+            var grid = $('#{!spLinesConfig.uniqueId}');
+            var messageElement = grid.closest("div.grid-container").find("div.grid-message").first();
+            var deferred = $.Deferred();
+            var selectedCompanyId = $('#companySelector').data('kendoComboBox').value();
+            var selectedYear = $('#yearPicker').data('kendoDatePicker').element[0].value;
+            if (isHideResults){
+                setTimeout(function() {
+                    deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+                }, 100);
+            }else{
+                KenandyErp.ClearMessage(messageElement);
+                KenandyErp.ClearMessage();
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.Supplier1099PaymentsExt.getSPLines}',
+                    splsConfigJson,
+                    selectedCompanyId,
+                    selectedYear,
+                    function (result, event) {
+                        KenandyErp.UnBlockUI();
+                        if (event.type == 'exception') {
+                            KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                        }
+                        else if(result != null) {
+                            if(result.total > 0){
+                                deferred.resolve(result, event);
+                            }
+                            else{
+                                deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 }); 
+                            }
+                        }
+                    },
+                    {escape: false}
+                );
+             }
+             return deferred.promise();
+       }
+     
+       var Supplier1099PaymentsUtil = function() {
+            return {
+                DisableButtons: function() {
+                   var isValidYear = Supplier1099PaymentsUtil.ValidateYear();
+                   var isValidCompany = Supplier1099PaymentsUtil.ValidateCompany();
+                   if (!isValidYear || !isValidCompany){
+                       $('.search-btn-cls').addClass("disab");
+                   }
+                   else{
+                       $('.search-btn-cls').removeClass("disab"); 
+                   }
+                },
+                
+                Search: function(){
+                   console.log('searching....');
+                   isHideResults = false; //reset boolean to query SP Lines
+                   $('#{!SPLinesConfig.uniqueId}').data('kendoGridActionList').dataSource.read();
+                   $('#{!SPLinesConfig.uniqueId}').show(); //CJF KNDY-18784- use .show(). It displays the grid with a border.
+                },
+                
+                SPLsGridInit: function(){
+                    var grid = $('#{!spLinesConfig.uniqueId}');
+                    if(grid){
+                      grid.empty();
+                    }
+                    var spLinesConfigGridWidth = $('#{!SPLinesConfig.uniqueId}').width() +'px';
+
+                    var  splsGrid = $('#{!SPLinesConfig.uniqueId}').width(spLinesConfigGridWidth).kendoGridActionList({
+                        namespace: '{!NamespaceUU}', 
+                        config: '{!SPLinesConfigJson}', 
+                        fieldList: Supplier1099PaymentsUtil.GetFieldList(splinesFieldList),
+                        getActionListFunction:GetSPLinesData,
+                        showIconButtons: true
+                    }).data('kendoGridActionList');
+                    
+                    //Hide the grid on page load
+                    document.getElementById('GridSPLs').style.display = 'none';
+
+                    //unbind and bind grid events
+                    splsGrid.wrapper.off("click", ".grid-save-command");
+                    splsGrid.wrapper.on("click", ".grid-save-command", $.proxy(Supplier1099PaymentsUtil.Save, { grid: splsGrid, options: { config: splsConfigJson , dateFields: null} }));
+                    
+                    splsGrid.wrapper.off("click", ".grid-cancel-command");
+                    splsGrid.wrapper.on("click", ".grid-cancel-command", $.proxy(Supplier1099PaymentsUtil.CancelChanges, { grid: splsGrid, options: {config: splsConfigJson , dateFields: null} }));
+                    
+                    // CJF KNDY-18784- fix added
+                    splsGrid.bind("dataBound", function(e){
+                        if(!e.sender.lockedTable){
+                            //Calculate the column width
+                            var cl = Supplier1099PaymentsUtil.getColumnWidth(splinesFieldList);
+                            $('#{!SPLinesConfig.uniqueId} .k-grid-content table').width(cl+'px');
+                            $('#{!SPLinesConfig.uniqueId} .k-grid-header-wrap table').width(cl+'px');
+                        }
+                    });                  
+                    
+                },
+                getColumnWidth: function(fieldList){
+                    fieldList = JSON.parse(fieldList);
+                    var sumColumnWidths = 0;
+                    $.each(fieldList, function(){
+                        this.width = this.width == null ? getWidth(this.title.length) : this.width;
+                        if(!this.hidden){
+                            sumColumnWidths+=Number(this.width.slice(0, this.width.length-2));
+                        }
+
+                    });
+                    return sumColumnWidths;
+                },
+                GetFieldList: function(fieldList) {
+                    fieldList = JSON.parse(fieldList);
+                    $.each(fieldList, function(){
+                        console.log("this.title:" + this.title)
+                        this.width = this.width == null ? getWidth(this.title.length) : this.width;
+                    });
+                    return JSON.stringify(fieldList);
+                },
+                
+                GoBack: function(e){
+                    var cnfrm = window.confirm('{!$Label.ConfirmGoBack} ');
+                    if(cnfrm){
+                        KenandyErp.BlockUI();
+                        window.location.href = '{!returnUrl}';
+                    }
+                },
+                
+                Save: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    var options = self.options;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+
+                    if (grid.editable && !grid.editable.validatable.validate()) {
+                        e.preventDefault();
+                        return false;
+                    }
+                    
+                    var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields, isDml: false });
+                    var updatedRows = [];
+                    updatedRows = gridUtils.UpdatedRows();
+                    if ( updatedRows.length == 0) {
+                        KenandyErp.Message("{!$Label.No_records_changed}", KenandyErp.MessageType.Info, messageElement);
+                        return;
+                    }
+                    KenandyErp.ClearMessage(messageElement);
+                    KenandyErp.ClearMessage();
+                    KenandyErp.BlockUI(grid.element);
+   
+                    Visualforce.remoting.Manager.invokeAction(
+                        "{!$RemoteAction.Supplier1099PaymentsExt.saveSPLs}",              
+                        updatedRows, 
+                        function (result, event) {
+                            KenandyErp.UnBlockUI(grid.element);
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                                KenandyErp.Messages(result.messages, messageElement);
+                                if (result.success) {
+                                    // refresh the grid
+                                    grid.dataSource._destroyed = [];
+                                    grid.dataSource.read();
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+              },
+              
+              ValidateYear: function(){
+                  var dateVal = $('#yearPicker').data('kendoDatePicker').element[0].value;
+                  var validYear = true;
+                  if (!dateVal ){
+                      validYear = false;
+                  }
+                  else{
+                      var yearVal = parseInt(dateVal);
+                      if( isNaN(dateVal) || !yearVal || yearVal < 0){
+                          validYear =  false
+                      }
+                  }
+                  return validYear;
+              },
+
+              ValidateCompany: function(){
+                  var isValid = false;
+                  var regex = new RegExp("^[a-zA-Z0-9]{18}");
+                  var selectedCompany = $('#companySelector').data('kendoComboBox').value();
+                  if(selectedCompany && regex.test(selectedCompany)){
+                      isValid = true;
+                  }
+                  return isValid;
+              },
+              
+              CancelChanges: function(e){
+                    var self = this;
+                    var grid = self.grid;
+                    var options = self.options;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                    
+                    KenandyErp.ClearMessage();
+                    if (grid.editable && !grid.editable.validatable.validate()) {
+                        e.preventDefault();
+                        return false;
+                    }
+                    
+                    var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields });
+                    var updatedRows = [];
+                    var newRows = [];
+                    newRows = gridUtils.NewRows();
+                    updatedRows = gridUtils.UpdatedRows();
+                    if (newRows.length == 0 && updatedRows.length == 0) {
+                        KenandyErp.Message("{!$Label.No_records_changed}", KenandyErp.MessageType.Info, messageElement);
+                        return;
+                    }
+                    KenandyErp.ClearMessage();
+                    var yesCallback = function(){
+                        // refresh the grid
+                        grid.dataSource._destroyed = [];
+                        grid.dataSource.read();
+                        e.stopPropagation();
+                    };
+                    KenandyErp.Confirmation('All the unsaved changes will be lost. Do you still want to proceed?', yesCallback);
+                },
+            }
+      }();
+      
+      $(document).on('KenandyErpReady', function(e) {
+          $('#yearPicker').kendoDatePicker({
+             start: "decade",
+             depth: "decade",
+             format: 'yyyy',
+             dateFormat : 'yyyy',
+             value: new Date()
+          }); 
+          
+        // Year validation messages, disable/enable buttons whenever validator runs
+        var validator = $('#yearPicker').kendoValidator({
+            rules: {
+                correctYearFormat: function (e) {
+                   var validYear = Supplier1099PaymentsUtil.ValidateYear();
+                   Supplier1099PaymentsUtil.DisableButtons();
+                   return validYear;
+                }
+            },
+            messages: {
+                required: 'Year is required',
+                correctYearFormat: "Invalid year"
+            }
+         }).data("kendoValidator");
+
+          var companySelector = $.fn.KendoComboBox($('#companySelector'), { lookupSearchAction: '{!$RemoteAction.Supplier1099PaymentsExt.lookupSearchFilter}', referenceTo: 'Company__c', title: 'Company', autoBind: true, value: '{!defaultCompanyId}', highlightFirst: true});
+          companySelector.input.on("keydown", function(e) {
+              var filter = companySelector.dataSource.filter() || { filters: [] };
+              if (e.keyCode === 9 && filter.filters[0]) { //TAB
+                companySelector.select(companySelector.current().index());
+                Supplier1099PaymentsUtil.DisableButtons(); // reset buttons if tab out
+              }
+          });
+          Supplier1099PaymentsUtil.SPLsGridInit();
+          $('#searchBtn').on("click", $.proxy(Supplier1099PaymentsUtil.Search));
+          $('#goBackBtn').on("click", $.proxy(Supplier1099PaymentsUtil.GoBack));
+          $('#companySelector').on("change", $.proxy(Supplier1099PaymentsUtil.DisableButtons)); //reset buttons if changed and not tabbed out
+          $('#yearPicker').on("change", $.proxy(Supplier1099PaymentsUtil.DisableButtons));
+      });
+      
+
+    </script>
+</apex:page>

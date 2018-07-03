@@ -1,0 +1,26 @@
+<apex:page standardController="Accounting_Entry__c" extensions="CompanyDefaultExt">
+	<apex:form id="theForm" >
+    <c:busyWait />
+	<apex:sectionHeader subtitle="{!$Label.New_Accounting_Entry}" title="{!$ObjectType.Accounting_Entry__c.Label}"/>
+	<apex:pagemessages />
+	<apex:pageBlock mode="edit"  >
+   		<apex:pageBlockButtons >
+        <apex:commandButton value="{!$Label.Save}" action="{!save}"   status="actionStatus" rerender="theForm" accessKey="s"/>
+        <apex:commandButton value="{!$Label.Cancel}" action="{!cancel}"  immediate="true"   status="actionStatus" rerender="theForm"/>
+        </apex:pageBlockButtons>
+   
+		<apex:pageBlockSection title="{!$Label.Information}" columns="2" collapsible="false" >
+			 <apex:repeat value="{!$ObjectType.Accounting_Entry__c.FieldSets.New_Information}" var="f" > 
+            <apex:inputField value="{!Accounting_Entry__c[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+            </apex:repeat>
+		</apex:pageBlockSection>
+		
+		<apex:pageBlockSection title="{!$Label.Source_Document}" columns="2" collapsible="false" >
+			 <apex:repeat value="{!$ObjectType.Accounting_Entry__c.FieldSets.New_Source_Document}" var="f" > 
+            <apex:inputField value="{!Accounting_Entry__c[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+            </apex:repeat>
+		</apex:pageBlockSection>
+		
+  	</apex:pageBlock>
+   	</apex:form>
+</apex:page>

@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpClasses</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>A class can be any code or name that groups or classifies inventory.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableEnhancedLookup>true</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fields>
+        <fullName>COGS_GL_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>COGS GL Account</label>
+        <referenceTo>GL_Account__c</referenceTo>
+        <relationshipLabel>Classes (COGS GL Account)</relationshipLabel>
+        <relationshipName>Classes_COGS_GL</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Class_Unique__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>Name for uniqueness</description>
+        <externalId>false</externalId>
+        <label>Class Unique</label>
+        <length>80</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Description__c</fullName>
+        <description>Description of this class</description>
+        <externalId>false</externalId>
+        <label>Description</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>Expense_GL_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Expense GL Account</label>
+        <referenceTo>GL_Account__c</referenceTo>
+        <relationshipLabel>Classes (Expense GL Account)</relationshipLabel>
+        <relationshipName>Classes_GL_Expense</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Inventory_GL_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Inventory GL Account</description>
+        <externalId>false</externalId>
+        <label>Inventory GL Account</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>GL_Account__c.Active__c</field>
+                <operation>equals</operation>
+                <value>True</value>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>GL_Account__c</referenceTo>
+        <relationshipLabel>Classes (Inventory GL Account)</relationshipLabel>
+        <relationshipName>Classes_Inventory_GL</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Minimum_Shelf_Life_In_Days__c</fullName>
+        <defaultValue>0</defaultValue>
+        <description>The minimum shelf life (in days) required for an item of this class to be accepted while receiving.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The minimum shelf life (in days) required for an item of this class to be accepted in the receiving process.</inlineHelpText>
+        <label>Minimum Shelf Life In Days</label>
+        <precision>5</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Quality_Sample_Percentage__c</fullName>
+        <description>The percentage of quantity to be allocated for sampling.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>When receiving items in this class, you can choose to enter a percentage of the total received amount that will be allocated for sampling.</inlineHelpText>
+        <label>Quality Sample Percentage</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Percent</type>
+    </fields>
+    <fields>
+        <fullName>Revenue_GL_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Revenue GL Account</description>
+        <externalId>false</externalId>
+        <label>Revenue GL Account</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>GL_Account__c.Active__c</field>
+                <operation>equals</operation>
+                <value>True</value>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>GL_Account__c</referenceTo>
+        <relationshipLabel>Classes (Revenue GL Account)</relationshipLabel>
+        <relationshipName>Classes_Revenue_GL</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Shelf_Life_Days__c</fullName>
+        <externalId>false</externalId>
+        <label>Shelf Life Days</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Status_1_Name__c</fullName>
+        <externalId>false</externalId>
+        <label>Status 1 Name</label>
+        <length>20</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Status_1_Offset_Days__c</fullName>
+        <externalId>false</externalId>
+        <label>Status 1 Offset Days</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Status_2_Name__c</fullName>
+        <externalId>false</externalId>
+        <label>Status 2 Name</label>
+        <length>20</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Status_2_Offset_Days__c</fullName>
+        <externalId>false</externalId>
+        <label>Status 2 Offset Days</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Status_3_Name__c</fullName>
+        <externalId>false</externalId>
+        <label>Status 3 Name</label>
+        <length>20</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Status_3_Offset_Days__c</fullName>
+        <externalId>false</externalId>
+        <label>Status 3 Offset Days</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Type__c</fullName>
+        <description>Indicate the overall type of this class of items.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Specifies the type of items in this class. Can be either &quot;Goods&quot;, &quot;Services&quot;, &quot;Labor&quot;, &quot;Miscellaneous&quot;, or &quot;Expense&quot;.</inlineHelpText>
+        <label>Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Goods</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Services</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Labor</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Miscellaneous</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Expense</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Freight</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <label>Class</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Description__c</columns>
+        <columns>Minimum_Shelf_Life_In_Days__c</columns>
+        <columns>Quality_Sample_Percentage__c</columns>
+        <columns>Inventory_GL_Account__c</columns>
+        <columns>Revenue_GL_Account__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Class</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Classes</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Description__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Minimum_Shelf_Life_In_Days__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Quality_Sample_Percentage__c</customTabListAdditionalFields>
+        <excludedStandardButtons>ChangeOwner</excludedStandardButtons>
+        <excludedStandardButtons>Accept</excludedStandardButtons>
+        <lookupDialogsAdditionalFields>Description__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Minimum_Shelf_Life_In_Days__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Quality_Sample_Percentage__c</lookupDialogsAdditionalFields>
+        <searchFilterFields>NAME</searchFilterFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

@@ -1,0 +1,64 @@
+<apex:page standardController="Sales_Order__c"
+                tabStyle="Sales_Order__c" 
+                extensions="SalesOrderUndoReleaseExt"  >
+                
+    <style type="text/css">
+	    .col1 {width:50%;}
+	    .col2 {width:50%;}
+	</style>
+	            
+	<apex:sectionHeader subtitle="{!Sales_Order__c.Name}" title="{!$ObjectType.Sales_Order__c.Label}"/>
+	
+	<script type="text/javascript">
+	  function loading(val) {
+	    if (val) {
+	      document.getElementById('contentLoading').style.display = 'block';
+	      document.getElementById('contentLoaded').style.display = 'none';
+	    }
+	    else {
+	      document.getElementById('contentLoading').style.display = 'none';
+	      document.getElementById('contentLoaded').style.display = 'block';
+	    }
+	  }
+	  function goback(){
+		if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+			sforce.one.back(true);
+		} else {
+			window.location.href = '/{!Sales_Order__c.Id}';
+		}
+	  }
+	</script>
+
+	<apex:form id="theForm">
+    	<c:busyWait />
+
+		<apex:actionFunction name="doInit" action="{!undoRelease}" rerender="allPanel" status="loading"/>
+		<script>
+           window.onload=function()
+           {
+             doInit();
+           };
+        </script>
+
+		<apex:actionStatus id="loading" onstart="loading(true)" onstop="loading(false)" />
+
+		<apex:pageBlock title="{!$Label.Undo_Release_Title}" id="allPanel">
+
+			<div id="contentLoading" style="display:none;">
+				<div style="text-align: center;">
+				  <img src="/img/loading.gif" alt="Loading graphic" />
+				  Undoing the release of the Sales Order...
+				</div>
+			</div>
+
+			<div id="contentLoaded">
+				<apex:pageMessages />
+				<apex:pageBlockButtons location="bottom">
+					<apex:commandButton value="{!$Label.Go_Back}" onClick="goback();return false;" status="actionStatus" rerender="theForm" />
+				</apex:pageBlockButtons>
+				
+			</div>
+
+		</apex:pageBlock>
+	</apex:form>
+</apex:page>

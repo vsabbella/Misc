@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customSettingsType>List</customSettingsType>
+    <description>Stores the default notification email address information. (Ex: Default address for which the notification email to be sent when a batch process completes.)</description>
+    <enableEnhancedLookup>false</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <fields>
+        <fullName>Action__c</fullName>
+        <description>The type of action on the object that the notification contact is responsible for. (Ex: Batch Execution)</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The type of action on the object that the notification contact is responsible for. (Ex: Batch Execution)</inlineHelpText>
+        <label>Action</label>
+        <length>30</length>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Email__c</fullName>
+        <description>Email address of the notification contact to be used for sending the notification email.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Email address of the notification contact to be used for sending the notification email.</inlineHelpText>
+        <label>Email</label>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Email</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Object_Type__c</fullName>
+        <description>The type of object that the contact is associated with. (Ex: Memorized Transaction)</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The type of object that the contact is associated with. (Ex: Memorized Transaction)</inlineHelpText>
+        <label>Object Type</label>
+        <length>30</length>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <label>Notification Contacts</label>
+    <visibility>Protected</visibility>
+</CustomObject>

@@ -1,0 +1,18 @@
+<apex:page standardController="Supplier_Invoice__c" extensions="NewEditCloneDeleteExt" action="{!errMsg}">
+    <apex:sectionHeader title="Supplier Invoice" />
+    <apex:form >
+        <apex:PageMessages />
+        <apex:outputpanel style="padding:20px;">
+        	<apex:outputLink onClick="back()">{!$Label.Click_to_go_back}</apex:outputLink>
+        </apex:outputpanel>
+    </apex:form>
+    <script>
+        function back() {
+            if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+                sforce.one.back(true);
+            } else {
+                window.history.back();
+            }
+        }
+    </script>
+</apex:page>

@@ -1,0 +1,53 @@
+<apex:page standardcontroller="Fixed_Asset__c" extensions="FixedAssetDepreciationExt" recordSetVar="fixedAssets">
+
+	<apex:sectionHeader title="{!$ObjectType.Fixed_Asset__c.Label}" subtitle="{!$Label.Depreciation}"/>
+	
+	<apex:form id="form">
+		<c:busyWait />
+		<apex:pageMessages id="msgs"/>
+		
+		<apex:pageBlock title="{!$Label.Depreciate_Fixed_Assets}" >
+		
+			<apex:pageBlockButtons location="top">
+				<apex:commandButton value="{!$Label.Go_Back}" action="{!btn_Workbench}" immediate="true" status="actionStatus" rerender="form" />
+				<apex:commandButton value="{!$Label.Run_Depreciation}" action="{!btn_RunDepreciation}" status="actionStatus" rerender="form" disabled="{!disableDepreciation}" rendered="{!hasSelected}"/>
+			</apex:pageBlockButtons>
+			
+			<apex:pageBlockSection title="{!$Label.Select_Company_and_Book}" collapsible="false" rendered="{!isBatch}">
+			
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="{!$ObjectType.Company__c.Label}"/>
+					<apex:selectList value="{!selectedCompanyId}" size="1">
+						<apex:selectOptions value="{!companyOptions}"/>
+						<apex:actionSupport event="onchange" rerender="taxbooks"/>
+					</apex:selectList>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem id="pbsiBookOptions">
+					<apex:outputLabel value="{!$ObjectType.Tax_Book__c.Label}"/>
+					<apex:selectList value="{!selectedBookId}" size="1" id="taxbooks">
+						<apex:selectOptions value="{!taxBookOptions}"/>
+						<apex:actionSupport event="onchange" rerender="form" status="actionStatus" action="{!updateDepreciableFixedAssets}"/>
+					</apex:selectList>
+				</apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+			
+			<apex:panelGrid columns="5" cellpadding="10" width="100%" rendered="{!hasSelected}">
+				<apex:commandButton value="|< {!$Label.First}" action="{!first}" disabled="{!!hasPrevious}" status="actionStatus" rerender="form"/>
+				<apex:commandButton value="< {!$Label.Previous}" action="{!previous}" disabled="{!!hasPrevious}" status="actionStatus" rerender="form"/>
+				<apex:outputText value="{!$Label.Page} {!pageNumber} {!$Label.of} {!numberOfPages}"/>
+				<apex:commandButton value="{!$Label.Next} >" action="{!next}" disabled="{!!hasNext}" status="actionStatus" rerender="form"/>
+				<apex:commandButton value="{!$Label.Last} >|" action="{!last}" disabled="{!!hasNext}" status="actionStatus" rerender="form"/>
+			</apex:panelGrid>
+			
+			<apex:pageBlockTable value="{!ssCon.selected}" var="fa" rendered="{!hasSelected}">
+				<apex:repeat value="{!$Objecttype.Fixed_Asset__c.Fieldsets.Fixed_Asset_Detail}" var="f">
+					<apex:column value="{!fa[f]}"/>
+				</apex:repeat>
+			</apex:pageBlockTable>
+			<apex:outputText value="{!$Label.Select_atleast_one_FixedAsset_for_depreciation}" rendered="{!!hasSelected && !isBatch}"/>
+		</apex:pageBlock>
+		
+		
+	</apex:form>
+
+</apex:page>

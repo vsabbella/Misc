@@ -1,0 +1,15 @@
+<apex:page standardController="MRP_Run__c" extensions="EraseMRP_RunExt">
+   
+    <apex:form id="reportFormId">
+    <c:busyWait />
+        <apex:sectionHeader title="Erase MRP Run" subtitle="{!MRP_Run__c.Name}" />
+        <apex:pagemessages ></apex:pagemessages>
+        
+    <apex:pageBlock >
+        <apex:pageBlockButtons location="top" >
+        <apex:commandButton value="Erase MRP Run" action="{!eraseMrpRun}" rendered="{!have_jobid == false}" reRender="reportFormId"   status="actionStatus"/>
+        <apex:commandButton value="{!$Label.Cancel}" action="{!cancel}" reRender="reportFormId"   status="actionStatus"/>
+        </apex:pageBlockButtons>
+    </apex:pageBlock>
+    </apex:form>  
+</apex:page>

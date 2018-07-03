@@ -1,0 +1,681 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <content>ItemCostNew</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpItemCost</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Item cost</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableEnhancedLookup>true</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>Cost_Rollup_Fields</fullName>
+        <description>ItemSpecificationCostRollupExt.cls</description>
+        <displayedFields>
+            <field>Material_Cost__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Labor_Cost__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Outside_Processing_Cost__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Overhead_Cost__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Cost Rollup Fields</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>ItemCostClone</fullName>
+        <availableFields>
+            <field>Date_Approved__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Facility_Cost__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Invalid_Flag__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Item_Specification__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Labor_Cost__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Material_Cost__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Outside_Processing_Cost__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <availableFields>
+            <field>Overhead_Cost__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </availableFields>
+        <description>ItemCostClone</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Facility__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Start_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Status__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Standard_Cost__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Planning_Reference__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Item Cost Clone</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>New_Item_Cost</fullName>
+        <description>newItemCost</description>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Facility__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Status__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Note__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Start_Date__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Item_Specification__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>New Item Cost</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>New_Item_Cost_Components</fullName>
+        <description>new Item Cost</description>
+        <displayedFields>
+            <field>Material_Cost__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Outside_Processing_Cost__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Labor_Cost__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Overhead_Cost__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>New Item Cost Components</label>
+    </fieldSets>
+    <fields>
+        <fullName>Change_Reason__c</fullName>
+        <description>This field captures the reason as to why the start date of the item cost record is changed.</description>
+        <externalId>false</externalId>
+        <label>Change Reason</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Item Costs</relationshipLabel>
+        <relationshipName>Item_Costs</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Currency__c</fullName>
+        <description>Transaction Currency for this record.</description>
+        <externalId>false</externalId>
+        <formula>Item__r.Company__r.Comp_Currency__r.ISO_Code__c</formula>
+        <inlineHelpText>To manage the default transaction currency, go to the Company page.</inlineHelpText>
+        <label>Currency</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Date_Activated__c</fullName>
+        <description>Date this cost became effective</description>
+        <externalId>false</externalId>
+        <label>Date Activated</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Date_Approved__c</fullName>
+        <description>Date/Time on which the Item Cost is approved/activated.</description>
+        <externalId>false</externalId>
+        <label>Date Approved</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Date_Deactivated__c</fullName>
+        <description>Date this record was deactivated</description>
+        <externalId>false</externalId>
+        <label>Date Deactivated</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Facility_Cost__c</fullName>
+        <externalId>false</externalId>
+        <label>Facility Cost</label>
+        <length>5</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Facility__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The facility for which the item costs apply.</description>
+        <externalId>false</externalId>
+        <label>Facility</label>
+        <referenceTo>Facility__c</referenceTo>
+        <relationshipLabel>Item Costs</relationshipLabel>
+        <relationshipName>Item_Costs</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Invalid_Flag__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>This field determines if the itemcost is valid or invalid.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>This field determines if the itemcost is valid or invalid.</inlineHelpText>
+        <label>Invalid Flag</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Item_Cost_Unique__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>Name + FacilityId + Status to check for uniqueness</description>
+        <externalId>false</externalId>
+        <label>Item Cost Unique</label>
+        <length>160</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Item_Specification__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Item Specification</label>
+        <lookupFilter>
+            <active>true</active>
+            <booleanFilter>1 OR (2 AND 3)</booleanFilter>
+            <errorMessage>Item Facility needs to be the same as Item Spec Facility</errorMessage>
+            <filterItems>
+                <field>$Source.Facility__c</field>
+                <operation>equals</operation>
+                <valueField>Item_Specification__c.Facility__c</valueField>
+            </filterItems>
+            <filterItems>
+                <field>$Source.Facility__c</field>
+                <operation>notEqual</operation>
+                <value></value>
+            </filterItems>
+            <filterItems>
+                <field>Item_Specification__c.Facility__c</field>
+                <operation>equals</operation>
+                <value></value>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Item_Specification__c</referenceTo>
+        <relationshipLabel>Item Costs</relationshipLabel>
+        <relationshipName>Item_Costs</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Item__c</fullName>
+        <description>Lookup to Item</description>
+        <externalId>false</externalId>
+        <label>Item</label>
+        <lookupFilter>
+            <active>true</active>
+            <booleanFilter>1 AND 2 AND (3 OR 4)</booleanFilter>
+            <errorMessage>Value does not exist or you picked an item with a source not supported for entering costs.</errorMessage>
+            <filterItems>
+                <field>Item__c.Source__c</field>
+                <operation>notEqual</operation>
+                <value>Miscellaneous</value>
+            </filterItems>
+            <filterItems>
+                <field>Item__c.Source__c</field>
+                <operation>notEqual</operation>
+                <value>Expense</value>
+            </filterItems>
+            <filterItems>
+                <field>Item__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Company__c</valueField>
+            </filterItems>
+            <filterItems>
+                <field>Item__c.Company__c</field>
+                <operation>equals</operation>
+                <value></value>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Item__c</referenceTo>
+        <relationshipLabel>Item Costs</relationshipLabel>
+        <relationshipName>Item_Costs</relationshipName>
+        <relationshipOrder>0</relationshipOrder>
+        <reparentableMasterDetail>false</reparentableMasterDetail>
+        <trackTrending>false</trackTrending>
+        <type>MasterDetail</type>
+        <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    </fields>
+    <fields>
+        <fullName>Labor_Cost__c</fullName>
+        <defaultValue>0</defaultValue>
+        <description>Labor cost for this Item</description>
+        <externalId>false</externalId>
+        <label>Labor Cost</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Material_Cost__c</fullName>
+        <defaultValue>0</defaultValue>
+        <description>Material cost for this Item</description>
+        <externalId>false</externalId>
+        <label>Material Cost</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Note__c</fullName>
+        <description>Notes about this item cost</description>
+        <externalId>false</externalId>
+        <label>Notes</label>
+        <length>3000</length>
+        <trackTrending>false</trackTrending>
+        <type>LongTextArea</type>
+        <visibleLines>6</visibleLines>
+    </fields>
+    <fields>
+        <fullName>On_hand_Revaluation__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>This flag indicates if the item cost is revalued for the change in the item cost value.</description>
+        <externalId>false</externalId>
+        <label>On-hand Revaluation</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Outside_Processing_Cost__c</fullName>
+        <defaultValue>0</defaultValue>
+        <description>Outside Processing cost for this Item</description>
+        <externalId>false</externalId>
+        <label>Outside Processing Cost</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Overhead_Cost__c</fullName>
+        <defaultValue>0</defaultValue>
+        <description>Overhead cost for this Item</description>
+        <externalId>false</externalId>
+        <label>Manufacturing Overhead Cost</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Planning_Reference__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The planning item cost record from which this cost was created.</description>
+        <externalId>false</externalId>
+        <label>Planning Reference</label>
+        <referenceTo>Item_Cost__c</referenceTo>
+        <relationshipLabel>Item Costs</relationshipLabel>
+        <relationshipName>Item_Costs</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Standard_Cost__c</fullName>
+        <description>Item&apos;s standard cost</description>
+        <externalId>false</externalId>
+        <label>Standard Cost</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Start_Date__c</fullName>
+        <description>The Data/time on which the proposed cost is approved and can be used for the accounting purposes.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The Data/time on which the proposed cost is approved and can be used for the accounting purposes.</inlineHelpText>
+        <label>Start Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Status__c</fullName>
+        <description>Status of this item cost record.</description>
+        <externalId>false</externalId>
+        <label>Status</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Planning - 1</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Planning - 2</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Planning - 3</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Proposed</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Transaction_Currency__c</fullName>
+        <description>Transaction Currency for this record.</description>
+        <externalId>false</externalId>
+        <formula>Company__r.Default_Transaction_Currency__r.Name</formula>
+        <inlineHelpText>Transaction currency is defined on the Company page.</inlineHelpText>
+        <label>Transaction Currency</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <label>Item Cost</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Item__c</columns>
+        <columns>Facility__c</columns>
+        <columns>Status__c</columns>
+        <columns>Start_Date__c</columns>
+        <columns>Date_Approved__c</columns>
+        <columns>Invalid_Flag__c</columns>
+        <columns>On_hand_Revaluation__c</columns>
+        <columns>Change_Reason__c</columns>
+        <columns>Standard_Cost__c</columns>
+        <columns>Material_Cost__c</columns>
+        <columns>Labor_Cost__c</columns>
+        <columns>Outside_Processing_Cost__c</columns>
+        <columns>Overhead_Cost__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Item Cost</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Item Costs</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Status__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Date_Activated__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Date_Deactivated__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Standard_Cost__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Material_Cost__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Labor_Cost__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Overhead_Cost__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Outside_Processing_Cost__c</customTabListAdditionalFields>
+        <excludedStandardButtons>Accept</excludedStandardButtons>
+        <excludedStandardButtons>ChangeOwner</excludedStandardButtons>
+        <listViewButtons>Mass_Clone</listViewButtons>
+        <listViewButtons>Mass_Propose_Cost</listViewButtons>
+        <searchResultsAdditionalFields>Item__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Date_Activated__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Material_Cost__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Labor_Cost__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Overhead_Cost__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Outside_Processing_Cost__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Standard_Cost__c</searchResultsAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ControlledByParent</sharingModel>
+    <validationRules>
+        <fullName>Cannot_change_active_cost_fields</fullName>
+        <active>false</active>
+        <errorConditionFormula>false</errorConditionFormula>
+        <errorDisplayField>Date_Activated__c</errorDisplayField>
+        <errorMessage>You cannot change the active cost record</errorMessage>
+    </validationRules>
+    <webLinks>
+        <fullName>Activate_Proposed_Cost</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Activate Proposed Cost</masterLabel>
+        <openType>sidebar</openType>
+        <page>ActivateProposedCosts</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Clone</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <encodingKey>UTF-8</encodingKey>
+        <height>600</height>
+        <linkType>url</linkType>
+        <masterLabel>Clone</masterLabel>
+        <openType>sidebar</openType>
+        <protected>false</protected>
+        <url>/apex/{!$Setup.KNDY_Namespace__c.Namespace__c}ItemCostClone?clone=1&amp;recs={!Item_Cost__c.Id}</url>
+    </webLinks>
+    <webLinks>
+        <fullName>Mass_Clone</fullName>
+        <availability>online</availability>
+        <displayType>massActionButton</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Clone</masterLabel>
+        <openType>sidebar</openType>
+        <page>ItemCostCloneMass</page>
+        <protected>false</protected>
+        <requireRowSelection>true</requireRowSelection>
+    </webLinks>
+    <webLinks>
+        <fullName>Mass_Propose_Cost</fullName>
+        <availability>online</availability>
+        <displayType>massActionButton</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Propose Cost</masterLabel>
+        <openType>sidebar</openType>
+        <page>ItemCost_ProposeSelected</page>
+        <protected>false</protected>
+        <requireRowSelection>true</requireRowSelection>
+    </webLinks>
+    <webLinks>
+        <fullName>Propose_Cost</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <encodingKey>UTF-8</encodingKey>
+        <height>600</height>
+        <linkType>url</linkType>
+        <masterLabel>Propose Cost</masterLabel>
+        <openType>sidebar</openType>
+        <protected>false</protected>
+        <url>/apex/{!$Setup.KNDY_Namespace__c.Namespace__c}ItemCostClone?recs={!Item_Cost__c.Id}</url>
+    </webLinks>
+</CustomObject>

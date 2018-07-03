@@ -1,0 +1,24 @@
+<apex:page standardController="Fixed_Asset__c" extensions="FixedAssetCapitalizeExt" id="page" >
+	
+	<apex:sectionHeader title="{!$ObjectType.Fixed_Asset__c.Label}" subtitle="{!$Label.Capitalize}"/>
+	
+	<apex:form id="form">
+		<c:busyWait />
+		<apex:pageMessages id="msgs"/>
+		<apex:pageBlock title="{!$ObjectType.Fixed_Asset__c.Label} - {!Fixed_Asset__c.name}">
+		
+			<apex:pageBlockButtons location="top">
+				<apex:commandButton value="{!$Label.Go_Back}" action="{!cancel}" status="actionStatus" rerender="form"/>
+				<apex:commandButton value="{!$Label.Save_and_Capitalize}" action="{!btn_Capitalize}" status="actionStatus" rerender="form" disabled="{!!isValid}" accessKey="s"/>
+			</apex:pageBlockButtons>
+		
+			<apex:pageBlockSection collapsible="false">
+				<apex:repeat value="{!$Objecttype.Fixed_Asset__c.Fieldsets.Fixed_Asset_Detail}" var="f">
+					<apex:inputField value="{!Fixed_Asset__c[f]}" rendered="{!isValid}"/>
+					<apex:outputField value="{!Fixed_Asset__c[f]}" rendered="{!!isValid}"/>
+				</apex:repeat>
+			</apex:pageBlockSection>
+		</apex:pageBlock>
+	</apex:form>
+
+</apex:page>

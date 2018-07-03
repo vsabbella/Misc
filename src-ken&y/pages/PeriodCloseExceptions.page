@@ -1,0 +1,587 @@
+<apex:page standardController="Period__c" extensions="PeriodCloseExt" action="{!refresh}" >
+	
+    <apex:sectionHeader title="{!$ObjectType.Period__c.Label}" subtitle="{!Period__c.Name} {!$Label.Accounts_Receivable_Subledger}" rendered="{!(subledgerType == 'AR')}"/>
+    <apex:sectionHeader title="{!$ObjectType.Period__c.Label}" subtitle="{!Period__c.Name} {!$Label.Accounts_Payable_Subledger}" rendered="{!(subledgerType == 'AP')}"/>
+    <apex:sectionHeader title="{!$ObjectType.Period__c.Label}" subtitle="{!Period__c.Name} {!$Label.Shipment_Subledger}" rendered="{!(subledgerType == 'SH')}"/>
+    <apex:sectionHeader title="{!$ObjectType.Period__c.Label}" subtitle="{!Period__c.Name} {!$Label.Receiving_Subledger}" rendered="{!(subledgerType == 'RC')}"/>
+    <apex:sectionHeader title="{!$ObjectType.Period__c.Label}" subtitle="{!Period__c.Name} {!$Label.InterCompany_Subledger}" rendered="{!(subledgerType == 'IC')}"/>
+    <apex:sectionHeader title="{!$ObjectType.Period__c.Label}" subtitle="{!Period__c.Name} {!$Label.Inventory_Subledger}" rendered="{!(subledgerType == 'IN')}"/>
+    <apex:sectionHeader title="{!$ObjectType.Period__c.Label}" subtitle="{!Period__c.Name} {!$Label.Fixed_Asset_Subledger}" rendered="{!(subledgerType == 'FA')}"/>
+    <apex:sectionHeader title="{!$ObjectType.Period__c.Label}" subtitle="{!Period__c.Name} Journal Entry" rendered="{!(subledgerType == 'JE')}"/>
+    
+    <c:KendoResources />
+	<apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+	
+    <apex:form id="form">
+    <c:busyWait />
+        <apex:pageMessages rendered="{!ISNULL(Period__c.AR_Subledger_Job__c) && ISNULL(Period__c.AP_Subledger_Job__c) && ISNULL(Period__c.Shipment_Subledger_Job__c) && ISNULL(Period__c.Receiving_Subledger_Job__c) && ISNULL(Period__c.Inventory_Subledger_Job__c) && ISNULL(Period__c.FA_Subledger_Job__c) && ISNULL(Period__c.JE_Subledger_Job__c)}" id="msg"></apex:pageMessages>
+        <apex:actionPoller action="{!refresh}" reRender="msg,form,scriptPanel" interval="30" oncomplete="onRefreshComplete();" enabled="{!NOT(ISNULL(Period__c.AR_Subledger_Job__c)) || NOT(ISNULL(Period__c.AP_Subledger_Job__c)) || NOT(ISNULL(Period__c.FA_Subledger_Job__c)) || NOT(ISNULL(Period__c.JE_Subledger_Job__c)) || NOT(ISNULL(Period__c.Shipment_Subledger_Job__c)) || NOT(ISNULL(Period__c.Inventory_Subledger_Job__c)) || NOT(ISNULL(Period__c.Receiving_Subledger_Job__c))}"/>
+        <apex:pageBlock rendered="{!(subledgerType == 'AR')}">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="{!$Label.Go_Back}" action="{!goBack}" status="actionStatus" rerender="form"/>
+                <!-- 
+                <apex:commandButton value="{!$Label.AR_Subledger_Validation}" action="{!ValidateAR}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.AR_Subledger_Job__c) && ISNULL(Period__c.AR_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                	<apex:param name="IsValidateOnly" value="true" />      
+                </apex:commandButton>
+                <apex:commandButton value="Incremental {!$Label.AR_Subledger_Validation}" action="{!incrementalValidation}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.AR_Subledger_Job__c) && ISNULL(Period__c.AR_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                	<apex:param name="IsValidateOnly" value="true" />      
+                </apex:commandButton>
+                
+                <apex:commandButton value="{!$Label.AR_Subledger_Close}" action="{!CloseAR}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.AR_Subledger_Job__c) && ISNULL(Period__c.AR_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                 	<apex:param name="IsValidateOnly" value="false" />      
+                </apex:commandButton>
+                -->
+                <apex:commandButton value="{!$Label.AR_Subledger_Close}" action="{!closeSubledger}" rendered="{!ISNULL(Period__c.AR_Subledger_Job__c) && ISNULL(Period__c.AR_Subledger_Closed__c)}" status="actionStatus" rerender="msg" disabled="{!(!Period__c.Open__c)}"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection id="section">
+	            <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.AR_Subledger_Job__c))}">
+	                <apex:outputLabel value="{!$Label.AR_Subledger_Validation}" rendered="{!IsValidateOnly}"/>
+	                <apex:outputLabel value="{!$Label.AR_Subledger_Close}" rendered="{!NOT(IsValidateOnly)}"/>
+	            </apex:pageBlockSectionItem>
+	            <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.AR_Subledger_Job__c))}">
+	                <apex:outputpanel >
+						<div id="progressBarAR"/>					
+	                </apex:outputpanel>
+	            </apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+            <apex:pageBlockSection >
+            	<apex:outputPanel rendered="{!ISNULL(Period__c.AR_Subledger_Job__c)}">
+              		Number Of Exceptions     = <span id='exceptionsCount'>{!excpCount}</span>
+            	</apex:outputPanel>	
+            	<apex:outputPanel rendered="{!ISNULL(Period__c.AR_Subledger_Job__c)}">
+            		Last Validated on {!lastValidated}
+            	</apex:outputPanel>	
+            </apex:pageBlockSection>
+            <apex:outputPanel rendered="{!ISNULL(Period__c.AR_Subledger_Job__c) }" >
+				<div class="grid-container">
+		    		<div class="grid-message"></div>
+		        	<div id="GridPerioCloseExceptionList"></div>
+		        </div>
+			</apex:outputPanel>
+        </apex:pageBlock>	        
+
+        <apex:pageBlock rendered="{!(subledgerType == 'AP')}">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="{!$Label.Go_Back}" action="{!goBack}" status="actionStatus" rerender="form"/>
+                <!--
+                <apex:commandButton value="{!$Label.AP_Subledger_Validation}" action="{!ValidateAP}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.AP_Subledger_Job__c) && ISNULL(Period__c.AP_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                	<apex:param name="IsValidateOnly" value="true" />      
+                </apex:commandButton>
+                <apex:commandButton value="Incremental {!$Label.AP_Subledger_Validation}" action="{!incrementalValidation}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.AP_Subledger_Job__c) && ISNULL(Period__c.AP_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                	<apex:param name="IsValidateOnly" value="true" />      
+                </apex:commandButton>
+                
+                 <apex:commandButton value="{!$Label.AP_Subledger_Close}" action="{!CloseAP}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.AP_Subledger_Job__c) && ISNULL(Period__c.AP_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                 	<apex:param name="IsValidateOnly" value="false" />      
+                </apex:commandButton>
+                 -->
+                 <apex:commandButton value="{!$Label.AP_Subledger_Close}" action="{!closeSubledger}" rendered="{!ISNULL(Period__c.AP_Subledger_Job__c) && ISNULL(Period__c.AP_Subledger_Closed__c)}" status="actionStatus" rerender="msg" disabled="{!(!Period__c.Open__c)}"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection >
+	            <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.AP_Subledger_Job__c))}">
+	                <apex:outputLabel value="{!$Label.AP_Subledger_Validation}" rendered="{!IsValidateOnly}"/>
+	                <apex:outputLabel value="{!$Label.AP_Subledger_Close}" rendered="{!NOT(IsValidateOnly)}"/>
+	            </apex:pageBlockSectionItem>
+	            <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.AP_Subledger_Job__c))}">
+	                <apex:outputpanel >
+						<div id="progressBarAP"/>					
+	                </apex:outputpanel>
+	            </apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+            <apex:pageBlockSection >
+            	<apex:outputPanel rendered="{!ISNULL(Period__c.AP_Subledger_Job__c)}">
+            		Number Of Exceptions = <span id='exceptionsCount'>{!excpCount}</span>
+            	</apex:outputPanel>	
+            	<apex:outputPanel rendered="{!ISNULL(Period__c.AP_Subledger_Job__c)}">
+            		Last Validated on {!lastValidated}
+            	</apex:outputPanel>	
+            </apex:pageBlockSection>
+            <apex:outputPanel rendered="{!ISNULL(Period__c.AP_Subledger_Job__c) }" >
+				<div class="grid-container">
+		    		<div class="grid-message"></div>
+		        	<div id="GridPerioCloseExceptionList"></div>
+		        </div>
+			</apex:outputPanel>
+			     	
+        </apex:pageBlock>	        
+
+        <apex:pageBlock rendered="{!(subledgerType == 'SH')}">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="{!$Label.Go_Back}" action="{!goBack}" status="actionStatus" rerender="form"/>
+                <!--
+                <apex:commandButton value="{!$Label.Shipment_Subledger_Validation}" action="{!ValidateShipment}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.Shipment_Subledger_Job__c) && ISNULL(Period__c.Shipment_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                	<apex:param name="IsValidateOnly" value="true" />      
+                </apex:commandButton>
+                <apex:commandButton value="Incremental {!$Label.Shipment_Subledger_Validation}" action="{!incrementalValidation}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.Shipment_Subledger_Job__c) && ISNULL(Period__c.Shipment_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                	<apex:param name="IsValidateOnly" value="true" />      
+                </apex:commandButton>
+                
+                <apex:commandButton value="{!$Label.Shipment_Subledger_Close}" action="{!CloseShipment}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.Shipment_Subledger_Job__c) && ISNULL(Period__c.Shipment_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                 	<apex:param name="IsValidateOnly" value="false" />      
+                </apex:commandButton>
+                 -->
+                 <apex:commandButton value="{!$Label.Shipment_Subledger_Close}" action="{!closeSubledger}" rendered="{!ISNULL(Period__c.Shipment_Subledger_Job__c) && ISNULL(Period__c.Shipment_Subledger_Closed__c)}" status="actionStatus" rerender="msg" disabled="{!(!Period__c.Open__c)}"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection >
+	            <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.Shipment_Subledger_Job__c))}">
+	                <apex:outputLabel value="{!$Label.Shipment_Subledger_Validation}" rendered="{!IsValidateOnly}"/>
+	                <apex:outputLabel value="{!$Label.Shipment_Subledger_Close}" rendered="{!NOT(IsValidateOnly)}"/>
+	            </apex:pageBlockSectionItem>
+	            <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.Shipment_Subledger_Job__c))}">
+	                <apex:outputpanel >
+						<div id="progressBarSH"/>					
+	                </apex:outputpanel>
+	            </apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+            <apex:pageBlockSection >
+            	<apex:outputPanel rendered="{!ISNULL(Period__c.Shipment_Subledger_Job__c)}">
+            		Number Of Exceptions = <span id='exceptionsCount'>{!excpCount}</span>
+            	</apex:outputPanel>	
+            	<apex:outputPanel rendered="{!ISNULL(Period__c.Shipment_Subledger_Job__c)}">
+            		Last Validated on {!lastValidated}
+            	</apex:outputPanel>	
+            </apex:pageBlockSection>
+            <apex:outputPanel rendered="{!ISNULL(Period__c.Shipment_Subledger_Job__c) }" >
+				<div class="grid-container">
+		    		<div class="grid-message"></div>
+		        	<div id="GridPerioCloseExceptionList"></div>
+		        </div>
+			</apex:outputPanel>
+        </apex:pageBlock>	        
+
+        <apex:pageBlock rendered="{!(subledgerType == 'RC')}">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="{!$Label.Go_Back}" action="{!goBack}" status="actionStatus" rerender="form"/>
+                <!--
+                <apex:commandButton value="{!$Label.Receiving_Subledger_Validation}" action="{!ValidateReceiving}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.Receiving_Subledger_Job__c) && ISNULL(Period__c.Receiving_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                	<apex:param name="IsValidateOnly" value="true" />      
+                </apex:commandButton>
+                <apex:commandButton value="Incremental {!$Label.Receiving_Subledger_Validation}" action="{!incrementalValidation}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.Receiving_Subledger_Job__c) && ISNULL(Period__c.Receiving_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                	<apex:param name="IsValidateOnly" value="true" />      
+                </apex:commandButton>
+                 
+                <apex:commandButton value="{!$Label.Receiving_Subledger_Close}" action="{!CloseReceiving}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.Receiving_Subledger_Job__c) && ISNULL(Period__c.Receiving_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                 	<apex:param name="IsValidateOnly" value="false" />      
+                </apex:commandButton>
+                 -->
+                 <apex:commandButton value="{!$Label.Receiving_Subledger_Close}" action="{!closeSubledger}" rendered="{!ISNULL(Period__c.Receiving_Subledger_Job__c) && ISNULL(Period__c.Receiving_Subledger_Closed__c)}" status="actionStatus" rerender="msg" disabled="{!(!Period__c.Open__c)}"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection >
+	            <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.Receiving_Subledger_Job__c))}">
+	                <apex:outputLabel value="{!$Label.Receiving_Subledger_Validation}" rendered="{!IsValidateOnly}"/>
+	                <apex:outputLabel value="{!$Label.Receiving_Subledger_Close}" rendered="{!NOT(IsValidateOnly)}"/>
+	            </apex:pageBlockSectionItem>
+	            <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.Receiving_Subledger_Job__c))}">
+	                <apex:outputpanel >
+						<div id="progressBarRC"/>					
+	                </apex:outputpanel>
+	            </apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+            <apex:pageBlockSection >
+            	<apex:outputPanel rendered="{!ISNULL(Period__c.Receiving_Subledger_Job__c)}">
+            		Number Of Exceptions = <span id='exceptionsCount'>{!excpCount}</span>
+            	</apex:outputPanel>	
+            	<apex:outputPanel rendered="{!ISNULL(Period__c.Receiving_Subledger_Job__c)}">
+            		Last Validated on {!lastValidated}
+            	</apex:outputPanel>	
+            </apex:pageBlockSection>
+            <apex:outputPanel rendered="{!ISNULL(Period__c.Receiving_Subledger_Job__c) }" >
+				<div class="grid-container">
+		    		<div class="grid-message"></div>
+		        	<div id="GridPerioCloseExceptionList"></div>
+		        </div>
+			</apex:outputPanel>
+        </apex:pageBlock>	        
+
+            <apex:pageBlock rendered="{!(subledgerType == 'IC')}">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="{!$Label.Go_Back}" action="{!goBack}" status="actionStatus" rerender="form"/>
+                <!--
+                <apex:commandButton value="{!$Label.Inventory_Subledger_Validation}" action="{!ValidateInventory}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.Inventory_Subledger_Job__c) && ISNULL(Period__c.Inventory_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                	<apex:param name="IsValidateOnly" value="true" />      
+                </apex:commandButton>
+                <apex:commandButton value="Incremental {!$Label.Inventory_Subledger_Validation}" action="{!incrementalValidation}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.Inventory_Subledger_Job__c) && ISNULL(Period__c.Inventory_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                	<apex:param name="IsValidateOnly" value="true" />      
+                </apex:commandButton>
+                 
+                <apex:commandButton value="{!$Label.Inventory_Subledger_Close}" action="{!CloseInventory}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.Inventory_Subledger_Job__c) && ISNULL(Period__c.Inventory_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                 	<apex:param name="IsValidateOnly" value="false" />      
+                </apex:commandButton>
+                 -->
+                 <apex:commandButton value="{!$Label.InterCompany_Subledger_Close}" action="{!closeSubledger}" rendered="{!ISNULL(Period__c.InterCompany_Subledger_Job__c) && ISNULL(Period__c.InterCompany_Subledger_Closed__c)}" status="actionStatus" rerender="msg" disabled="{!(!Period__c.Open__c)}"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection >
+	            <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.InterCompany_Subledger_Job__c))}">
+	                <apex:outputLabel value="{!$Label.InterCompany_Subledger_Validation}" rendered="{!IsValidateOnly}"/>
+	                <apex:outputLabel value="{!$Label.InterCompany_Subledger_Close}" rendered="{!NOT(IsValidateOnly)}"/>
+	            </apex:pageBlockSectionItem>
+	            <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.InterCompany_Subledger_Job__c))}">
+	                <apex:outputpanel >
+						<div id="progressBarIC"/>					
+	                </apex:outputpanel>
+	            </apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+            <apex:pageBlockSection >
+            	<apex:outputPanel rendered="{!ISNULL(Period__c.InterCompany_Subledger_Job__c)}">
+            		Number Of Exceptions = <span id='exceptionsCount'>{!excpCount}</span>
+            	</apex:outputPanel>	
+            	<apex:outputPanel rendered="{!ISNULL(Period__c.InterCompany_Subledger_Job__c)}">
+            		Last Validated on {!lastValidated}
+            	</apex:outputPanel>	
+            </apex:pageBlockSection>
+            <apex:outputPanel rendered="{!ISNULL(Period__c.InterCompany_Subledger_Job__c) }" >
+				<div class="grid-container">
+		    		<div class="grid-message"></div>
+		        	<div id="GridPerioCloseExceptionList"></div>
+		        </div>
+			</apex:outputPanel>
+        </apex:pageBlock>	        
+
+        <apex:pageBlock rendered="{!(subledgerType == 'IN')}">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="{!$Label.Go_Back}" action="{!goBack}" status="actionStatus" rerender="form"/>
+                <!--
+                <apex:commandButton value="{!$Label.Inventory_Subledger_Validation}" action="{!ValidateInventory}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.Inventory_Subledger_Job__c) && ISNULL(Period__c.Inventory_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                	<apex:param name="IsValidateOnly" value="true" />      
+                </apex:commandButton>
+                <apex:commandButton value="Incremental {!$Label.Inventory_Subledger_Validation}" action="{!incrementalValidation}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.Inventory_Subledger_Job__c) && ISNULL(Period__c.Inventory_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                	<apex:param name="IsValidateOnly" value="true" />      
+                </apex:commandButton>
+                 
+                <apex:commandButton value="{!$Label.Inventory_Subledger_Close}" action="{!CloseInventory}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.Inventory_Subledger_Job__c) && ISNULL(Period__c.Inventory_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                 	<apex:param name="IsValidateOnly" value="false" />      
+                </apex:commandButton>
+                 -->
+                 <apex:commandButton value="{!$Label.Inventory_Subledger_Close}" action="{!closeSubledger}" rendered="{!ISNULL(Period__c.Inventory_Subledger_Job__c) && ISNULL(Period__c.Inventory_Subledger_Closed__c)}" status="actionStatus" rerender="msg" disabled="{!(!Period__c.Open__c)}"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection >
+	            <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.Inventory_Subledger_Job__c))}">
+	                <apex:outputLabel value="{!$Label.Inventory_Subledger_Validation}" rendered="{!IsValidateOnly}"/>
+	                <apex:outputLabel value="{!$Label.Inventory_Subledger_Close}" rendered="{!NOT(IsValidateOnly)}"/>
+	            </apex:pageBlockSectionItem>
+	            <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.Inventory_Subledger_Job__c))}">
+	                <apex:outputpanel >
+						<div id="progressBarIN"/>					
+	                </apex:outputpanel>
+	            </apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+            <apex:pageBlockSection >
+            	<apex:outputPanel rendered="{!ISNULL(Period__c.Inventory_Subledger_Job__c)}">
+            		Number Of Exceptions = <span id='exceptionsCount'>{!excpCount}</span>
+            	</apex:outputPanel>	
+            	<apex:outputPanel rendered="{!ISNULL(Period__c.Inventory_Subledger_Job__c)}">
+            		Last Validated on {!lastValidated}
+            	</apex:outputPanel>	
+            </apex:pageBlockSection>
+            <apex:outputPanel rendered="{!ISNULL(Period__c.Inventory_Subledger_Job__c) }" >
+				<div class="grid-container">
+		    		<div class="grid-message"></div>
+		        	<div id="GridPerioCloseExceptionList"></div>
+		        </div>
+			</apex:outputPanel>
+        </apex:pageBlock>	        
+
+        <apex:pageBlock rendered="{!(subledgerType == 'FA')}">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="{!$Label.Go_Back}" action="{!goBack}" status="actionStatus" rerender="form"/>
+                <!--
+                <apex:commandButton value="{!$Label.FA_Subledger_Validation}" action="{!ValidateFA}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.FA_Subledger_Job__c) && ISNULL(Period__c.FA_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                	<apex:param name="IsValidateOnly" value="true" />      
+                </apex:commandButton>
+                <apex:commandButton value="Incremental {!$Label.FA_Subledger_Validation}" action="{!incrementalValidation}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.FA_Subledger_Job__c) && ISNULL(Period__c.FA_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                	<apex:param name="IsValidateOnly" value="true" />      
+                </apex:commandButton>
+                 
+                <apex:commandButton value="{!$Label.FA_Subledger_Close}" action="{!CloseFA}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.FA_Subledger_Job__c) && ISNULL(Period__c.FA_Subledger_Closed__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                 	<apex:param name="IsValidateOnly" value="false" />      
+                </apex:commandButton>
+                 -->
+                 <apex:commandButton value="{!$Label.FA_Subledger_Close}" action="{!closeSubledger}" rendered="{!ISNULL(Period__c.FA_Subledger_Job__c) && ISNULL(Period__c.FA_Subledger_Closed__c)}" status="actionStatus" rerender="msg" disabled="{!(!Period__c.Open__c)}"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection >
+	            <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.FA_Subledger_Job__c))}">
+	                <apex:outputLabel value="{!$Label.FA_Subledger_Validation}" rendered="{!IsValidateOnly}"/>
+	                <apex:outputLabel value="{!$Label.FA_Subledger_Close}" rendered="{!NOT(IsValidateOnly)}"/>
+	            </apex:pageBlockSectionItem>
+	            <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.FA_Subledger_Job__c))}">
+	                <apex:outputpanel >
+						<div id="progressBarFA"/>					
+	                </apex:outputpanel>
+	            </apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+            <apex:pageBlockSection >
+            	<apex:outputPanel rendered="{!ISNULL(Period__c.FA_Subledger_Job__c)}">
+            		Number Of Exceptions = <span id='exceptionsCount'>{!excpCount}</span>
+            	</apex:outputPanel>	
+            	<apex:outputPanel rendered="{!ISNULL(Period__c.FA_Subledger_Job__c)}">
+            		Last Validated on {!lastValidated}
+            	</apex:outputPanel>	
+            </apex:pageBlockSection>
+            <apex:outputPanel rendered="{!ISNULL(Period__c.FA_Subledger_Job__c) }" >
+				<div class="grid-container">
+		    		<div class="grid-message"></div>
+		        	<div id="GridPerioCloseExceptionList"></div>
+		        </div>
+			</apex:outputPanel>
+        </apex:pageBlock>	        
+
+        <apex:pageBlock rendered="{!(subledgerType == 'JE')}">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="{!$Label.Go_Back}" action="{!goBack}" status="actionStatus" rerender="form"/>
+                <!-- 
+                <apex:commandButton value="JE Subledger Validation" action="{!ValidateJE}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.JE_Subledger_Job__c) && ISNULL(Period__c.GL_Close__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                	<apex:param name="IsValidateOnly" value="true" />      
+                </apex:commandButton>
+                <apex:commandButton value="Incremental JE Subledger Validation" action="{!incrementalValidation}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.JE_Subledger_Job__c) && ISNULL(Period__c.GL_Close__c)}" status="actionStatus" rerender="form" disabled="{!(!Period__c.Open__c)}">
+                	<apex:param name="IsValidateOnly" value="true" />      
+                </apex:commandButton>
+                
+                <apex:commandButton value="JE Subledger Close" action="{!CloseJE}" onComplete="onValidate();" rendered="{!ISNULL(Period__c.JE_Subledger_Job__c) && ISNULL(Period__c.GL_Close__c)}" status="actionStatus" rerender="form" disabled="{!(isJECloseDisabled && (Period__c.Open__c)||(!Period__c.Open__c))}">
+                 	<apex:param name="IsValidateOnly" value="false" />      
+                </apex:commandButton>
+                 -->
+                 <apex:commandButton value="JE Close" action="{!closeSubledger}" rendered="{!ISNULL(Period__c.JE_Subledger_Job__c) && ISNULL(Period__c.GL_Close__c)}" status="actionStatus" rerender="msg" disabled="{!(isJECloseDisabled && (Period__c.Open__c)||(!Period__c.Open__c))}"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection >
+	            <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.JE_Subledger_Job__c))}">
+	                <apex:outputLabel value="JE Validation" rendered="{!IsValidateOnly}"/>
+	                <apex:outputLabel value="JE Close" rendered="{!NOT(IsValidateOnly)}"/>
+	            </apex:pageBlockSectionItem>
+	            <apex:pageBlockSectionItem rendered="{!NOT(ISNULL(Period__c.JE_Subledger_Job__c))}">
+	                <apex:outputpanel >
+						<div id="progressBarJE"/>					
+	                </apex:outputpanel>
+	            </apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+            <apex:pageBlockSection >
+            	<apex:outputPanel rendered="{!ISNULL(Period__c.JE_Subledger_Job__c)}">
+            		Number Of Exceptions = <span id='exceptionsCount'>{!excpCount}</span>
+            	</apex:outputPanel>	
+            	<apex:outputPanel rendered="{!ISNULL(Period__c.JE_Subledger_Job__c)}">
+            	        Last Validated on {!lastValidated}
+            	</apex:outputPanel>	
+            </apex:pageBlockSection>
+            <apex:outputPanel rendered="{!ISNULL(Period__c.JE_Subledger_Job__c) }" >
+				<div class="grid-container">
+		    		<div class="grid-message"></div>
+		        	<div id="GridPerioCloseExceptionList"></div>
+		        </div>
+			</apex:outputPanel>
+        </apex:pageBlock>	         
+
+
+	</apex:form>
+	<script type="text/javascript">
+		var getExceptionLinesAction = '{!$RemoteAction.PeriodCloseExt.getExceptions}';
+	</script>
+	<apex:outputPanel id="scriptPanel">
+    <script type="text/javascript">
+        var exceptionLinesGrid = null;
+        var isValid = '{!IsValidateOnly}';
+        var isValidString = '{!IsValidateOnlyString}';
+        var jobId = '{!ISNULL(Period__c.AR_Subledger_Job__c) }';
+        var subledgerType = '{!subledgerType}';
+        
+        function gridInit() {
+
+       		// TODO: SK - We may remove below condition later based on how we redesign the PeriodClose page
+        	if(subledgerType != 'AR' && subledgerType != 'AP' && subledgerType != 'JE' && subledgerType != 'SH' && subledgerType != 'RC' && subledgerType != 'FA' && subledgerType != 'IN' ){
+		    	var exceptionLinesData = function() {
+		            var deferred = $.Deferred();
+		            
+		            Visualforce.remoting.Manager.invokeAction(
+		                getExceptionLinesAction,
+		                '{!subledgerType}',
+		                '{!periodJson}',
+		                '{!IsValidateOnlyString}',
+		                function (result, event) {
+		                    deferred.resolve(result, event);
+		                },
+		                {escape: false}
+		            );
+		
+		            return deferred.promise();
+		        }
+	        
+	        
+	            // Initialize Lot Master History Lines Grid
+	            exceptionLinesGrid = $.fn.GridRelatedList($('#GridPerioCloseExceptionList'), { namespace: '{!NamespaceUU}', config: '{!exceptionLinesConfigJson}', fieldList: '{!exceptionLinesFieldList}', getRelatedListFunction: exceptionLinesData });
+	            exceptionLinesGrid.element.bind('OnReadSuccess', OnExceptionLinesGridReadSuccess);
+	    	}
+    	} 
+	    
+	    
+        $(document).on('KenandyErpReady', function(e) {
+              
+           ARProgressBar();
+	       APProgressBar();
+	       JEProgressBar();
+	       INProgressBar();
+	       FAProgressBar();
+	       RCProgressBar();
+	       SHProgressBar();
+	       ICProgressBar();
+			gridInit();
+        });
+        
+        function onRefreshComplete() {
+        	console.log("refreshComplete");
+	       
+	       ARProgressBar();
+	       APProgressBar();
+	       JEProgressBar();
+	       INProgressBar();
+	       FAProgressBar();
+	       RCProgressBar();
+	       SHProgressBar();
+	       ICProgressBar();
+	       gridInit();
+        }
+        
+        function onValidate(){
+        console.log("validate");
+           ARProgressBar();
+	       APProgressBar();
+	       JEProgressBar();
+	       INProgressBar();
+	       FAProgressBar();
+	       RCProgressBar();
+	       SHProgressBar();
+	       ICProgressBar();
+        }
+        
+        
+	    
+    	$(document).ready(function() {
+	    	console.log("ready");
+	    	
+	       ARProgressBar();
+	       APProgressBar();
+	       JEProgressBar();
+	       INProgressBar();
+	       FAProgressBar();
+	       RCProgressBar();
+	       SHProgressBar();
+	       ICProgressBar();
+	       //gridInit();
+			
+		});
+		
+		function ARProgressBar(){
+			console.log("ar progress" + "{!ARProgress}");
+			$("#progressBarAR").kendoProgressBar({
+                min: 0,
+                max: 100,
+                type: "percent",
+                value: '{!ARprogress}',
+                animation: {
+                    duration: 600
+                }
+                
+            });
+		}
+		
+		function APProgressBar(){
+			$("#progressBarAP").kendoProgressBar({
+                min: 0,
+                max: 100,
+                type: "percent",
+                value: '{!APprogress}',
+                animation: {
+                    duration: 600
+                }
+                
+            });
+		}
+		
+		
+		function FAProgressBar(){
+			$("#progressBarFA").kendoProgressBar({
+                min: 0,
+                max: 100,
+                type: "percent",
+                value: '{!FAprogress}',
+                animation: {
+                    duration: 600
+                }
+                
+            });
+		}
+		
+		function JEProgressBar(){
+			$("#progressBarJE").kendoProgressBar({
+                min: 0,
+                max: 100,
+                type: "percent",
+                value: '{!JEprogress}',
+                animation: {
+                    duration: 600
+                }
+                
+            });
+		}
+		
+		function INProgressBar(){
+			$("#progressBarIN").kendoProgressBar({
+                min: 0,
+                max: 100,
+                type: "percent",
+                value: '{!INprogress}',
+                animation: {
+                    duration: 600
+                }
+                
+            });
+		}
+		
+		function ICProgressBar(){
+			$("#progressBarIC").kendoProgressBar({
+                min: 0,
+                max: 100,
+                type: "percent",
+                value: '{!ICprogress}',
+                animation: {
+                    duration: 600
+                }
+                
+            });
+		}
+		
+		function RCProgressBar(){
+			$("#progressBarRC").kendoProgressBar({
+                min: 0,
+                max: 100,
+                type: "percent",
+                value: '{!RCprogress}',
+                animation: {
+                    duration: 600
+                }
+                
+            });
+		}
+		
+		function SHProgressBar(){
+			$("#progressBarSH").kendoProgressBar({
+                min: 0,
+                max: 100,
+                type: "percent",
+                value: '{!SHprogress}',
+                animation: {
+                    duration: 600
+                }
+                
+            });
+		}
+		
+        function OnExceptionLinesGridReadSuccess(e) {
+        	$('#exceptionsCount').html(e.event.result.total);
+        	
+        	if (e.event.result.messages && e.event.result.messages[0]) {
+            	var messageElement = $('#GridPerioCloseExceptionList').closest("div.grid-container").find("div.grid-message");
+    
+				KenandyErp.Messages(e.event.result.messages, messageElement);
+			}
+        }
+    </script>
+    </apex:outputPanel>
+</apex:page>

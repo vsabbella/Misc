@@ -1,0 +1,429 @@
+<apex:page showHeader="true" sidebar="true" standardController="Item__c" extensions="InventoryTransactionsHistoryExt" tabStyle="Item__c" readOnly="true" docType="html-5.0">
+    <style type="text/css">
+        .column-label {
+            vertical-align: middle !important;
+            width: 10%;
+        }
+        
+        .column-field {
+            vertical-align: middle !important;
+            width: 40%;
+        }
+        
+        .filter-operator {
+            
+        }
+        
+        .custom-filter-options {
+            width: 10%;
+        }
+        
+        .custom-filter-fields {
+            width: 85%;
+        }
+    </style>
+    
+    <c:KendoResources />
+
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+
+    <apex:sectionHeader subtitle="{!$Label.Inventory_Transactions_History}" help="{!URLFOR($Page.HelpInventoryMaster)}"/>
+
+    <div class="page-message"></div>
+    <apex:form id="lotMasterHistoryForm">
+    
+    <apex:pageBlock title="{!$Label.Filters}">    
+        <table class="kndy-table">
+            <tr>
+                <td class="column-label">
+                    <apex:outputLabel value="{!$ObjectType.Item__c.Label}" for="itemFilter" />:
+                </td>
+                <td class="column-field">
+                    <input id="itemFilter" class="kendoWidgetSelector" />
+                </td>
+                <td class="column-label">
+                    <apex:outputLabel value="{!$ObjectType.Inventory_Transaction__c.fields.Transaction_Date__c.Label}" />:
+                </td>
+                <td class="column-field">
+                    <table class="kndy-table">
+                        <tr>
+                            <td>
+                                <table cellspacing="0" cellpadding="0" class="kndy-table">
+                                    <tr>
+                                        <td class="custom-filter-options">
+                                            <select id="TransDateFilterOperator" class="filter-operator">
+                                                <option value="mtd">{!$Label.Month_to_date}</option>
+                                                <option value="ytd">{!$Label.Year_to_date}</option>
+                                                <option value="fmtd">{!$Label.Fiscal_month_to_date}</option>                                                
+                                                <option value="fytd">{!$Label.Fiscal_year_to_date}</option>                                                
+                                                <option value="custom">{!$Label.Custom}</option>
+                                            </select>
+                                        </td>
+                                        <td>&nbsp;</td>
+                                        <td class="custom-filter-fields">
+                                            <span class="custom-date-range k-hidden">
+                                                <input id="FromTransDate" />
+                                                &nbsp;{!$Label.to}&nbsp;
+                                                <input id="ToTransDate" />
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td class="column-label">
+                    <apex:outputLabel value="{!$ObjectType.Facility__c.Label}" for="facilityFilter" />:
+                </td>
+                <td class="column-field">
+                    <input id="facilityFilter" class="kendoWidgetSelector" />
+                </td>
+                <td class="column-label">
+                    <apex:outputLabel value="{!$ObjectType.Location__c.Label}" for="locationFilter" />:
+                </td>
+                <td class="column-field">
+                    <input id="locationFilter" class="kendoWidgetSelector" />
+                </td>
+            </tr>
+            <tr>
+                <td class="column-label">
+                    <apex:outputLabel value="{!$ObjectType.Inventory_Transaction__c.fields.Lot__c.Label}" for="lotFilter" />:
+                </td>
+                <td class="column-field">
+                    <input id="lotFilter" class="kendoWidgetSelector k-textbox" />
+                </td>
+                <td class="column-label">
+                    <label for="reasonCodeFilter">{!$ObjectType.Inventory_Change__c.Fields.Reason_Code__c.Label}:</label>
+                </td>
+                <td class="column-field">
+                    <input id="reasonCodeFilter" class="kendoWidgetSelector k-textbox" />
+                </td>
+            </tr>
+            <tr>
+                <td class="column-label">
+                    <apex:outputLabel value="{!$ObjectType.Inventory_Transaction__c.fields.Type__c.Label}" for="typeFilter" />:
+                </td>
+                <td class="column-field">
+                    <select id="typeFilter" class="kendoWidgetSelector" multiple="multiple">
+                    <apex:repeat value="{!TransactionTypeOptions}" var="opt">
+                        <option value="{!opt.value}">{!opt.label}</option>
+                    </apex:repeat>
+                    </select>
+                </td>
+                <td class="column-label">
+                    <label for="referenceNumberFilter">{!$Label.Reference} #:</label>
+                </td>
+                <td class="column-field">
+                    <input id="referenceNumberFilter" class="kendoWidgetSelector k-textbox" />
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3">&nbsp;</td>
+                <td>
+                    <input name="searchFilter" id="searchFilter" type="button" value="{!$Label.Search}" onclick="LotMasterHistoryActions.Search();" class="btn" />
+                    <input name="clearFilters" id="clearFilters" type="button" value="{!$Label.CSReset}" onclick="LotMasterHistoryActions.Reset();" class="btn" />
+                </td>
+            </tr>
+        </table>
+    </apex:pageBlock>
+    
+    </apex:form>
+    
+    <apex:pageBlock id="lotMasterHistoryGridContainer">    
+        <div class="grid-container">
+            <div class="grid-message"></div>
+            <div id="{!lotMasterHistoryLinesConfig.uniqueId}" ></div>
+        </div>
+    </apex:pageBlock>
+
+    <script type="text/javascript">  
+        var itemFilter;
+        var facilityFilter;
+        var locationFilter;
+        var typeFilter;
+        var isHideResults = ('{!isHideResultsOnPageLoad}' == 'true');
+
+        var getLotMasterHistoryLinesData = function() {
+            var deferred = $.Deferred();
+            var remoteArgs = JSON.parse('{!lotMasterHistoryLinesConfigJson}');
+            
+            if (isHideResults) {
+                setTimeout(function() {
+                    deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+                }, 100);
+            }
+            else {              
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.InventoryTransactionsHistoryExt.getLotMasterHistoryLines}',
+                    LotMasterHistoryUtils.GetFilterCriteria(),
+                    $('#referenceNumberFilter').val().trim(),
+                    remoteArgs,
+                    function (result, event) {
+                        deferred.resolve(result, event);
+                    },
+                    {escape: false}
+                );
+            }
+            
+            return deferred.promise();
+        }
+        
+        $(document).on('KenandyErpReady', function(e) {
+            LotMasterHistoryActions.Init();
+        });
+        
+        var LotMasterHistoryUtils = function() {
+            return {
+            	RowNumber: 0,
+            	Balances: [],
+            	
+            	GetBalance: function(rowNumber) {
+            		var balance = this.Balances[rowNumber];
+            		
+            		return kendo.toString(balance, 'n6');
+            	},
+            	
+                GetFieldList: function(fieldList) {
+                    fieldList = JSON.parse(fieldList);
+                    
+                    $.each(fieldList, function() {
+                        if (this.field == 'balance') {
+                            this.template = "#= LotMasterHistoryUtils.GetBalance(LotMasterHistoryUtils.RowNumber++) #";
+                        }
+                    });
+        
+                    return JSON.stringify(fieldList);
+                },
+                
+                GetFilterCriteria: function() {
+                    var filterCriteria = [];
+                    var operatorType = $('#TransDateFilterOperator').val();
+                    
+                    if (itemFilter.value().trim() != '') {
+                        filterCriteria.push({ field: 'Item__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: itemFilter.value(), operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+                    }
+                                
+                    if (operatorType == 'custom') {
+                        var fromDate = $("input[id='FromTransDate']").val();
+                        var toDate = $("input[id='ToTransDate']").val();
+                        
+                        filterCriteria.push({ field: 'Transaction_Date__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.DateTime, value: fromDate, operator: KenandyErp.KendoGridOptions.FilterOperatorType.GreaterThanOrEquals });
+                        filterCriteria.push({ field: 'Transaction_Date__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.DateTime, value: toDate, operator: KenandyErp.KendoGridOptions.FilterOperatorType.LessThanOrEquals });
+                    }
+                    else {
+                        filterCriteria.push({ field: 'Transaction_Date__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.DateTime, value: '', operator: operatorType });
+                    }
+                                
+                    if (facilityFilter.value().trim() != '') {
+                        filterCriteria.push({ field: 'To_Location__r.Facility__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: facilityFilter.value(), operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+                        filterCriteria.push({ field: 'From_Location__r.Facility__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: facilityFilter.value(), operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+                    }
+                    
+                    if (locationFilter.value().trim() != '') {
+                        filterCriteria.push({ field: 'To_Location__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: locationFilter.value(), operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+                    }
+                    
+                    if ($('#lotFilter').val().trim() != '') {
+                        filterCriteria.push({ field: 'Lot__r.Name', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: $('#lotFilter').val().trim(), operator: KenandyErp.KendoGridOptions.FilterOperatorType.Contains });
+                    }
+                    
+                    if ($('#reasonCodeFilter').val().trim() != '') {
+                        filterCriteria.push({ field: 'Inventory_Change__r.Reason_Code__r.Name', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: $('#reasonCodeFilter').val().trim(), operator: KenandyErp.KendoGridOptions.FilterOperatorType.Contains });
+                    }
+                    
+                    if (typeFilter.value().length > 0) {
+                        filterCriteria.push({ field: 'Type__c', value: JSON.stringify(typeFilter.value()), operator: KenandyErp.KendoGridOptions.FilterOperatorType.Contains });
+                    }
+                    
+                    return filterCriteria;
+                }
+            };
+        }();
+        
+        var LotMasterHistoryActions = function() {
+            
+            return { 
+            
+                Init: function() {
+                    // Hide grid on page load
+                    $('[id$=lotMasterHistoryGridContainer]').hide();
+                    
+                    $('#itemFilter').val('');
+                    $('#facilityFilter').val('');
+                    $('#locationFilter').val('');
+                    $('#lotFilter').val('');
+                    $('#reasonCodeFilter').val('');
+                    $('#referenceNumberFilter').val('');
+                    
+                    // Initialize Item Lookup
+                    itemFilter = $.fn.KendoComboBox($('#itemFilter'), { lookupSearchAction: '{!$RemoteAction.InventoryTransactionsHistoryExt.lookupSearchFilter}', referenceTo: 'Item__c', title: '{!$ObjectType.Item__c.Label}' });
+                    
+                    // Initialize Transaction Date Filter Options
+                    $.fn.KendoDropDownList($('#TransDateFilterOperator'));
+                    $('#TransDateFilterOperator').bind('change', LotMasterHistoryActions.OnTransactionDateFilterOperatorChange);
+                    
+                    // Initialize Transaction Custom From Date Lookup
+                    $.fn.KendoDateTimePicker($("input[id='FromTransDate']"));
+                                
+                    // Initialize Transaction Custom To Date Lookup
+                    $.fn.KendoDateTimePicker($("input[id='ToTransDate']"));
+                    
+                    // Initialize Facility Lookup
+                    facilityFilter = $.fn.KendoComboBox($('#facilityFilter'), { lookupSearchAction: '{!$RemoteAction.InventoryTransactionsHistoryExt.lookupSearchFilter}', referenceTo: 'Facility__c', title: '{!$ObjectType.Facility__c.Label}' });
+                    
+                    // Initialize Location Lookup
+                    locationFilter = $.fn.KendoComboBox($('#locationFilter'), { lookupSearchAction: '{!$RemoteAction.InventoryTransactionsHistoryExt.lookupSearchFilter}', referenceTo: 'Location__c', title: '{!$ObjectType.Location__c.Label}', filterCriteria: "Facility__c = \'#=Id#\'", cascadeFrom: 'facilityFilter' });
+                    
+                    // Initialize Item Lookup
+                    typeFilter = $.fn.KendoMultiSelect($('#typeFilter'));
+                    
+                    // Initialize Lot Master History Lines Grid
+                    var grid = $.fn.GridRelatedList($('#{!lotMasterHistoryLinesConfig.uniqueId}'), { namespace: '{!NamespaceUU}', config: '{!lotMasterHistoryLinesConfigJson}', fieldList: LotMasterHistoryUtils.GetFieldList('{!lotMasterHistoryFieldList}'), lookupSearchAction: '{!$RemoteAction.InventoryTransactionsHistoryExt.lookupSearch}', getRelatedListFunction: getLotMasterHistoryLinesData });
+                    
+                    grid.bind("dataBinding", function(e) {
+                    	LotMasterHistoryUtils.RowNumber = (this.dataSource.page() -1) * this.dataSource.pageSize();
+
+                    	var dataSource = this.dataSource;
+						var data = dataSource.data();
+						
+						if (data.length > 0) {
+							var sort = dataSource.sort();
+							var currentData = data;
+							
+							if (sort && sort.length > 0) {
+								var query = new kendo.data.Query(data);
+								
+								currentData = query.sort(sort).data;
+							}
+							
+							var balanceTotal = 0;
+							var rowCount = currentData.length;
+
+	                    	while(rowCount > 0){
+	                    		var item = currentData[rowCount - 1];
+	                    		var itType = item.get('it.Type__c');
+	                    		
+	                    		switch(itType.toUpperCase())
+								{
+									case 'PURCHASE ORDER RECEIPT':
+									case 'WORK ORDER ASSEMBLY COMPLETION':
+									case 'WORK ORDER COMPONENT RETURN':
+									case 'BY-PRODUCT':
+									case 'SALES ORDER UNDO SHIPMENT':
+									case 'PALLET':
+									case 'TRANSFER ORDER UNDO SHIPMENT':
+									case 'TRANSFER ORDER RECEIPT':
+									case 'ADJUSTMENT INCREASE':	
+									case 'ADJUSTMENT DECREASE':									
+									case 'CYCLE COUNT':								
+										balanceTotal = balanceTotal + item.get('it.Quantity__c');
+										break;
+									case 'PURCHASE ORDER RETURN':
+									case 'WORK ORDER COMPONENT ISSUE':
+									case 'WORK ORDER ASSEMBLY UNCOMPLETION':
+									case 'BY-PRODUCT UNCOMPLETION':
+									case 'SALES ORDER SHIPMENT':
+									case 'TRANSFER ORDER SHIPMENT':
+										balanceTotal = balanceTotal - item.get('it.Quantity__c');
+										break;
+								   	default: 
+								    	break;
+								}
+								
+	                    		LotMasterHistoryUtils.Balances.push(balanceTotal);
+	                    		rowCount--;
+	                    	}
+	                    	
+	                    	LotMasterHistoryUtils.Balances.reverse();
+                    	}
+                    });
+                    
+                    grid.bind("dataBound", function(e) {
+                    	LotMasterHistoryUtils.RowNumber = 0;
+                    	LotMasterHistoryUtils.Balances = [];
+                    });
+                },
+                
+                OnTransactionDateFilterOperatorChange: function() {
+                    var operatorType = this.value;
+                    
+                    if (operatorType == 'custom') {
+                        $('.custom-date-range').show();
+                    }
+                    else {
+                        $('.custom-date-range').hide();
+                    }
+                },
+                
+                Validate: function() {
+                    var operatorType = $("#TransDateFilterOperator").val();
+                    
+                    KenandyErp.ClearMessage();
+                    
+                    if (itemFilter.value().trim() == '') {
+                        KenandyErp.Message('Item is required');
+                        return false;
+                    }
+                    
+                    if (itemFilter.value().trim() != '' && itemFilter.select() == -1) {
+                        KenandyErp.Message('{!$Label.Select_a_valid_Item}');
+                        return false;
+                    }
+                    
+                    if (operatorType == 'custom') {
+                        var fromDate = $("input[id='FromTransDate']").val();
+                        var toDate = $("input[id='ToTransDate']").val();
+                        
+                        if (!KenandyErp.IsValidDate(fromDate)) {
+                            KenandyErp.Message('{!$Label.Enter_a_valid_from_transaction_date}');
+                            return false;
+                        }
+                        
+                        if (!KenandyErp.IsValidDate(toDate)) {
+                            KenandyErp.Message('{!$Label.Enter_a_valid_to_transaction_date}');
+                            return false;
+                        }
+                        
+                        if (KenandyErp.ParseSFDCDate(toDate) < KenandyErp.ParseSFDCDate(fromDate)) {
+                            KenandyErp.Message('{!$Label.From_transaction_date_must_be_earlier_than_to_transaction_date}');
+                            return false;
+                        }
+                    }
+                    
+                    if (facilityFilter.value().trim() != '' && facilityFilter.select() == -1) {
+                        KenandyErp.Message('{!$Label.Select_a_valid_Facility}');
+                        return false;
+                    }
+                    
+                    if (locationFilter.value().trim() != '' && locationFilter.select() == -1) {
+                        KenandyErp.Message('{!$Label.Select_a_valid_location}');
+                        return false;
+                    }
+                    
+                    return true;
+                },
+                
+                Search: function() {
+                    if (this.Validate()) {
+                        isHideResults = false;
+                        $('[id$=lotMasterHistoryGridContainer]').show();
+                    
+                        $('#{!lotMasterHistoryLinesConfig.uniqueId}').data('kendoGrid').dataSource.read();
+                    }
+                    
+                    return true;
+                },
+                
+                Reset: function() {
+                    $("form[id$='lotMasterHistoryForm']")[0].reset();
+                    $('#TransDateFilterOperator').val('range').trigger('change');
+                }
+            };
+        }();
+    </script>
+
+
+</apex:page>

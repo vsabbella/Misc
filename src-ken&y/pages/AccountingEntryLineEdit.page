@@ -1,0 +1,11 @@
+<apex:page standardController="Accounting_Entry_Line__c"  
+	extensions="AccountingEntryLineEditExt" 
+	action="{!doRedirect}" >
+<!-- 
+redirect to the add manage page for the accounting entry
+used for edit AND delete operations on individual lines
+-->
+<div style="display:none;" >
+<apex:outputText value="{!Accounting_Entry_Line__c.Accounting_Entry__c}" />
+</div> 
+</apex:page>

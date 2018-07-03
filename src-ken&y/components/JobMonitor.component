@@ -1,0 +1,76 @@
+<apex:component controller="JobMonitorExt" >
+    <!-- TODO Filter by company or facility -->
+    <!-- TODO Add a refresh interval -->
+    
+    <apex:attribute name="height" default="300" description="Height of the job monitor grid" access="public" type="integer"></apex:attribute>
+    <c:KendoResources ></c:KendoResources>
+    <apex:pageBlock >
+        <!-- <apex:pageMessages ></apex:pageMessages> -->
+        <apex:pageBlockSection title="Monitor Jobs (User : {!$User.FirstName} {!$User.LastName} )" collapsible="false">
+        </apex:pageBlockSection>
+        <div id='grid'></div>
+    </apex:pageBlock>
+    
+    <script>
+        $(document).on('ready' , function () {
+            
+            var grid = $('#grid').kendoGrid ( {
+                dataSource : {
+                    transport : {
+                        read: function(readOptions) { 
+                            Visualforce.remoting.Manager.invokeAction ( 
+                                '{!$RemoteAction.JobMonitorExt.getBackgroundJobs}',
+                                function (result, event) {
+                                    if ( event.type =='Exception') {
+                                        console.log ( event ) ;
+                                    }
+                                    else {
+                                        result = JSON.parse ( result ) ;
+                                        if ( typeof result == 'object' && result.isSuccessful == false ) {
+                                            KenandyErp.Message ( result.message ) ; 
+                                        }
+                                        else 
+                                            readOptions.success ( result );
+                                    }
+                                } ,
+                                {escape:false}
+                                
+                            )  ; 
+                        }
+                    }, 
+                    schema: {
+                        model: {
+                            fields : {
+                                jobId:{type:'string'} ,
+                    			OrgId: {type:'string'} ,
+                    			UserId:{type:'string'} ,
+                    			message: {type:'string'} ,
+                    			status: {type:'string'},
+                    			created_date: { type: 'date' },
+                    			start_date: { type: 'date' },
+                    			end_date: { type: 'date' }
+                            }
+                        }
+                    },
+                    pageSize: 10
+                } ,
+                columns:[
+                        { field: 'jobId' , title: "Job"} ,
+                        //{ field: 'orgId' ,} ,
+                        { field: 'message' , title: 'Message'} ,
+                        { field: 'status' , title:'Status'} ,
+                        { field: 'created_date', format: "{0:MM/dd/yyyy HH:mm:ss}", title:'Created On'} ,
+                        { field: 'start_date', format: "{0:MM/dd/yyyy HH:mm:ss}",title:'Start Time'} ,
+                        { field: 'end_date', format: "{0:MM/dd/yyyy HH:mm:ss}",title:'End Time'}
+                        
+                    ] ,
+                height: {!height} ,
+                pageable: {
+                    refresh:true 
+                },
+                sortable: true
+            }) ;
+        } );
+        
+    </script>
+</apex:component>

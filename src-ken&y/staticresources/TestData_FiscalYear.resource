@@ -1,0 +1,1 @@
+Name,Company__c,Fiscal_Year_Start_Date__c,Fiscal_Year_End_Date__c,GL_Account__cFiscalYear-16,{Company},{Start Date},{End Date},39000 - Retained Earnings

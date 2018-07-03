@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customSettingsType>List</customSettingsType>
+    <description>maps the fields of the stock movement rules with the source document fields</description>
+    <enableFeeds>false</enableFeeds>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Source_Document_Path_Putaway__c</fullName>
+        <externalId>false</externalId>
+        <label>Source Document Path (Putaway)</label>
+        <length>255</length>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Source_Document_Path__c</fullName>
+        <description>Source document path to find the field corresponding to the field on the stock movement rule object.</description>
+        <externalId>false</externalId>
+        <label>Source Document Path (Pick)</label>
+        <length>255</length>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Source_Document__c</fullName>
+        <description>API Name of the source document object.</description>
+        <externalId>false</externalId>
+        <label>Source Document</label>
+        <length>80</length>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Stock_Movement_Rule_Field__c</fullName>
+        <description>API name of the field on the stock movement rule object.</description>
+        <externalId>false</externalId>
+        <label>Stock Movement Rule Field</label>
+        <length>80</length>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <label>Stock Movement Rule Settings</label>
+    <visibility>Public</visibility>
+</CustomObject>

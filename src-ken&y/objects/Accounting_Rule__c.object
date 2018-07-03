@@ -1,0 +1,2868 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpAccountingRules</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>The rules based engine that generates the accounting entries for all Financial Companies from Operating Companies</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableEnhancedLookup>true</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>Accounting_Rule</fullName>
+        <description>Used in the accounting rules new page</description>
+        <displayedFields>
+            <field>SubTransaction_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Accounting Rule</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Accounting_Rule_All_Fields</fullName>
+        <description>Used in the Accounting Rule New page to display existing related rules</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Transaction__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>SubTransaction_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>GL_Account__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Accounting Rule All Fields</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Preview</fullName>
+        <description>Accounting Entry Preview page</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Company__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Object_Name__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Transaction__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>SubTransaction_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Line_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Role__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Rule_Type__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Amount_Reference__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>GL_Account__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Default_GL_Account__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>GL_Account_Reference_Value__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Preview</label>
+    </fieldSets>
+    <fields>
+        <fullName>Accounting_Standard__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Accounting Standard</label>
+        <referenceTo>Accounting_Standard__c</referenceTo>
+        <relationshipLabel>Accounting Rules</relationshipLabel>
+        <relationshipName>Accounting_Rules</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Allocation_Type__c</fullName>
+        <externalId>false</externalId>
+        <label>Allocation Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Header</fullName>
+                    <default>false</default>
+                    <label>Header</label>
+                </value>
+                <value>
+                    <fullName>Line</fullName>
+                    <default>false</default>
+                    <label>Line</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Allocation__c</fullName>
+        <externalId>false</externalId>
+        <label>Allocation</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Freight</fullName>
+                    <default>false</default>
+                    <label>Freight</label>
+                </value>
+                <value>
+                    <fullName>Manual</fullName>
+                    <default>false</default>
+                    <label>Manual</label>
+                </value>
+                <value>
+                    <fullName>Spoils</fullName>
+                    <default>false</default>
+                    <label>Spoils</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Amount_Reference__c</fullName>
+        <description>Field name of custom amount on lines to use for accounting.  Can be a reference to a related object field.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Field name of custom amount on lines to use for accounting. This can also be a reference to a related object field.</inlineHelpText>
+        <label>Amount Reference</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Autonumber__c</fullName>
+        <displayFormat>{0000000000}</displayFormat>
+        <externalId>false</externalId>
+        <label>Autonumber</label>
+        <trackTrending>false</trackTrending>
+        <type>AutoNumber</type>
+    </fields>
+    <fields>
+        <fullName>Company_Identifier__c</fullName>
+        <externalId>false</externalId>
+        <label>Company Identifier</label>
+        <length>32</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Company_Ledger__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Company Ledger</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Company</description>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Accounting Rules</relationshipLabel>
+        <relationshipName>Accounting_Generator</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Consolidation_Ledger__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Consolidation Ledger</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Default_GL_Account__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Use default GL Account. Uncheck if using a reference to a field containing a dynamic GL Account.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>A check mark indicates that the rule uses the default general ledger account. Clear the check box if you are using a reference to a field containing a dynamic general ledger account.</inlineHelpText>
+        <label>Default GL Account</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Default_Intercompany__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Default Intercompany</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Effective_End_Date__c</fullName>
+        <description>The date until which the Accounting Rule is effective</description>
+        <externalId>false</externalId>
+        <label>Effective End Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Effective_Start_Date__c</fullName>
+        <description>The Date from which accounting rule is effctive</description>
+        <externalId>false</externalId>
+        <label>Effective Start Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Expected_Sign__c</fullName>
+        <externalId>false</externalId>
+        <label>Expected Sign</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Positive</fullName>
+                    <default>true</default>
+                    <label>Positive</label>
+                </value>
+                <value>
+                    <fullName>Negative</fullName>
+                    <default>false</default>
+                    <label>Negative</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>FX_Date_Path__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>The path within the schema to the upstream source document. The source document captures the date of the original transaction.</inlineHelpText>
+        <label>FX Date Path</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>FX_Flow__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>The flow of money for financial exchange consideration. Can be either &quot;In&quot; or &quot;Out&quot;. If &quot;Out&quot;, monetary non-cash accounts could be exposed to financial exchange fluctuations.</inlineHelpText>
+        <label>FX Flow</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>In</fullName>
+                    <default>false</default>
+                    <label>In</label>
+                </value>
+                <value>
+                    <fullName>Out</fullName>
+                    <default>false</default>
+                    <label>Out</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>GL_Account_Identifier__c</fullName>
+        <externalId>false</externalId>
+        <label>GL Account Identifier</label>
+        <length>64</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>GL_Account_Reference_Value__c</fullName>
+        <description>Field name of a dynamic GL Account value.  Can be a reference to a related object field.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Field name of a dynamic general ledger account value. This can also be a reference to a related object field.</inlineHelpText>
+        <label>GL Account Reference Value</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>GL_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>GL Account Segment Default.</description>
+        <externalId>false</externalId>
+        <label>GL Account</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>GL Account used in the Accounting rule is Inactive.  Please Select a Active GL Account</errorMessage>
+            <filterItems>
+                <field>GL_Account__c.Active__c</field>
+                <operation>equals</operation>
+                <value>True</value>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>GL_Account__c</referenceTo>
+        <relationshipLabel>Accounting Rules</relationshipLabel>
+        <relationshipName>Accounting_Rules</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Intercompany_Reference_Value__c</fullName>
+        <externalId>false</externalId>
+        <label>Intercompany Reference Value</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Intercompany__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Intercompany</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Accounting Rules (Interco)</relationshipLabel>
+        <relationshipName>Interco_Accounting_Rules</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Line_Type__c</fullName>
+        <description>Select the line type for this accounting rule</description>
+        <externalId>false</externalId>
+        <label>Line Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Decrease</fullName>
+                    <default>false</default>
+                    <label>Decrease</label>
+                </value>
+                <value>
+                    <fullName>Deduction Debit</fullName>
+                    <default>false</default>
+                    <label>Deduction Debit</label>
+                </value>
+                <value>
+                    <fullName>Distribution Sample</fullName>
+                    <default>false</default>
+                    <label>Distribution Sample</label>
+                </value>
+                <value>
+                    <fullName>Freight</fullName>
+                    <default>false</default>
+                    <label>Freight</label>
+                </value>
+                <value>
+                    <fullName>Future</fullName>
+                    <default>false</default>
+                    <label>Future</label>
+                </value>
+                <value>
+                    <fullName>Increase</fullName>
+                    <default>false</default>
+                    <label>Increase</label>
+                </value>
+                <value>
+                    <fullName>Item</fullName>
+                    <default>false</default>
+                    <label>Item</label>
+                </value>
+                <value>
+                    <fullName>Miscellaneous</fullName>
+                    <default>false</default>
+                    <label>Miscellaneous</label>
+                </value>
+                <value>
+                    <fullName>PO</fullName>
+                    <default>false</default>
+                    <label>PO</label>
+                </value>
+                <value>
+                    <fullName>Return</fullName>
+                    <default>false</default>
+                    <label>Return</label>
+                </value>
+                <value>
+                    <fullName>Standard</fullName>
+                    <default>false</default>
+                    <label>Standard</label>
+                </value>
+                <value>
+                    <fullName>Transfer</fullName>
+                    <default>false</default>
+                    <label>Transfer</label>
+                </value>
+                <value>
+                    <fullName>Material</fullName>
+                    <default>false</default>
+                    <label>Material</label>
+                </value>
+                <value>
+                    <fullName>Labor Cost</fullName>
+                    <default>false</default>
+                    <label>Labor Cost</label>
+                </value>
+                <value>
+                    <fullName>Outside Processing Cost</fullName>
+                    <default>false</default>
+                    <label>Outside Processing Cost</label>
+                </value>
+                <value>
+                    <fullName>Manufacturing Overhead Cost</fullName>
+                    <default>false</default>
+                    <label>Manufacturing Overhead Cost</label>
+                </value>
+                <value>
+                    <fullName>Material Cost</fullName>
+                    <default>false</default>
+                    <label>Material Cost</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Object_Name__c</fullName>
+        <description>The name of the object that the source document resides in.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The name of the object in which the source document resides.</inlineHelpText>
+        <label>Object Name</label>
+        <length>100</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Object__c</fullName>
+        <externalId>false</externalId>
+        <label>Object</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Customer Invoice</fullName>
+                    <default>false</default>
+                    <label>Customer Invoice</label>
+                </value>
+                <value>
+                    <fullName>Customer Receipt</fullName>
+                    <default>false</default>
+                    <label>Customer Receipt</label>
+                </value>
+                <value>
+                    <fullName>Fixed Asset Adjustment</fullName>
+                    <default>false</default>
+                    <label>Fixed Asset Adjustment</label>
+                </value>
+                <value>
+                    <fullName>Fixed Asset Depreciation</fullName>
+                    <default>false</default>
+                    <label>Fixed Asset Depreciation</label>
+                </value>
+                <value>
+                    <fullName>Inventory Change</fullName>
+                    <default>false</default>
+                    <label>Inventory Change</label>
+                </value>
+                <value>
+                    <fullName>Invoice</fullName>
+                    <default>false</default>
+                    <label>Invoice</label>
+                </value>
+                <value>
+                    <fullName>Journal Entry</fullName>
+                    <default>false</default>
+                    <label>Journal Entry</label>
+                </value>
+                <value>
+                    <fullName>Payment</fullName>
+                    <default>false</default>
+                    <label>Payment</label>
+                </value>
+                <value>
+                    <fullName>Receiving Document</fullName>
+                    <default>false</default>
+                    <label>Receiving Document</label>
+                </value>
+                <value>
+                    <fullName>Shipment</fullName>
+                    <default>false</default>
+                    <label>Shipment</label>
+                </value>
+                <value>
+                    <fullName>Supplier Invoice</fullName>
+                    <default>false</default>
+                    <label>Supplier Invoice</label>
+                </value>
+                <value>
+                    <fullName>Supplier Payment</fullName>
+                    <default>false</default>
+                    <label>Supplier Payment</label>
+                </value>
+                <value>
+                    <fullName>Bank Transaction Group</fullName>
+                    <default>false</default>
+                    <label>Bank Transaction Group</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Raise_Exceptions_for_Blank_Amounts__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Raise Exceptions for Blank Amounts</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Role__c</fullName>
+        <externalId>false</externalId>
+        <label>Role</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Investor</fullName>
+                    <default>false</default>
+                    <label>Investor</label>
+                </value>
+                <value>
+                    <fullName>Investee</fullName>
+                    <default>false</default>
+                    <label>Investee</label>
+                </value>
+                <value>
+                    <fullName>Payor</fullName>
+                    <default>false</default>
+                    <label>Payor</label>
+                </value>
+                <value>
+                    <fullName>Payee</fullName>
+                    <default>false</default>
+                    <label>Payee</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Rule_Type__c</fullName>
+        <description>Rule Type: Credit (CR), Debit (DR), or NA</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Select either Credit (CR), Debit (DR), or NA (no type).</inlineHelpText>
+        <label>Rule Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>CR</fullName>
+                    <default>false</default>
+                    <label>CR</label>
+                </value>
+                <value>
+                    <fullName>DR</fullName>
+                    <default>false</default>
+                    <label>DR</label>
+                </value>
+                <value>
+                    <fullName>NA</fullName>
+                    <default>false</default>
+                    <label>NA</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Statutory_Ledger__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Statutory Ledger</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>SubTransaction_Type__c</fullName>
+        <description>Select the sub transaction type for this accounting rule</description>
+        <externalId>false</externalId>
+        <label>SubTransaction Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <controllingField>Transaction__c</controllingField>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Activate Proposed Costs</fullName>
+                    <default>false</default>
+                    <label>Activate Proposed Costs</label>
+                </value>
+                <value>
+                    <fullName>Adjustment</fullName>
+                    <default>false</default>
+                    <label>Adjustment</label>
+                </value>
+                <value>
+                    <fullName>Adjustment Decrease</fullName>
+                    <default>false</default>
+                    <label>Adjustment Decrease</label>
+                </value>
+                <value>
+                    <fullName>Adjustment Increase</fullName>
+                    <default>false</default>
+                    <label>Adjustment Increase</label>
+                </value>
+                <value>
+                    <fullName>Affiliate Order</fullName>
+                    <default>false</default>
+                    <label>Affiliate Order</label>
+                </value>
+                <value>
+                    <fullName>Bank Adjustment</fullName>
+                    <default>false</default>
+                    <label>Bank Adjustment</label>
+                </value>
+                <value>
+                    <fullName>Bank Interest Income</fullName>
+                    <default>false</default>
+                    <label>Bank Interest Income</label>
+                </value>
+                <value>
+                    <fullName>Bank Fees</fullName>
+                    <default>false</default>
+                    <label>Bank Fees</label>
+                </value>
+                <value>
+                    <fullName>Billback Allowance</fullName>
+                    <default>false</default>
+                    <label>Billback Allowance</label>
+                </value>
+                <value>
+                    <fullName>By-Product</fullName>
+                    <default>false</default>
+                    <label>By-Product</label>
+                </value>
+                <value>
+                    <fullName>Capitalize</fullName>
+                    <default>false</default>
+                    <label>Capitalize</label>
+                </value>
+                <value>
+                    <fullName>Claim Payment</fullName>
+                    <default>false</default>
+                    <label>Claim Payment</label>
+                </value>
+                <value>
+                    <fullName>Credit Applied</fullName>
+                    <default>false</default>
+                    <label>Credit Applied</label>
+                </value>
+                <value>
+                    <fullName>Credit Applied - Claim</fullName>
+                    <default>false</default>
+                    <label>Credit Applied - Claim</label>
+                </value>
+                <value>
+                    <fullName>Cycle Count</fullName>
+                    <default>false</default>
+                    <label>Cycle Count</label>
+                </value>
+                <value>
+                    <fullName>Debit Applied</fullName>
+                    <default>false</default>
+                    <label>Debit Applied</label>
+                </value>
+                <value>
+                    <fullName>Debit Applied - Claim</fullName>
+                    <default>false</default>
+                    <label>Debit Applied - Claim</label>
+                </value>
+                <value>
+                    <fullName>Deduction</fullName>
+                    <default>false</default>
+                    <label>Deduction</label>
+                </value>
+                <value>
+                    <fullName>Depreciation</fullName>
+                    <default>false</default>
+                    <label>Depreciation</label>
+                </value>
+                <value>
+                    <fullName>Earned Terms Discount</fullName>
+                    <default>false</default>
+                    <label>Earned Terms Discount</label>
+                </value>
+                <value>
+                    <fullName>Expense</fullName>
+                    <default>false</default>
+                    <label>Expense</label>
+                </value>
+                <value>
+                    <fullName>Freight</fullName>
+                    <default>false</default>
+                    <label>Freight</label>
+                </value>
+                <value>
+                    <fullName>General Deduction</fullName>
+                    <default>false</default>
+                    <label>General Deduction</label>
+                </value>
+                <value>
+                    <fullName>Goods</fullName>
+                    <default>false</default>
+                    <label>Goods</label>
+                </value>
+                <value>
+                    <fullName>Intercompany Netting</fullName>
+                    <default>false</default>
+                    <label>Intercompany Netting</label>
+                </value>
+                <value>
+                    <fullName>Intercompany Payment</fullName>
+                    <default>false</default>
+                    <label>Intercompany Payment</label>
+                </value>
+                <value>
+                    <fullName>Invoice</fullName>
+                    <default>false</default>
+                    <label>Invoice</label>
+                </value>
+                <value>
+                    <fullName>Invoice Deduction</fullName>
+                    <default>false</default>
+                    <label>Invoice Deduction</label>
+                </value>
+                <value>
+                    <fullName>Labor</fullName>
+                    <default>false</default>
+                    <label>Labor</label>
+                </value>
+                <value>
+                    <fullName>Liability</fullName>
+                    <default>false</default>
+                    <label>Liability</label>
+                </value>
+                <value>
+                    <fullName>Logical Purchase Order Receipt</fullName>
+                    <default>false</default>
+                    <label>Logical Purchase Order Receipt</label>
+                </value>
+                <value>
+                    <fullName>Logical Sales Order Shipment</fullName>
+                    <default>false</default>
+                    <label>Logical Sales Order Shipment</label>
+                </value>
+                <value>
+                    <fullName>Miscellaneous</fullName>
+                    <default>false</default>
+                    <label>Miscellaneous</label>
+                </value>
+                <value>
+                    <fullName>Non Trade Promotion Allowance</fullName>
+                    <default>false</default>
+                    <label>Non Trade Promotion Allowance</label>
+                </value>
+                <value>
+                    <fullName>Off Invoice</fullName>
+                    <default>false</default>
+                    <label>Off Invoice</label>
+                </value>
+                <value>
+                    <fullName>On Account</fullName>
+                    <default>false</default>
+                    <label>On Account</label>
+                </value>
+                <value>
+                    <fullName>Origin</fullName>
+                    <default>false</default>
+                    <label>Origin</label>
+                </value>
+                <value>
+                    <fullName>Overpayment</fullName>
+                    <default>false</default>
+                    <label>Overpayment</label>
+                </value>
+                <value>
+                    <fullName>Overpayment Applied</fullName>
+                    <default>false</default>
+                    <label>Overpayment Applied</label>
+                </value>
+                <value>
+                    <fullName>Payment</fullName>
+                    <default>false</default>
+                    <label>Payment</label>
+                </value>
+                <value>
+                    <fullName>Prepayment</fullName>
+                    <default>false</default>
+                    <label>Prepayment</label>
+                </value>
+                <value>
+                    <fullName>Prepayment Applied</fullName>
+                    <default>false</default>
+                    <label>Prepayment Applied</label>
+                </value>
+                <value>
+                    <fullName>Purchase Order Receipt</fullName>
+                    <default>false</default>
+                    <label>Purchase Order Receipt</label>
+                </value>
+                <value>
+                    <fullName>Purchase Order Return</fullName>
+                    <default>false</default>
+                    <label>Purchase Order Return</label>
+                </value>
+                <value>
+                    <fullName>Purchase Order Receipt - Consigned</fullName>
+                    <default>false</default>
+                    <label>Purchase Order Receipt - Consigned</label>
+                </value>
+                <value>
+                    <fullName>Void - Purchase Order Receipt - Consigned</fullName>
+                    <default>false</default>
+                    <label>Void - Purchase Order Receipt - Consigned</label>
+                </value>
+                <value>
+                <fullName>Transfer Shipment - Consigned</fullName>
+                <default>false</default>
+                <label>Transfer Shipment - Consigned</label>
+                </value>
+                <value>
+                    <fullName>Transfer Receipt - Consigned</fullName>
+                    <default>false</default>
+                    <label>Transfer Receipt - Consigned</label>
+                </value>
+                <value>
+                    <fullName>Transfer - Consigned</fullName>
+                    <default>false</default>
+                    <label>Transfer - Consigned</label>
+                </value>
+                <value>
+                    <fullName>Purchase Price Variance</fullName>
+                    <default>false</default>
+                    <label>Purchase Price Variance</label>
+                </value>
+                <value>
+                    <fullName>Receipt</fullName>
+                    <default>false</default>
+                    <label>Receipt</label>
+                </value>
+                <value>
+                    <fullName>Refund Applied Payment</fullName>
+                    <default>false</default>
+                    <label>Refund Applied Payment</label>
+                </value>
+                <value>
+                    <fullName>Refund Applied Prepayment</fullName>
+                    <default>false</default>
+                    <label>Refund Applied Prepayment</label>
+                </value>
+                <value>
+                    <fullName>Refund Credit</fullName>
+                    <default>false</default>
+                    <label>Refund Credit</label>
+                </value>
+                <value>
+                    <fullName>Refund Unapplied Overpayment</fullName>
+                    <default>false</default>
+                    <label>Refund Unapplied Overpayment</label>
+                </value>
+                <value>
+                    <fullName>Refund Unapplied Prepayment</fullName>
+                    <default>false</default>
+                    <label>Refund Unapplied Prepayment</label>
+                </value>
+                <value>
+                    <fullName>Repair</fullName>
+                    <default>false</default>
+                    <label>Repair</label>
+                </value>
+                <value>
+                    <fullName>Return</fullName>
+                    <default>false</default>
+                    <label>Return</label>
+                </value>
+                <value>
+                    <fullName>Sales Order Pick</fullName>
+                    <default>false</default>
+                    <label>Sales Order Pick</label>
+                </value>
+                <value>
+                    <fullName>Sales Order Shipment</fullName>
+                    <default>false</default>
+                    <label>Sales Order Shipment</label>
+                </value>
+                <value>
+                    <fullName>Sales Order Undo Shipment</fullName>
+                    <default>false</default>
+                    <label>Sales Order Undo Shipment</label>
+                </value>
+                <value>
+                    <fullName>Sales Tax</fullName>
+                    <default>false</default>
+                    <label>Sales Tax</label>
+                </value>
+                <value>
+                    <fullName>Sample</fullName>
+                    <default>false</default>
+                    <label>Sample</label>
+                </value>
+                <value>
+                    <fullName>Services</fullName>
+                    <default>false</default>
+                    <label>Services</label>
+                </value>
+                <value>
+                    <fullName>Standard</fullName>
+                    <default>false</default>
+                    <label>Standard</label>
+                </value>
+                <value>
+                    <fullName>Sundry Allowance</fullName>
+                    <default>false</default>
+                    <label>Sundry Allowance</label>
+                </value>
+                <value>
+                    <fullName>Transfer</fullName>
+                    <default>false</default>
+                    <label>Transfer</label>
+                </value>
+                <value>
+                    <fullName>Transfer Of Ownership</fullName>
+                    <default>false</default>
+                    <label>Transfer Of Ownership</label>
+                </value>
+                <value>
+                    <fullName>Transfer Order Pick</fullName>
+                    <default>false</default>
+                    <label>Transfer Order Pick</label>
+                </value>
+                <value>
+                    <fullName>Transfer Order Receipt</fullName>
+                    <default>false</default>
+                    <label>Transfer Order Receipt</label>
+                </value>
+                <value>
+                    <fullName>Transfer Order Shipment</fullName>
+                    <default>false</default>
+                    <label>Transfer Order Shipment</label>
+                </value>
+                <value>
+                    <fullName>Transfer Order Undo Pick</fullName>
+                    <default>false</default>
+                    <label>Transfer Order Undo Pick</label>
+                </value>
+                <value>
+                    <fullName>Transfer Order Undo Shipment</fullName>
+                    <default>false</default>
+                    <label>Transfer Order Undo Shipment</label>
+                </value>
+                <value>
+                    <fullName>Unearned Terms Discount</fullName>
+                    <default>false</default>
+                    <label>Unearned Terms Discount</label>
+                </value>
+                <value>
+                    <fullName>Void Purchase Order Receipt</fullName>
+                    <default>false</default>
+                    <label>Void Purchase Order Receipt</label>
+                </value>
+                <value>
+                    <fullName>Void - Purchase Order Receipt</fullName>
+                    <default>false</default>
+                    <label>Void - Purchase Order Receipt</label>
+                </value>
+                <value>
+                    <fullName>Void - In-Transit Purchase Order Receipt</fullName>
+                    <default>false</default>
+                    <label>Void - In-Transit Purchase Order Receipt</label>
+                </value>
+                <value>
+                    <fullName>Void Purchase Order Return</fullName>
+                    <default>false</default>
+                    <label>Void Purchase Order Return</label>
+                </value>
+                <value>
+                    <fullName>Void Transfer Order Pick</fullName>
+                    <default>false</default>
+                    <label>Void Transfer Order Pick</label>
+                </value>
+                <value>
+                    <fullName>Work Order Assembly Completion</fullName>
+                    <default>false</default>
+                    <label>Work Order Assembly Completion</label>
+                </value>
+                <value>
+                    <fullName>Work Order Assembly Scrap</fullName>
+                    <default>false</default>
+                    <label>Work Order Assembly Scrap</label>
+                </value>
+                <value>
+                    <fullName>Work Order Assembly Uncompletion</fullName>
+                    <default>false</default>
+                    <label>Work Order Assembly Uncompletion</label>
+                </value>
+                <value>
+                    <fullName>Work Order Component Issue</fullName>
+                    <default>false</default>
+                    <label>Work Order Component Issue</label>
+                </value>
+                <value>
+                    <fullName>Work Order Component Return</fullName>
+                    <default>false</default>
+                    <label>Work Order Component Return</label>
+                </value>
+                <value>
+                    <fullName>Work Order Component Scrap</fullName>
+                    <default>false</default>
+                    <label>Work Order Component Scrap</label>
+                </value>
+                <value>
+                    <fullName>Writeoff</fullName>
+                    <default>false</default>
+                    <label>Writeoff</label>
+                </value>
+                <value>
+                    <fullName>By-product Uncompletion</fullName>
+                    <default>false</default>
+                    <label>By-product Uncompletion</label>
+                </value>
+                <value>
+                    <fullName>Sales Order Undo Pick</fullName>
+                    <default>false</default>
+                    <label>Sales Order Undo Pick</label>
+                </value>
+                <value>
+                    <fullName>RMA Scrap</fullName>
+                    <default>false</default>
+                    <label>RMA Scrap</label>
+                </value>
+                <value>
+                    <fullName>RMA Receipt</fullName>
+                    <default>false</default>
+                    <label>RMA Receipt</label>
+                </value>
+                <value>
+                    <fullName>RMA</fullName>
+                    <default>false</default>
+                    <label>RMA</label>
+                </value>
+                <value>
+                    <fullName>Upgrade</fullName>
+                    <default>false</default>
+                    <label>Upgrade</label>
+                </value>
+                <value>
+                    <fullName>Work Order Issue From WIP</fullName>
+                    <default>false</default>
+                    <label>Work Order Issue From WIP</label>
+                </value>
+                <value>
+                    <fullName>RMA Receipt For Repair</fullName>
+                    <default>false</default>
+                    <label>RMA Receipt For Repair</label>
+                </value>
+                <value>
+                    <fullName>Work Order Repair Component Issue</fullName>
+                    <default>false</default>
+                    <label>Work Order Repair Component Issue</label>
+                </value>
+                <value>
+                    <fullName>Work Order Repair Assembly Completion</fullName>
+                    <default>false</default>
+                    <label>Work Order Repair Assembly Completion</label>
+                </value>
+                <value>
+                    <fullName>Work Order Repair Component Return</fullName>
+                    <default>false</default>
+                    <label>Work Order Repair Component Return</label>
+                </value>
+                <value>
+                    <fullName>Work Order Repair Assembly Uncompletion</fullName>
+                    <default>false</default>
+                    <label>Work Order Repair Assembly Uncompletion</label>
+                </value>
+                <value>
+                    <fullName>Debit</fullName>
+                    <default>false</default>
+                    <label>Debit</label>
+                </value>
+                <value>
+                    <fullName>Credit</fullName>
+                    <default>false</default>
+                    <label>Credit</label>
+                </value>
+                <value>
+                    <fullName>Retire</fullName>
+                    <default>false</default>
+                    <label>Retire</label>
+                </value>
+                <value>
+                    <fullName>Residual</fullName>
+                    <default>false</default>
+                    <label>Residual</label>
+                </value>
+                <value>
+                    <fullName>Fixed Asset To Inventory</fullName>
+                    <default>false</default>
+                    <label>Fixed Asset To Inventory</label>
+                </value>
+                <value>
+                    <fullName>Transfer Shipment</fullName>
+                    <default>false</default>
+                    <label>Transfer Shipment</label>
+                </value>
+                <value>
+                    <fullName>Transfer Receipt</fullName>
+                    <default>false</default>
+                    <label>Transfer Receipt</label>
+                </value>
+                <value>
+                    <fullName>Palletize</fullName>
+                    <default>false</default>
+                    <label>Palletize</label>
+                </value>
+                <value>
+                    <fullName>Break Package</fullName>
+                    <default>false</default>
+                    <label>Break Package</label>
+                </value>
+                <value>
+                    <fullName>Inventory To Fixed Asset</fullName>
+                    <default>false</default>
+                    <label>Inventory To Fixed Asset</label>
+                </value>
+                <value>
+                    <fullName>Rental Exchange In</fullName>
+                    <default>false</default>
+                    <label>Rental Exchange In</label>
+                </value>
+                <value>
+                    <fullName>Rental Exchange Out</fullName>
+                    <default>false</default>
+                    <label>Rental Exchange Out</label>
+                </value>
+                <value>
+                    <fullName>Goods - Purchase Order</fullName>
+                    <default>false</default>
+                    <label>Goods - Purchase Order</label>
+                </value>
+                <value>
+                    <fullName>Expense - Purchase Order</fullName>
+                    <default>false</default>
+                    <label>Expense - Purchase Order</label>
+                </value>
+                <value>
+                    <fullName>Miscellaneous - Purchase Order</fullName>
+                    <default>false</default>
+                    <label>Miscellaneous - Purchase Order</label>
+                </value>
+                <value>
+                    <fullName>Refund Allowance Accrual</fullName>
+                    <default>false</default>
+                    <label>Refund Allowance Accrual</label>
+                </value>
+                <value>
+                    <fullName>Allowance Accrual Applied</fullName>
+                    <default>false</default>
+                    <label>Allowance Accrual Applied</label>
+                </value>
+                <value>
+                    <fullName>Funds Transfer</fullName>
+                    <default>false</default>
+                    <label>Funds Transfer</label>
+                </value>
+                <value>
+			        <fullName>In-Transit</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Void - In-Transit</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Credit Memo</fullName>
+                    <default>false</default>
+                    <label>Credit Memo</label>
+                </value>
+                <value>
+                    <fullName>Writeoff Credit</fullName>
+                    <default>false</default>
+                    <label>Writeoff Credit</label>
+                </value>
+                <value>
+                    <fullName>Sales Order Pick Transfer</fullName>
+                    <default>false</default>
+                    <label>Sales Order Pick Transfer</label>
+                </value>
+                <value>
+                    <fullName>Transfer Order Pick Transfer</fullName>
+                    <default>false</default>
+                    <label>Transfer Order Pick Transfer</label>
+                </value>
+                <value>
+                    <fullName>Work Order Repair Issue From WIP</fullName>
+                    <default>false</default>
+                    <label>Work Order Repair Issue From WIP</label>
+                </value>
+                <value>
+                    <fullName>Work Order Repair Component Scrap</fullName>
+                    <default>false</default>
+                    <label>Work Order Repair Component Scrap</label>
+                </value>
+                <value>
+                    <fullName>Work Order Repair Return To WIP</fullName>
+                    <default>false</default>
+                    <label>Work Order Repair Return To WIP</label>
+                </value>
+                <value>
+                    <fullName>RMA Repair Shipment</fullName>
+                    <default>false</default>
+                    <label>RMA Repair Shipment</label>
+                </value>
+                <value>
+                    <fullName>RMA Repair Undo Shipment</fullName>
+                    <default>false</default>
+                    <label>RMA Repair Undo Shipment</label>
+                </value>
+            </valueSetDefinition>
+            <valueSettings>
+                <controllingFieldValue>Transfer Of Ownership</controllingFieldValue>
+                <controllingFieldValue>Transfer Order Pick</controllingFieldValue>
+                <controllingFieldValue>Work Order Kit</controllingFieldValue>
+                <controllingFieldValue>Work Order Complete</controllingFieldValue>
+                <controllingFieldValue>Consigned</controllingFieldValue>
+                <valueName>Transfer Of Ownership</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Transfer Order Pick</controllingFieldValue>
+                <valueName>Transfer Order Pick</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Transfer Order Pick</controllingFieldValue>
+                <valueName>Transfer Order Undo Pick</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Transfer Order Receipt</controllingFieldValue>
+                <controllingFieldValue>Transfer Order Shipment</controllingFieldValue>
+                <controllingFieldValue>Invoice</controllingFieldValue>
+                <controllingFieldValue>Adjustment</controllingFieldValue>
+                <controllingFieldValue>Advanced Shipment Notice</controllingFieldValue>
+                <controllingFieldValue>Credit Memo</controllingFieldValue>
+                <controllingFieldValue>Customer Invoice</controllingFieldValue>
+                <controllingFieldValue>Logical Purchase Order Receipt</controllingFieldValue>
+                <controllingFieldValue>Logical Sales Order Shipment</controllingFieldValue>
+                <controllingFieldValue>Manual</controllingFieldValue>
+                <controllingFieldValue>Allowance Accrual</controllingFieldValue>
+                <controllingFieldValue>Purchase Order Receipt</controllingFieldValue>
+                <controllingFieldValue>Sales Order Shipment</controllingFieldValue>
+                <controllingFieldValue>Standard</controllingFieldValue>
+                <valueName>Goods</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Transfer Order Receipt</controllingFieldValue>
+                <controllingFieldValue>Transfer Order Shipment</controllingFieldValue>
+                <controllingFieldValue>Invoice</controllingFieldValue>
+                <controllingFieldValue>Advanced Shipment Notice</controllingFieldValue>
+                <controllingFieldValue>Credit Memo</controllingFieldValue>
+                <controllingFieldValue>Customer Invoice</controllingFieldValue>
+                <controllingFieldValue>Logical Purchase Order Receipt</controllingFieldValue>
+                <controllingFieldValue>Logical Sales Order Shipment</controllingFieldValue>
+                <controllingFieldValue>Manual</controllingFieldValue>
+                <controllingFieldValue>Allowance Accrual</controllingFieldValue>
+                <controllingFieldValue>Purchase Order Receipt</controllingFieldValue>
+                <controllingFieldValue>Sales Order Shipment</controllingFieldValue>
+                <controllingFieldValue>Standard</controllingFieldValue>
+                <valueName>Miscellaneous</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Transfer Order Receipt</controllingFieldValue>
+                <valueName>Transfer Order Receipt</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Transfer Order Shipment</controllingFieldValue>
+                <valueName>Transfer Order Shipment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Transfer Order Shipment</controllingFieldValue>
+                <valueName>Transfer Order Undo Shipment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Void - Purchase Order Receipt</controllingFieldValue>
+                <valueName>Void - Purchase Order Receipt</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Void - In-Transit Purchase Order Receipt</controllingFieldValue>
+                <valueName>Void - In-Transit Purchase Order Receipt</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Work Order</controllingFieldValue>
+                <controllingFieldValue>Work Order Complete</controllingFieldValue>
+                <valueName>Work Order Assembly Completion</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Work Order</controllingFieldValue>
+                <controllingFieldValue>Work Order Complete</controllingFieldValue>
+                <valueName>Work Order Assembly Scrap</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Work Order</controllingFieldValue>
+                <controllingFieldValue>Work Order Uncomplete</controllingFieldValue>
+                <valueName>Work Order Assembly Uncompletion</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Work Order</controllingFieldValue>
+                <controllingFieldValue>Work Order Kit</controllingFieldValue>
+                <controllingFieldValue>Work Order Complete</controllingFieldValue>
+                <valueName>Work Order Component Issue</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Work Order</controllingFieldValue>
+                <controllingFieldValue>Work Order DeKit</controllingFieldValue>
+                <controllingFieldValue>Work Order Uncomplete</controllingFieldValue>
+                <valueName>Work Order Component Return</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Work Order</controllingFieldValue>
+                <controllingFieldValue>Work Order Scrap Components</controllingFieldValue>
+                <valueName>Work Order Component Scrap</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Fixed Asset Adjustment</controllingFieldValue>
+                <valueName>Repair</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Fixed Asset Adjustment</controllingFieldValue>
+                <valueName>Upgrade</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Work Order Kit</controllingFieldValue>
+                <controllingFieldValue>Work Order Complete</controllingFieldValue>
+                <valueName>Work Order Repair Component Issue</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Fixed Asset Depreciation</controllingFieldValue>
+                <valueName>Capitalize</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Fixed Asset Depreciation</controllingFieldValue>
+                <valueName>Depreciation</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Fixed Asset Depreciation</controllingFieldValue>
+                <valueName>Retire</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Fixed Asset Depreciation</controllingFieldValue>
+                <valueName>Residual</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Fixed Asset Depreciation</controllingFieldValue>
+                <controllingFieldValue>Fixed Asset to Inventory</controllingFieldValue>
+                <valueName>Fixed Asset To Inventory</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Work Order DeKit</controllingFieldValue>
+                <controllingFieldValue>Work Order Uncomplete</controllingFieldValue>
+                <valueName>Work Order Repair Component Return</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Work Order Complete</controllingFieldValue>
+                <valueName>By-Product</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Work Order Complete</controllingFieldValue>
+                <valueName>Work Order Issue From WIP</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Work Order Complete</controllingFieldValue>
+                <valueName>Work Order Repair Assembly Completion</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory to Fixed Asset</controllingFieldValue>
+                <valueName>Inventory To Fixed Asset</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Work Order Uncomplete</controllingFieldValue>
+                <valueName>By-product Uncompletion</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Work Order Uncomplete</controllingFieldValue>
+                <valueName>Work Order Repair Assembly Uncompletion</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Intercompany Payment</controllingFieldValue>
+                <valueName>Intercompany Netting</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Intercompany Payment</controllingFieldValue>
+                <valueName>Intercompany Payment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Void Purchase Order Return</controllingFieldValue>
+                <valueName>Void Purchase Order Return</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>In-Transit</controllingFieldValue>
+                <valueName>Receipt</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>In-Transit</controllingFieldValue>
+                <valueName>Return</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <controllingFieldValue>Customer Invoice</controllingFieldValue>
+                <controllingFieldValue>Manual</controllingFieldValue>
+                <controllingFieldValue>Standard</controllingFieldValue>
+                <valueName>Adjustment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <controllingFieldValue>Transfer</controllingFieldValue>
+                <valueName>Transfer</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Invoice</controllingFieldValue>
+                <controllingFieldValue>Credit Memo</controllingFieldValue>
+                <controllingFieldValue>Allowance Accrual</controllingFieldValue>
+                <controllingFieldValue>Purchase Order Receipt</controllingFieldValue>
+                <controllingFieldValue>Purchase Order Return</controllingFieldValue>
+                <valueName>Expense</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Invoice</controllingFieldValue>
+                <controllingFieldValue>Credit Memo</controllingFieldValue>
+                <valueName>Goods - Purchase Order</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Invoice</controllingFieldValue>
+                <controllingFieldValue>Credit Memo</controllingFieldValue>
+                <valueName>Expense - Purchase Order</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Invoice</controllingFieldValue>
+                <controllingFieldValue>Credit Memo</controllingFieldValue>
+                <valueName>Miscellaneous - Purchase Order</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Adjustment</controllingFieldValue>
+                <valueName>Adjustment Decrease</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Adjustment</controllingFieldValue>
+                <valueName>Adjustment Increase</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Claim Settlement</controllingFieldValue>
+                <controllingFieldValue>Receipt</controllingFieldValue>
+                <valueName>Credit Applied</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Claim Settlement</controllingFieldValue>
+                <valueName>Credit Applied - Claim</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Claim Settlement</controllingFieldValue>
+                <controllingFieldValue>Receipt</controllingFieldValue>
+                <valueName>Debit Applied</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Claim Settlement</controllingFieldValue>
+                <valueName>Debit Applied - Claim</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Claim Settlement</controllingFieldValue>
+                <controllingFieldValue>Receipt</controllingFieldValue>
+                <valueName>Overpayment Applied</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Claim Settlement</controllingFieldValue>
+                <controllingFieldValue>Receipt</controllingFieldValue>
+                <valueName>Prepayment Applied</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Claim Settlement</controllingFieldValue>
+                <controllingFieldValue>Receipt</controllingFieldValue>
+                <valueName>Allowance Accrual Applied</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Customer Invoice</controllingFieldValue>
+                <controllingFieldValue>Manual</controllingFieldValue>
+                <controllingFieldValue>Standard</controllingFieldValue>
+                <valueName>Freight</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Customer Invoice</controllingFieldValue>
+                <controllingFieldValue>Manual</controllingFieldValue>
+                <controllingFieldValue>Standard</controllingFieldValue>
+                <valueName>Sales Tax</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Cycle Count</controllingFieldValue>
+                <valueName>Cycle Count</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Transfer</controllingFieldValue>
+                <valueName>Transfer Shipment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Transfer</controllingFieldValue>
+                <valueName>Palletize</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Transfer</controllingFieldValue>
+                <valueName>Break Package</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Transfer</controllingFieldValue>
+                <valueName>Transfer Receipt</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Activate Proposed Costs</controllingFieldValue>
+                <valueName>Activate Proposed Costs</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Void Transfer Order Pick</controllingFieldValue>
+                <valueName>Void Transfer Order Pick</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>RMA Scrap</controllingFieldValue>
+                <valueName>RMA Scrap</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>RMA Receipt</controllingFieldValue>
+                <valueName>RMA Receipt</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Logical Purchase Order Receipt</controllingFieldValue>
+                <valueName>Logical Purchase Order Receipt</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>RMA</controllingFieldValue>
+                <valueName>RMA</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Logical Sales Order Shipment</controllingFieldValue>
+                <valueName>Logical Sales Order Shipment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Bank Transaction</controllingFieldValue>
+                <valueName>Bank Adjustment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Bank Transaction</controllingFieldValue>
+                <valueName>Bank Interest Income</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Bank Transaction</controllingFieldValue>
+                <valueName>Bank Fees</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Bank Transaction</controllingFieldValue>
+                <valueName>Funds Transfer</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>RMA Receipt For Repair</controllingFieldValue>
+                <valueName>RMA Receipt For Repair</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Rental Exchange</controllingFieldValue>
+                <valueName>Rental Exchange In</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Rental Exchange</controllingFieldValue>
+                <valueName>Rental Exchange Out</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Refund</controllingFieldValue>
+                <valueName>Refund Applied Payment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Refund</controllingFieldValue>
+                <valueName>Refund Applied Prepayment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Refund</controllingFieldValue>
+                <valueName>Refund Credit</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Refund</controllingFieldValue>
+                <valueName>Refund Unapplied Overpayment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Refund</controllingFieldValue>
+                <valueName>Refund Unapplied Prepayment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Refund</controllingFieldValue>
+                <valueName>Refund Allowance Accrual</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Purchase Order Receipt</controllingFieldValue>
+                <valueName>Purchase Order Receipt</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Purchase Order Receipt</controllingFieldValue>
+                <valueName>Purchase Price Variance</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Purchase Order Receipt</controllingFieldValue>
+                <valueName>Purchase Order Receipt - Consigned</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Void - Purchase Order Receipt</controllingFieldValue>
+                <valueName>Void - Purchase Order Receipt - Consigned</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Transfer</controllingFieldValue>
+                <valueName>Transfer Shipment - Consigned</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Transfer</controllingFieldValue>
+                <valueName>Transfer Receipt - Consigned</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Transfer</controllingFieldValue>
+                <valueName>Transfer - Consigned</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Sales Order Undo Pick</controllingFieldValue>
+                <controllingFieldValue>Sales Order Pick</controllingFieldValue>
+                <valueName>Sales Order Undo Pick</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Purchase Order Return</controllingFieldValue>
+                <valueName>Purchase Order Return</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Receipt</controllingFieldValue>
+                <valueName>Claim Payment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Receipt</controllingFieldValue>
+                <controllingFieldValue>Supplier Payment</controllingFieldValue>
+                <valueName>Earned Terms Discount</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Receipt</controllingFieldValue>
+                <valueName>General Deduction</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Receipt</controllingFieldValue>
+                <valueName>Invoice Deduction</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Receipt</controllingFieldValue>
+                <valueName>Overpayment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Receipt</controllingFieldValue>
+                <controllingFieldValue>Supplier Payment</controllingFieldValue>
+                <valueName>Payment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Receipt</controllingFieldValue>
+                <controllingFieldValue>Supplier Payment</controllingFieldValue>
+                <valueName>Prepayment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Receipt</controllingFieldValue>
+                <valueName>Unearned Terms Discount</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Receipt</controllingFieldValue>
+                <valueName>Writeoff</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Receipt</controllingFieldValue>
+                <valueName>Writeoff Credit</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Sales Order Pick</controllingFieldValue>
+                <valueName>Sales Order Pick</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Sales Order Shipment</controllingFieldValue>
+                <valueName>Sales Order Shipment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Sales Order Shipment</controllingFieldValue>
+                <valueName>Sales Order Undo Shipment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Standard</controllingFieldValue>
+                <valueName>Debit</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Standard</controllingFieldValue>
+                <valueName>Credit</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>In-Transit</controllingFieldValue>
+                <valueName>In-Transit</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Void - In-Transit</controllingFieldValue>
+                <valueName>Void - In-Transit</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Trade</controllingFieldValue>
+                <valueName>Liability</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Sales Order Pick Transfer</controllingFieldValue>
+                <valueName>Sales Order Pick Transfer</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Transfer Order Pick Transfer</controllingFieldValue>
+                <valueName>Transfer Order Pick Transfer</valueName>
+            </valueSettings>
+            <valueSettings>
+             	<valueName>Undo Transfer of Ownership</valueName>
+                 <controllingFieldValue>Undo Transfer of Ownership</controllingFieldValue>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Work Order Complete</controllingFieldValue>
+                <valueName>Work Order Repair Issue From WIP</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Work Order DeKit</controllingFieldValue>
+                <valueName>Work Order Repair Component Scrap</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Work Order Uncomplete</controllingFieldValue>
+                <valueName>Work Order Repair Return to WIP</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Sales Order Shipment</controllingFieldValue>
+                <valueName>RMA Repair Shipment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Sales Order Undo Shipment</controllingFieldValue>
+                <valueName>RMA Repair Undo Shipment</valueName>
+            </valueSettings>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Subsidiary_Ledger__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Subsidiary Ledger</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Suppress_Zero_Amount_Lines__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Suppress Zero-Amount Lines</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Transaction__c</fullName>
+        <description>Select the transaction type for this accounting rule</description>
+        <externalId>false</externalId>
+        <label>Transaction</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <controllingField>Object__c</controllingField>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Accrual - Manual</fullName>
+                    <default>false</default>
+                    <label>Accrual - Manual</label>
+                </value>
+                <value>
+                    <fullName>Adjustment</fullName>
+                    <default>false</default>
+                    <label>Adjustment</label>
+                </value>
+                <value>
+                    <fullName>Advanced Shipment Notice</fullName>
+                    <default>false</default>
+                    <label>Advanced Shipment Notice</label>
+                </value>
+                <value>
+                    <fullName>Chargeback</fullName>
+                    <default>false</default>
+                    <label>Chargeback</label>
+                </value>
+                <value>
+                    <fullName>Claim Settlement</fullName>
+                    <default>false</default>
+                    <label>Claim Settlement</label>
+                </value>
+                <value>
+                    <fullName>Credit Memo</fullName>
+                    <default>false</default>
+                    <label>Credit Memo</label>
+                </value>
+                <value>
+                    <fullName>Customer Credit Memo</fullName>
+                    <default>false</default>
+                    <label>Customer Credit Memo</label>
+                </value>
+                <value>
+                    <fullName>Customer Invoice</fullName>
+                    <default>false</default>
+                    <label>Customer Invoice</label>
+                </value>
+                <value>
+                    <fullName>Cycle Count</fullName>
+                    <default>false</default>
+                    <label>Cycle Count</label>
+                </value>
+                <value>
+                    <fullName>Fixed Asset Adjustment</fullName>
+                    <default>false</default>
+                    <label>Fixed Asset Adjustment</label>
+                </value>
+                <value>
+                    <fullName>Fixed Asset Depreciation</fullName>
+                    <default>false</default>
+                    <label>Fixed Asset Depreciation</label>
+                </value>
+                <value>
+                    <fullName>Fixed Asset to Inventory</fullName>
+                    <default>false</default>
+                    <label>Fixed Asset to Inventory</label>
+                </value>
+                <value>
+                    <fullName>Inventory to Fixed Asset</fullName>
+                    <default>false</default>
+                    <label>Inventory to Fixed Asset</label>
+                </value>
+                <value>
+                    <fullName>Intercompany Investment</fullName>
+                    <default>false</default>
+                    <label>Intercompany Investment</label>
+                </value>
+                <value>
+                    <fullName>Intercompany Payment</fullName>
+                    <default>false</default>
+                    <label>Intercompany Payment</label>
+                </value>
+                <value>
+                    <fullName>In-Transit</fullName>
+                    <default>false</default>
+                    <label>In-Transit</label>
+                </value>
+                <value>
+                    <fullName>In-Transit Purchase Order Receipt</fullName>
+                    <default>false</default>
+                    <label>In-Transit Purchase Order Receipt</label>
+                </value>
+                <value>
+                    <fullName>Inventory Change</fullName>
+                    <default>false</default>
+                    <label>Inventory Change</label>
+                </value>
+                <value>
+                    <fullName>Invoice</fullName>
+                    <default>false</default>
+                    <label>Invoice</label>
+                </value>
+                <value>
+                    <fullName>Invoice Credit</fullName>
+                    <default>false</default>
+                    <label>Invoice Credit</label>
+                </value>
+                <value>
+                    <fullName>Logical</fullName>
+                    <default>false</default>
+                    <label>Logical</label>
+                </value>
+                <value>
+                    <fullName>Logical Purchase Order Receipt</fullName>
+                    <default>false</default>
+                    <label>Logical Purchase Order Receipt</label>
+                </value>
+                <value>
+                    <fullName>Logical Sales Order Shipment</fullName>
+                    <default>false</default>
+                    <label>Logical Sales Order Shipment</label>
+                </value>
+                <value>
+                    <fullName>Logical RMA Receipt</fullName>
+                    <default>false</default>
+                    <label>Logical RMA Receipt</label>
+                </value>
+                <value>
+                    <fullName>Logical Purchase Order Return</fullName>
+                    <default>false</default>
+                    <label>Logical Purchase Order Return</label>
+                </value>
+                <value>
+                    <fullName>Manual</fullName>
+                    <default>false</default>
+                    <label>Manual</label>
+                </value>
+                <value>
+                    <fullName>Miscellaneous Credit</fullName>
+                    <default>false</default>
+                    <label>Miscellaneous Credit</label>
+                </value>
+                <value>
+                    <fullName>Miscellaneous Receipt</fullName>
+                    <default>false</default>
+                    <label>Miscellaneous Receipt</label>
+                </value>
+                <value>
+                    <fullName>Overpayment</fullName>
+                    <default>false</default>
+                    <label>Overpayment</label>
+                </value>
+                <value>
+                    <fullName>Prepayment</fullName>
+                    <default>false</default>
+                    <label>Prepayment</label>
+                </value>
+                <value>
+                    <fullName>Purchase Order Receipt</fullName>
+                    <default>false</default>
+                    <label>Purchase Order Receipt</label>
+                </value>
+                <value>
+                    <fullName>Purchase Order Receipt - Consigned</fullName>
+                    <default>false</default>
+                    <label>Purchase Order Receipt - Consigned</label>
+                </value>
+                <value>
+                    <fullName>Purchase Order Return</fullName>
+                    <default>false</default>
+                    <label>Purchase Order Return</label>
+                </value>
+                <value>
+                    <fullName>Receipt</fullName>
+                    <default>false</default>
+                    <label>Receipt</label>
+                </value>
+                <value>
+                    <fullName>Recurring Journal</fullName>
+                    <default>false</default>
+                    <label>Recurring Journal</label>
+                </value>
+                <value>
+                    <fullName>Return Receipt</fullName>
+                    <default>false</default>
+                    <label>Return Receipt</label>
+                </value>
+                <value>
+                    <fullName>Sales Order Pick</fullName>
+                    <default>false</default>
+                    <label>Sales Order Pick</label>
+                </value>
+                <value>
+                    <fullName>Sales Order Shipment</fullName>
+                    <default>false</default>
+                    <label>Sales Order Shipment</label>
+                </value>
+                <value>
+                    <fullName>Sales Order Undo Shipment</fullName>
+                    <default>false</default>
+                    <label>Sales Order Undo Shipment</label>
+                </value>
+                <value>
+                    <fullName>Settlement</fullName>
+                    <default>false</default>
+                    <label>Settlement</label>
+                </value>
+                <value>
+                    <fullName>Shipment</fullName>
+                    <default>false</default>
+                    <label>Shipment</label>
+                </value>
+                <value>
+                    <fullName>Standard</fullName>
+                    <default>false</default>
+                    <label>Standard</label>
+                </value>
+                <value>
+                    <fullName>Supplier Payment</fullName>
+                    <default>false</default>
+                    <label>Supplier Payment</label>
+                </value>
+                <value>
+                    <fullName>Trade</fullName>
+                    <default>false</default>
+                    <label>Trade</label>
+                </value>
+                <value>
+                    <fullName>Transfer Of Ownership</fullName>
+                    <default>false</default>
+                    <label>Transfer Of Ownership</label>
+                </value>
+                <value>
+                    <fullName>Transfer Order Pick</fullName>
+                    <default>false</default>
+                    <label>Transfer Order Pick</label>
+                </value>
+                <value>
+                    <fullName>Transfer Order Receipt</fullName>
+                    <default>false</default>
+                    <label>Transfer Order Receipt</label>
+                </value>
+                <value>
+                    <fullName>Transfer Order Shipment</fullName>
+                    <default>false</default>
+                    <label>Transfer Order Shipment</label>
+                </value>
+                <value>
+                    <fullName>Transfer Order Undo Shipment</fullName>
+                    <default>false</default>
+                    <label>Transfer Order Undo Shipment</label>
+                </value>
+                <value>
+                    <fullName>Void - Purchase Order Receipt</fullName>
+                    <default>false</default>
+                    <label>Void - Purchase Order Receipt</label>
+                </value>
+                <value>
+                    <fullName>Void - Purchase Order Receipt - Consigned</fullName>
+                    <default>false</default>
+                    <label>Void - Purchase Order Receipt - Consigned</label>
+                </value>
+
+                <value>
+                    <fullName>Void - In-Transit Purchase Order Receipt</fullName>
+                    <default>false</default>
+                    <label>Void - In-Transit Purchase Order Receipt</label>
+                </value>
+                <value>
+                    <fullName>Work Order</fullName>
+                    <default>false</default>
+                    <label>Work Order</label>
+                </value>
+                <value>
+                    <fullName>Year End</fullName>
+                    <default>false</default>
+                    <label>Year End</label>
+                </value>
+                <value>
+                    <fullName>Year End Adjustment</fullName>
+                    <default>false</default>
+                    <label>Year End Adjustment</label>
+                </value>
+                <value>
+                    <fullName>Work Order Kit</fullName>
+                    <default>false</default>
+                    <label>Work Order Kit</label>
+                </value>
+                <value>
+                    <fullName>Work Order DeKit</fullName>
+                    <default>false</default>
+                    <label>Work Order DeKit</label>
+                </value>
+                <value>
+                    <fullName>Work Order Complete</fullName>
+                    <default>false</default>
+                    <label>Work Order Complete</label>
+                </value>
+                <value>
+                    <fullName>Work Order Uncomplete</fullName>
+                    <default>false</default>
+                    <label>Work Order Uncomplete</label>
+                </value>
+                <value>
+                    <fullName>Work Order Scrap Components</fullName>
+                    <default>false</default>
+                    <label>Work Order Scrap Components</label>
+                </value>
+                <value>
+                    <fullName>Void Purchase Order Return</fullName>
+                    <default>false</default>
+                    <label>Void Purchase Order Return</label>
+                </value>
+                <value>
+                    <fullName>Transfer</fullName>
+                    <default>false</default>
+                    <label>Transfer</label>
+                </value>
+                <value>
+                    <fullName>Consigned</fullName>
+                    <default>false</default>
+                    <label>Consigned</label>
+                </value>
+                <value>
+                    <fullName>Activate Proposed Costs</fullName>
+                    <default>false</default>
+                    <label>Activate Proposed Costs</label>
+                </value>
+                <value>
+                    <fullName>Void Transfer Order Pick</fullName>
+                    <default>false</default>
+                    <label>Void Transfer Order Pick</label>
+                </value>
+                <value>
+                    <fullName>RMA Scrap</fullName>
+                    <default>false</default>
+                    <label>RMA Scrap</label>
+                </value>
+                <value>
+                    <fullName>RMA Receipt</fullName>
+                    <default>false</default>
+                    <label>RMA Receipt</label>
+                </value>
+                <value>
+                    <fullName>RMA</fullName>
+                    <default>false</default>
+                    <label>RMA</label>
+                </value>
+                <value>
+                    <fullName>Bank Transaction</fullName>
+                    <default>false</default>
+                    <label>Bank Transaction</label>
+                </value>
+                <value>
+                    <fullName>Intercompany Cross Charge</fullName>
+                    <default>false</default>
+                    <label>Intercompany Cross Charge</label>
+                </value>
+                <value>
+                    <fullName>RMA Receipt For Repair</fullName>
+                    <default>false</default>
+                    <label>RMA Receipt For Repair</label>
+                </value>
+                <value>
+                    <fullName>PL RFX</fullName>
+                    <default>false</default>
+                    <label>PL RFX</label>
+                </value>
+                <value>
+                    <fullName>Rental Exchange</fullName>
+                    <default>false</default>
+                    <label>Rental Exchange</label>
+                </value>
+                <value>
+                    <fullName>Refund</fullName>
+                    <default>false</default>
+                    <label>Refund</label>
+                </value>
+                <value>
+                    <fullName>UFX</fullName>
+                    <default>false</default>
+                    <label>UFX</label>
+                </value>
+                <value>
+                    <fullName>Allowance Accrual</fullName>
+                    <default>false</default>
+                    <label>Allowance Accrual</label>
+                </value>
+                <value>
+                    <fullName>Sales Order Undo Pick</fullName>
+                    <default>false</default>
+                    <label>Sales Order Undo Pick</label>
+                </value>
+                <value>
+                     <fullName>Undo Transfer of Ownership</fullName>
+                     <default>false</default>
+                </value>
+                <value>
+                    <fullName>Void - In-Transit</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Sales Order Pick Transfer</fullName>
+                    <default>false</default>
+                    <label>Sales Order Pick Transfer</label>
+                </value>
+                <value>
+                    <fullName>Transfer Order Pick Transfer</fullName>
+                    <default>false</default>
+                    <label>Transfer Order Pick Transfer</label>
+                </value>
+            </valueSetDefinition>
+            <valueSettings>
+                <controllingFieldValue>Supplier Payment</controllingFieldValue>
+                <controllingFieldValue>Supplier Invoice</controllingFieldValue>
+                <valueName>Credit Memo</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Supplier Invoice</controllingFieldValue>
+                <valueName>Invoice</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Supplier Invoice</controllingFieldValue>
+                <controllingFieldValue>Customer Invoice</controllingFieldValue>
+                <valueName>Prepayment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Supplier Payment</controllingFieldValue>
+                <valueName>Supplier Payment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Bank Transaction Group</controllingFieldValue>
+                <controllingFieldValue>Customer Invoice</controllingFieldValue>
+                <valueName>Standard</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Customer Invoice</controllingFieldValue>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Adjustment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Customer Invoice</controllingFieldValue>
+                <valueName>Chargeback</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Customer Invoice</controllingFieldValue>
+                <valueName>Customer Invoice</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Customer Invoice</controllingFieldValue>
+                <controllingFieldValue>Journal Entry</controllingFieldValue>
+                <valueName>Manual</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Customer Invoice</controllingFieldValue>
+                <valueName>Overpayment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Customer Invoice</controllingFieldValue>
+                <valueName>Settlement</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Customer Invoice</controllingFieldValue>
+                <valueName>RMA</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Customer Invoice</controllingFieldValue>
+                <valueName>Allowance Accrual</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Customer Receipt</controllingFieldValue>
+                <valueName>Claim Settlement</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Customer Receipt</controllingFieldValue>
+                <valueName>Receipt</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Customer Receipt</controllingFieldValue>
+                <valueName>Refund</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Fixed Asset Adjustment</controllingFieldValue>
+                <valueName>Fixed Asset Adjustment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Fixed Asset Depreciation</controllingFieldValue>
+                <valueName>Fixed Asset Depreciation</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Cycle Count</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Fixed Asset to Inventory</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Inventory to Fixed Asset</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <controllingFieldValue>Receiving Document</controllingFieldValue>
+                <valueName>In-Transit Purchase Order Receipt</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <controllingFieldValue>Receiving Document</controllingFieldValue>
+                <valueName>Logical Purchase Order Receipt</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <controllingFieldValue>Shipment</controllingFieldValue>
+                <valueName>Logical Sales Order Shipment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <controllingFieldValue>Receiving Document</controllingFieldValue>
+                <valueName>Logical RMA Receipt</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <controllingFieldValue>Receiving Document</controllingFieldValue>
+                <valueName>Logical Purchase Order Return</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <controllingFieldValue>Receiving Document</controllingFieldValue>
+                <valueName>Miscellaneous Receipt</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <controllingFieldValue>Receiving Document</controllingFieldValue>
+                <valueName>Purchase Order Receipt</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <controllingFieldValue>Receiving Document</controllingFieldValue>
+                <valueName>Purchase Order Return</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <controllingFieldValue>Receiving Document</controllingFieldValue>
+                <valueName>Return Receipt</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Sales Order Pick</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <controllingFieldValue>Shipment</controllingFieldValue>
+                <valueName>Sales Order Shipment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Transfer Order Pick</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <controllingFieldValue>Receiving Document</controllingFieldValue>
+                <valueName>Transfer Order Receipt</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <controllingFieldValue>Shipment</controllingFieldValue>
+                <valueName>Transfer Order Shipment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Void - Purchase Order Receipt</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Void - In-Transit Purchase Order Receipt</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Work Order Kit</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Work Order DeKit</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Work Order Complete</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Work Order Uncomplete</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Work Order Scrap Components</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Void Purchase Order Return</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Transfer</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Consigned</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Activate Proposed Costs</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Void Transfer Order Pick</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>RMA Scrap</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>RMA Receipt</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>RMA Receipt For Repair</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Rental Exchange</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Sales Order Undo Pick</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Invoice</controllingFieldValue>
+                <valueName>Intercompany Investment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Invoice</controllingFieldValue>
+                <valueName>Intercompany Cross Charge</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Journal Entry</controllingFieldValue>
+                <valueName>Accrual - Manual</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Journal Entry</controllingFieldValue>
+                <valueName>Recurring Journal</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Journal Entry</controllingFieldValue>
+                <valueName>Year End</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Journal Entry</controllingFieldValue>
+                <valueName>Year End Adjustment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Journal Entry</controllingFieldValue>
+                <valueName>Bank Transaction</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Journal Entry</controllingFieldValue>
+                <valueName>PL RFX</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Journal Entry</controllingFieldValue>
+                <valueName>UFX</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Payment</controllingFieldValue>
+                <valueName>Intercompany Payment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Receiving Document</controllingFieldValue>
+                <valueName>Advanced Shipment Notice</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Receiving Document</controllingFieldValue>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>In-Transit</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Shipment</controllingFieldValue>
+                <valueName>Sales Order Undo Shipment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Shipment</controllingFieldValue>
+                <valueName>Transfer Order Undo Shipment</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Void - In-Transit</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Sales Order Pick Transfer</valueName>
+            </valueSettings>
+            <valueSettings>
+                <controllingFieldValue>Inventory Change</controllingFieldValue>
+                <valueName>Transfer Order Pick Transfer</valueName>
+            </valueSettings>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Unique_Key__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>Company + Object Name + Transaction + Sub Transaction + Line Type + Rule Type + Amt Override Unique Key</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Generated as follows: Company + Object Name + Transaction + SubTransaction + Line Type + Rule Type + Amt Override.</inlineHelpText>
+        <label>Unique Key</label>
+        <length>240</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <label>Accounting Rule</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Company__c</columns>
+        <columns>Object_Name__c</columns>
+        <columns>Role__c</columns>
+        <columns>Transaction__c</columns>
+        <columns>SubTransaction_Type__c</columns>
+        <columns>Line_Type__c</columns>
+        <columns>Rule_Type__c</columns>
+        <columns>Amount_Reference__c</columns>
+        <columns>GL_Account__c</columns>
+        <columns>Default_GL_Account__c</columns>
+        <columns>GL_Account_Reference_Value__c</columns>
+        <columns>Intercompany__c</columns>
+        <columns>Intercompany_Reference_Value__c</columns>
+        <columns>Company_Ledger__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <listViews>
+        <fullName>Invoice</fullName>
+        <columns>NAME</columns>
+        <columns>Company__c</columns>
+        <columns>Object_Name__c</columns>
+        <columns>Transaction__c</columns>
+        <columns>SubTransaction_Type__c</columns>
+        <columns>Line_Type__c</columns>
+        <columns>Rule_Type__c</columns>
+        <columns>Amount_Reference__c</columns>
+        <columns>GL_Account__c</columns>
+        <columns>Default_GL_Account__c</columns>
+        <columns>GL_Account_Reference_Value__c</columns>
+        <columns>Company_Ledger__c</columns>
+        <columns>Consolidation_Ledger__c</columns>
+        <columns>Statutory_Ledger__c</columns>
+        <columns>Subsidiary_Ledger__c</columns>
+        <filterScope>Everything</filterScope>
+        <filters>
+            <field>Transaction__c</field>
+            <operation>equals</operation>
+            <value>Customer Invoice,Credit Memo</value>
+        </filters>
+        <label>Invoice</label>
+    </listViews>
+    <listViews>
+        <fullName>Purchase_Receipt</fullName>
+        <columns>NAME</columns>
+        <columns>Company__c</columns>
+        <columns>Object_Name__c</columns>
+        <columns>Transaction__c</columns>
+        <columns>SubTransaction_Type__c</columns>
+        <columns>Line_Type__c</columns>
+        <columns>Rule_Type__c</columns>
+        <columns>Amount_Reference__c</columns>
+        <columns>GL_Account__c</columns>
+        <columns>Default_GL_Account__c</columns>
+        <columns>GL_Account_Reference_Value__c</columns>
+        <filterScope>Everything</filterScope>
+        <filters>
+            <field>Transaction__c</field>
+            <operation>equals</operation>
+            <value>Purchase Receipt</value>
+        </filters>
+        <label>Purchase Receipt</label>
+    </listViews>
+    <listViews>
+        <fullName>Receipts</fullName>
+        <columns>NAME</columns>
+        <columns>Company__c</columns>
+        <columns>Object_Name__c</columns>
+        <columns>Transaction__c</columns>
+        <columns>SubTransaction_Type__c</columns>
+        <columns>Line_Type__c</columns>
+        <columns>Rule_Type__c</columns>
+        <columns>Amount_Reference__c</columns>
+        <columns>GL_Account__c</columns>
+        <columns>Default_GL_Account__c</columns>
+        <columns>GL_Account_Reference_Value__c</columns>
+        <filterScope>Everything</filterScope>
+        <filters>
+            <field>Transaction__c</field>
+            <operation>equals</operation>
+            <value>Customer Receipt</value>
+        </filters>
+        <label>Customer Receipts</label>
+    </listViews>
+    <listViews>
+        <fullName>Shipment</fullName>
+        <columns>NAME</columns>
+        <columns>Company__c</columns>
+        <columns>Object_Name__c</columns>
+        <columns>Transaction__c</columns>
+        <columns>SubTransaction_Type__c</columns>
+        <columns>Line_Type__c</columns>
+        <columns>Rule_Type__c</columns>
+        <columns>Amount_Reference__c</columns>
+        <columns>GL_Account__c</columns>
+        <columns>Default_GL_Account__c</columns>
+        <columns>GL_Account_Reference_Value__c</columns>
+        <filterScope>Everything</filterScope>
+        <filters>
+            <field>Transaction__c</field>
+            <operation>equals</operation>
+            <value>Shipment</value>
+        </filters>
+        <label>Shipment</label>
+    </listViews>
+    <listViews>
+        <fullName>Supplier_Invoice</fullName>
+        <columns>NAME</columns>
+        <columns>Company__c</columns>
+        <columns>Object_Name__c</columns>
+        <columns>Transaction__c</columns>
+        <columns>SubTransaction_Type__c</columns>
+        <columns>Line_Type__c</columns>
+        <columns>Rule_Type__c</columns>
+        <columns>Amount_Reference__c</columns>
+        <columns>GL_Account__c</columns>
+        <columns>Default_GL_Account__c</columns>
+        <columns>GL_Account_Reference_Value__c</columns>
+        <filterScope>Everything</filterScope>
+        <filters>
+            <field>Transaction__c</field>
+            <operation>equals</operation>
+            <value>Supplier Invoice</value>
+        </filters>
+        <label>Supplier Invoice</label>
+    </listViews>
+    <listViews>
+        <fullName>Supplier_Payment</fullName>
+        <columns>NAME</columns>
+        <columns>Company__c</columns>
+        <columns>Object_Name__c</columns>
+        <columns>Transaction__c</columns>
+        <columns>SubTransaction_Type__c</columns>
+        <columns>Line_Type__c</columns>
+        <columns>Rule_Type__c</columns>
+        <columns>Amount_Reference__c</columns>
+        <columns>GL_Account__c</columns>
+        <columns>Default_GL_Account__c</columns>
+        <columns>GL_Account_Reference_Value__c</columns>
+        <filterScope>Everything</filterScope>
+        <filters>
+            <field>Transaction__c</field>
+            <operation>equals</operation>
+            <value>Supplier Payment</value>
+        </filters>
+        <label>Supplier Payment</label>
+    </listViews>
+    <listViews>
+        <fullName>Work_Order</fullName>
+        <columns>NAME</columns>
+        <columns>Company__c</columns>
+        <columns>Object_Name__c</columns>
+        <columns>Transaction__c</columns>
+        <columns>SubTransaction_Type__c</columns>
+        <columns>Line_Type__c</columns>
+        <columns>Rule_Type__c</columns>
+        <columns>Amount_Reference__c</columns>
+        <columns>GL_Account__c</columns>
+        <columns>Default_GL_Account__c</columns>
+        <columns>GL_Account_Reference_Value__c</columns>
+        <filterScope>Everything</filterScope>
+        <filters>
+            <field>Transaction__c</field>
+            <operation>equals</operation>
+            <value>Work Order</value>
+        </filters>
+        <label>Work Order</label>
+    </listViews>
+    <nameField>
+        <label>Accounting Rule</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Accounting Rules</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Rule_Type__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Object_Name__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Transaction__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>SubTransaction_Type__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Line_Type__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Amount_Reference__c</customTabListAdditionalFields>
+        <listViewButtons>Validate_Rules</listViewButtons>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <startsWith>Vowel</startsWith>
+    <validationRules>
+        <fullName>Accounting_Standard_Check</fullName>
+        <active>true</active>
+        <errorConditionFormula>ISBLANK(Accounting_Standard__c)</errorConditionFormula>
+        <errorMessage>The Accounting Standard can not be blank.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Company_Ledger_Check</fullName>
+        <active>true</active>
+        <description>Make sure the company ledger check box is checked for each rule.</description>
+        <errorConditionFormula>!Company_Ledger__c</errorConditionFormula>
+        <errorMessage>Please check the company ledger check box.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Expected_sign_should_always_be_positive</fullName>
+        <active>true</active>
+        <errorConditionFormula>!ISPICKVAL(Expected_Sign__c, &apos;Positive&apos;)</errorConditionFormula>
+        <errorMessage>The value in the Expected Sign field must be Positive.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Raise_Exceptions_JE_check</fullName>
+        <active>true</active>
+        <errorConditionFormula>(ISPICKVAL(Object__c, &apos;Journal Entry&apos;) &amp;&amp; Raise_Exceptions_for_Blank_Amounts__c == True)
+            ||
+            (Object_Name__c == &apos;Journal_Entry__c&apos; &amp;&amp; Raise_Exceptions_for_Blank_Amounts__c == True)</errorConditionFormula>
+        <errorDisplayField>Raise_Exceptions_for_Blank_Amounts__c</errorDisplayField>
+        <errorMessage>You must not select the Raise Exceptions for Blank Amounts checkbox when the Object field is Journal Entry. .</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Supressing_zeros_JE_check</fullName>
+        <active>true</active>
+        <errorConditionFormula>(ISPICKVAL(Object__c, &apos;Journal Entry&apos;) &amp;&amp; Suppress_Zero_Amount_Lines__c == False)
+            ||
+            (Object_Name__c == &apos;Journal_Entry__c&apos; &amp;&amp; Suppress_Zero_Amount_Lines__c == False)</errorConditionFormula>
+        <errorDisplayField>Suppress_Zero_Amount_Lines__c</errorDisplayField>
+        <errorMessage>You must select the Suppress Zero-Amount Lines checkbox when the Object field is Journal Entry.</errorMessage>
+    </validationRules>
+    <visibility>Public</visibility>
+    <webLinks>
+        <fullName>Validate_Rules</fullName>
+        <availability>online</availability>
+        <displayType>massActionButton</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Validate Rules</masterLabel>
+        <openType>noSidebar</openType>
+        <page>AccountingRuleValid</page>
+        <protected>false</protected>
+        <requireRowSelection>true</requireRowSelection>
+    </webLinks>
+</CustomObject>

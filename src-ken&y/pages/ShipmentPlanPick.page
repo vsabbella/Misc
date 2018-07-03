@@ -1,0 +1,12 @@
+<apex:page action="{!executeBatch}" controller="ShipmentPlanPick" tabStyle="Shipment__c" title="Generate Picks">
+    <apex:sectionHeader title="Generate Picks" />
+    <apex:pageMessages escape="false" />
+
+    <apex:pageBlock>
+        <apex:pageBlockTable value="{!shipments}" var="shipment">
+            <apex:column headerValue="Shipment">
+                <apex:outputLink value="/{!shipment.Id}">{!shipment.Name}</apex:outputLink>
+            </apex:column>
+        </apex:pageBlockTable>
+    </apex:pageBlock>
+</apex:page>

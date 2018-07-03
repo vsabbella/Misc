@@ -1,0 +1,370 @@
+<apex:page showHeader="true" sidebar="true" standardController="Accounting_Entry__c" extensions="AccountInquiryExt" tabStyle="Accounting_Entry__c" readOnly="true" docType="html-5.0">
+	<style type="text/css">
+		.column-label {
+			vertical-align: middle !important;
+			width: 10%;
+		}
+		
+		.column-field {
+			vertical-align: middle !important;
+        	width: 40%;
+        }
+        
+        .filter-operator {
+        	width: 100px;
+        }
+        
+        .custom-filter-options {
+        	width: 10%;
+        }
+        
+        .custom-filter-fields {
+        	width: 85%;
+        }
+	</style>
+	
+    <c:KendoResources />
+
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+
+    <apex:sectionHeader subtitle="{!$Label.Account_Inquiry}" />
+
+    <div class="page-message"></div>
+    <apex:form id="accountInquiryForm">
+    
+	<apex:pageBlock title="{!$Label.Filters}">	
+		<apex:variable var="cols" value="{!1}" /> 
+		<apex:variable var="counter" value="{!0}" />
+		<apex:variable var="resetCounter" value="{!0}" /> 
+		<table class="kndy-table">
+		<apex:repeat value="{!SearchFilters}" var="item" >
+			<apex:variable var="label" value="{!item['title']}" />
+		    <apex:outputText escape="false" value="<tr>" rendered="{!resetCounter==0}" />
+		    
+		    <apex:outputPanel layout="none" rendered="{!resetCounter<=cols}">
+				<td class="column-label">
+					{!label}
+				</td>
+				<td class="column-field">
+					<apex:outputPanel layout="none" rendered="{!item['field'] == 'Accounting_Entry__r.Period__c'}">
+						<table class="kndy-table">
+							<tr>
+								<td>
+									<table cellspacing="0" cellpadding="0" class="kndy-table">
+										<tr>
+											<td class="custom-filter-options">
+												<select id="PeriodFilterOperator" class="filter-operator">
+													<option value="range">{!$Label.Range}</option>
+													<option value="contains">{!$Label.Contains}</option>
+													<option value="custom">{!$Label.Custom}</option>
+												</select>
+											</td>
+											<td>&nbsp;</td>
+											<td class="custom-filter-fields">
+												<span class="custom-range">
+						                            <select id="{!item['field']}FromRange">
+						                            	<apex:repeat value="{!periodFromRangeOptions}" var="periodOption">
+												        	<option value="{!periodOption.value}">{!periodOption.label}</option>
+												        </apex:repeat>
+						                            </select>
+						                            &nbsp;to&nbsp;
+						                            <select id="{!item['field']}ToRange">
+						                            	<apex:repeat value="{!periodToRangeOptions}" var="periodOption">
+												        	<option value="{!periodOption.value}">{!periodOption.label}</option>
+												        </apex:repeat>
+						                            </select>
+						                        </span>
+						                        <span class="custom-select k-hidden">
+						                            <select id="{!item['field']}Filter" multiple="multiple">
+						                            	<apex:repeat value="{!periodRangeOptions}" var="periodOption">
+												        	<option value="{!periodOption.value}">{!periodOption.label}</option>
+												        </apex:repeat>
+						                            </select>
+						                        </span>
+						                        <span class="custom-date-range k-hidden">
+						                            <input id="{!item['field']}FromDate" />
+						                            &nbsp;{!$Label.to}&nbsp;
+						                            <input id="{!item['field']}ToDate" />
+						                        </span>
+											</td>
+										</tr>
+									</table>
+								</td>
+							</tr>
+						</table>                   
+					</apex:outputPanel>
+					<apex:outputPanel layout="none" rendered="{!(item['field'] == 'Accounting_Entry__r.Transaction_Type__c' || item['field'] == 'SubTransaction_Type__c')}">
+						<select id="{!item['field']}Filter"></select>
+					</apex:outputPanel>
+					<apex:outputPanel layout="none" rendered="{!(item['field'] != 'Accounting_Entry__r.Period__c' && item['field'] != 'Accounting_Entry__r.Transaction_Type__c' && item['field'] != 'SubTransaction_Type__c')}">
+						<input id="{!item['field']}Filter" />
+					</apex:outputPanel>
+				</td>
+			</apex:outputPanel>
+		    
+		    <apex:outputPanel layout="none" rendered="{!SearchFilters.size-1==counter && resetCounter<cols}">
+		    	<td colspan="{!(cols-resetCounter)*2}">&nbsp;</td>
+		    </apex:outputPanel>
+    
+	    	<apex:outputText escape="false" value="</tr>" rendered="{!counter==SearchFilters.size}" />
+	    	<apex:variable var="resetCounter" value="{!IF(resetCounter==cols, 0, resetCounter+1)}"/>
+			<apex:variable var="counter" value="{!counter+1}" />
+		</apex:repeat>
+			<tr>
+	    		<td colspan="{!cols*2+1}">&nbsp;</td>
+	    		<td>
+					<input name="searchFilter" id="searchFilter" type="button" value="{!$Label.Search}" onclick="AccountInquiryActions.Search();" class="btn search-filter-buttons" />
+					<input name="clearFilters" id="clearFilters" type="button" value="{!$Label.CSReset}" onclick="AccountInquiryActions.Reset();" class="btn search-filter-buttons" />
+	        	</td>    
+	    	</tr>
+		</table>
+	</apex:pageBlock>
+	
+	</apex:form>
+	
+	<apex:pageBlock id="aeLinesGridContainer" title="{!$ObjectType.Accounting_Entry_Line__c.LabelPlural}">    
+		<div class="grid-container">
+    		<div class="grid-message"></div>
+        	<div id="{!accountingEntryLinesConfig.uniqueId}" ></div>
+        </div>
+    </apex:pageBlock>
+
+    <script type="text/javascript">  
+    	var searchFilters = JSON.parse('{!SearchFiltersJson}');
+    	var isHideResults = ('{!isHideResultsOnPageLoad}' == 'true');
+    	var aggregates = [ { field: "Amount_CR__c", aggregate: "sum" },
+                           { field: "Amount_DR__c", aggregate: "sum" },
+                           { field: "Balance_f__c", aggregate: "sum" } ];
+
+		var getAccountingEntryLinesData = function() {
+            var deferred = $.Deferred();
+            var remoteArgs = JSON.parse('{!accountingEntryLinesConfigJson}');
+            // The stuff returned from Salesforce has extra properties like "attributes"
+            // which couldn't be deserialised back
+            //remoteArgs.parentRecord = { Id: remoteArgs.parentRecord.Id };
+            
+            if (isHideResults) {
+	            setTimeout(function() {
+	  				deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+	 			}, 100);
+			}
+			else {	            
+				        
+	            Visualforce.remoting.Manager.invokeAction(
+	                '{!$RemoteAction.AccountInquiryExt.getAccountingEntryLines}',
+	                AccountInquiryUtils.GetFilterCriteria(),
+	                remoteArgs, 
+	                function (result, event) {
+	                    deferred.resolve(result, event);
+	                },
+	                {escape: false}
+	            );
+			}
+			
+            return deferred.promise();
+        }
+        
+        $(document).on('KenandyErpReady', function(e) {
+        	AccountInquiryActions.Init();
+        });
+		
+        var AccountInquiryUtils = function() {
+        	return {
+        		GetFieldList: function(fieldList) {
+        			fieldList = JSON.parse(fieldList);
+        			
+        			$.each(fieldList, function() {
+        				var aggregateField = _.where(aggregates, {field: this.field})[0];
+        				
+        				if (aggregateField && this.field == aggregateField.field) {
+			            	this.aggregate = aggregateField.aggregate;
+			            }
+        			});
+		
+        			return JSON.stringify(fieldList);
+        		},
+        		
+        		GetFilterCriteria: function() {
+        			var filterCriteria = [];
+        			
+        			$.each(searchFilters, function(index, item) {
+			        	if (item.field == 'Accounting_Entry__r.Period__c') {
+							var operatorType = $('#PeriodFilterOperator').val();
+							
+							if (operatorType == 'range' || operatorType == 'custom') {
+								var fromDate = (operatorType == 'custom') ? $("input[id='" + item.field + "FromDate']").val() : $("select[id='" + item.field + "FromRange']").val();
+								var toDate = (operatorType == 'custom') ? $("input[id='" + item.field + "ToDate']").val() : $("select[id='" + item.field + "ToRange']").val();
+								
+								filterCriteria.push({ field: 'Accounting_Entry__r.Period__r.Period_Start__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.DateTime, value: fromDate, operator: KenandyErp.KendoGridOptions.FilterOperatorType.GreaterThanOrEquals });
+								filterCriteria.push({ field: 'Accounting_Entry__r.Period__r.Period_End__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.DateTime, value: toDate, operator: KenandyErp.KendoGridOptions.FilterOperatorType.LessThanOrEquals });
+							}
+							else {
+								filterCriteria.push({ field: item.field, value: JSON.stringify($("select[id='" + item.field + "Filter']").val()), operator: KenandyErp.KendoGridOptions.FilterOperatorType.Contains });	
+							}
+		        		}
+						else if (item.field == 'Accounting_Entry__r.Transaction_Type__c' || item.field == 'SubTransaction_Type__c') {
+							if ($("select[id='" + item.field + "Filter']").val().trim() != '') {
+								filterCriteria.push({ field: item.field, fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: $("select[id='" + item.field + "Filter']").val(), operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+	        				}
+						}
+						else {	
+							if (item.fieldtype == KenandyErp.KendoGridOptions.ColumnType.Reference) {
+								if ($("input[id='" + item.field + "Filter']").val().trim() != '') {																															
+									filterCriteria.push({ field: item.field.replace(/__c/, '__r.Name'), fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: $('#' + item.field + 'Filter').val(), operator: KenandyErp.KendoGridOptions.FilterOperatorType.Contains });
+					        	}
+					        }
+						}     	
+					});
+					
+					return filterCriteria;
+        		}
+        	};
+		}();
+		
+        var AccountInquiryActions = function() {
+			
+			return { 
+			
+				Init: function() {
+					// Hide grid on page load
+		        	$('[id$=aeLinesGridContainer]').hide();
+		        	
+		        	// Initialize Filter Operator(s)
+		        	$.fn.KendoDropDownList($('.filter-operator'));
+		        	$('#PeriodFilterOperator').bind('change', AccountInquiryActions.OnPeriodFilterOperatorChange);
+		        	
+		        	$.each(searchFilters, function(index, item) {
+			        	if (item.field == 'Accounting_Entry__r.Period__c') {
+				        	// Initialize Period From Range Lookup
+				        	$.fn.KendoDropDownList($("select[id='" + item.field + "FromRange']"));
+	        	
+	        				// Initialize Period To Range Lookup
+	        				$.fn.KendoDropDownList($("select[id='" + item.field + "ToRange']"));
+	        				
+	        				// Initialize Period Selection Lookup
+	        				$.fn.KendoMultiSelect($("select[id='" + item.field + "Filter']"));
+	        	
+	        				// Initialize Period Custom From Date Lookup
+	        				$.fn.KendoDateTimePicker($("input[id='" + item.field + "FromDate']"));
+	        				
+	        				// Initialize Period Custom To Date Lookup
+	        				$.fn.KendoDateTimePicker($("input[id='" + item.field + "ToDate']"));
+						}
+						else if (item.field == 'Accounting_Entry__r.Transaction_Type__c') {
+					        // Initialize Transaction Type DropDownList
+		        			$.fn.KendoDropDownList($("select[id='" + item.field + "Filter']"), { getPicklistValuesAction: '{!$RemoteAction.AccountInquiryExt.getPicklistValues}', objectName: 'Accounting_Entry__c', fieldName: 'Transaction_Type__c' });
+						}
+						else if (item.field == 'SubTransaction_Type__c') {
+							// Initialize Sub Transaction Type
+		        			$.fn.KendoDropDownList($("select[id='" + item.field + "Filter']"), { getPicklistValuesAction: '{!$RemoteAction.AccountInquiryExt.getPicklistValues}', objectName: 'Accounting_Entry_Line__c', fieldName: 'SubTransaction_Type__c' });
+						}
+						else {
+							if (item.fieldtype == KenandyErp.KendoGridOptions.ColumnType.Reference) {
+								// Initialize Channel Lookup
+		        				$.fn.KendoAutoComplete($("input[id='" + item.field + "Filter']"), { lookupSearchAction: '{!$RemoteAction.AccountInquiryExt.lookupSearchFilter}', referenceTo: item.field, title: item.title });
+		        			}
+						}     	
+					});
+		        	
+		        	// Initialize Accounting Entry Lines Grid
+		            $.fn.GridRelatedList($('#{!accountingEntryLinesConfig.uniqueId}'), { namespace: '{!NamespaceUU}', config: '{!accountingEntryLinesConfigJson}', fieldList: AccountInquiryUtils.GetFieldList('{!accountingEntryLinesFieldList}'), lookupSearchAction: '{!$RemoteAction.AccountInquiryExt.lookupSearch}', getRelatedListFunction: getAccountingEntryLinesData, aggregates: aggregates });
+				},
+        		
+        		OnPeriodFilterOperatorChange: function() {
+        			var operatorType = this.value;
+        			
+        			if (operatorType == 'range') {
+        				$('.custom-range').show();
+        				$('.custom-select').hide();
+        				$('.custom-date-range').hide();
+        			}
+        			else if (operatorType == 'contains') {
+        				$('.custom-range').hide();
+        				$('.custom-select').show();
+        				$('.custom-date-range').hide();
+        			}
+        			else if (operatorType == 'custom') {
+        				$('.custom-range').hide();
+        				$('.custom-select').hide();
+        				$('.custom-date-range').show();
+        			}
+        		},
+        		
+        		Validate: function() {
+        			var operatorType = $("#PeriodFilterOperator").val();
+        			
+        			KenandyErp.ClearMessage();
+        			
+        			if (operatorType == 'range') {
+        				var fromDate = $("select[id='Accounting_Entry__r.Period__cFromRange']").val();
+		        		var toDate = $("select[id='Accounting_Entry__r.Period__cToRange']").val();
+		        		
+		        		if (KenandyErp.ParseSFDCDate(toDate) < KenandyErp.ParseSFDCDate(fromDate)) {
+		        			KenandyErp.Message('{!$Label.From_range_must_be_earlier_than_to_range}');
+		        			return false;
+		        		}
+        			}
+        			else if (operatorType == 'contains') {
+        				var periodRange = $("select[id='Accounting_Entry__r.Period__cFilter']").val();
+        				
+        				if (!periodRange) {
+		        			KenandyErp.Message('{!$Label.Select_atleast_one_period_range}');
+		        			return false;
+		        		}
+        			}
+        			else if (operatorType == 'custom') {
+        				var fromDate = $("input[id='Accounting_Entry__r.Period__cFromDate']").val();
+		        		var toDate = $("input[id='Accounting_Entry__r.Period__cToDate']").val();
+		        		
+		        		if (!KenandyErp.IsValidDate(fromDate)) {
+		        			KenandyErp.Message('{!$Label.Enter_a_valid_period_from_date}');
+		        			return false;
+		        		}
+		        		
+		        		if (!KenandyErp.IsValidDate(toDate)) {
+		        			KenandyErp.Message('{!$Label.Enter_a_valid_period_to_date}');
+		        			return false;
+		        		}
+		        		
+		        		if (KenandyErp.ParseSFDCDate(toDate) < KenandyErp.ParseSFDCDate(fromDate)) {
+		        			KenandyErp.Message('{!$Label.From_period_date_must_be_earlier_than_to_period_date}');
+		        			return false;
+		        		}
+        			}
+        			
+        			return true;
+        		},
+        		
+        		Search: function() {
+        			isHideResults = false;
+        			$('[id$=aeLinesGridContainer]').show();
+
+        			if (this.Validate()) {
+        				$('#{!accountingEntryLinesConfig.uniqueId}').data('kendoGrid').dataSource.read();
+        			}
+        			
+        			return true;
+        		},
+        		
+        		Reset: function() {
+        			$("form[id$='accountInquiryForm']")[0].reset();
+        			$('#PeriodFilterOperator').val('range').trigger('change');
+        		},
+        		
+        		EnableFilterButtons: function() {
+        			$('.search-filter-buttons').each(function() {
+						$(this).val($(this).prop('default_value')).toggleClass('btnDisabled', false).prop('disabled', false);
+					});
+        		},
+        		
+        		DisableFilterButtons: function() {
+        			$('.search-filter-buttons').each(function() {
+						$(this).prop('default_value', $(this).prop('defaultValue')).val('Loading...').toggleClass('btnDisabled', true).prop('disabled', true);
+					});
+        		}
+			};
+		}();
+    </script>
+
+
+</apex:page>

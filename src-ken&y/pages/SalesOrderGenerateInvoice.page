@@ -1,0 +1,64 @@
+<apex:page standardController="Sales_Order__c" 
+           extensions="GenerateInvoiceExt"
+           title="Generate Invoice">
+           <style>
+			    .messageText a {  
+			        color:#333;
+			        font-size:91%;
+			        margin: 0px !important;
+			     } 
+		   </style>
+           <c:busyWait includeScripts="false"/>
+           <apex:includeScript value="{!$Resource.async}" />
+           <apex:includeScript value="{!$Resource.CreateInvoice}" />
+           <c:KendoResources />
+           <apex:sectionHeader title="{!$ObjectType.Customer_Invoice__c.Label}" subtitle="Generate Invoice for: {!Sales_Order__c.Name}"/>
+           <div id="message"></div>
+           <div id="err"></div>
+           <div>
+           		<apex:form id="form">
+	                <apex:pageBlock >
+	                    <apex:outputText value="{!$Label.Use_Invoice_Grouping_Rule}">
+	                      <input type="checkbox" id="useIGR" checked="checked"></input>
+	                    </apex:outputText>
+	                    <apex:pageBlockButtons location="bottom">
+		                    <apex:outputPanel id="panel">
+		                    	<input name="next" id="next" type="button" value="{!$Label.Next}" class="btn" />
+		                    	<input name="confirm" id="confirm" type="button" value="{!$Label.Confirm}" class="btn" /> 
+								<input name="goBack" id="goBack" type="button" value="{!$Label.Go_Back}" class="btn" />	
+		                    </apex:outputPanel>
+	                    </apex:pageBlockButtons>
+	                </apex:pageBlock>
+				</apex:form>
+			</div>
+			<script>
+				var nspace = '{!nspace}';
+				var recId = '{!recId}';
+				var objectName = '{!objectName}';
+				var className = 'GenerateInvoiceExt';
+				$(document).on('KenandyErpReady', function(e) {
+					//When the next button is pressed
+					$("#next").click(function(){
+						var promise = GenerateInvoiceUtil.next();
+						promise.done(function(){
+						    GenerateInvoiceUtil.waterfall();
+						});  
+					});
+						            
+					//When the Go Back button is pressed
+					$("#goBack").click(function(){
+            			KenandyErp.NavigateToURL('/' + recId,true);
+					});
+						            
+					//When the Confirm button is pressed
+					$("#confirm").click(function(){
+				    	GenerateInvoiceUtil.waterfall();
+					});
+						 
+					var promise = GenerateInvoiceUtil.validate();
+					promise.done(function(){
+						var getValuesPromise = GenerateInvoiceUtil.GetValues();
+				    });
+				});	
+			</script>
+</apex:page>

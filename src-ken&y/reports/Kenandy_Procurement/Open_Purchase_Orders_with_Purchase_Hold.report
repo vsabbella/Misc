@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <columns>
+        <field>CUST_NAME</field>
+    </columns>
+    <columns>
+        <field>FK_NAME</field>
+    </columns>
+    <columns>
+        <field>Purchase_Order__c.Delivery_Facility__c</field>
+    </columns>
+    <columns>
+        <field>Purchase_Order__c.Delivery_Location__c</field>
+    </columns>
+    <columns>
+        <field>Purchase_Order__c.Approval_Status__c</field>
+    </columns>
+    <columns>
+        <field>Purchase_Order__c.Status__c</field>
+    </columns>
+    <description>This report lists all the open purchase orders where the purchase from supplier is on hold</description>
+    <filter>
+        <criteriaItems>
+            <column>Purchase_Order__c.Status__c</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>equals</operator>
+            <value>Open</value>
+        </criteriaItems>
+        <criteriaItems>
+            <column>Purchase_Order__c.Approval_Status__c</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>equals</operator>
+            <value>Approved</value>
+        </criteriaItems>
+        <criteriaItems>
+            <column>FK_$Supplier__c.Hold_Purchasing__c</column>
+            <isUnlocked>false</isUnlocked>
+            <operator>equals</operator>
+            <value>1</value>
+        </criteriaItems>
+    </filter>
+    <format>Tabular</format>
+    <name>Open Purchase Orders with Purchase Hold</name>
+    <params>
+        <name>co</name>
+        <value>1</value>
+    </params>
+    <reportType>CustomEntity$Purchase_Order__c@Purchase_Order__c.Supplier__c</reportType>
+    <scope>organization</scope>
+    <showDetails>true</showDetails>
+    <timeFrameFilter>
+        <dateColumn>Purchase_Order__c.Date_Closed__c</dateColumn>
+        <interval>INTERVAL_CUSTOM</interval>
+    </timeFrameFilter>
+</Report>

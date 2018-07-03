@@ -1,0 +1,13 @@
+<apex:page standardController="Task" action="{!IF(Task.Type =='Exception',null,URLFOR($Action.Task.Edit,Task.Id,['retURL'='/'+Task.whatId],true))}" title="Edit Task"> 
+	<apex:form id="theForm">
+        <apex:pageMessage summary="{!$Label.Cannot_Edit_Exception_Tasks}"  severity="error" strength="3" />
+        <apex:pageMessages />
+        <apex:outputpanel style="padding:20px;">
+        	<apex:outputLink value="{!$CurrentPage.parameters.retURL}" >{!$Label.Click_to_go_back}</apex:outputLink>
+        </apex:outputpanel>
+        
+        <apex:inputHidden value="{!Task.Type}" id="typeHiddenId"/>
+        <apex:inputHidden value="{!Task.whatId}" id="theHiddenInput"/>
+        
+    </apex:form>
+</apex:page>

@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpAssetClass</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Stores information regarding the Asset Class for each Tax Book and period in time.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fields>
+        <fullName>Accumulated_Depreciation_GL_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Accumulated Depreciation GL Account</label>
+        <lookupFilter>
+           <active>true</active>
+             <errorMessage>GL Account must be active</errorMessage>
+             <filterItems>
+                 <field>GL_Account__c.Active__c</field>
+                 <operation>equals</operation>
+                 <value>True</value>
+             </filterItems>
+             <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>GL_Account__c</referenceTo>
+        <relationshipLabel>Asset Class Rules (Accumulated Depreciation GL Account)</relationshipLabel>
+        <relationshipName>Accumulated_Asset_Class_Rules</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Asset_Class__c</fullName>
+        <deleteConstraint>Restrict</deleteConstraint>
+        <description>Lookup to Asset Class.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>A group of fixed assets categorized according to business purpose. For example, Manufacturing equipment.</inlineHelpText>
+        <label>Asset Class</label>
+        <referenceTo>Asset_Class__c</referenceTo>
+        <relationshipLabel>Asset Class Rules</relationshipLabel>
+        <relationshipName>Asset_Class_Rules</relationshipName>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Autonumber__c</fullName>
+        <displayFormat>{0000000000}</displayFormat>
+        <externalId>false</externalId>
+        <label>Autonumber</label>
+        <trackTrending>false</trackTrending>
+        <type>AutoNumber</type>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Company</description>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Asset Class Rules</relationshipLabel>
+        <relationshipName>Asset_Class_Rules</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Declining_Balance__c</fullName>
+        <externalId>false</externalId>
+        <label>Declining Balance</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>200%</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>150%</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Straight Line</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Depreciation_Convention__c</fullName>
+        <externalId>false</externalId>
+        <label>Depreciation Convention</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Mid Month</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Full Month</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Mid Quarter</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Full Quarter</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Half Year</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Full Year</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Depreciation_Method__c</fullName>
+        <externalId>false</externalId>
+        <label>Depreciation Method</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Straight Line</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Declining Balance</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Sum of Years</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>MACRS</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Depreciation_Period__c</fullName>
+        <externalId>false</externalId>
+        <label>Depreciation Period</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Monthly</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Quarterly</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Annually</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Disposition_GL_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <inlineHelpText>The account used to record the gain/loss on the asset when sold or retired.</inlineHelpText>
+        <label>Disposition GL Account</label>
+        <lookupFilter>
+             <active>true</active>
+             <errorMessage>GL Account must be active</errorMessage>
+             <filterItems>
+                 <field>GL_Account__c.Active__c</field>
+                 <operation>equals</operation>
+                 <value>True</value>
+             </filterItems>
+             <isOptional>false</isOptional>
+         </lookupFilter>
+        <referenceTo>GL_Account__c</referenceTo>
+        <relationshipLabel>Asset Class Rules (Disposition GL Account)</relationshipLabel>
+        <relationshipName>Disposition_Asset_Class_Rules</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>End_Date__c</fullName>
+        <externalId>false</externalId>
+        <label>End Date</label>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Expense_GL_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <inlineHelpText>The expense GL account is debited after each depreciation cycle.</inlineHelpText>
+        <label>Expense GL Account</label>
+        <lookupFilter>
+             <active>true</active>
+             <errorMessage>GL Account must be active</errorMessage>
+             <filterItems>
+                 <field>GL_Account__c.Active__c</field>
+                 <operation>equals</operation>
+                 <value>True</value>
+             </filterItems>
+             <isOptional>false</isOptional>
+         </lookupFilter>
+        <referenceTo>GL_Account__c</referenceTo>
+        <relationshipLabel>Asset Class Rules (Expense GL Account)</relationshipLabel>
+        <relationshipName>Expense_Asset_Class_Rules</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>GL_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <inlineHelpText>The full acquisition cost is debited from this account.</inlineHelpText>
+        <label>Fixed Asset GL Account</label>
+        <lookupFilter>
+             <active>true</active>
+             <errorMessage>GL Account must be active</errorMessage>
+             <filterItems>
+                 <field>GL_Account__c.Active__c</field>
+                 <operation>equals</operation>
+                 <value>True</value>
+             </filterItems>
+             <isOptional>false</isOptional>
+         </lookupFilter>
+        <referenceTo>GL_Account__c</referenceTo>
+        <relationshipLabel>Asset Class Rules (Fixed Asset GL Account)</relationshipLabel>
+        <relationshipName>Asset_Class_Rules</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Life_in_Months__c</fullName>
+        <description>The default life in months for assets related to this Asset Class.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The default value for assets assigned to this class. You can change the number for a specific asset.</inlineHelpText>
+        <label>Life in Months</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Start_Date__c</fullName>
+        <externalId>false</externalId>
+        <inlineHelpText>As tax laws change, you will need to create new asset class rules. The start and end dates provide you with a way to define the eligibility for a given rule.</inlineHelpText>
+        <label>Start Date</label>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Tax_Book__c</fullName>
+        <deleteConstraint>Restrict</deleteConstraint>
+        <description>Lookup to Book</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The corporate book is used to depreciate your fixed assets. In addition to the corporate book, you can set up any number of tax book for each state in which you pay tax.</inlineHelpText>
+        <label>Book</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>$Source.Company__c</field>
+                <operation>equals</operation>
+                <valueField>Tax_Book__c.Company__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Tax_Book__c</referenceTo>
+        <relationshipLabel>Asset Class Rules</relationshipLabel>
+        <relationshipName>Asset_Class_Rules</relationshipName>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <label>Asset Class Rule</label>
+    <nameField>
+        <label>Asset Class Rule</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Asset Class Rules</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>The_Asset_class_rule_company_must_match</fullName>
+        <active>true</active>
+        <errorConditionFormula>IF(ISNULL(Asset_Class__c) = FALSE &amp;&amp; Asset_Class__r.Company__c != Company__c, TRUE, FALSE)</errorConditionFormula>
+        <errorMessage>The Asset class rule company must match the asset class company.</errorMessage>
+    </validationRules>
+</CustomObject>

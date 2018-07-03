@@ -1,0 +1,1884 @@
+<apex:page showHeader="true" sidebar="true" extensions="SupplierInvoiceManageExt,KSE" standardController="Supplier_Invoice__c" tabStyle="Supplier_Invoice__c" docType="html-5.0" title="{!$ObjectType.Supplier_Invoice__c.Label}"> 
+    <style type="text/css">
+        .line-errors {
+            cursor: pointer;
+        }
+        
+        .line-total {
+            border: 2px dashed !important;
+            font-weight: bold;
+            width: 100px;
+            text-align: right;
+        }
+        
+        .button-text-bold {
+            font-weight: bold;
+        }
+        
+        .text-red {
+            border-color: red !important;
+        }
+        
+        .text-green {
+            border-color: green !important;
+        }
+        
+        .invoiced-amount {
+            padding: .3em .4em !important;
+        }
+        
+        .column-label {
+            vertical-align: middle !important;
+            width: 15%;
+        }
+        
+        .column-field {
+            vertical-align: middle !important;
+            width: 40%;
+        }
+        
+        .matchtopo-multiselect{
+            width: 350px; 
+            vertical-align: middle !important;
+        }
+        
+        .button-text-bold{
+           font-weight: bold;
+         }
+        
+        div.individualPalette.lookupHoverDetail[id^='lookup'] .pbButton input.btn:nth-child(2) {
+            display: none;
+        }
+        
+        body .bPageBlock .pbBody .kndy-pbHeader .pbSubheader {
+            background-color: #428bca;
+        }
+        
+        .disab {
+            opacity: 0.4;
+            cursor: default;
+            pointer-events: none;
+        }
+     </style>
+    
+    <!--    Visualforce Page form Starts  -->
+    <apex:form id="SupplierInvoiceManageForm">
+        <div class="page-container">
+           <c:KendoResources />
+           <apex:includeScript value="{!$Resource.GridActionListJS}" />
+           <apex:includeScript value="{!$Resource.SupplierInvoice}" />
+           <apex:sectionHeader title="{!pageTitle}" subtitle="{!pageSubTitle}" />
+
+            <div class="page-message"></div>
+            <apex:pageMessages id="msgs" />
+
+            <apex:pageBlock id="InvoiceHeaderDetailBlock">
+                <apex:pageBlockSection columns="1">
+                    <div id="InvoiceHeaderDetailList"></div>
+                </apex:pageBlockSection>
+                <apex:pageBlockButtons location="top">
+                    <apex:outputPanel layout="none">
+                        <a href="{!ReturnUrl}" style="text-decoration: none;"><input type="button" value="{!$Label.Go_Back}" class="k-button kndy-btn cancel-command button-text-bold" /></a>
+                        <button id="saveButton" class ="k-button kndy-btn save-command" type="button" accesskey="s">{!$Label.Save}</button>
+                        <button id="actionButton" class ="k-button kndy-btn" type="button">{!$Label.Actions}</button>
+                    </apex:outputPanel>
+                </apex:pageBlockButtons>
+            </apex:pageBlock>
+            <apex:pageBlock title="">
+                <apex:outputPanel styleClass="kndy-pbHeader" layout="block">
+                    <apex:pageBlockSection columns="1" collapsible="true"
+                        title="Exceptions" id="pbsExceptions"
+                        rendered="{!displayExceptions}">
+                        <div class="grid-container">
+                            <div class="grid-message"></div>
+                            <div id="ExceptionsGrid"></div>
+                        </div>
+                    </apex:pageBlockSection>
+                    <apex:pageBlockSection columns="1" collapsible="true"
+                        title="Invoice Lines" id="pbsInvoiceLInes">
+                        <div class="grid-container">
+                            <div class="grid-message"></div>
+                            <div id="InvoiceLinesGrid"></div>
+                        </div>
+                    </apex:pageBlockSection>
+                </apex:outputPanel>
+            </apex:pageBlock>
+        </div>
+        <apex:inputHidden value="{!Supplier_Invoice__c.Name}" />
+        <apex:inputHidden value="{!Supplier_Invoice__c.Invoice_Type__c}" />
+        <apex:inputHidden value="{!Supplier_Invoice__c.Purchase_Order__c}" />
+        <apex:inputHidden value="{!Supplier_Invoice__c.Purchase_Order__r.id}" />
+        <apex:inputHidden value="{!Supplier_Invoice__c.Purchase_Order__r.Name}" />
+        <apex:inputHidden value="{!Supplier_Invoice__c.Finalized__c}" />
+        <apex:inputHidden value="{!Supplier_Invoice__c.Has_Exceptions__c}" />
+        <apex:inputHidden value="{!Supplier_Invoice__c.Has_Line_Exceptions__c}" />
+        <apex:inputHidden value="{!Supplier_Invoice__c.Currency__c}" />
+        <apex:inputHidden value="{!Supplier_Invoice__c.Company__c}" />
+
+        <input id="defaultPurchaseOrderId" type="hidden"
+            value="{!Supplier_Invoice__c.Purchase_Order__c}" />
+        <input id="oldPurchaseOrderId" type="hidden"
+            value="{!Supplier_Invoice__c.Purchase_Order__r}" />  
+    </apex:form>
+    <!--    Visualforce Page form Ends   -->
+    
+    <!-- Match to PO Window div Starts-->
+    <div id="copyPOLinesWindow" class="kndy-hidden">
+        <apex:pageBlock >
+            <apex:pageBlockSection columns="1">
+                <table class="kndy-table">
+		            <tr>
+		                <td class="column-label">
+		                    Purchase Order
+		                </td>
+		                <td class="column-field">
+		                    <input id="purchaseOrderId" class="kendoWidgetSelector matchtopo-multiselect"></input>
+		                </td>
+		                <td class="column-field">
+		                	<input name="searchFilter" id="searchFilter" type="button" value="Search" onclick="SupplierInvoiceManageUtil.SearchPurchaseOrders();" class="btn" />
+		                </td>
+					</tr>
+				</table>
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection columns="1">
+                <div class="grid-container">
+                    <div class="grid-message"></div>
+                    <div id="POLinesGrid"></div>
+                </div>
+            </apex:pageBlockSection>
+
+            <apex:pageBlockButtons location="bottom">
+                <apex:outputPanel layout="none">
+                    <input type="button" value='{!$Label.Go_Back}' class="btn cancel-command" onclick="SupplierInvoiceManageUtil.HidePOLinesWindow();" />
+                    <input type="button" value='{!$Label.Match}' class="btn apply-command" onclick="SupplierInvoiceManageUtil.CopyPOLines(this);" />  
+                    <input type="button" value='{!$Label.Match_and_Close}' class="btn apply-close-command" onclick="SupplierInvoiceManageUtil.CopyPOLines(this);" />
+                </apex:outputPanel>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </div>
+    <!-- Match to PO Window div Ends-->
+
+
+	<script type="text/javascript">
+        var nspace = '{!nspace}';
+        var NamespaceUU = '{!NamespaceUU}';
+        var className = 'SupplierInvoiceManageExt';
+        var pageURI = '{!$Page.SupplierInvoiceManage}';
+        var isPOChanged = false;
+        var isInvTypeChanged= false;
+        var currency = '{!si.Currency__c}' ? '{!si.Currency__c}' : null; // Company default currency on new SI; on Edit - Currency of the SI/PO currency
+        var currencyRef = '{!si.Currency__r}' ? { Id: '{!si.Currency__r.Id}', Name: '{!si.Currency__r.name}' } : { Id: null, Name: null }; 
+        var poCurrency = poCurrency ? poCurrency : null;
+        var exceptionsRecords;
+        var global_grid_width = $(window).width() - $('#sidebarDiv').width() - 100;   
+        var hasTax = '{!hasTax}';
+        var displayExceptions = '{!displayExceptions}';
+        var whatIdNameMapJson = '{!whatIdNameMapJson}';
+        var returnUrl = '{!ReturnUrl}';
+        var windowhref = '{!$Page.SupplierInvoiceManage}';
+        var currentPageURL = '{!$CurrentPage.URL}';
+        var label_Please_fix_the_following_errors = '{!$Label.Please_fix_the_following_errors}';
+        var label_changing_purchase_order_resets_invoice_lines  = '{!$Label.changing_purchase_order_resets_invoice_lines}';
+        var label_Invoice_amount_cannot_be_negative_for_a_prepayment = '{!$Label.Invoice_amount_cannot_be_negative_for_a_prepayment}';
+        var label_Changing_remit_to_supplier_resets_invoicelines  = '{!$Label.Changing_remit_to_supplier_resets_invoicelines}';
+        var label_Invoice_amount_cannot_be_negative_for_an_invoice = '{!$Label.Invoice_amount_cannot_be_negative_for_an_invoice}';
+        var label_Total_line_amount_cannot_be_negative_for_an_invoice = '{!$Label.Total_line_amount_cannot_be_negative_for_an_invoice}';
+        var label_Invoice_amount_cannot_be_positive_for_a_credit_memo = '{!$Label.Invoice_amount_cannot_be_positive_for_a_credit_memo}';
+        var label_Invoice_amount_cannot_be_negative_for_a_prepayment = '{!$Label.Invoice_amount_cannot_be_negative_for_a_prepayment}';
+        var label_Total_line_amount_cannot_be_negative_for_a_prepayment = '{!$Label.Total_line_amount_cannot_be_negative_for_a_prepayment}';
+        var label_CM_or_Prepayment_on_SI_cannot_be_zero = '{!$Label.CM_or_Prepayment_on_SI_cannot_be_zero}';
+       
+        /* Populates the Supplier Invoice Header Data */
+        var invoiceHeaderData = function(readOptions) {
+            var deferred = $.Deferred();
+            var supplierInvoiceId = SupplierInvoiceManageUtil.SupplierInvoiceId;
+            var invoiceType = SupplierInvoiceManageUtil.InvoiceType;
+            
+            if (!supplierInvoiceId) {
+                var headerData = SupplierInvoiceManageUtil.InvoiceHeaderData;
+                var records = [];
+
+                delete headerData['attributes'];
+                records.push(headerData);
+                            
+                setTimeout(function() {
+                    deferred.resolve({ records: records, success: true, total: 1 }, { statusCode: 200 });
+                }, 100);
+            }else {
+                Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.SupplierInvoiceManageExt.getSupplierInvoiceDetails}',
+                        supplierInvoiceId,
+                        '{!$currentpage.parameters.clone}',
+                        function (result, event) {
+                            deferred.resolve(result, event);
+                        },
+                        {escape: false}
+                    );
+            }
+            
+            return deferred.promise();
+        };
+        
+        /* Populates the Supplier Invoice Lines grid data */
+        var invoiceLinesData = function(readOptions) {
+            var deferred = $.Deferred();
+            var config = SupplierInvoiceManageUtil.GetInvoiceLinesConfigJson();
+            var isLoadFromPO = (readOptions && readOptions.loadFromPO) ? readOptions.loadFromPO : false;
+            var invType = SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data.get('Invoice_Type__c');
+            KenandyErp.ClearMessage();//KNDY-12258
+            SupplierInvoiceManageUtil.ActivateMatchToPOButton();  
+            if (isLoadFromPO || isPOChanged) {
+                isPOChanged = false;
+
+            	// from PurchaseOrder Header on SI
+            	var purchaseOrderId = $('#Purchase_Order__c').val();
+            
+            	// from Match to PO
+            	var purchaseOrderIds = [];
+            
+            	if(purchaseOrderIds == "" && purchaseOrderId != null){  
+            	  purchaseOrderIds.push(purchaseOrderId);  
+            	}
+            	
+            	purchaseOrderIds = (purchaseOrderIds != "" && purchaseOrderIds.length > 0) ? JSON.stringify(purchaseOrderIds) : null;
+               
+	            if (!purchaseOrderIds) {
+	                setTimeout(function() {
+	                    deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+	                }, 100);
+	            }else {
+	                Visualforce.remoting.Manager.invokeAction(
+	                    '{!$RemoteAction.SupplierInvoiceManageExt.getInvoiceLinesByPurchaseOrderId}',
+	                    purchaseOrderIds, 
+	                    invType,
+	                    function (result, event) {
+	                        deferred.resolve(result, event);
+	                        KenandyErp.Messages(result.messages); //KNDY-12258
+	                    },
+	                    {escape: false}
+	                );
+	            }
+            }else {
+	            if (!config.parentRecord.Id) {
+	                setTimeout(function() {
+	                    deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+	                }, 100);
+	            }
+	            else {
+	                var remoteArgs = config;
+	                // The stuff returned from Salesforce has extra properties like "attributes"
+	                // which couldn't be deserialised back
+	                remoteArgs.parentRecord = { Id: remoteArgs.parentRecord.Id, Invoice_Type__c: invType };
+                    if(!isInvTypeChanged){
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.SupplierInvoiceManageExt.getInvoiceLines}',
+                             remoteArgs,
+                             '{!$currentpage.parameters.clone}',
+                             function (result, event) {
+                                deferred.resolve(result, event);
+                                KenandyErp.Messages(result.messages); //KNDY-12258
+                             },
+                             {escape: false}
+                        );
+                    }else{
+                        isInvTypeChanged = false;
+                        KenandyErp.UnBlockUI();
+                    }
+                }
+            }
+            return deferred.promise();
+        };
+        
+        /* Populates the POLines grid data on the Match to PO window. */
+        var poLinesData = function() {
+            var deferred = $.Deferred();
+            var config = SupplierInvoiceManageUtil.GetInvoiceLinesConfigJson();
+            var purchaseOrderIds = [];
+            purchaseOrderIds = $("#purchaseOrderId").data("kendoMultiSelect").value(); 
+            purchaseOrderIds = (purchaseOrderIds != "" && purchaseOrderIds.length > 0) ? JSON.stringify(purchaseOrderIds) : null;
+            
+            var invType = SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data.get('Invoice_Type__c');
+            
+            if (!purchaseOrderIds) {
+                setTimeout(function() {
+                    deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+                }, 100);
+            }
+            else {
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.SupplierInvoiceManageExt.getInvoiceLinesByPurchaseOrderId}',
+                    purchaseOrderIds, 
+                    invType, 
+                    function (result, event) {
+                        deferred.resolve(result, event);
+                    },
+                    {escape: false}
+                );
+            }
+            
+            return deferred.promise();
+        };
+        
+        <!--  Exceptions Grid related Code Starts -->  
+        var ExceptionTasksUtils = function() {
+            return {
+                
+                /* This function overrides the exceptions obtained on the validate process */
+                MassOverride: function(e) {
+                    debugger;
+                    var self = this;
+                    var grid = self.grid;
+                    var columns = grid.columns;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");                 
+                    var gridUtils = new KendoGridUtils(grid);
+                    var selectedRows = gridUtils.SelectedRows();                
+                    if (selectedRows.length == 0) {
+                        KenandyErp.Message("No Rows Selected", KenandyErp.MessageType.Error, messageElement);
+                        return;
+                    }                    
+                    
+                    if (selectedRows.length > 0) {
+                        $.each( selectedRows, function( idx, elem) {
+                            delete elem.name;
+                        });
+                    }
+                                     
+                    KenandyErp.BlockUI(grid.element);                    
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.SupplierInvoiceManageExt.massOverrideTasks}',
+                         selectedRows,
+                         function (result, event) {                                       
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                                if (result.success) {
+                                    KenandyErp.Messages(result.messages, messageElement);
+                                }
+                                else {
+                                    KenandyErp.Messages(result.messages, messageElement);
+                                }                                                                    
+                                grid.dataSource.read();
+                            }
+                            KenandyErp.UnBlockUI(grid.element);
+                        },
+                        {escape: false}
+                    );
+                },
+                          
+                GetFieldList: function(fieldList) {
+                    fieldList = JSON.parse(fieldList);
+                    
+                    $.each(fieldList, function() { 
+                        if (this.field == 'relatedToLink') {
+                            this.template = '<a target="_top" href="/#=sanitize(WhatId)#">#=getRelatedToName(WhatId)#</a>';
+                        }
+                        if (this.field == 'name'){ 
+                           this.template =  '#=  ExceptionTasksUtils.RenderNameColumn(data)# ';
+                        }
+                    });
+        
+                    return JSON.stringify(fieldList);
+                },
+                
+                /* Displays sortable String WhatId on the Exceptions grid */
+                RenderNameColumn: function(data){
+                   var whatId = data.get('WhatId');
+                   var whatIdName = getRelatedToName(whatId);
+                   data.name = whatIdName;
+                   return sanitize(data.name); 
+                }
+            };
+        }();   
+        
+        /* Populates the Exceptions grid data */
+        var loadExceptionData = function() {
+                var deferred = $.Deferred();
+                var configJson = SupplierInvoiceManageUtil.GetExceptionsConfigJson();
+                var remoteArgs = configJson;
+                remoteArgs.parentRecord = { Id: '{!si}' };
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.SupplierInvoiceManageExt.getTaskRelatedList}',
+                    configJson, 
+                    function (result, event) {
+                        deferred.resolve(result, event);
+                        // On the Exceptions grid, cells display a mini-page on hover. The below code blocks all mini-pages on hover 
+                        var arr =  $('a[id^="lookup"]');
+                        for(var i = 0 ;i<arr.length;i++){
+                           arr[i].onmouseover = null;
+                        }
+                        if (result.total > 0){ //KNDY-7636
+                            exceptionsRecords = result.records; 
+                            loadExceptionsPerInvoiceLine();
+                        }
+                    },
+                    {escape: false}
+                );                   
+                return deferred.promise();
+        }; 
+        
+        /* Populates error column in invoicelinesGrid with exception list against each invoice line */
+        var loadExceptionsPerInvoiceLine = function () {
+            if (typeof exceptionsRecords == 'undefined'){
+                return;
+            }
+            var grid = $("#InvoiceLinesGrid").data("kendoGridActionList");
+            var currentData = grid.dataSource.view();
+            $.each(currentData, function(index, item) { 
+                template = '';
+                
+                // for each invoice line row in UI, construct a list
+                // of exception subjects corresponding to that invoice line
+                if (item.get('invoiceLine.Has_Exceptions__c')){
+                    var invLineId = item.get('invoiceLine.Id');
+                    var invLineExceptions = []; // Array of Exception Tasks
+                    $.each(exceptionsRecords, function(ix, itemException) {
+                        if (itemException['WhatId'] == invLineId){ 
+                           invLineExceptions.push(itemException);
+                        }
+                    });
+                    
+                    //KNDY-10372 santize data used in html inserts
+                    if (invLineExceptions.length > 0) {
+                        template = template + '<table cellspacing="3"><tr><td class="kndy-white kndy-text-left"><h3>Exceptions</h3></td></tr><tr><td>';
+                        
+                        template = template + '<ul class="error-messages">';
+                        for (var i = 0; i < invLineExceptions.length; i++) {
+                            template = template + '<li><a href="/' + sanitize(invLineExceptions[i].Id) + '" target="_blank"><nobr>' + sanitize(invLineExceptions[i].Subject) + '</nobr></a></li>';
+                        }
+                        template =  template + '</ul>';
+                        template = template + '</td></tr></table>'
+                    }
+                }
+                 
+                // populate errros column for each invoice line row in UI
+                var rowGUID = item['uid']
+                var row = grid.tbody.find("tr[data-uid='" + rowGUID + "']");
+                var dataItem = grid.dataItem(row);
+                dataItem.errors = template;
+            });
+        };
+        <!--  Exceptions Grid related Code Ends --> 
+             
+        $(document).on('KenandyErpReady', function(e) {
+            KenandyErp.KendoGridOptions.DefaultPageSize = KenandyErp.KendoGridOptions.PageSizes[0];
+
+            SupplierInvoiceManageUtil.Company = '{!si.Company__c}';
+            
+            SupplierInvoiceManageUtil.Init({
+                supplierInvoiceId: '{!JSENCODE(si.Id)}',
+                invoiceType: '{!JSENCODE(si.Invoice_Type__c)}',
+                invoiceHeaderData: '{!JSENCODE(SupplierInvoiceJson)}',
+                supplierInvoiceHeaderFieldList: '{!JSENCODE(supplierInvoiceHeaderFieldList)}',
+                supplierInvoiceAddlHeaderFieldList: '{!JSENCODE(supplierInvoiceAddlHeaderFieldList)}',
+                VATFieldList: '{!JSENCODE(VATFieldList)}' ,
+                supplierInvoiceLinesConfigJson: '{!JSENCODE(supplierInvoiceLinesConfigJson)}',                
+                supplierInvoiceLinesFieldList: '{!JSENCODE(supplierInvoiceLinesFieldList)}',              
+                exceptionsConfigJson: '{!JSENCODE(exceptionsConfigJson)}',        
+                segmentLinesFieldList: '{!JSENCODE(segmentLinesFieldList)}',
+                purchaseOrderLinesConfigJson: '{!JSENCODE(purchaseOrderLinesConfigJson)}',
+                purchaseOrderLinesFieldList: '{!JSENCODE(purchaseOrderLinesFieldList)}',
+                customViews: '{!JSENCODE(CustomViews)}',
+                customViewFields: '{!JSENCODE(CustomViewFields)}',
+                
+                // Clone is not specified here as it does not execute a remote action
+                headerActions: {
+
+                     'Validate': '{!$RemoteAction.SupplierInvoiceManageExt.headerActions}',
+                     'Tax': '{!$RemoteAction.SupplierInvoiceManageExt.headerActions}'
+                },
+                 
+                headerSaveActions: {
+                     'Save': '{!$RemoteAction.SupplierInvoiceManageExt.saveAction}',
+                     'SaveAndValidate': '{!$RemoteAction.SupplierInvoiceManageExt.saveAndInspect}' 
+                },
+                supplierInvoiceLineTaxFieldList: '{!JSENCODE(supplierInvoiceLineTaxFieldList)}',  //KNDY-18171
+            });
+        });
+                
+        var SupplierInvoiceManageUtil = function() {
+            
+            return {
+                SupplierInvoiceId: null,
+                InvoiceType: null,
+                InvoiceHeaderDetailList: null,
+                InvoiceLinesGrid: null,
+                ExceptionsGrid: null,
+                InvoiceHeaderData: null,
+                SupplierInvoiceHeaderFieldList: null,
+                SupplierInvoiceAddlHeaderFieldList: null,
+                VATFieldList : null,
+                SupplierInvoiceLinesConfigJson: null,
+                SupplierInvoiceLinesFieldList: null,                           
+                ExceptionsConfigJson: null,                           
+                SegmentLinesFieldList: null,
+                SupplierInvoiceLinesFields: null,
+                PurchaseOrderLinesConfigJson: null,
+                PurchaseOrderLinesFieldList: null,
+                CustomViews: null,
+                CustomViewFields: null,
+                POLinesGrid: null,
+                CopyPOLinesWindow: null,
+                HeaderActions: null,
+                HeaderSaveActions: null,
+                isDirtyInvoiceHeaderData: false,
+                supplierInvoiceLineTaxFieldList: null, //KNDY-18171
+                Company:'',
+                
+                InvoiceTypeEnum: {
+                    Invoice: 'Invoice',
+                    CreditMemo: 'Credit Memo',
+                    Prepayment: 'Prepayment',
+                },
+                
+                // All the UI related defaulting happens here 
+                Init: function(args) {
+                   this.SupplierInvoiceId = args.supplierInvoiceId;
+                   this.InvoiceType = args.invoiceType;
+                   this.InvoiceHeaderData = JSON.parse(args.invoiceHeaderData);
+                   this.SupplierInvoiceHeaderFieldList = JSON.parse(args.supplierInvoiceHeaderFieldList);
+                   this.SupplierInvoiceAddlHeaderFieldList = JSON.parse(args.supplierInvoiceAddlHeaderFieldList);
+                   this.VATFieldList = args.VATFieldList.length > 0?JSON.parse(args.VATFieldList): args.VATFieldList;                  
+                   this.SupplierInvoiceLinesConfigJson = JSON.parse(args.supplierInvoiceLinesConfigJson);                  
+                   this.SupplierInvoiceLinesFieldList = JSON.parse(args.supplierInvoiceLinesFieldList);                
+                   this.SegmentLinesFieldList = JSON.parse(args.segmentLinesFieldList);
+                   this.SupplierInvoiceLinesFields = _.pluck(SupplierInvoiceManageUtil.SupplierInvoiceLinesFieldList, 'field');
+                   this.PurchaseOrderLinesConfigJson = JSON.parse(args.purchaseOrderLinesConfigJson);
+                   this.PurchaseOrderLinesFieldList = JSON.parse(args.purchaseOrderLinesFieldList);
+                   this.CustomViews = JSON.parse(args.customViews);
+                   this.CustomViewFields = JSON.parse(args.customViewFields);
+                   this.HeaderActions = args.headerActions;
+                   this.HeaderSaveActions = args.headerSaveActions;
+                   this.ExceptionsConfigJson = JSON.parse(args.exceptionsConfigJson); 
+                   this.supplierInvoiceLineTaxFieldList = args.supplierInvoiceLineTaxFieldList?JSON.parse(args.supplierInvoiceLineTaxFieldList):null; //KNDY-18171
+                   if (this.SupplierInvoiceLinesFields.length > 0) {
+                        // Remove Id field 
+                        this.SupplierInvoiceLinesFields.splice(1,1);
+                   }
+
+                   this.RenderSaveListDropdown();
+                   this.RenderActionListDropdown();
+                   this.RenderWidgets();
+                },
+                
+                //     Supplier Invoice Header Methods Starts     
+                
+                //  Loads the Save dropdown on the Supplier Invoice header 
+                RenderSaveListDropdown: function() {
+                    $('#saveButton').kendoDropDownButton({
+                        type: 'splitButton',
+                        items: [
+                            {
+                                text: '{!$Label.Save_and_Return}',
+                                cssClass: "save-return-command"
+                            },
+                            {
+                                text: '{!$Label.Save_and_New_label}',
+                                cssClass: "save-new-command"
+                            },
+                            {
+                                text: '{!$Label.Save_and_Validate}',  
+                                cssClass: "save-inspect-command"
+                            }
+                        ]
+                    });
+                },
+                
+                // Loads the Actions dropdown on the Supplier Invoice header
+                RenderActionListDropdown: function() {
+
+                var returnURL = '?id=' +SupplierInvoiceManageUtil.SupplierInvoiceId +'&retURL='+'{!ReturnUrl}';
+                var abItems = [
+                            {
+                                text: '{!$Label.Clone}',                                
+                                cssClass: "clone-command",
+                                click: function(e) {
+                                     if(dirtyFlagCheckBeforeNavigate())
+                                        SupplierInvoiceManageUtil.ExecuteAction('Clone'); 
+                                     } 
+                            },
+                            {
+                                text: '{!$Label.Validate}', 
+                                cssClass: "inspect-command",
+                                click: function(e) {
+                                    if(dirtyFlagCheckBeforeNavigate())
+                                      SupplierInvoiceManageUtil.ExecuteAction('Validate');
+                                    } 
+                            },
+                            {
+                                 text: '{!$Label.Get_Tax}',                               
+                                 cssClass: "get-tax-command",
+                                 click: function(e) {
+                                     if(SupplierInvoiceUtility.IsPageDirty()){
+                                         KenandyErp.Message('{!$Label.Save_invoice_before_calculating_tax}');
+                                     }else{
+                                       SupplierInvoiceManageUtil.ExecuteAction('Tax');
+                                     }
+                                 }
+                            },
+                            {
+                                text: '{!$Label.Unfinalize}', 
+                                cssClass: "unfinalize-command",
+                                click: function(e) {
+                                     if(dirtyFlagCheckBeforeNavigate())
+
+                                          KenandyErp.NavigateToURL('{!$Page.sourcedocumentunfinalize}' + returnURL,true);
+                                     }
+                            },
+                            {
+                                text: '{!$Label.Cancel}', 
+                                cssClass: "cancel-action-command",
+                                 click: function(e) {
+                                    if(dirtyFlagCheckBeforeNavigate())
+                                        KenandyErp.NavigateToURL('{!$Page.SupplierInvoiceVoidCancel}' + returnURL, true);
+                                     }
+                            },
+                            {
+                                text: '{!$Label.Void}', 
+                                cssClass: "void-action-command",
+                                click: function(e) {
+                                    if(dirtyFlagCheckBeforeNavigate())
+                                       KenandyErp.NavigateToURL('{!$Page.SupplierInvoiceVoidCancel}' + returnURL, true);
+                                    }
+                            },
+                            {
+                                text: '{!$Label.Pay_Invoice_Label}',
+                                cssClass: "pay-invoice-command",
+                                click: function(e) {
+                                	//KNDY-17714 - Call payment batch page with immediate action
+                                    if(dirtyFlagCheckBeforeNavigate())
+                                      KenandyErp.NavigateToURL('{!$Page.PaymentBatch}'  + '?action=Immediately&supplierInvoiceId='+SupplierInvoiceManageUtil.SupplierInvoiceId +'&retURL='+'{!ReturnUrl}' +'/e', true);
+
+                                }
+	                        }
+                        ]
+                    $('#actionButton').kendoDropDownButton({
+                        items: abItems 
+                    });
+                },
+                
+                // Calls the Supplier Invoice header detaillist rendering method 
+                RenderWidgets: function() {
+                    // Show invoice header detail list
+                    this.RenderInvoiceHeaderDetailList();
+                },
+                
+                // Loads the Supplier Invoice header detaillist for individual records on the UI               
+                RenderInvoiceHeaderDetailList: function() {
+
+                	var lookupSearchFilters = [];
+                	console.log('company--->'+SupplierInvoiceManageUtil.Company);
+                	lookupSearchFilters.push({ field: "Supplier__c", filter: "( Company__c = \'"+ SupplierInvoiceManageUtil.Company  +"\' or Company__c = null ) and Type__c = \'Remit-To\' and Status__c = \'Active\'" });
+                	lookupSearchFilters.push({ field: "Purchase_Order__c", filter: "Company__c = \'"+ SupplierInvoiceManageUtil.Company +"\' and Remit_To_Supplier__r.Status__c = \'Active\'" });  
+                	
+                    // Destroy InvoiceHeaderDetailList
+                    if (this.InvoiceHeaderDetailList) {
+                        this.InvoiceHeaderDetailList.destroy();
+                        $('#InvoiceHeaderDetailList').empty();
+                    }
+                    
+                    this.InvoiceHeaderDetailList = $('#InvoiceHeaderDetailList').kendoDetailList({
+                        namespace: '{!NamespaceUU}', 
+                        autoExpandSections: true, 
+                        sections: [
+                            {
+                                fields: SupplierInvoiceManageUtil.GetInvoiceHeaderFieldList(SupplierInvoiceManageUtil.SupplierInvoiceHeaderFieldList)
+                            },
+                            {
+                                name: 'invoice-header-addl-info',
+                                title: '{!$Label.Additional_Information}',
+                                fields: SupplierInvoiceManageUtil.SupplierInvoiceAddlHeaderFieldList
+                            },
+                            {
+                                name: 'VAT',
+                                title: '{!$Label.Tax}',
+                                fields: SupplierInvoiceManageUtil.VATFieldList
+                            }
+                        ],
+                        lookupSearchAction: '{!$RemoteAction.SupplierInvoiceManageExt.lookupSearchFilter}',
+                        lookupSearchFilters: lookupSearchFilters,
+                        getDetailListFunction: invoiceHeaderData
+                    }).data('kendoDetailList');
+                    
+                    this.InvoiceHeaderDetailList.element.bind('OnReadSuccess', this.OnInvoiceHeaderDetailListReadSuccess);
+                },
+                
+                //  Binds the individual events related to field change/focus on the Supplier Invoice header     
+                BindHeaderEvents: function() {
+                    this.InvoiceHeaderDetailList.data.bind('change', function() {
+                        SupplierInvoiceManageUtil.isDirtyInvoiceHeaderData = true;
+                    });
+
+                    // Bind Purchase Order focus event
+                    $('input[name="Purchase_Order__r.Name"]').bind('focus', function(e) {
+                        $(this).prop('default_po_id', $('input[name="Purchase_Order__c"]').val());
+                        $(this).prop('default_po_name', $(this).val()); 
+                        });
+                    
+                    // Bind Payment Terms change event
+                    $('input[name="Payment_Term__c"]').bind('change', 
+                        SupplierInvoiceManageUtil.OnPaymentTermChange
+                    );
+                    
+                    // Bind Payment Terms change event
+                    $('input[name="Date_Invoiced__c"]').bind('change', 
+                        SupplierInvoiceManageUtil.OnInvoiceDateChange
+                    );
+                    
+                    // Bind Purchase Order change event
+                    $('input[name="Purchase_Order__c"]').bind('change', 
+                        SupplierInvoiceUtility.OnPurchaseOrderHeaderChange
+                    );
+                    
+                    // Bind Supplier change event
+                    $('input[name="Supplier__c"]').bind('change', 
+                        SupplierInvoiceUtility.OnSupplierChange
+                    );
+                    
+                    // Bind Invoice Amount change event
+                    $('input[name="Invoice_Amount__c"]').bind('change', 
+                        SupplierInvoiceUtility.SetLineTotal
+                    );
+
+                    //Bind Company change event
+                    $('input[name="Company__c"]').bind('change',
+                        SupplierInvoiceUtility.OnCompanyChange
+                    );
+                    
+                    // Bind Invoice Type change event
+                    $('#Invoice_Type__c').bind('change',
+                        SupplierInvoiceUtility.OnInvoiceTypeChange   
+                    ); 
+
+                    // Bind Currency change event
+                    $('#Currency__c').bind('change',
+                        SupplierInvoiceManageUtil.ActivateMatchToPOButton  
+                    ); 
+                },
+                 
+                SetBilltoFields: function(isCompanyChanged){
+                    var VATFieldList = SupplierInvoiceManageUtil.VATFieldList;
+                    if (VATFieldList != null && VATFieldList.length > 0){
+                        var si = SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data;
+                        var company = si.get('Company__r');
+                        var companyId = si.get('Company__c');
+                        if(company && companyId){
+	                                        	if(isCompanyChanged){
+                        		si.set('Bill_To_City__c',company.get('City__c'));
+		                        si.set('Bill_To_Street__c',company.get('Street__c'));
+		                        si.set('Bill_To_State__c',company.get('State__c'));
+		                        si.set('Bill_To_Zip_Code__c',company.get('Zip_Code__c'));
+		                        si.set('Bill_To_Country__c',company.get('Country__c'));
+                        	}else{
+                        		var billToCity = si.get('Bill_To_City__c') == null? company.get('City__c'):si.get('Bill_To_City__c');
+		                        var billToStreet  = si.get('Bill_To_Street__c')== null?  company.get('Street__c'):si.get('Bill_To_Street__c');
+		                        var billToState = si.get('Bill_To_State__c') == null?  company.get('State__c'): si.get('Bill_To_State__c');
+		                        var billToZipCode  = si.get('Bill_To_Zip_Code__c') == null?  company.get('Zip_Code__c'):si.get('Bill_To_Zip_Code__c');
+		                        var billToCountry = si.get('Bill_To_Country__c') == null?  company.get('Country__c'):si.get('Bill_To_Country__c');
+		                        si.set('Bill_To_City__c',billToCity);
+		                        si.set('Bill_To_Street__c',billToStreet);
+		                        si.set('Bill_To_State__c',billToState);
+		                        si.set('Bill_To_Zip_Code__c',billToZipCode);
+		                        si.set('Bill_To_Country__c',billToCountry);
+                        	}
+     }else{
+	                     	si.set('Bill_To_City__c',null);
+	                        si.set('Bill_To_Street__c',null);
+	                        si.set('Bill_To_State__c',null);
+	                        si.set('Bill_To_Zip_Code__c',null);
+	                        si.set('Bill_To_Country__c',null);
+	                     }
+                    }
+                },
+                
+                //KNDY-18171
+                SetBillFromFields: function(){
+                	var VATFieldList = SupplierInvoiceManageUtil.VATFieldList;
+                    if(VATFieldList != null && VATFieldList.length > 0){
+                    	var si = SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data;
+                        var supplier = si.get('Supplier__r');
+                        var supplierId = si.get('Supplier__c');
+                        if(supplier && supplierId){
+	                        si.set('Bill_From_City__c',supplier.get('City__c'));
+	                        si.set('Bill_From_Street__c',supplier.get('Street__c'));
+	                        si.set('Bill_From_State__c',supplier.get('State__c'));
+	                        si.set('Bill_From_Zip_Code__c',supplier.get('Zip_Code__c'));
+	                        si.set('Bill_From_Country__c',supplier.get('Country__c'));
+	                     }else{
+	                     	si.set('Bill_From_City__c',null);
+	                        si.set('Bill_From_Street__c',null);
+	                        si.set('Bill_From_State__c',null);
+	                        si.set('Bill_From_Zip_Code__c',null);
+	                        si.set('Bill_From_Country__c',null);
+	                     }
+                     }
+                },
+                
+                //KNDY-18171
+                DisableTaxFieldsOnHeader: function(){
+                	var VATFieldList = SupplierInvoiceManageUtil.VATFieldList;
+                	if(VATFieldList != null && VATFieldList.length > 0){
+	                	var disabledFields = []; 
+	                	$.each(VATFieldList,function(index, item) {
+        			 		disabledFields.push(item.field);
+        			 	});
+	                	if(this.InvoiceHeaderDetailList) {
+	                        this.InvoiceHeaderDetailList.enable(false, { 
+	                            disabledFields: disabledFields 
+	                        });
+	                    }
+                    }
+                },
+                
+                DisableHeaderActions:function(hdrActionsStr){ //KNDY-17757
+                   //Disable or Enable 'Save and New' Action
+                   $('.save-new-command').addClass("disab");
+                   if (hdrActionsStr != null &&  hdrActionsStr.Save_New) {   
+                         $('.save-new-command').removeClass("disab"); 
+                   }
+                   //Disable or Enable 'Clone' Action
+                   $('.clone-command').addClass("disab");
+                   if (hdrActionsStr != null &&  hdrActionsStr.Clone) {   
+                         $('.clone-command').removeClass("disab"); 
+                   }
+               
+                   //Disable or Enable 'Save' Action
+                   $('.save-command').addClass("disab");
+                   if (hdrActionsStr != null &&  hdrActionsStr.Save) {   
+                       $('.save-command').removeClass("disab"); 
+                   }
+
+                   //Disable or Enable 'Save and Return' Action
+                   $('.save-return-command').addClass("disab");
+                   if (hdrActionsStr != null &&  hdrActionsStr.Save_Return) {   
+                         $('.save-return-command').removeClass("disab"); 
+                   }
+                   
+                   //Disable or Enable 'Save and Validate' Action
+                   $('.save-inspect-command').addClass("disab");
+                   if (hdrActionsStr != null &&  hdrActionsStr.Save_Validate) {   
+                         $('.save-inspect-command').removeClass("disab"); 
+                   }
+
+                    //Disable or Enable 'Validate' Action
+                   $('.inspect-command').addClass("disab");
+                   if (hdrActionsStr != null &&  hdrActionsStr.Validate) {   
+                         $('.inspect-command').removeClass("disab"); 
+                   }
+                   
+                   //Disable or Enable 'Get_Tax' Action
+                   $('.get-tax-command').addClass("disab");
+                   if({!HasTax} == false){
+                         $('.get-tax-command').hide();
+                   }else if ({!HasTax} == true && hdrActionsStr != null && hdrActionsStr.Get_Tax) {   
+                         $('.get-tax-command').removeClass("disab"); 
+                   }
+                   
+                   //Disable or Enable 'Unfinalize' Action
+                   $('.unfinalize-command').addClass("disab");
+                   if (hdrActionsStr != null && hdrActionsStr.Unfinalize) { 
+                         $('.unfinalize-command').removeClass("disab"); 
+                   }
+                   
+                   //Disable or Enable 'Cancel' Action
+                   $('.cancel-action-command').addClass("disab");
+                   if (hdrActionsStr != null && hdrActionsStr.Cancel) { 
+                         $('.cancel-action-command').removeClass("disab"); 
+                   }
+                   
+                   //Disable or Enable 'Void' Action
+                   $('.void-action-command').addClass("disab");
+                   if (hdrActionsStr != null && hdrActionsStr.Void) { 
+                         $('.void-action-command').removeClass("disab"); 
+                   }
+                   
+                   //Disable or Enable 'Pay Invoice' Action
+                   $('.pay-invoice-command').addClass("disab");
+                   if (hdrActionsStr != null && hdrActionsStr.Pay_Invoice) { 
+                         $('.pay-invoice-command').removeClass("disab"); 
+                   }
+                },
+                
+                DisableHeaderFields: function(options) {
+                    var hasInvoiceLines = (options.hasInvoiceLines) ? options.hasInvoiceLines : false;
+                    var isEnabled = !hasInvoiceLines;
+                    var enabledFields = [ 'Memo__c', 'Hold__c' ];
+                    var disabledFields = [];
+                    var disabledHeaderFields = [];
+                    var uri = URI('{!$CurrentPage.URL}');
+                
+                    if (SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data.get('Id') &&
+                        SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data.get('Status__c') != 'Incomplete'
+                        && uri.hasQuery("clone", "1") === false) {
+                         disabledFields.push('Purchase_Order__c');
+                    }
+
+                    if (hasInvoiceLines && SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data.get('Id')) {
+                        disabledFields.push ('Invoice_Type__c', 'Supplier__c', 'Company__c', 'Currency__c');
+                        if (SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data.get('Finalized__c')) {
+                            var headerFields = SupplierInvoiceManageUtil.InvoiceHeaderDetailList.getFieldList();
+                                
+                            for (var i = 0; i < headerFields.length; i++) {
+                                var field = headerFields[i].field;
+                                        
+                                if (_.contains(enabledFields, field) && _.contains(disabledFields, field)) {
+                                    disabledHeaderFields.push(field);
+                                }
+                            }
+                    }
+                        disabledHeaderFields = _.union(disabledFields, disabledHeaderFields);
+                                    }
+                   
+                    // Disable Header Fields
+                    if (this.InvoiceHeaderDetailList) {
+                        this.InvoiceHeaderDetailList.enable(isEnabled, { 
+                            disabledFields: disabledHeaderFields 
+                        });
+                    }
+                },                           
+                               
+                ExecuteAction: function(actionType,supplierInvid){
+                	console.log(supplierInvid);
+                    var uri = URI('{!$CurrentPage.URL}');
+                    if((!SupplierInvoiceManageUtil.SupplierInvoiceId ||
+                        uri.hasQuery("clone", "1") === true) && !supplierInvid){ //KNDY-18475
+                        KenandyErp.Messages([{message:'{!$Label.Cannot_perform_any_action_save_the_supplier_invoice_to_proceed}', severity:'ERROR'}]);
+                        return;
+                    }
+                    if(SupplierInvoiceUtility.IsPageDirty() && !supplierInvid && !(actionType=='Tax')){ //KNDY-18475
+                        KenandyErp.Messages([{message:'{!$Label.Cannot_perform_any_action_save_the_supplier_invoice_to_proceed}', severity:'ERROR'}]);
+                        return;                    
+                    }
+                    
+                    // KNDY-7558 Clone does not execute a controller method, but redirects to a new page
+                    if (actionType == 'Clone'){ 
+                        SupplierInvoiceManageUtil.cloneSI();
+                        return;
+                    }
+                    
+                    KenandyErp.BlockUI();
+                    KenandyErp.ClearMessage();
+                    
+                    //KNDY-18475 
+                    var suppInvid = supplierInvid?supplierInvid:'{!JSENCODE(si.Id)}';              
+                    Visualforce.remoting.Manager.invokeAction(
+                        SupplierInvoiceManageUtil.HeaderActions[actionType],
+                        suppInvid,   //KNDY-18475
+                        actionType,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();          
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message);
+                            } 
+                            else {
+                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                if (result.success) {
+                                     KenandyErp.BlockUI();
+                                    if({!HasTax} == true){
+                                        if(actionType == 'Validate'){
+                                            SupplierInvoiceManageUtil.ExecuteAction('Tax');
+                                        }else{
+                                            KenandyErp.Messages(result.messages);
+                                            //KNDY-18475
+                                            if(supplierInvid){
+                                            	 KenandyErp.NavigateToURL('{!$Page.SupplierInvoiceManage}' + '?id=' + supplierInvid,true);
+                                            }else{
+                                                KenandyErp.NavigateToURL('{!$Page.SupplierInvoiceManage}' + '?id=' + '{!JSENCODE(si.Id)}' + '&',true);
+
+	                                        }
+                                     	}
+                                    }else{
+                                         KenandyErp.NavigateToURL('{!$Page.SupplierInvoiceManage}' + '?id=' + '{!JSENCODE(si.Id)}' + '&',true);
+                                	}
+                                }
+                                else{
+                                    KenandyErp.Messages(result.messages);
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                },
+                
+                <!-- Supplier Invoice Lines grid related functions starts here --->
+                RenderInvoiceLinesGrid: function(options) {
+                    var configOptions = SupplierInvoiceManageUtil.GetInvoiceLinesConfigJson();
+                    var lookupSearchFilters = [];
+
+                    lookupSearchFilters.push({ field: "segments.GL_Account__c", filter: "Active__c = true" });  //KNDY-15441
+                    lookupSearchFilters.push({ field: "invoiceLine.Item__c", filter: "Active__c = true" });
+                    lookupSearchFilters.push({ field: "invoiceLine.Purchase_Order__c", filter: "Remit_To_Supplier__r.Status__c = Active" });
+
+                    
+                    // Destroy InvoiceLinesGrid
+                    if (this.InvoiceLinesGrid) {
+                        this.InvoiceLinesGrid.destroy();
+                        $('#InvoiceLinesGrid').empty();
+                    }
+                    var InvoiceLinesGridWidth = $('#InvoiceLinesGrid').width();
+                    this.InvoiceLinesGrid = $('#InvoiceLinesGrid').width(InvoiceLinesGridWidth).kendoGridActionList({
+                        namespace: '{!NamespaceUU}', 
+                        config: configOptions, 
+                        fieldList: SupplierInvoiceManageUtil.GetInvoiceLinesFieldList(),
+                        lookupSearchAction: '{!$RemoteAction.SupplierInvoiceManageExt.lookupSearchFilter}', 
+                        getActionListFunction: invoiceLinesData,
+                        aggregates: [{ field: "invoicedAmount", aggregate: "sum" }],
+                        showIconButtons: true,
+                        modelIdField: 'invoiceLine.Id',
+                        toolbarButtons: [ 
+                        	{ template: "<input class='grid-view-options' />" }, { name: "grid-copy-from-po-command", text:"", template: "<input type='button' value='{!$Label.Match_to_PO}' class='k-button kndy-btn copy-from-po-command button-text-bold disab' />" }
+                        ],
+                        beforeEdit: function(e) {
+                            SupplierInvoiceManageUtil.InvoiceLinesGridBeforeEdit.call(this, e);
+                        },
+                        validateLookupOnBlur: true,
+                        lookupSearchFilters: lookupSearchFilters
+
+                    }).data('kendoGridActionList');
+                    
+                    this.InvoiceLinesGrid.wrapper.on("click", ".copy-from-po-command", $.proxy(SupplierInvoiceManageUtil.ShowPOLinesWindow, { grid:{}, options:{}}));
+                    
+                    
+                    // disable/enable the grid icons and buttons
+                    SupplierInvoiceManageUtil.SetSILGridActions(); //KNDY-17757
+                       
+                    this.InvoiceLinesGrid.table.kendoTooltip({
+                        autoHide: false,
+                        showOn: "click",
+                        filter: ".line-errors",
+                        position: "right",
+                        content: function(e) {
+                            var targetUID = $(e.target).closest("tr").data("uid");
+                            var grid = $("#InvoiceLinesGrid").data("kendoGridActionList");
+                            var row = grid.tbody.find("tr[data-uid='" + targetUID + "']");
+                            var dataItem = grid.dataItem(row);
+                            var exceptionsDiv = "<div id='" + targetUID + "'>" + dataItem.errors + " </div>";
+                            return exceptionsDiv;
+                        },
+                        
+                        show:function(e){
+                            this.target().addClass("has-clicked");
+                            
+                            if(activeHoverTooltip.target() && activeHoverTooltip.target()[0] == this.target()[0]){
+                                activeHoverTooltip.hide();
+                            }
+                        },
+
+                        hide:function (e){
+                            this.target().removeClass("has-clicked");
+                        }
+                    });
+                    
+                    // show tooltip on mouseenter of errors column
+                    activeHoverTooltip = this.InvoiceLinesGrid.table.kendoTooltip({
+                        autoHide: true,
+                        showOn: "mouseenter",
+                        filter: ".line-errors:not(.has-clicked)",
+                        position: "right",
+                        content: function(e) {
+                            var targetUID = $(e.target).closest("tr").data("uid");
+                            var grid = $("#InvoiceLinesGrid").data("kendoGridActionList");
+                            var row = grid.tbody.find("tr[data-uid='" + targetUID + "']");
+                            var dataItem = grid.dataItem(row);
+                            var exceptionsDiv = "<div id='" + targetUID + "'>" + dataItem.errors + " </div>";
+                            return exceptionsDiv;
+                        }
+                    }).data("kendoTooltip");
+                    
+                    this.InvoiceLinesGrid.bind('edit', $.proxy(SupplierInvoiceManageUtil.InvoiceLinesGridEdit, { grid: this.InvoiceLinesGrid }));
+
+                    //KNDY-17757 unbind grid cancel changes command 
+                    this.InvoiceLinesGrid.wrapper.off("click", ".grid-cancel-command");
+                       
+                    //KNDY-17757 bind grid cancel changes command
+                    this.InvoiceLinesGrid.wrapper.on("click", ".grid-cancel-command", $.proxy(SupplierInvoiceManageUtil.CancelChanges, { grid: this.InvoiceLinesGrid , options: { config: configOptions } }));
+
+                    
+                    this.InvoiceLinesGrid.bind('save', function(data) {
+                        if(!data.model.get('invoiceLine.Invoice_Quantity__c')) {
+                            data.model.set('invoiceLine.Invoice_Quantity__c',1.00);
+                        }
+                        if (data.values['invoiceLine.Invoice_Quantity__c']) {
+                            var invAmt = data.values['invoiceLine.Invoice_Quantity__c'] * data.model.get('invoiceLine.Unit_Price__c');//KNDY-14371
+                            data.model.set('invoicedAmount', invAmt.round(2));
+                        }
+                        else if (data.values['invoiceLine.Unit_Price__c']) {//KNDY-14371
+                            var invAmt = data.model.get('invoiceLine.Invoice_Quantity__c') * data.values['invoiceLine.Unit_Price__c'];//KNDY-14371
+                            data.model.set('invoicedAmount', invAmt.round(2));
+                        }
+                    });
+                    
+                    this.InvoiceLinesGrid.dataSource.bind('change', function() {
+                        SupplierInvoiceUtility.SetLineTotal();
+                        //KNDY-7636 recalculate exceptions for visible rows in UI when grid view changes ex - sort or view next page
+                        loadExceptionsPerInvoiceLine(); 
+                    });
+
+                    this.InvoiceLinesGrid.element.bind('OnReadSuccess', this.OnInvoiceLinesGridReadSuccess);
+                    
+                    // unbind and bind the save, save & return button click events
+                    $('.save-command, .save-new-command, .save-return-command').off("click",
+                        $.proxy(SupplierInvoiceUtility.Save, { actionType: 'Save', grid: this.InvoiceLinesGrid, options: { config: configOptions } })
+                    );
+                    
+                    $('.save-command, .save-new-command, .save-return-command').on("click",
+                        $.proxy(SupplierInvoiceUtility.Save, { actionType: 'Save', grid: this.InvoiceLinesGrid, options: { config: configOptions } })
+                    );
+                    
+                    $('.save-inspect-command').off("click",
+                        $.proxy(SupplierInvoiceUtility.Save, { actionType: 'SaveAndValidate', grid: this.InvoiceLinesGrid, options: { config: configOptions } })
+                    );
+                    
+                    $('.save-inspect-command').on("click",
+                        $.proxy(SupplierInvoiceUtility.Save, { actionType: 'SaveAndValidate', grid: this.InvoiceLinesGrid, options: { config: configOptions } })
+                    );
+                    
+                    $(".grid-view-options").kendoDropDownList({
+                        index: 0,
+                        dataTextField: "text",
+                        dataValueField: "value",
+                        dataSource: SupplierInvoiceManageUtil.CustomViews,
+                        change: function(e) {  
+                            var fieldNames = SupplierInvoiceManageUtil.SupplierInvoiceLinesFields;
+
+                            for (var fld in fieldNames) {
+                                SupplierInvoiceManageUtil.InvoiceLinesGrid.showColumn(fieldNames[fld]);
+                            }
+                                
+                            if (this.value() != '') {
+                                fieldNames = _.values(_.pick(SupplierInvoiceManageUtil.CustomViewFields, this.value()))[0];
+                                
+                                for (var fld in fieldNames) {
+                                    SupplierInvoiceManageUtil.InvoiceLinesGrid.hideColumn(fieldNames[fld]);
+                                }
+                            }
+                        }
+                    });
+                },
+                
+                // cancel grid action is available always
+                SetSILGridActions: function(e){ //KNDY-17757
+                    var invoiceType = $('#Invoice_Type__c').val();
+                    var parseActions = JSON.parse('{!JSENCODE(SILActionsMap)}'); //KNDY-17757
+                    $('.grid-create-command').addClass("disab");
+                    $('.grid-clone-command').addClass("disab"); 
+                    $('.grid-mass-delete-command').addClass("disab");
+                   
+                    if ( parseActions != null ){
+                        if (parseActions.Create) {   
+                            $('.grid-create-command').removeClass("disab");
+                        }
+                        if (parseActions.Clone) {   
+                            $('.grid-clone-command').removeClass("disab");
+                        }
+                        if (parseActions.Delete) {   
+                            $('.grid-mass-delete-command').removeClass("disab");
+                        }
+                        if (!parseActions.MatchToPO || invoiceType == 'Prepayment') { //KNDY-17890
+                            $('.copy-from-po-command').addClass("disab");
+                        }
+                    }
+                },
+                               
+                InvoiceLinesGridBeforeEdit: function(e) {
+                    var grid = this;
+                    var columnIndex = grid.cellIndex(e.container);
+                    var fieldName = grid.thead.find("th").eq(columnIndex).data("field");
+                    var isDefaultPrevented = false;
+                    if (e.model.get('invoiceLine.Id')) {
+                        if (fieldName == 'invoiceLine.Purchase_Order__c') {
+                            isDefaultPrevented = true;
+                        }
+                        
+                        if (fieldName == 'invoiceLine.Purchase_Order_Line__c') {
+                            isDefaultPrevented = true;
+                        }
+                        
+                        if (fieldName == 'invoiceLine.Item__c') {
+                            isDefaultPrevented = true;
+                        }
+                        if (fieldName == 'invoiceLine.Name') {// KNDY-10461
+                            isDefaultPrevented = true; 
+                        }
+                        if ((e.model.get('invoiceLine.Purchase_Order_Line__c') || (e.model.get('invoiceLine.Item__r.Source__c') && e.model.get('invoiceLine.Item__r.Source__c') != 'Miscellaneous')) 
+                                                 && fieldName == 'invoiceLine.Description__c') {     
+                            isDefaultPrevented = true;
+                        }
+                        
+                        //Disable edits of Purchase_UOM__c field
+                        if (fieldName == 'invoiceLine.Purchase_UOM__c') {
+                            if (SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data.get('Status__c') == 'Approved' ||
+                                    e.model.get('invoiceLine.Purchase_Order_Line__c') || 
+                                    !e.model.get('invoiceLine.Item__c')){
+                                isDefaultPrevented = true;
+                            }
+                        }
+                    }
+                    else if (e.model.get('invoiceLine.Purchase_Order_Line__c')) {
+                        if (fieldName == 'invoiceLine.Item__c') {
+                            isDefaultPrevented = true;
+                        }
+                        if (fieldName == 'invoiceLine.Purchase_UOM__c') { //KNDY-10605
+                            isDefaultPrevented = true;
+                        }
+                        if (fieldName == 'invoiceLine.Description__c') {  
+                            isDefaultPrevented = true;
+                        }
+                    }else{
+                       console.log('inside the else block');  
+                       if( e.model.get('invoiceLine.Item__c') != null && (e.model.get('invoiceLine.Item__c') == e.model.get('invoiceLine.Item__r.Id')) 
+                                           && e.model.get('invoiceLine.Item__r.Source__c') != 'Miscellaneous' && fieldName == 'invoiceLine.Description__c'){
+                           isDefaultPrevented = true;      
+                       } 
+                    }
+                    
+                    //KNDY-18075
+	            	if(e.model.get('invoiceLine.Purchase_Order_Line__c') || e.model.get('invoiceLine.Purchase_Order__c')
+	            	   || SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data.get('Finalized__c')){
+	            	   if(SupplierInvoiceManageUtil.SegmentLinesFieldList){ //KNDY-18466
+		            		$.each(SupplierInvoiceManageUtil.SegmentLinesFieldList, function(index, item) {
+	        			 		var segmentField = 'segments.'+item.field;
+	                    		console.log(segmentField);
+	        			 		if(fieldName == segmentField){
+	        			 			isDefaultPrevented = true;
+	        			 		}
+	        			 	});
+	        			}
+        			 	//KNDY-18171
+        			 	console.log('***'+SupplierInvoiceManageUtil.supplierInvoiceLineTaxFieldList);
+        			 	if(SupplierInvoiceManageUtil.supplierInvoiceLineTaxFieldList){ //KNDY-18466
+	        			 	$.each(SupplierInvoiceManageUtil.supplierInvoiceLineTaxFieldList, function(index, item) {
+	        			 		var taxField = 'invoiceLine.'+item.field;
+	        			 		if(fieldName == taxField){
+	        			 			isDefaultPrevented = true;
+	        			 		}
+	        			 	});
+	        			 }
+	            	}
+	            	console.log(isDefaultPrevented);
+                    if (isDefaultPrevented) {
+                        e.preventDefault();
+                    }
+                },
+                
+                InvoiceLinesGridEdit: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+
+                    if ($(e.container).find('input[name="invoiceLine.Item__c"]').length > 0) {
+                        var lookupSearchFilters = [];
+                        var invType = $('#Invoice_Type__c').val();
+                        if(invType == 'Prepayment'){
+                            lookupSearchFilters.push({ field: "invoiceLine.Item__c", filter: "Source__c = \'Miscellaneous\'"});
+                        }else{
+                            lookupSearchFilters.push({ field: "invoiceLine.Item__c", filter: "Active__c = true" });
+                        }
+                        $(e.container).find('input[name="invoiceLine.Item__c"]').data('kendoLookup').options.criteria = lookupSearchFilters;
+                    }
+                    
+                    $(e.container).find('input[name="invoiceLine.Item__c"]').bind('blur', 
+                        $.proxy(SupplierInvoiceUtility.OnItemChange, { grid: grid })
+                    );
+                    
+                },
+                
+                GetInvoiceLinesFieldList: function() {
+                    var fieldList = SupplierInvoiceManageUtil.SupplierInvoiceLinesFieldList;
+                    
+                    $.each(fieldList, function() { 
+
+                        if (this.field == 'errors') {
+                            this.headerTemplate = '';
+                            this.template =  '#= SupplierInvoiceManageUtil.RenderErrors(data)# ';
+                            this.width = '30px';
+                        }
+                        else if (this.field == 'invoicedAmount') {
+                            this.editable = true;
+                            this.headerTemplate = this.title + '<br/><input type="textbox" class="k-textbox line-total text-green" value="0.000000" readonly />';
+                            this.editor = function(container, options) {
+                                SupplierInvoiceManageUtil.InvoiceLinesGrid.closeCell(container);
+                            }
+                            this.width = '100px';
+                        }
+                        if(this.field == 'invoiceLine.Purchase_Order__c' || this.field == 'invoiceLine.Purchase_Order_Line__c'){
+                            this.editable = false;
+                            this.width= '100px';
+                        }
+                        else{
+                            this.width = '100px';
+                        }
+
+                    });
+                    return fieldList;
+                },
+                
+                <!-- Exceptions grid related functions and code starts here -->
+
+                RenderExceptionsGrid: function(options) {
+                    var configOptions = SupplierInvoiceManageUtil.GetExceptionsConfigJson();
+                    // Destroy ExceptionsGrid
+                    if (this.ExceptionsGrid) {
+                        this.ExceptionsGrid.destroy();
+                        $('#ExceptionsGrid').empty();
+                    }
+                    
+                    this.ExceptionsGrid = $('#ExceptionsGrid').kendoGridActionList({
+                        namespace: '{!NamespaceUU}', 
+                        config: configOptions,
+                        fieldList: ExceptionTasksUtils.GetFieldList('{!JSENCODE(exceptionsFieldList)}'),
+                        lookupSearchAction: '{!$RemoteAction.SupplierInvoiceManageExt.lookupSearchFilter}', 
+                        getActionListFunction: loadExceptionData,
+                        toolbarButtons: [ 
+                                { name: "grid-mass-override-custom-command", text:"", template: "<input type='button' value='Mass Override' class='btn grid-mass-override-custom-command' />" }
+                        ]
+                    }).data('kendoGridActionList'); 
+                    
+                    // Delete any existing messages in exceptions grid
+                    var grid = this.ExceptionsGrid;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");                 
+                    messageElement.empty();
+                    
+                    // KNDY-7636 Hide RelatedTo column
+                    grid.hideColumn(2);
+                    
+                    //BINDING EVENTS
+                    this.ExceptionsGrid.wrapper.on("click", ".grid-mass-override-custom-command", $.proxy(ExceptionTasksUtils.MassOverride, { grid: this.ExceptionsGrid})); 
+               },
+               
+               // This method rendors the graphical icon on invoice line grid UI
+               // Once exceptions grid is loaded in UI, the value for errors column will be populated
+               // This value is visible on mouse hover or click on the graphical icon
+               RenderErrors: function(data) { 
+                  return (data.get('invoiceLine.Id') && data.get('invoiceLine.Has_Exceptions__c')) ? '<i class="fa fa-exclamation-triangle fa-lg line-errors kndy-orange"></i>' : '';         
+               },  
+               
+               GetExceptionsConfigJson: function() {
+                    var configJson = SupplierInvoiceManageUtil.ExceptionsConfigJson;
+                    return configJson;
+               },    
+
+               OnInvoiceHeaderDetailListReadSuccess: function(e) {
+                
+                  var uriStr = URI('{!$CurrentPage.URL}');
+                  console.log('SupplierInvoiceManageUtil.SupplierInvoiceId');
+                  console.log (SupplierInvoiceManageUtil.SupplierInvoiceId);
+                  console.log('uriStr.hasQuery("clone", "1")');
+                  console.log(uriStr.hasQuery("clone", "1"));
+
+                  if(SupplierInvoiceManageUtil.SupplierInvoiceId != "" && uriStr.hasQuery("clone", "1") === false){
+                
+	                   var parseActions = JSON.parse('{!JSENCODE(actionsMap)}');
+	                   var si = SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data;
+	                   
+	                   //Disable or Enable 'Save' Action
+	                   $('.save-command').addClass("disab");
+	                   if (si.get('Id') && parseActions != null &&  parseActions.Save) {   
+	                         $('.save-command').removeClass("disab"); 
+	                   }
+	                   
+	                   //Disable or Enable 'Save and New' Action
+	                   $('.save-new-command').addClass("disab");
+	                   if (si.get('Id') && parseActions != null &&  parseActions.Save_New) {   
+	                         $('.save-new-command').removeClass("disab"); 
+	                   }
+	                   
+	                   //Disable or Enable 'Save and Return' Action
+	                   $('.save-return-command').addClass("disab");
+	                   if (si.get('Id') && parseActions != null &&  parseActions.Save_Return) {   
+	                         $('.save-return-command').removeClass("disab"); 
+	                   }
+	                   
+	                   //Disable or Enable 'Save and Validate' Action
+	                   $('.save-inspect-command').addClass("disab");
+	                   if (si.get('Id') && parseActions != null &&  parseActions.Save_Validate) {   
+	                         $('.save-inspect-command').removeClass("disab"); 
+	                   }
+	                   
+	                   //Disable or Enable 'Clone' Action
+	                   $('.clone-command').addClass("disab");
+	                   if (si.get('Id') && parseActions != null &&  parseActions.Clone) {   
+	                         $('.clone-command').removeClass("disab"); 
+	                   }
+	                   
+	                    //Disable or Enable 'Validate' Action
+	                   $('.inspect-command').addClass("disab");
+	                   if (si.get('Id') && parseActions != null &&  parseActions.Validate) {   
+	                         $('.inspect-command').removeClass("disab"); 
+	                   }
+	                   
+	                   //Disable or Enable 'Get_Tax' Action
+	                   $('.get-tax-command').addClass("disab");
+	                   if({!HasTax} == false){
+	                         $('.get-tax-command').hide();
+	                   }else if (si.get('Id') && {!HasTax} == true && parseActions != null && parseActions.Get_Tax) {   
+	                         $('.get-tax-command').removeClass("disab"); 
+	                   }
+	                   
+	                   //Disable or Enable 'Unfinalize' Action
+	                   $('.unfinalize-command').addClass("disab");
+	                   if (si.get('Id') && parseActions != null && parseActions.Unfinalize) { 
+	                         $('.unfinalize-command').removeClass("disab"); 
+	                   }
+	                   
+	                   //Disable or Enable 'Cancel' Action
+	                   $('.cancel-action-command').addClass("disab");
+	                   if (si.get('Id') && parseActions != null && parseActions.Cancel) { 
+	                         $('.cancel-action-command').removeClass("disab"); 
+	                   }
+	                   
+	                   //Disable or Enable 'Void' Action
+	                   $('.void-action-command').addClass("disab");
+	                   if (si.get('Id') && parseActions != null && parseActions.Void) { 
+	                         $('.void-action-command').removeClass("disab"); 
+	                   }
+	                   
+	                   //Disable or Enable 'Pay Invoice' Action
+                       $('.pay-invoice-command').addClass("disab");
+                       if (si.get('Id') && parseActions != null && parseActions.Pay_Invoice) { 
+                             $('.pay-invoice-command').removeClass("disab"); 
+                       }
+                   }else{
+                       console.log('In the else section');
+                       
+                       $('.pay-invoice-command').addClass("disab"); 
+                       $('.unfinalize-command').addClass("disab");
+                       $('.void-action-command').addClass("disab");   
+                       //KNDY-17757
+                       // get permitted user actions
+	                   var hdrActionsStr = JSON.parse('{!JSENCODE(userSIActionsMap)}');
+	                   SupplierInvoiceManageUtil.DisableHeaderActions(hdrActionsStr);
+                   }
+                   
+                    //Bind TAX Fields
+                    SupplierInvoiceManageUtil.SetBilltoFields(false);
+                
+                    // Bind header events
+                	SupplierInvoiceManageUtil.BindHeaderEvents();
+                	
+                    // Show invoice lines grid
+                	SupplierInvoiceManageUtil.RenderInvoiceLinesGrid();
+                	
+                	//disable tax fields on header
+                	SupplierInvoiceManageUtil.DisableTaxFieldsOnHeader();
+                },
+                
+                OnInvoiceLinesGridReadSuccess: function(e) {
+                	var hasInvoiceLines = (e.event && e.event.result && e.event.result.total > 0);
+                    if(!hasInvoiceLines)  {
+						$('.get-tax-command').addClass("disab");
+					                    
+                    }                  
+                    
+                    if (hasInvoiceLines && SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data.get('Id')) {
+                        SupplierInvoiceManageUtil.DisableHeaderFields({
+                            hasInvoiceLines: true
+                        });
+                    }
+                    
+                    // Show Exceptions grid
+                    if ({!displayExceptions}){
+                        SupplierInvoiceManageUtil.RenderExceptionsGrid();
+                    }
+                },
+                
+                <!-- Match to PO related functions/methods starts here ---> 
+
+                // This function renders the PO Lines grid on the Match to PO popup.
+               RenderPOLinesGrid: function() {
+                    // Destroy POLinesGrid
+                    if (this.POLinesGrid) {
+                        this.POLinesGrid.destroy();
+                        $('#POLinesGrid').empty();
+                    }
+                    
+                    this.POLinesGrid = $('#POLinesGrid').width("1000px").kendoGridActionList({  
+                    	namespace: '{!NamespaceUU}', 
+                        config: SupplierInvoiceManageUtil.PurchaseOrderLinesConfigJson, 
+                        fieldList: SupplierInvoiceManageUtil.GetPurchaseOrderLinesFieldList(),
+                        lookupSearchAction: '{!$RemoteAction.SupplierInvoiceManageExt.lookupSearchFilter}', 
+                        getActionListFunction: poLinesData,
+                        filterable: true,
+                        showIconButtons: true
+                    }).data('kendoGridActionList');
+                    
+                    this.POLinesGrid.element.bind('OnReadSuccess', this.OnPOLinesGridReadSuccess);
+                },
+                
+                //On successful load the below method is called.
+                OnPOLinesGridReadSuccess: function(e) { 
+                    var hasPOLines = (e.event && e.event.result && e.event.result.total > 0);
+                    var grid = SupplierInvoiceManageUtil.POLinesGrid; 
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                    KenandyErp.ClearMessage(messageElement);
+                    if(hasPOLines === false){
+                        $.each(e.event.result.messages, function (idx, nextMsg) {
+                            var message = nextMsg.message;
+                            var severity = nextMsg.severity;
+                            KenandyErp.Message(message, severity, messageElement);
+                        });
+                    }
+                },
+                
+                //This method shows the dropdown with the purchase orders
+                OnPurchaseOrderKeyPress: function(e) {
+                    if (e.keyCode == 13) {
+                        this.SearchPurchaseOrders();
+                    }
+                    
+                    return true;
+                },
+                
+                SearchPurchaseOrders: function() {
+                    this.POLinesGrid.dataSource.read();
+                },
+                
+                GetPurchaseOrderLinesFieldList: function() {
+                   var fieldList = SupplierInvoiceManageUtil.PurchaseOrderLinesFieldList;
+                   $.each(fieldList, function() { 
+
+                       if(this.field == 'invoiceLine.Purchase_Order_Line__r.Line__c')
+                       {
+                         this.width = '75px';
+                       }else{  
+                         this.width = '150px';
+                       }  
+
+                   });
+                   return fieldList;
+                },
+                
+                // This method opens the Match to PO window.
+                ShowPOLinesWindow: function() {
+                    console.log('insdie the showpolineswindow');
+                	
+                       var element = $('#purchaseOrderId');
+                       instance = kendo.widgetInstance(element);
+                       
+	                   if (instance == undefined){
+	                        // do nothing
+	                   }else{
+	                        if($("#purchaseOrderId").data("kendoMultiSelect").value() != "") {
+	                		  $("#purchaseOrderId").data("kendoMultiSelect").value("");    
+	                		}       		
+	                   }
+                     	
+                	
+			         if(instance == undefined){
+               	         //Initialize the multiselect lookup for the Match to PO pop-up
+	             	     var poFilter = $.fn.KendoMultiSelect($('#purchaseOrderId'), { 
+						 lookupSearchAction: '{!$RemoteAction.SupplierInvoiceManageExt.lookupSearchFilter}', 
+						 referenceTo: 'Purchase_Order__c', 
+						 title: 'Purchase Order',
+		                 cascadeFrom: "",   
+						 filterCriteria: "Remit_To_Supplier__c = \'" + $('#Supplier__c').val() + "\' and Company__c = \'" + $('#Company__c').val() + "\' and Currency__c = \'"+ $('#Currency__c').val()  +"\'" ,
+						 value: ''
+					    });
+                    }else{
+                           //dynamic filter criteria added to kendoMultiSelect  
+	                       var customoption = {}; 
+	                       customoption.filterCriteria = "Remit_To_Supplier__c = \'" + $('#Supplier__c').val() + "\' and Company__c = \'" + $('#Company__c').val() + "\' and Currency__c = \'"+ $('#Currency__c').val()  +"\'" ;
+	                       $('#purchaseOrderId').data('kendoMultiSelect').dataSource.read(customoption);
+                    }   
+					
+					$('#purchaseOrderId').bind('keypress', SupplierInvoiceManageUtil.OnPurchaseOrderKeyPress);
+		     
+                	if (!$('#copyPOLinesWindow').data('kendoWindow')) {
+	                	$('#copyPOLinesWindow').kendoWindow({
+                                title: '{!$Label.Match_to_Purchase_Order}',  
+	                            modal: true,
+	                            height: "500px",
+	                            width: "1050px"
+	                        });
+                    }
+                    
+                    SupplierInvoiceManageUtil.RenderPOLinesGrid();
+                    $('#copyPOLinesWindow').data('kendoWindow').center().open();
+                },
+                
+                //Closes the Match to PO window
+                HidePOLinesWindow: function() {
+                	$('#copyPOLinesWindow').data('kendoWindow').close();
+                },
+                
+                // The below function captures the selected POL from the Match to PO popup and carries them to invoice lines grid as Supplier invoice lines
+                CopyPOLines: function(selector) {
+                    var fromGrid = this.POLinesGrid;
+                    var toGrid = this.InvoiceLinesGrid; 
+                    var dateFields = KenandyErp.KendoGridOptions.GetDateFields(SupplierInvoiceManageUtil.PurchaseOrderLinesFieldList);
+                    var gridUtils = new KendoGridUtils(fromGrid, { isDml: false });
+                    var selectedRows = gridUtils.SelectedRows();
+                    var rowsToBeDeleted = [];
+                    
+                    if (selectedRows.length > 0) {
+                        var includeNewLines = true;
+                        var polIds = SupplierInvoiceManageUtil.GetInvoiceLineGridPOLIds(includeNewLines);//KNDY-11841 KNDY-11877
+                        var duplicatePOLs = [];
+                        var siLinesToAdd = [];
+                        $.each(selectedRows, function (idx, elem) {
+                            elem.IsSelected__custom = false;
+                            elem = Serializer.ConvertFromSFDCDate(elem, { dateFields: dateFields });
+                            if (!polIds.includes(elem.invoiceLine.Purchase_Order_Line__c)){//KNDY-11841 KNDY-11877
+                                toGrid.dataSource.insert(0, elem);
+                                rowsToBeDeleted.push(elem);
+                            }
+                            else {
+                               duplicatePOLs.push(elem.invoiceLine.Purchase_Order_Line__r.Name);
+                               siLinesToAdd.push(elem);
+                            }
+                            if(currency == null && poCurrency == null && elem.invoiceLine.Purchase_Order__r.Currency__c != null){
+                                SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data.set('Currency__c', elem.invoiceLine.Purchase_Order__r.Currency__c);
+                                poCurrency = elem.invoiceLine.Purchase_Order__r.Currency__c;
+                            }
+                        });
+                        
+                        if(duplicatePOLs.length > 0){
+                            var r = confirm('{!$Label.Already_matched_purchase_order_lines}'+' '+ duplicatePOLs + '{!$Label.Are_you_sure_to_match_again}');
+                            if (r == true){
+                                $.each(siLinesToAdd, function (idx, newLine) {
+                                    toGrid.dataSource.insert(0, newLine);
+                                    rowsToBeDeleted.push(newLine);
+                                });
+                            }
+                            }
+                            SupplierInvoiceManageUtil.DeleteLinesFromPOLinesWindow(rowsToBeDeleted);
+                    }
+                    else if (this.POLinesGrid.dataSource.data().length > 0){//KNDY-11841 KNDY-11877
+                        KenandyErp.Alert('{!$Label.select_purcahse_order_lines_you_want_to_copy}');
+                        return;
+                    }
+                    
+                    if ($(selector).hasClass('apply-close-command')) {
+                        this.HidePOLinesWindow();
+                    }
+                },
+                
+                //collects all the POL ids from the Invoice Lines grid KNDY-11841 KNDY-11877
+                GetInvoiceLineGridPOLIds: function(includeNewLines){ 
+                    var polIds = [];
+                    var grid = SupplierInvoiceManageUtil.InvoiceLinesGrid;
+                    $.each(grid.dataSource.data(), function (idx, item) {
+                        var polId = item.invoiceLine.Purchase_Order_Line__c;
+                        if (includeNewLines){
+                            if (polId && !polIds.includes(polId)){
+                                polIds.push(polId);
+                            }
+                        }
+                        else{
+                            if (item.id && polId && !polIds.includes(polId)){
+                                polIds.push(polId);
+                            }
+                        }
+                    });
+                    return polIds;
+                },
+                
+                //Deletes POL lines from the Match to PO Window. 
+                DeleteLinesFromPOLinesWindow : function(lines){ //KNDY-11841 KNDY-11877
+                    var grid =   this.POLinesGrid;
+                    var currentDataRowsToDelete = [];
+                    var currentData = grid.dataSource.data();
+                    $.each(lines, function (idx, item) {
+                        $.each(currentData, function (idx, line) {
+                            if (line.invoiceLine.Purchase_Order_Line__c == item.invoiceLine.Purchase_Order_Line__c){
+                                currentDataRowsToDelete.push(line);
+                            }
+                        });
+                    });
+                    $.each(currentDataRowsToDelete, function (idx, elem) {
+                        grid.dataSource.remove(elem);
+                    });
+                    if (grid.dataSource.data().length == 0){
+                        SupplierInvoiceManageUtil.ShowPOLinesWindow();
+                    }
+                    else{
+                        grid.refresh();
+                    }
+
+                },
+
+                GetInvoiceHeaderFieldList: function() {
+                    var fieldList = SupplierInvoiceManageUtil.SupplierInvoiceHeaderFieldList;
+                    return fieldList;
+                },
+                
+                GetInvoiceLinesConfigJson: function() {
+                    var configJson = SupplierInvoiceManageUtil.SupplierInvoiceLinesConfigJson;
+
+                    return configJson;
+                },
+
+                OnInvoiceDateChange: function(e){
+                    var self = this;
+                    var invoiceDate = $(e.target).val();
+                    console.log(invoiceDate);
+                    if (!invoiceDate) {
+                        return;
+                    }
+
+                    if($('input[name="Payment_Term__c"]').val() != ""){
+                       SupplierInvoiceManageUtil.OnPaymentTermChange(e);
+                    }
+                },
+                
+                OnPaymentTermChange: function(e) {
+                    var self = this;
+                    var paymentTermId = $(e.target).val();
+                    var dateInvoiced = $('input[name="Date_Invoiced__c"]').val();
+                    console.log(paymentTermId);
+                    
+                    if (!paymentTermId || $('input[name="Payment_Term__c"]').val() == ""){ 
+                        SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data.set('Discount_Date__c', '');
+                        SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data.set('Payment_Due_Date__c', '');
+                        return;
+                    }
+                    
+                    if($('input[name="Payment_Term__c"]').val() != paymentTermId && $('input[name="Payment_Term__c"]').val() != ""){
+                        paymentTermId = $('input[name="Payment_Term__c"]').val();
+                    } 
+
+                    KenandyErp.BlockUI();
+                                
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.SupplierInvoiceManageExt.getPaymentTermDetailsAndSetDueDates}',
+                        paymentTermId,
+                        dateInvoiced,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();
+                            
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                
+                                if (result.success) {
+                                    if (result.records && result.records.length > 0) {
+                                        var paymentTermsWrapperLst = result.records[0];   
+                                        
+                                        var tempDiscDate = new Date(SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data.get('Date_Invoiced__c'));
+                                        var discountDate = new Date(tempDiscDate);
+                                       
+                                        discountDate.setDate(tempDiscDate.getDate() + (typeof(paymentTermsWrapperLst.paymentTerm.Discount_Days__c) == "undefined" ? 0:paymentTermsWrapperLst.paymentTerm.Discount_Days__c));
+                                        SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data.set('Discount_Date__c', KenandyErp.ParseSFDCDate(discountDate));
+                                        
+                                        var paymentDueDate = new Date();
+                                        if(paymentTermsWrapperLst.paymentDueOverrideDate == null){
+                                             paymentDueDate.setDate(SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data.get('Date_Invoiced__c').getDate() + paymentTermsWrapperLst.paymentTerm.Due_Days__c);
+                                        }else{
+                                             SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data.set('Payment_Due_Date__c', KenandyErp.ParseSFDCDate(paymentTermsWrapperLst.paymentDueOverrideDate));
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                }, 
+                
+                ActivateMatchToPOButton: function() {
+                    console.log('Inside the activate Match to PO');
+                    if ($('#Supplier__c').val() != '' &&  $('#Company__c').val() != '' && $('#Invoice_Type__c').val() != '' && $('#Currency__c').val() != '') {  
+                        $('.copy-from-po-command').removeClass("disab");
+                    }else{
+                        $('.copy-from-po-command').addClass("disab");
+                    }
+                    //KNDY-17757 Reset Match to PO button
+                    SupplierInvoiceManageUtil.SetSILGridActions();
+                },
+                
+                //KNDY-11841 KNDY-11877 Upon save, confirm that user want to create multiple si lines for same pol
+                ValidateDuplicatePOLines: function(newRows){
+                    var includeNewLines = false; 
+                    var polIds = SupplierInvoiceManageUtil.GetInvoiceLineGridPOLIds(includeNewLines);
+                    var duplicatePOLs = [];
+                    var confirmResult = true;
+                    $.each(newRows, function (idx, elem) {
+                        if (polIds.includes(elem.invoiceLine.Purchase_Order_Line__c)){
+                            duplicatePOLs.push(elem.invoiceLine.Purchase_Order_Line__r.Name);
+                        }
+                    });
+                    
+                    if(duplicatePOLs.length > 0){
+                        confirmResult = confirm("Invoice Lines exist for purchase order lines: "+ duplicatePOLs + ".Do you want to create mulitple invoice lines for these?");
+                    }
+                    return confirmResult;
+                },
+                
+                CancelChanges: function(e){ //KNDY-17757
+                    var self = this;
+                    var grid = self.grid;
+                    var options = self.options;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-error-message:first");
+                    
+                    //Reset the warning header
+                    showWarningHeader = false;
+
+                    KenandyErp.ClearMessage(messageElement);
+                    
+                    if (grid.editable && !grid.editable.validatable.validate()) {
+                        e.preventDefault();
+                        return false;
+                    }
+                    
+                    //var currentData = grid.dataSource.data();
+                    var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields });
+                    var updatedRows = [];
+                    var newRows = [];
+                    
+                    newRows = gridUtils.NewRows();
+                    updatedRows = gridUtils.UpdatedRows();
+                      
+                    if (newRows.length == 0 && updatedRows.length == 0) {
+                        KenandyErp.Message("{!$Label.No_records_changed}", KenandyErp.MessageType.Info, messageElement);
+                        return;
+                    }
+                    
+                    KenandyErp.ClearMessage();
+
+                    var yesCallback = function(){
+                        // refresh the grid
+                        grid.dataSource._destroyed = [];
+                        grid.dataSource.read();
+                        e.stopPropagation();
+                    };
+                    
+                    KenandyErp.Confirmation('All the unsaved changes will be lost. Do you still want to proceed?', yesCallback);
+                },
+                
+                //KNDY-7558 - Cloning a SI adds a url parameter clone=1
+                //Controller looks for this parameter to display copies of records on page
+                cloneSI: function(){  
+                    if (window.location.href.indexOf('?') != -1 && window.location.href.indexOf('id') != -1) {
+                        if(SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data.get('Supplier__r') && 
+                                     SupplierInvoiceManageUtil.InvoiceHeaderDetailList.data.get('Supplier__r.Status__c') === 'Active')
+                          {
+                               KenandyErp.NavigateToURL('{!$Page.SupplierInvoiceManage}' + '?clone=1&id='+SupplierInvoiceManageUtil.SupplierInvoiceId,true);
+
+                          }else{
+                             KenandyErp.Messages([{message:'{!$Label.Cannot_Clone_Remit_To_Supplier_not_Active}', severity:'ERROR'}]);  
+                          } 
+                    }
+                    else {
+                        KenandyErp.Messages([{message:'{!$Label.Cannot_perform_any_action_save_the_supplier_invoice_to_proceed}', severity:'ERROR'}]);
+                    }
+                }
+            <!-- Match to PO related functions/methods ends here ---> 
+                };
+  }();
+  function getRelatedToName(Id) { 
+        var whatIdNameMap = whatIdNameMapJson;
+        return ( whatIdNameMap[Id]) ? whatIdNameMap[Id] : '';
+  }
+  function dirtyFlagCheckBeforeNavigate(){
+         console.log('Inside the method dirtyFlagCheckBeforeNavigate');
+         var messageNoAction = '{!$Label.Cannot_perform_any_action_save_the_supplier_invoice_to_proceed}';
+         if(!SupplierInvoiceUtility.IsPageDirty()){
+                  if(SupplierInvoiceManageUtil.SupplierInvoiceId == ''){KenandyErp.Message(messageNoAction); return;}
+                  else{
+                     return true;
+                  }
+         }else{
+              KenandyErp.Message(messageNoAction); return;
+         } 
+   }
+ </script>
+</apex:page>

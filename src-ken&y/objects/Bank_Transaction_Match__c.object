@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <content>BankTransactionMatchEdit</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <content>BankTransactionUnMatch</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <content>BankTransactionMatchEdit</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <content>BankTransactionMatchEdit</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpManageBankTransactions</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>false</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fields>
+        <fullName>Amount__c</fullName>
+        <externalId>false</externalId>
+        <label>Amount</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>2</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Autonumber__c</fullName>
+        <displayFormat>{0000000000}</displayFormat>
+        <externalId>false</externalId>
+        <label>Autonumber</label>
+        <trackTrending>false</trackTrending>
+        <type>AutoNumber</type>
+    </fields>
+    <fields>
+        <fullName>Bank_Transaction_Date__c</fullName>
+        <description>Date that bank transaction cleared bank</description>
+        <externalId>false</externalId>
+        <label>Bank Transaction Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Bank_Transaction__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to bank transaction matched to CR/SP/BT/JE</description>
+        <externalId>false</externalId>
+        <label>Bank Transaction</label>
+        <referenceTo>Bank_Transaction__c</referenceTo>
+        <relationshipLabel>Bank Transaction Matches</relationshipLabel>
+        <relationshipName>Bank_Transaction_Match</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Bank_Transfer_Transaction__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to bank transaction matched to another bank ta transfer - post MVP)</description>
+        <externalId>false</externalId>
+        <label>Bank Transfer Transaction</label>
+        <referenceTo>Bank_Transaction__c</referenceTo>
+        <relationshipLabel>Bank Transaction Match (Matched Bank Transaction)</relationshipLabel>
+        <relationshipName>Bank_Transaction_Match1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Bank Transaction Matches</relationshipLabel>
+        <relationshipName>Bank_Transaction_Match</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Customer_Receipt__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to customer receipt match</description>
+        <externalId>false</externalId>
+        <label>Customer Receipt</label>
+        <referenceTo>Customer_Receipt__c</referenceTo>
+        <relationshipLabel>Bank Transaction Matches</relationshipLabel>
+        <relationshipName>Bank_Transaction_Match</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Is_Potential_Match__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Is Potential Match</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Journal_Entry_Line__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Journal Entry Line</label>
+        <referenceTo>Journal_Entry_Line__c</referenceTo>
+        <relationshipLabel>Bank Transaction Match</relationshipLabel>
+        <relationshipName>Bank_Transaction_Match</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Journal_Entry__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to journal entry match</description>
+        <externalId>false</externalId>
+        <label>Journal Entry</label>
+        <referenceTo>Journal_Entry__c</referenceTo>
+        <relationshipLabel>Bank Transaction Matches</relationshipLabel>
+        <relationshipName>Bank_Transaction_Match</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Matched_To_Transaction_Date__c</fullName>
+        <description>Transaction date of object to which bank transaction is matched</description>
+        <externalId>false</externalId>
+        <label>Matched To Transaction Date</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Payment__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Payment</label>
+        <referenceTo>Payment__c</referenceTo>
+        <relationshipLabel>Bank Transaction Match</relationshipLabel>
+        <relationshipName>Bank_Transaction_Match</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Supplier_Payment__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to supplier payment match</description>
+        <externalId>false</externalId>
+        <label>Supplier Payment</label>
+        <referenceTo>Supplier_Payment__c</referenceTo>
+        <relationshipLabel>Bank Transaction Matches</relationshipLabel>
+        <relationshipName>Bank_Transaction_Match</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Transaction_Mathching_Rule__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Transaction Matching Rule</label>
+        <referenceTo>Transaction_Matching_Rule__c</referenceTo>
+        <relationshipLabel>Bank Transaction Match</relationshipLabel>
+        <relationshipName>Bank_Transaction_Match</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Unique_Key__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>false</externalId>
+        <label>Unique Key</label>
+        <length>40</length>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <label>Bank Transaction Match</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Bank_Transaction__c</columns>
+        <columns>Bank_Transaction_Date__c</columns>
+        <columns>Customer_Receipt__c</columns>
+        <columns>Supplier_Payment__c</columns>
+        <columns>Journal_Entry__c</columns>
+        <columns>Bank_Transfer_Transaction__c</columns>
+        <columns>Matched_To_Transaction_Date__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Bank Transaction Match</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Bank Transaction Match</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>BTM_can_not_be_added</fullName>
+        <active>true</active>
+        <description>Bank Transaction Matching can not be added as the Bank Transaction is already approved.</description>
+        <errorConditionFormula>AND(
+ISNEW(),OR(Bank_Transaction__r.Match_Approved__c  = true,NOT(ISBLANK(  Bank_Transaction__r.Reconciled_As_Of_Date__c))  ) )</errorConditionFormula>
+        <errorMessage>Existing matches have been approved and/or  reconciled; to add a different match, you must first unmatch</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Bank_Transaction_Cannot_be_blank</fullName>
+        <active>true</active>
+        <description>Bank Transaction cannot be blank</description>
+        <errorConditionFormula>OR(ISBLANK(Bank_Transaction__c),ISNULL(Bank_Transaction__c))</errorConditionFormula>
+        <errorMessage>Please populate &apos;Bank Transaction&apos;.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Populate_finalized_matches_with_BT</fullName>
+        <active>true</active>
+        <description>Populate finalized, un-void, non-cancelled Customer Receipt, Journal Entry Line, Supplier Payment</description>
+        <errorConditionFormula>if(ISBLANK(Customer_Receipt__c),false,OR( ISPICKVAL(Customer_Receipt__r.Status__c,&apos;Cancelled&apos;) , Customer_Receipt__r.Void__c,!Customer_Receipt__r.Finalized__c)) 
+|| 
+if(ISBLANK(Supplier_Payment__c),false,OR( ISPICKVAL(Supplier_Payment__r.Status__c,&apos;Cancelled&apos;) , Supplier_Payment__r.Void__c ,!Supplier_Payment__r.Finalized__c) ) 
+|| 
+if(ISBLANK(Journal_Entry_Line__c),false,OR( ISPICKVAL(Journal_Entry_Line__r.Journal_Entry__r.Status__c,&apos;Cancelled&apos;) , Journal_Entry_Line__r.Journal_Entry__r.Void__c,!Journal_Entry_Line__r.Journal_Entry__r.Finalized__c) )
+||
+if(ISBLANK(Payment__c),false,!Payment__r.Finalized__c)</errorConditionFormula>
+        <errorMessage>Please populate finalized, un-void, non-cancelled Customer Receipt, Journal Entry Line</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Populate_valid_matches_with_BT</fullName>
+        <active>true</active>
+        <errorConditionFormula>if( 
+IF(isblank(Customer_Receipt__c),0,1)+ 
+If(isblank(Payment__c ),0,1)+ 
+if(isblank(Supplier_Payment__c ),0,1)+ 
+if(isblank(Journal_Entry_Line__c ),0,1)+
+if(isblank(Bank_Transfer_Transaction__c),0,1)==1,false,true)</errorConditionFormula>
+        <errorMessage>Please populate one and only one amongst Customer Receipt, Journal Entry Line, Supplier Payment, Interco Payments and Bank Transfer</errorMessage>
+    </validationRules>
+</CustomObject>

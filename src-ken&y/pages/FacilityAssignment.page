@@ -1,0 +1,17 @@
+<apex:page standardController="Sales_Order__c" extensions="FacilityAssignmentExt">
+    <apex:sectionHeader subtitle="{!Sales_Order__c.Name}" title="Sales Order"/>
+    
+    <apex:form id="theForm">
+    <c:busyWait />
+	    <apex:pageBlock title="{!$Label.Assign_Facility}" mode="edit">
+	        <apex:pagemessages ></apex:pagemessages>
+	        <apex:pageBlockButtons >
+	        <apex:commandButton value="{!$Label.Assign}" action="{!fassign}" rendered="{!not(selecterror)}" reRender="theForm"   status="actionStatus"/>
+	        <apex:commandButton value="{!$Label.Cancel}" action="{!cancel}" reRender="theForm"   status="actionStatus"/>
+	        </apex:pageBlockButtons>
+	    </apex:pageBlock>
+    </apex:form>  
+    
+    <div id="responseErrors" >
+    </div>
+</apex:page>

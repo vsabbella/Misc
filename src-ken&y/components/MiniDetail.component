@@ -1,0 +1,32 @@
+<apex:component controller="MiniDetail"   >
+	<!-- like apex:detail, but using a field set -->
+	<apex:attribute name="Subject" description="id of the base sobject"
+		type="String" required="true" assignTo="{!subjectId}" />
+		
+	<apex:attribute name="fieldSetName"
+		description="name of the fieldset to show" type="String"
+		required="true" assignTo="{!field_set_name}" />
+
+<!--<apex:form > -->
+	<apex:pageBlock id="viewblock" mode="maindetail">
+		<apex:pageBlockButtons location="top">
+			<apex:CommandButton value="View Details" 
+			action="{!viewDetail}" />
+		</apex:pageBlockButtons>
+<!--{!subjectRecord['Name']}"-->
+		<apex:pageBlockSection title="Selected" 
+			collapsible="false" columns="1">
+			<apex:repeat value="{!fields}" var="f">
+				<apex:outputField value="{!subjectRecord[f]}" />
+			</apex:repeat>
+		</apex:pageBlockSection>
+	</apex:pageBlock>
+<!--	</apex:form>-->
+
+<style>
+/*adjust for a bootstrap issue */
+#force .helpButton img.helpOrb,#force .helpButtonOn img.helpOrb {
+	height: 15px;
+}
+</style>
+</apex:component>

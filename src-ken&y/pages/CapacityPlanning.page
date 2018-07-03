@@ -1,0 +1,604 @@
+<apex:page controller="CapacityPlanningExt" sidebar="false" title="Capacity Planning" docType="html-5.0">
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+    
+    <apex:form >
+        <div class="page-container">
+            <apex:sectionHeader title="Capacity Planning" help="{!HelpURL}" /> 
+            <div class="page-message" />
+            <apex:pageMessages id="msgs" />
+
+            <apex:pageBlock title="Filters">
+                <apex:pageBlockButtons location="top">
+                    <apex:outputPanel layout="none">
+                        <input type="button" id="search" value="Search" class="btn search-command" />
+                        <input type="button" id="calendar-view" value="Calendar View" class="btn calendar-view-command" />
+                    </apex:outputPanel>
+                </apex:pageBlockButtons>
+
+                <div id="filters">
+                    <ul class="kndy-detail-list k-widget k-reset k-header k-panelbar">
+                        <li class="k-state-active k-item k-first k-last k-state-highlight">
+                            <div class="k-content" role="region" style="display: block;">
+                                <table class="kndy-table">
+                                    <tr>
+                                        <td class="kndy-label-column"><apex:outputLabel value="{!$ObjectType.Company__c.Label}" for="company" /></td>
+                                        <td class="kndy-data-column"><input id="company" /></td>
+
+                                        <td class="kndy-label-column"><apex:outputLabel value="{!$ObjectType.Resource__c.Label}" for="resource" /></td>
+                                        <td class="kndy-data-column"><input id="resource" /></td>
+
+                                        <td class="kndy-label-column"><apex:outputLabel value="{!$ObjectType.Work_Order__c.fields.Start_Date2__c.Label}" for="startDate" /></td>
+                                        <td class="kndy-data-column"><input id="startDate" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="kndy-label-column"><apex:outputLabel value="{!$ObjectType.Facility__c.Label}" for="facility" /></td>
+                                        <td class="kndy-data-column"><input id="facility" /></td>
+
+                                        <td class="kndy-label-column"><apex:outputLabel value="{!$ObjectType.Work_Center_Resource__c.Label}" for="workCenterResource" /></td>
+                                        <td class="kndy-data-column"><input id="workCenterResource" /></td>
+
+                                        <td class="kndy-label-column"><apex:outputLabel value="Number of Days" for="days" /></td>
+                                        <td class="kndy-data-column"><input id="days" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="kndy-label-column"><apex:outputLabel value="{!$ObjectType.Work_Center__c.Label}" for="workCenter" /></td>
+                                        <td class="kndy-data-column"><input id="workCenter" /></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </apex:pageBlock>
+            
+            <apex:pageBlock title="Work Center Resources" id="wcrPB">
+                <div class="grid-container">
+                    <div class="grid-message" />
+                    <div id="wcrGrid" />
+                </div>
+            </apex:pageBlock>
+
+            <apex:pageBlock title="Work Orders">
+                <div class="grid-container">
+                    <div class="grid-message" />
+                    <div id="woGrid" />
+                </div>
+            </apex:pageBlock>
+
+            <apex:pageBlock title="Operation Trackings">
+                <div class="grid-container">
+                    <div class="grid-message" />
+                    <div id="opGrid" />
+                </div>
+            </apex:pageBlock>
+        </div>
+    </apex:form>
+    
+    <script type="text/javascript">
+        var woMap;
+        var opMap;
+        var selectedWCR;
+
+        $(document).on("KenandyErpReady", function(e) {
+            CapacityUtil.Init({
+                wcrFields: "{!JSENCODE(wcrFieldsJson)}",
+                woFields: "{!JSENCODE(woFieldsJson)}",
+                opFields: "{!JSENCODE(opFieldsJson)}"
+            });
+        });
+        
+        var CapacityUtil = function() {
+            return {
+                wcrFields: null,
+                wcrGrid: null,
+                woFields: null,
+                woGrid: null,
+                opFields: null,
+                opGrid: null,
+            
+                Init: function(args) {
+                    this.wcrFields = JSON.parse(args.wcrFields);
+                    this.woFields = JSON.parse(args.woFields);
+                    this.opFields = JSON.parse(args.opFields);
+
+                    CapacityUtil.RenderFilters();
+                    CapacityUtil.RenderWCRGrid();
+                    CapacityUtil.RenderWOGrid();
+                    CapacityUtil.RenderOPGrid();
+                    CapacityUtil.BindButtons();
+                    CapacityUtil.RenderLegend();
+                },
+
+                RenderFilters: function() {
+                    $.fn.KendoComboBox($("#company"), { 
+                        lookupSearchAction: "{!$RemoteAction.CapacityPlanningExt.lookupSearchFilter}", 
+                        referenceTo: "Company__c",
+                        title: "{!$ObjectType.Company__c.Label}",
+                        value: "{!defaultCompany}"
+                    });
+
+                    $.fn.KendoComboBox($("#facility"), { 
+                        lookupSearchAction: "{!$RemoteAction.CapacityPlanningExt.lookupSearchFilter}", 
+                        referenceTo: "Facility__c",
+                        title: "{!$ObjectType.Facility__c.Label}",
+                        value: "{!defaultFacility}",
+                        filterCriteria: "Company__c=\'#=Id#\'",
+                        cascadeFrom: "company"
+                    });
+
+                    $.fn.KendoComboBox($("#workCenter"), { 
+                        lookupSearchAction: "{!$RemoteAction.CapacityPlanningExt.lookupSearchFilter}", 
+                        referenceTo: "Work_Center__c",
+                        title: "{!$ObjectType.Work_Center__c.Label}",
+                        value: "",
+                        filterCriteria: "Facility__c=\'#=Id#\'",
+                        cascadeFrom: "facility"
+                    });
+
+                    $.fn.KendoComboBox($("#resource"), { 
+                        lookupSearchAction: "{!$RemoteAction.CapacityPlanningExt.lookupSearchFilter}", 
+                        referenceTo: "Resource__c",
+                        title: "{!$ObjectType.Resource__c.Label}",
+                        value: "",
+                        filterCriteria: "Facility__c=\'#=Id#\'",
+                        cascadeFrom: "facility"
+                    });
+
+                    $.fn.KendoComboBox($("#workCenterResource"), { 
+                        lookupSearchAction: "{!$RemoteAction.CapacityPlanningExt.lookupSearchFilter}", 
+                        referenceTo: "Work_Center_Resource__c",
+                        title: "{!$ObjectType.Work_Center_Resource__c.Label}"
+                    });
+
+                    var cascade = function() {
+                        var company = $("#company").data("kendoComboBox").value();
+                        var facility = $("#facility").data("kendoComboBox").value();
+                        var wc = $("#workCenter").data("kendoComboBox").value();
+                        var resource = $("#resource").data("kendoComboBox").value();
+                        var wcr = $("#workCenterResource").data("kendoComboBox");
+                        var filters;
+                        var enable = false;
+
+                        if (company && facility && wc && resource) {
+                            filters = "Work_Center__c = \'" + wc + "\' AND Resource__c = \'" + resource + "\'";
+                            enable = true;
+                        }
+
+                        if (wcr) {
+                            wcr.destroy();
+                            $("#workCenterResource").empty();
+                        }
+
+                        $.fn.KendoComboBox($("#workCenterResource"), { 
+                            lookupSearchAction: "{!$RemoteAction.CapacityPlanningExt.lookupSearchFilter}", 
+                            referenceTo: "Work_Center_Resource__c",
+                            title: "{!$ObjectType.Work_Center_Resource__c.Label}",
+                            filterCriteria: filters
+                        });
+                        $("#workCenterResource").data("kendoComboBox").enable(enable);
+                    };
+                    
+                    $("#workCenter").data("kendoComboBox").bind("cascade",cascade);
+                    $("#resource").data("kendoComboBox").bind("cascade",cascade);
+
+                    var d = new Date();
+                    d.setHours(0,0,0,0);
+
+                    $.fn.KendoDatePicker($("#startDate"), {
+                        value: d
+                    });
+
+                    $("#days").kendoNumericTextBox({
+                        decimals: 0,
+                        min: 1,
+                        format: "n0",
+                        value: 30
+                    });
+                },
+                
+                RenderWCRGrid: function() {
+                    var wcrFields = this.wcrFields;
+                    var wcrDateFields = KenandyErp.KendoGridOptions.GetDateFields(wcrFields);
+
+                    if (this.wcrGrid) {
+                        $("#wcrGrid").off();
+                        this.wcrGrid.destroy();
+                        $("#wcrGrid").empty();
+                    }
+
+                    var getModel = function() {
+                        return kendo.data.Model.define({ id: "Id", fields: KenandyErp.KendoGridOptions.GetFields(wcrFields) });
+                    };
+
+                    var getDataSource = function() {
+                        return new kendo.data.DataSource({
+                            transport: {
+                                read: function(options) {
+                                    var messageElement = $("#wcrGrid").closest("div.grid-container").find("div.grid-message");
+                                    KenandyErp.ClearMessage();
+                                    KenandyErp.ClearMessage(messageElement);
+
+                                    var errors = false;
+                                    if (!$("#facility").val()) {
+                                        KenandyErp.Message("Facility is required",KenandyErp.MessageType.Error,$(".page-message"));
+                                        errors = true;
+                                    }
+                                    if (!$("#startDate").val()) {
+                                        KenandyErp.Message("Start date is required",KenandyErp.MessageType.Error,$(".page-message"));
+                                        errors = true;
+                                    }
+                                    if (!$("#days").val()) {
+                                        KenandyErp.Message("Number of days is required",KenandyErp.MessageType.Error,$(".page-message"));
+                                        errors = true;
+                                    }
+
+                                    if (!errors) {
+                                        KenandyErp.BlockUI($("#wcrGrid"));
+
+                                        Visualforce.remoting.Manager.invokeAction(
+                                            "{!$RemoteAction.CapacityPlanningExt.getWCRData}",
+                                            $("#facility").val(),
+                                            $("#workCenter").val() ? $("#workCenter").val() : null,
+                                            $("#resource").val() ? $("#resource").val() : null,
+                                            $("#workCenterResource").val() ? $("#workCenterResource").val() : null,
+                                            new Date($("#startDate").val()).toUTCString(),
+                                            $("#days").val(),
+                                            function(result,event) {
+                                                KenandyErp.UnBlockUI($("#wcrGrid"));
+
+                                                if (event.type == "exception") {
+                                                    KenandyErp.Message(event.message,KenandyErp.MessageType.Error,messageElement);
+                                                } else if (result.success) {
+                                                    KenandyErp.CleanNamespace(result.records,"{!namespaceUU}");
+
+                                                    $.each(result.records, function(i,wcrWrapper) {
+                                                        wcrWrapper.wcr.WCRRec = { Id: wcrWrapper.wcr.Id, Name: wcrWrapper.wcr.Name };
+                                                    });
+
+                                                    woMap = { };
+                                                    opMap = { };
+                                                    if (result.additionalInfo && result.additionalInfo != null) {
+                                                        var addlInfo = JSON.parse(result.additionalInfo);
+                                                        if (addlInfo["wos"]) {
+                                                            woMap = addlInfo["wos"];
+                                                        }
+                                                        if (addlInfo["ops"]) {
+                                                            opMap = addlInfo["ops"];
+                                                        }
+                                                    }
+                                                    selectedWCR = null;
+                                                    CapacityUtil.woGrid.dataSource.read();
+                                                    CapacityUtil.opGrid.dataSource.read();
+
+                                                    options.success(result.records);
+                                                } else {
+                                                    KenandyErp.Messages(result.messages,messageElement);
+                                                }
+                                            },
+                                            { escape: false }
+                                        );
+                                    } else {
+                                        options.success([ ]);
+                                    }
+                                }
+                            },
+                            batch: true,
+                            schema: {
+                                model: getModel(),
+                                parse: function(response) {
+                                    $.each(response, function(i,item) {
+                                        item = Serializer.ConvertFromSFDCDate(item, { dateFields: wcrDateFields });
+                                    });
+                                    return response;
+                                }
+                            }
+                        });
+                    };
+
+                    var onDataBound = function(e) {
+                        if (e.sender.dataSource.total() == 0) {
+                            $(e.sender.wrapper).find('.k-grid-content tbody').append('<tr class="kndy-grid-empty"><td colspan="' + e.sender.columns.length + '" class="kndy-grid-empty-message">No records to display</td></tr>');
+                        } else {
+                            $(".color-cell").each(function() {
+                                var value = 0;
+                                try {
+                                    value = parseInt($(this).text());
+                                } catch (e) { }
+
+                                if (value > 0) {
+                                    $(this).addClass("color-cell-green");
+                                } else if (value == 0) {
+                                    $(this).addClass("color-cell-yellow");
+                                } else if (value < 0) {
+                                    $(this).addClass("color-cell-red");
+                                }
+                            });
+                        }
+                    };
+
+                    var getColumns = function() {
+                        var columns = KenandyErp.KendoGridOptions.GetColumns(wcrFields);
+
+                        $.each(columns, function(i,col) {
+                            if (col.field == "percentAvailable") {
+                                col.attributes.class += " color-cell";
+                            }
+                        });
+
+                        return columns;
+                    };
+
+                    this.wcrGrid = $("#wcrGrid").kendoGrid({
+                        columns: getColumns(),
+                        dataSource: getDataSource(),
+                        resizable: true,
+                        selectable: true,
+                        dataBound: onDataBound,
+                        change: function(e) {
+                            selectedWCR = this.dataItem(this.select()[0]).wcr.Id;
+                            CapacityUtil.woGrid.dataSource.read();
+                            CapacityUtil.opGrid.dataSource.read();
+                        }
+                    }).data("kendoGrid");
+                },
+
+                RenderWOGrid: function() {
+                    var woFields = this.woFields;
+                    var woDateFields = KenandyErp.KendoGridOptions.GetDateFields(woFields);
+
+                    if (this.woGrid) {
+                        $("#woGrid").off();
+                        this.woGrid.destroy();
+                        $("#woGrid").empty();
+                    }
+
+                    var getModel = function() {
+                        return kendo.data.Model.define({ id: "Id", fields: KenandyErp.KendoGridOptions.GetFields(woFields) });
+                    };
+
+                    var getDataSource = function() {
+                        return new kendo.data.DataSource({
+                            transport: {
+                                read: function(options) {
+                                    if (selectedWCR && selectedWCR != null && woMap && woMap[selectedWCR]) {
+                                        var messageElement = $("#woGrid").closest("div.grid-container").find("div.grid-message");
+                                        KenandyErp.ClearMessage();
+                                        KenandyErp.ClearMessage(messageElement);
+                                        KenandyErp.BlockUI($("#woGrid"));
+
+                                        Visualforce.remoting.Manager.invokeAction(
+                                            "{!$RemoteAction.CapacityPlanningExt.getWOData}",
+                                            woMap[selectedWCR],
+                                            function(result,event) {
+                                                KenandyErp.UnBlockUI($("#woGrid"));
+
+                                                if (event.type == "exception") {
+                                                    KenandyErp.Message(event.message,KenandyErp.MessageType.Error,messageElement);
+                                                } else if (result.success) {
+                                                    KenandyErp.CleanNamespace(result.records,"{!namespaceUU}");
+                                                    $.each(result.records, function(i,wo) {
+                                                        if (!wo.Shipment_Line__r) {
+                                                            wo.Shipment_Line__r = { };
+                                                        }
+                                                        wo.WORec__r = { Id: wo.Id, Name: wo.Name };
+                                                    });
+                                                    options.success(result.records);
+                                                } else {
+                                                    KenandyErp.Messages(result.messages,messageElement);
+                                                }
+                                            },
+                                            { escape: false }
+                                        );
+                                    } else {
+                                        options.success([ ]);
+                                    }
+                                }
+                            },
+                            batch: true,
+                            schema: {
+                                model: getModel(),
+                                parse: function(response) {
+                                    $.each(response, function(i,item) {
+                                        item = Serializer.ConvertFromSFDCDate(item, { dateFields: woDateFields });
+                                    });
+                                    return response;
+                                }
+                            }
+                        });
+                    };
+
+                    var onDataBound = function(e) {
+                        if (e.sender.dataSource.total() == 0) {
+                            $(e.sender.wrapper).find('.k-grid-content tbody').append('<tr class="kndy-grid-empty"><td colspan="' + e.sender.columns.length + '" class="kndy-grid-empty-message">No records to display</td></tr>');
+                        }
+                    };
+
+                    var getColumns = function() {
+                        return KenandyErp.KendoGridOptions.GetColumns(woFields);
+                    };
+
+                    this.woGrid = $("#woGrid").kendoGrid({
+                        columns: getColumns(),
+                        dataSource: getDataSource(),
+                        resizable: true,
+                        dataBound: onDataBound,
+                    }).data("kendoGrid");
+                },
+
+                RenderOPGrid: function() {
+                    var opFields = this.opFields;
+                    var opDateFields = KenandyErp.KendoGridOptions.GetDateFields(opFields);
+
+                    if (this.opGrid) {
+                        $("#opGrid").off();
+                        this.opGrid.destroy();
+                        $("#opGrid").empty();
+                    }
+
+                    var getModel = function() {
+                        return kendo.data.Model.define({ id: "Id", fields: KenandyErp.KendoGridOptions.GetFields(opFields) });
+                    };
+
+                    var getDataSource = function() {
+                        return new kendo.data.DataSource({
+                            transport: {
+                                read: function(options) {
+                                    if (selectedWCR && selectedWCR != null && opMap && opMap[selectedWCR]) {
+                                        var messageElement = $("#opGrid").closest("div.grid-container").find("div.grid-message");
+                                        KenandyErp.ClearMessage();
+                                        KenandyErp.ClearMessage(messageElement);
+                                        KenandyErp.BlockUI($("#opGrid"));
+
+                                        Visualforce.remoting.Manager.invokeAction(
+                                            "{!$RemoteAction.CapacityPlanningExt.getOPData}",
+                                            opMap[selectedWCR],
+                                            function(result,event) {
+                                                KenandyErp.UnBlockUI($("#opGrid"));
+
+                                                if (event.type == "exception") {
+                                                    KenandyErp.Message(event.message,KenandyErp.MessageType.Error,messageElement);
+                                                } else if (result.success) {
+                                                    KenandyErp.CleanNamespace(result.records,"{!namespaceUU}");
+
+                                                    $.each(result.records, function(i,op) {
+                                                        op.OPRec__r = { Id: op.Id, Name: op.Name };
+                                                    });
+
+                                                    options.success(result.records);
+                                                } else {
+                                                    KenandyErp.Messages(result.messages,messageElement);
+                                                }
+                                            },
+                                            { escape: false }
+                                        );
+                                    } else {
+                                        options.success([ ]);
+                                    }
+                                }
+                            },
+                            batch: true,
+                            schema: {
+                                model: getModel(),
+                                parse: function(response) {
+                                    $.each(response, function(i,item) {
+                                        item = Serializer.ConvertFromSFDCDate(item, { dateFields: opDateFields });
+                                    });
+                                    return response;
+                                }
+                            }
+                        });
+                    };
+
+                    var onDataBound = function(e) {
+                        if (e.sender.dataSource.total() == 0) {
+                            $(e.sender.wrapper).find('.k-grid-content tbody').append('<tr class="kndy-grid-empty"><td colspan="' + e.sender.columns.length + '" class="kndy-grid-empty-message">No records to display</td></tr>');
+                        }
+                    };
+
+                    var getColumns = function() {
+                        return KenandyErp.KendoGridOptions.GetColumns(opFields);
+                    };
+
+                    this.opGrid = $("#opGrid").kendoGrid({
+                        columns: getColumns(),
+                        dataSource: getDataSource(),
+                        resizable: true,
+                        dataBound: onDataBound,
+                    }).data("kendoGrid");
+                },
+
+                BindButtons: function() {
+                    $(".search-command").on("click", function() { CapacityUtil.wcrGrid.dataSource.read(); });
+                    
+                    $(".calendar-view-command").on("click", function() {
+                        var url = "{!$Page.ProductionPlanning}";
+                        var i = 0;
+                        if ($("#company").val()) {
+                            url += (i == 0 ? "?" : "&") + "company=" + $("#company").val();
+                            i++;
+                        }
+                        if ($("#facility").val()) {
+                            url += (i == 0 ? "?" : "&") + "facility=" + $("#facility").val();
+                            i++;
+                        }
+                        if ($("#workCenter").val()) {
+                            url += (i == 0 ? "?" : "&") + "workCenter=" + $("#workCenter").val();
+                            i++;
+                        }
+                        if ($("#resource").val()) {
+                            url += (i == 0 ? "?" : "&") + "resource=" + $("#resource").val();
+                            i++;
+                        }
+                        if ($("#workCenterResource").val()) {
+                            url += (i == 0 ? "?" : "&") + "workCenterResource=" + $("#workCenterResource").val();
+                            i++;
+                        }
+                        if ($("#startDate").val()) {
+                            url += (i == 0 ? "?" : "&") + "startDate=" + (new Date($("#startDate").val())).toISOString().split("T")[0];
+                            i++;
+                        }
+                        if ($("#days").val()) {
+                            url += (i == 0 ? "?" : "&") + "days=" + $("#days").val();
+                            i++;
+                        }
+                        
+                        window.open(url,"_top");
+                    });
+                },
+
+                RenderLegend: function() {
+                    var legendTd = $("div[id$='wcrPB'] td:last-of-type");
+                    legendTd.empty();
+                    legendTd.css("padding-top","8px");
+                    legendTd.append("<div class='legend-green' /> <strong> > 0% </strong> &nbsp;&nbsp;&nbsp; <div class='legend-yellow' /> <strong> = 0% </strong> &nbsp;&nbsp;&nbsp; <div class='legend-red' /> <strong> < 0% </strong> ");
+                }
+            };
+        }();
+    </script>
+
+    <style type="text/css">
+        .color-cell-red {
+            background-color: #DB6767;
+        }
+        .color-cell-yellow {
+            background-color: #E8ED61;
+        }
+        .color-cell-green {
+            background-color: #8BC783;
+        }
+        .legend-red {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            margin: 0px;
+            padding: 0px;
+            border-style: solid;
+            border-width: 1px;
+            border-color: black;
+            background-color: #DB6767;
+        }
+        .legend-yellow {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            margin: 0px;
+            padding: 0px;
+            border-style: solid;
+            border-width: 1px;
+            border-color: black;
+            background-color: #E8ED61;
+        }
+        .legend-green {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            margin: 0px;
+            padding: 0px;
+            border-style: solid;
+            border-width: 1px;
+            border-color: black;
+            background-color: #8BC783;
+        }
+    </style>
+</apex:page>

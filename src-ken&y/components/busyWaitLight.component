@@ -1,0 +1,49 @@
+<apex:component >
+<!-- like busy wait but does not include jquery for me -->
+<script>
+
+    function busyWaitGrayOut( isVisible ) {
+        var shadowDiv = document.getElementById( "ShadowDivId" );  // pull shadow div
+        
+        if (isVisible) {
+            shadowDiv.style.MozOpacity = 0.3;
+            shadowDiv.className = "shadowDivEnableClass";
+            if(document.getElementById('loadingImage') != undefined){
+                document.getElementById('loadingImage').style.display='block';
+            }
+        } else {
+            shadowDiv.className = "shadowDivDisableClass";
+            if(document.getElementById('loadingImage') != undefined){
+                document.getElementById('loadingImage').style.display='none';
+            }
+        }
+    }
+
+</script>
+    
+    <div id="ShadowDivId" class="shadowDivDisableClass">
+            <div id="loadingImage" style="position: absolute; 
+                                left: 40%; top: 40%;display: none;z-index: 51;">
+                <apex:image value="/img/loading32.gif" 
+                                width="30px" height="30px" />
+            </div>
+        </div>  
+    <apex:actionStatus id="actionStatus" onstart="busyWaitGrayOut(true)" onstop="busyWaitGrayOut(false)"  />
+
+<style>
+.shadowDivDisableClass{  display:none;}
+.shadowDivEnableClass{
+    position:absolute;
+    overflow:hidden;
+    opacity:0.3;
+    z-Index:20000;
+    filter:alpha(opacity=30);
+    background-Color:#000000;
+    display:block;   
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;      
+}
+</style>
+</apex:component>

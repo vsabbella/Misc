@@ -1,0 +1,36 @@
+<apex:page standardController="Work_Order__c" sidebar="false" extensions="WorkOrderCancelExt" id="page">
+    <script type="text/javascript"> 
+        $(document).ready(function() { 
+            cancelConfirm();
+            return false;
+        });
+        
+        function cancelConfirm(){
+            result = window.confirm('{!$Label.ConfirmCancel}');
+            if (result == true)
+                confirmCancelAF();
+            return false;
+        }
+
+        function goback(){
+            if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+                sforce.one.back(true);
+            } else {
+                window.location.href = '/{!Work_Order__c.Id}';
+            }
+        }
+
+    </script>
+    <apex:form id="mainFormID">
+        <c:busyWait />
+        <apex:pageBlock >
+            <apex:outputPanel id="errPanel">
+                <apex:PageMessages />
+            </apex:outputPanel>
+            <apex:actionFunction name="confirmCancelAF" action="{!cancel}" status="actionStatus" reRender="errPanel" />
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="{!$Label.Go_Back}" onClick="goback();return false;"  status="actionStatus" rerender="mainFormID" />
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

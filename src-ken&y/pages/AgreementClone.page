@@ -1,0 +1,104 @@
+<apex:page doctype="html-5.0" standardController="Agreement__c" extensions="AgreementCloneCon" showHeader="false">
+	<style type="text/css">
+		.column-width {
+        	width: 25%;
+        }
+        .filterLabel {
+            font-weight: bold;
+            font-size: 93%;
+        }
+		.filterInput {
+        	width : 90%;
+        }
+	</style>
+	
+	
+    <c:KendoResources />
+    <c:busyWait />
+    <script>
+    
+		
+			function checkAll(cb)
+			{
+				var inputElem = document.getElementsByTagName("input");
+				for(var i=0; i<inputElem.length; i++)
+				{
+					if(inputElem[i].id.indexOf("checkedone")!=-1)
+					inputElem[i].checked = cb.checked;
+				}
+			} 
+		var isSuccess = '{!isSuccess}';                                                   
+        var errorMsg = '{!errorMsg}';
+    	function closeModalWindow(result) {
+	        var win = window.parent.$("#cloneAgreementwindow").data("kendoWindow");
+	        if ( win) { 
+                window.parent.$("#pprod").data("kendoTreeList").dataSource.read();
+	        	win.close(); 
+	        }
+	    }
+			
+	    function onConfirmComplete() { debugger;
+	    	if (isSuccess == 'true') {
+                KenandyErp.Message(errorMsg, KenandyErp.MessageType.Success, window.parent.$('.page-message'));
+	        	closeModalWindow();
+	        }
+	    }	
+			
+		
+
+	</script>
+    <apex:sectionHeader title="{!Agreement__c.Name}" subtitle="Clone"/>
+    <apex:form id="form">
+    	<script>
+			isSuccess = '{!isSuccess}';                                                   
+		    errorMsg = '{!errorMsg}';
+		</script>
+        <apex:pageMessages escape="false"/>
+        <apex:pageBlock >
+        	
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="Clone"  action="{!agmtClone}" disabled="{!disableButton}" status="actionStatus" rendered="{!renderGrid}" rerender="form" oncomplete="onConfirmComplete();" />
+                <apex:commandButton value="Cancel" onclick="closeModalWindow()"/>
+                
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection columns="2">                
+                    <apex:inputField value="{!Agreement.name}"/>
+                    <apex:inputField value="{!Agreement.Agreement_Code__c}"/>
+                    <apex:inputField value="{!Agreement.Agreement_Type__c }"/>
+                    <apex:inputField value="{!Agreement.Company__c}"/>
+                    <apex:inputField value="{!Agreement.Status__c}" />
+                    <apex:inputField value="{!Agreement.Customer__c}"/>
+                    <apex:inputField value="{!Agreement.Bill_To__c}"/>
+                    <apex:inputField value="{!Agreement.Sold_To__c }"/>
+                    <apex:inputField value="{!Agreement.Ship_To__c }"/>
+                    <apex:inputField value="{!Agreement.Site__c }"/>
+                    <apex:inputField value="{!agrm.Start_Date__c}" /> 
+                    <apex:inputField value="{!agrm.End_Date__c}"/>    
+           </apex:pageBlockSection>
+            </apex:pageBlock>
+            <apex:pageBlock >
+             <div style="overflow-x: auto">
+            <apex:pageBlockTable value="{!lws}" var="lw" rendered="{!renderGrid}">
+                <apex:column >
+                    <apex:facet name="header"> 
+								<apex:inputCheckbox id="checkAll">
+									<apex:actionSupport event="onclick" onsubmit="checkAll(this)" rerender=""/>
+								</apex:inputCheckbox>
+							</apex:facet>
+					<apex:inputCheckbox id="checkedone" value="{!lw.selected}"/>	
+                </apex:column>
+                
+                <apex:repeat value="{!$ObjectType.Agreement_Line__c.Fieldsets.Clone}" var="f" >
+                   <apex:column headerValue="{!f.label}" >
+                       <apex:inputField value="{!lw.al[f]}"/>
+                   </apex:column>
+                </apex:repeat>
+                
+            </apex:pageBlockTable>
+            </div>
+        </apex:pageBlock>
+       
+      
+    </apex:form>
+    
+</apex:page>

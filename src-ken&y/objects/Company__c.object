@@ -1,0 +1,1581 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpCompany</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Each Logistics or Financial entity will be represented by a single Company record.  Master data for the Company is recorded here and used throughout the System.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableEnhancedLookup>true</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>HierarchyView</fullName>
+        <description>This is used in SegmentHierarchyViewManage page</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>CreatedDate</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>LastModifiedDate</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>HierarchyView</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>MRPRun_RO</fullName>
+        <description>GenerateMRP</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>MRPRun_RO</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>MRPRun_WR</fullName>
+        <description>GenerateMRP</description>
+        <displayedFields>
+            <field>Planning_Calendar__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Receiving_Calendar__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Planning_Calendar2__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Receiving_Calendar2__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>MRP_Backward_Horizon_in_Days__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>MRP_Demand_Time_Fence_in_Days__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>MRP_Forward_Horizon_in_Days__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>MRP_Planning_Time_Fence_in_Days__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Use_Quantity_on_Hand_as_Supply_in_MRP__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Use_Order_Forecast_as_Demand_in_MRP__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Use_Only_Level_Zero_QOH_as_Supply_in_MRP__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Use_Sales_Orders_as_Demand_in_MRP__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Use_Purchase_Orders_as_Supply_in_MRP__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Use_Work_Orders_as_Demand_in_MRP__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Use_Work_Orders_as_Supply_in_MRP__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Use_Transfer_Orders_as_Demand_in_MRP__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Use_Transfer_Orders_as_Supply_in_MRP__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>MRPRun_WR</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Minipage</fullName>
+        <description>on the sidebar of the GettingAround page</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>A_Days__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>B_Days__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>C_Days__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Minipage</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Overview</fullName>
+        <description>Used on the Company detail page button &quot;Overview&quot;</description>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Address__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Address__r.BillingStreet</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Address__r.BillingCity</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Address__r.BillingState</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>CreatedDate</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Overview</label>
+    </fieldSets>
+    <fields>
+        <fullName>A_Days__c</fullName>
+        <description>The number of days between cycle counts for A parts</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The number of days between cycle counts for A parts.</inlineHelpText>
+        <label>A Days</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Accounting_Standard__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Accounting Standard</label>
+        <referenceTo>Accounting_Standard__c</referenceTo>
+        <relationshipLabel>Companies</relationshipLabel>
+        <relationshipName>Companies</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Address__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to account for address</description>
+        <externalId>false</externalId>
+        <label>Address</label>
+        <referenceTo>Account</referenceTo>
+        <relationshipLabel>Companies</relationshipLabel>
+        <relationshipName>Companies</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Aliases__c</fullName>
+        <externalId>false</externalId>
+        <label>Aliases</label>
+        <length>131072</length>
+        <trackTrending>false</trackTrending>
+        <type>LongTextArea</type>
+        <visibleLines>3</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Allow_Retro_Active_Standard_Cost__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>This field would determine if the retro active cost update is allowed for the company. This field would be maintained only by the Admin, not all users would have access to this field.</description>
+        <externalId>false</externalId>
+        <label>Allow Retroactive Standard Cost</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Auto_Plan_Pick__c</fullName>
+        <defaultValue>true</defaultValue>
+        <externalId>false</externalId>
+        <label>Auto Plan-Pick</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>B_Days__c</fullName>
+        <description>The number of days between cycle counts for B parts</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The number of days between cycle counts for B parts.</inlineHelpText>
+        <label>B Days</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>C_Days__c</fullName>
+        <description>The number of days between cycle counts for C parts</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The number of days between cycle counts for C parts.</inlineHelpText>
+        <label>C Days</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>City__c</fullName>
+        <description>Company city</description>
+        <externalId>false</externalId>
+        <formula>Address__r.BillingCity</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>City</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Comp_Currency__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Company Currency</label>
+        <referenceTo>Currency__c</referenceTo>
+        <relationshipLabel>Companies</relationshipLabel>
+        <relationshipName>Companies</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Company_Currency__c</fullName>
+        <externalId>false</externalId>
+        <label>Company Currency</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>USD</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>EUR</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>GBP</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>CAD</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>SGD</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Company_Identifier__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <description>Unique identifier to specify this company for data integrations</description>
+        <externalId>true</externalId>
+        <label>Company Identifier</label>
+        <length>32</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Company_Unique__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>Name for uniqueness</description>
+        <externalId>false</externalId>
+        <label>Company Unique</label>
+        <length>80</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Consol_Currency__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Consolidation Currency</label>
+        <referenceTo>Currency__c</referenceTo>
+        <relationshipLabel>Companies (Consolidation Currency)</relationshipLabel>
+        <relationshipName>Consol_Currency</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Consolidation_Currency__c</fullName>
+        <externalId>false</externalId>
+        <label>Consolidation Currency</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>USD</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>EUR</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>GBP</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>CAD</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Control_Number__c</fullName>
+        <description>IRS control number typically used for electronic filing [such as 1099-MISC].</description>
+        <externalId>false</externalId>
+        <inlineHelpText>IRS control number typically used for electronic filing (such as 1099-MISC).</inlineHelpText>
+        <label>DEPRECATED</label>
+        <length>20</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Country__c</fullName>
+        <description>Company Country</description>
+        <externalId>false</externalId>
+        <formula>Address__r.BillingCountry</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Country</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+    <fullName>Auto_Create_BTO_WOs__c</fullName>
+    <label>Auto-Create Build to Order Work Orders</label>
+    <defaultValue>false</defaultValue>
+    <description>Default is unchecked. If checked, associates work orders while releasing the build to order sales order lines.</description>
+    <externalId>false</externalId>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Credit_Card_Bank_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Merchant Bank Account</label>
+        <referenceTo>Bank_Account__c</referenceTo>
+        <relationshipLabel>Companies (Credit Card Bank Account)</relationshipLabel>
+        <relationshipName>Companies_For_Credit_Cards</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Default_Amount_Tolerance__c</fullName>
+        <description>the default total amount of delta between a Supplier Invoice line compared to its related PO line defined at the company level</description>
+        <externalId>false</externalId>
+        <label>Default Amount Tolerance</label>
+        <precision>4</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Default_Exchange_Rate_Type__c</fullName>
+        <externalId>false</externalId>
+        <label>Default Exchange Rate Type</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Monthly</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Daily</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Default_Purchasing_Deliver_To_Facility__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Facility</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Default Purchasing Deliver To Facility</inlineHelpText>
+        <label>Purchasing Deliver To Facility</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Facility__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Id</valueField>
+            </filterItems>
+            <isOptional>true</isOptional>
+        </lookupFilter>
+        <referenceTo>Facility__c</referenceTo>
+        <relationshipLabel>Companies</relationshipLabel>
+        <relationshipName>Companies</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Default_Quantity_Tolerance_Over__c</fullName>
+        <description>the default % that the QTY can be different (over) between SI line and PO line receipt QTY defined at the company level</description>
+        <externalId>false</externalId>
+        <label>Default Quantity Tolerance Over %</label>
+        <precision>4</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Percent</type>
+    </fields>
+    <fields>
+        <fullName>Default_Rollup_Basis__c</fullName>
+        <description>Defines how the assembly cost rollup will function</description>
+        <externalId>false</externalId>
+        <label>Rollup Basis</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Standard</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>Linear</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Default_Sales_Order_Dimension_UOM__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>This UOM will be defaulted to all newly created Sales Order: Dimension UOM field</description>
+        <externalId>false</externalId>
+        <label>Default Sales Order Dimension UOM</label>
+        <referenceTo>UOM__c</referenceTo>
+        <relationshipLabel>Companies (Default Sales Order Dimension UOM)</relationshipLabel>
+        <relationshipName>Companies1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Default_Sales_Order_Ship_From_Facility__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Facility</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Default Sales Order Ship From Facility</inlineHelpText>
+        <label>Sales Order Ship From Facility</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Facility__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Id</valueField>
+            </filterItems>
+            <isOptional>true</isOptional>
+        </lookupFilter>
+        <referenceTo>Facility__c</referenceTo>
+        <relationshipLabel>Companies (Default Sales Order Ship From Facility)</relationshipLabel>
+        <relationshipName>Companies1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Default_Sales_Order_Weight_UOM__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>This will be used as the default weight UOM for all Sales Orders in a company.</description>
+        <externalId>false</externalId>
+        <label>Default Sales Order Weight UOM</label>
+        <referenceTo>UOM__c</referenceTo>
+        <relationshipLabel>Companies</relationshipLabel>
+        <relationshipName>Companies</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Default_Transaction_Currency__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Default Transaction Currency</label>
+        <referenceTo>Currency__c</referenceTo>
+        <relationshipLabel>Companies (Default Transaction Currency)</relationshipLabel>
+        <relationshipName>Default_Transaction_Currency</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Default_Unit_Price_Tolerance_Over__c</fullName>
+        <description>the default % that the unit price can be different (over) between SI line and PO line defined at the company level</description>
+        <externalId>false</externalId>
+        <label>Default Unit Price Tolerance Over %</label>
+        <precision>4</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Percent</type>
+    </fields>
+    <fields>
+        <fullName>Default_Work_Order_Facility__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Facility</description>
+        <externalId>false</externalId>
+        <label>Default Work Order Facility</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Facility__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Id</valueField>
+            </filterItems>
+            <isOptional>true</isOptional>
+        </lookupFilter>
+        <referenceTo>Facility__c</referenceTo>
+        <relationshipLabel>Companies (Default Work Order Complete to Faicility)</relationshipLabel>
+        <relationshipName>Companies2</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Default_Work_Order_WIP_Facility__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Facility</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Lookup to Facility</inlineHelpText>
+        <label>Default Work Order WIP Facility</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Facility__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Id</valueField>
+            </filterItems>
+            <isOptional>true</isOptional>
+        </lookupFilter>
+        <referenceTo>Facility__c</referenceTo>
+        <relationshipLabel>Companies (Default Work Order WIP Facility)</relationshipLabel>
+        <relationshipName>Companies4</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Deposit_Bank_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Deposit bank account will be carried out by default on Customer receipt page as per company selection</description>
+        <externalId>false</externalId>
+        <label>Deposit Bank Account</label>
+        <lookupFilter>
+            <active>true</active>
+            <filterItems>
+                <field>Bank_Account__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Id</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Bank_Account__c</referenceTo>
+        <relationshipLabel>Companies (Deposit Bank Account)</relationshipLabel>
+        <relationshipName>Companies1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Disbursement_Bank_Account__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Default bank account used to send payments to suppliers</description>
+        <externalId>false</externalId>
+        <label>Disbursement Bank Account</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>Select a bank account related to this company</errorMessage>
+            <filterItems>
+                <field>Bank_Account__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Id</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Bank_Account__c</referenceTo>
+        <relationshipLabel>Companies</relationshipLabel>
+        <relationshipName>Companies</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Do_Not_Release_Partial_Sales_Orders__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Do Not Release Partial Sales Orders</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Finalize_Supplier_Invoices_w_Exceptions__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>If selected, the system finalizes supplier invoices and credit memos so they can be accounted, even if there are exceptions.</description>
+        <externalId>false</externalId>
+        <label>Finalize Supplier Invoices on Creation</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Freight_Forwarder__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Freight Forwarder</label>
+        <referenceTo>Contact</referenceTo>
+        <relationshipLabel>Companies</relationshipLabel>
+        <relationshipName>Companies</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Frequency_of_Rate_Feed__c</fullName>
+        <externalId>false</externalId>
+        <label>Frequency of Rate Feed</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Daily</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Monthly</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>MRP_Backward_Horizon_in_Days__c</fullName>
+        <description>The number of days in the past from today that MRP will search for demand and supply</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Specifies the number of days in the past that MRP looks to for supply and demand.</inlineHelpText>
+        <label>MRP Backward Horizon in Days</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>MRP_Demand_Time_Fence_in_Days__c</fullName>
+        <description>MRP uses forecasted demand outside of this time window and Sales Orders inside this time fence</description>
+        <externalId>false</externalId>
+        <inlineHelpText>MRP uses forecast demand outside of this time fence and sales order demand inside the time fence.</inlineHelpText>
+        <label>MRP Demand Time Fence in Days</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>MRP_Forward_Horizon_in_Days__c</fullName>
+        <description>The number of days in the future from today that MRP will search for demand and supply</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Specifies the number of days in the future that MRP looks to for supply and demand.</inlineHelpText>
+        <label>MRP Forward Horizon in Days</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>MRP_Planning_Time_Fence_in_Days__c</fullName>
+        <description>The number of days in the future from today before MRP creates any planned make order</description>
+        <externalId>false</externalId>
+        <inlineHelpText>MRP will not change existing planned orders within the specified period.</inlineHelpText>
+        <label>MRP Planning Time Fence in Days</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Manufacturing_Calendar__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Manufacturing Calendar</label>
+        <lookupFilter>
+            <active>true</active>
+            <booleanFilter>1 AND 2</booleanFilter>
+            <errorMessage>Manufacturing calendar must have type Manufacturing</errorMessage>
+            <filterItems>
+                <field>Calendar__c.Type__c</field>
+                <operation>equals</operation>
+                <value>Manufacturing</value>
+            </filterItems>
+            <filterItems>
+                <field>Calendar__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Id</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Calendar__c</referenceTo>
+        <relationshipLabel>Companies</relationshipLabel>
+        <relationshipName>Companies</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Name_Control__c</fullName>
+        <description>Name Control is used for filing with the IRS [typically 1099s].</description>
+        <externalId>false</externalId>
+        <label>DEPRECATED</label>
+        <length>4</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Parent_Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>record parent to subsidiary relationships</description>
+        <externalId>false</externalId>
+        <label>Parent Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Parent Companies</relationshipLabel>
+        <relationshipName>Parent_Companies</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Planning_Calendar2__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Planning Calendar</label>
+        <referenceTo>Calendar__c</referenceTo>
+        <relationshipLabel>Companies (Planning Calendar)</relationshipLabel>
+        <relationshipName>Companies1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Planning_Calendar__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The business hours used to plan the orders generated through MRP.</description>
+        <externalId>false</externalId>
+        <label>Planning Calendar</label>
+        <referenceTo>BusinessHours</referenceTo>
+        <relationshipName>Companies</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Populate_Acceptance_Date_On_Agreement__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>Populate Acceptance Date On Agreement</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Receiving_Calendar2__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Receiving Calendar</label>
+        <referenceTo>Calendar__c</referenceTo>
+        <relationshipLabel>Companies (Receiving Calendar)</relationshipLabel>
+        <relationshipName>Companies2</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Receiving_Calendar__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Receiving Calendar</label>
+        <referenceTo>BusinessHours</referenceTo>
+        <relationshipLabel>Companies (Receiving Calendat)</relationshipLabel>
+        <relationshipName>Companies1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Revaluation_Frequency_of_Unrealized_FX__c</fullName>
+        <externalId>false</externalId>
+        <label>Revaluation_Frequency of Unrealized FX</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Daily</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Monthly</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Serial_Control__c</fullName>
+        <description>Defines which processes needs to track serials</description>
+        <externalId>false</externalId>
+        <label>Serial Control</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>At receipt and all processes</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>At shipment only</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Stat_Currency__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Statutory Currency</label>
+        <referenceTo>Currency__c</referenceTo>
+        <relationshipLabel>Companies (Statutory Currency)</relationshipLabel>
+        <relationshipName>Stat_Currency</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>State__c</fullName>
+        <description>Company State</description>
+        <externalId>false</externalId>
+        <formula>Address__r.BillingState</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>State</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Statutory_Currency__c</fullName>
+        <externalId>false</externalId>
+        <label>Statutory Currency</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>USD</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>EUR</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>GBP</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>CAD</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Street__c</fullName>
+        <description>Company Street</description>
+        <externalId>false</externalId>
+        <formula>Address__r.BillingStreet</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Street</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Subs_Currency__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Subsidiary Currency</label>
+        <referenceTo>Currency__c</referenceTo>
+        <relationshipLabel>Companies (Subsidiary Currency)</relationshipLabel>
+        <relationshipName>Subs_Currency</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Subsidiary_Currency__c</fullName>
+        <externalId>false</externalId>
+        <label>Subsidiary Currency</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>USD</fullName>
+                    <default>true</default>
+                </value>
+                <value>
+                    <fullName>EUR</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>GBP</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>CAD</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>TIN__c</fullName>
+        <description>TIN of the company [for payment] - shows up on 1099 electronic filing.</description>
+        <externalId>false</externalId>
+        <label>TIN</label>
+        <length>10</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Top_Parent_Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>The ultimate parent for all companies that are related to this company</description>
+        <externalId>false</externalId>
+        <label>Top Parent Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Companies (Top Parent Company)</relationshipLabel>
+        <relationshipName>Top_Parent_Companies</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Unrealized_FX_Revaluation_Method__c</fullName>
+        <externalId>false</externalId>
+        <label>Unrealized FX Revaluation Method</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Daily</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Monthly</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Use_Facility_Costs_in_Assembly_Rollup__c</fullName>
+        <defaultValue>true</defaultValue>
+        <externalId>false</externalId>
+        <label>Use Facility Costs in Assembly Rollup</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Use_Item_Types_For_Costing__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>This should be checked to do cost rollup based on item types.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>This should be checked to do cost rollup based on item types.</inlineHelpText>
+        <label>Use Item Types For Costing</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Use_Only_Level_Zero_QOH_as_Supply_in_MRP__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <inlineHelpText>Use Only Level Zero QOH as Supply in MRP when checkbox is selected.</inlineHelpText>
+        <label>Level Zero QOH as Supply</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Use_Order_Forecast_as_Demand_in_MRP__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Use Order Forecast as Demand in MRP</description>
+        <externalId>false</externalId>
+        <inlineHelpText>MRP ignores order forecasts as demand if the checkbox is not selected.</inlineHelpText>
+        <label>Order Forecast as Demand</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Use_Purchase_Orders_as_Supply_in_MRP__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Use Purchase Orders as Supply in MRP</description>
+        <externalId>false</externalId>
+        <inlineHelpText>MRP ignores purchase orders as supply if the checkbox is not selected.</inlineHelpText>
+        <label>Purchase Orders as Supply</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Use_Quantity_on_Hand_as_Supply_in_MRP__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Use Quantity on Hand as Supply in MRP</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Use Quantity on Hand as Supply in MRP: ignore Safety Stock and Negative Quantity on Hand if checkbox is not selected.</inlineHelpText>
+        <label>Quantity on Hand as Supply</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Use_Sales_Orders_as_Demand_in_MRP__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Use Sales Orders as Demand in MRP</description>
+        <externalId>false</externalId>
+        <inlineHelpText>MRP ignores sales orders as demand if checkbox is not selected.</inlineHelpText>
+        <label>Sales Orders as Demand</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Use_Transfer_Orders_as_Demand_in_MRP__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Use Transfer Orders as Demand in MRP</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Use Transfer Orders as Demand in MRP</inlineHelpText>
+        <label>Transfer Orders as Demand</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Use_Transfer_Orders_as_Supply_in_MRP__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Use Transfer Orders as Supply in MRP</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Use Transfer Orders as Supply in MRP</inlineHelpText>
+        <label>Transfer Orders as Supply</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Use_Warranty_Repairs__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Repair Flow</description>
+        <externalId>false</externalId>
+        <label>Use Warranty Repairs</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Use_Work_Orders_as_Demand_in_MRP__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Use Work Orders as Demand in MRP</description>
+        <externalId>false</externalId>
+        <inlineHelpText>MRP ignores work orders as demand if the checkbox is not selected.</inlineHelpText>
+        <label>Work Orders as Demand</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Use_Work_Orders_as_Supply_in_MRP__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Use Work Orders as Supply in MRP</description>
+        <externalId>false</externalId>
+        <inlineHelpText>MRP ignores work orders as supply if the checkbox is not selected.</inlineHelpText>
+        <label>Work Orders as Supply</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>VAT_ID__c</fullName>
+        <externalId>false</externalId>
+        <label>VAT ID</label>
+        <length>50</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Zip_Code__c</fullName>
+        <description>Company Zip Code</description>
+        <externalId>false</externalId>
+        <formula>Address__r.BillingPostalCode</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Zip Code</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <label>Company</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>CREATED_DATE</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Company</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Companies</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>A_Days__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>B_Days__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>C_Days__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>CREATED_DATE</customTabListAdditionalFields>
+        <excludedStandardButtons>Accept</excludedStandardButtons>
+        <excludedStandardButtons>ChangeOwner</excludedStandardButtons>
+        <lookupDialogsAdditionalFields>Street__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>City__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>State__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Zip_Code__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Country__c</lookupDialogsAdditionalFields>
+        <searchFilterFields>NAME</searchFilterFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>ABC_Days</fullName>
+        <active>true</active>
+        <errorConditionFormula>OR(A_Days__c &lt; 0, B_Days__c &lt;0, C_Days__c &lt;0)</errorConditionFormula>
+        <errorMessage>A Days, B Days or C Days cannot be less than zero</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Currency_Fields_Required</fullName>
+        <active>true</active>
+        <errorConditionFormula>IF(ISBLANK(Default_Transaction_Currency__c), TRUE, FALSE)</errorConditionFormula>
+        <errorMessage>Default Transaction Currency is not populated for this company</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>QOH_Validation</fullName>
+        <active>true</active>
+        <errorConditionFormula>AND ( Use_Only_Level_Zero_QOH_as_Supply_in_MRP__c == true, Use_Quantity_on_Hand_as_Supply_in_MRP__c == true)</errorConditionFormula>
+        <errorDisplayField>Use_Only_Level_Zero_QOH_as_Supply_in_MRP__c</errorDisplayField>
+        <errorMessage>You cannot check both Use Quantity on Hand as Supply in MRP or Use Only Level Zero QOH as Supply in MRP</errorMessage>
+    </validationRules>
+    <webLinks>
+        <fullName>Apply_Payments</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Apply Payments</masterLabel>
+        <openType>noSidebar</openType>
+        <page>ApplyPayments</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Configure_Balance_Transfers</fullName>
+        <availability>online</availability>
+        <displayType>link</displayType>
+        <linkType>page</linkType>
+        <masterLabel>Configure Balance Transfers</masterLabel>
+        <openType>replace</openType>
+        <page>BalanceTransfer</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Configure_OTC</fullName>
+        <availability>online</availability>
+        <displayType>link</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Configure OTC</masterLabel>
+        <openType>sidebar</openType>
+        <page>ConfigureOTC</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Credit_Profile_Edit</fullName>
+        <availability>online</availability>
+        <description>Credit Risk Profile Maintenance</description>
+        <displayType>link</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Credit Profile Edit</masterLabel>
+        <openType>sidebar</openType>
+        <page>CreditProfileEdit</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Fixed_Asset_Depreciation_Rollback</fullName>
+        <availability>online</availability>
+        <description>Use this link to rollback all unposted depreciation records for the specified company.</description>
+        <displayType>link</displayType>
+        <linkType>page</linkType>
+        <masterLabel>Fixed Asset Depreciation Rollback</masterLabel>
+        <openType>replace</openType>
+        <page>CompanyFixedAssetDepreciationRollback</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Generate_Accounting_Batch</fullName>
+        <availability>online</availability>
+        <description>Generate Accounting in batches for Order to Cash and Procure to Pay process</description>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Generate Accounting Batch</masterLabel>
+        <openType>noSidebar</openType>
+        <page>GenerateAccountingBatch</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Generate_Customer_Invoices</fullName>
+        <availability>online</availability>
+        <description>To Generate Customer Invoices off of Sales Orders for this company</description>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Generate Customer Invoices</masterLabel>
+        <openType>noSidebar</openType>
+        <page>CustomerInvoicesBatch</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Generate_MRP</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Generate MRP</masterLabel>
+        <openType>sidebar</openType>
+        <page>GenerateMRP</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Generate_MRP_V2</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Generate MRP V2</masterLabel>
+        <openType>sidebar</openType>
+        <page>GenerateMRPV2</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Manage_Bracket_Pricing_Upcharges</fullName>
+        <availability>online</availability>
+        <description>To manage backet pricing upcharges</description>
+        <displayType>link</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Manage Bracket Pricing</masterLabel>
+        <openType>sidebar</openType>
+        <page>BracketPricingUpchargeManage</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Overview</fullName>
+        <availability>online</availability>
+        <description>used on the overview detail page</description>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Overview</masterLabel>
+        <openType>sidebar</openType>
+        <page>CompanyView</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>PTP_Cleanup</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>PTP Cleanup</masterLabel>
+        <openType>noSidebar</openType>
+        <page>PTPCleanupCompany</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Recalculate_Customer_Credit_Buckets</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Recalculate Customer Credit Buckets</masterLabel>
+        <openType>sidebar</openType>
+        <page>CustomerCreditBuckets</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>ScheduleJobs</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Scheduled Jobs</masterLabel>
+        <openType>sidebar</openType>
+        <page>ProcessSchedule</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Setup_Custom_Data</fullName>
+        <availability>online</availability>
+        <displayType>link</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Setup Custom Data</masterLabel>
+        <openType>sidebar</openType>
+        <page>SetupCustomData</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Setup_Sample_Data</fullName>
+        <availability>online</availability>
+        <displayType>link</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Setup and Configuration</masterLabel>
+        <openType>sidebar</openType>
+        <page>SetupSampleData</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Supplier_1099_Batch</fullName>
+        <availability>online</availability>
+        <displayType>link</displayType>
+        <linkType>page</linkType>
+        <masterLabel>Supplier 1099 Batch</masterLabel>
+        <openType>replace</openType>
+        <page>Supplier1099Batch</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Supplier_1099_Rollback</fullName>
+        <availability>online</availability>
+        <description>Use this custom link to initiate a Supplier 1099 Rollback for all 1099s that have not been filed.</description>
+        <displayType>link</displayType>
+        <linkType>page</linkType>
+        <masterLabel>Supplier 1099 Rollback</masterLabel>
+        <openType>replace</openType>
+        <page>Supplier1099Rollback</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Supplier_1099_TXT_Batch</fullName>
+        <availability>online</availability>
+        <displayType>link</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>DEPRECATED</masterLabel>
+        <openType>sidebar</openType>
+        <page>Supplier1099TXTCreator</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>TIN_Match_Download</fullName>
+        <availability>online</availability>
+        <description>Downloads file for TIN matching program through IRS.</description>
+        <displayType>link</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>TIN Match Download for 1099</masterLabel>
+        <openType>sidebar</openType>
+        <page>Supplier1099TextDownload</page>
+        <protected>false</protected>
+    </webLinks>
+    <webLinks>
+        <fullName>Update_Pricebook_Lines</fullName>
+        <availability>online</availability>
+        <description>Updates pricebook lines for this company</description>
+        <displayType>link</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Update Pricebook Lines</masterLabel>
+        <openType>sidebar</openType>
+        <page>PricebookLineUpdate</page>
+        <protected>false</protected>
+    </webLinks>
+</CustomObject>

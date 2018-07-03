@@ -1,0 +1,20 @@
+<apex:page standardController="Report_Item__c"   showheader="false">
+
+	<c:ReportView reportItem="{!Report_Item__c}" />
+
+<div style="display: none; ">
+<apex:outputText value="{!Report_Item__c.Report_Id__c}" />
+<apex:outputText value="{!Report_Item__c.name}" />
+<apex:outputText value="{!Report_Item__c.Display_Name__c}" /> 
+<apex:outputText value="{!Report_Item__c.Total_Label__c}" /> 
+<apex:outputText value="{!Report_Item__c.Display_Total__c}" />
+<apex:outputText value="{!Report_Item__c.Asynchronous__c}" /> 
+<apex:outputText value="{!Report_Item__c.Company__c}" />
+<apex:outputText value="{!Report_Item__c.Numeric_Scale__c}" />
+<apex:outputText value="{!Report_Item__c.Period_Name__c}" /> 
+<apex:outputText value="{!Report_Item__c.Show_Details__c}" /> 
+<apex:outputText value="{!Report_Item__c.Display_Column_Labels__c}" /> 
+<apex:outputText value="{!Report_Item__c.Financial_Report_Section__r.Financial_Report__r.Show_Symbols__c}" /> 
+<apex:outputText value="{!Report_Item__c.Financial_Report_Section__r.Financial_Report__r.Symbols_First_Last__c}" /> 
+</div>
+</apex:page>

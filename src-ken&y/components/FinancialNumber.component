@@ -1,0 +1,12 @@
+<apex:component >
+	<apex:attribute name="value" description="The number displayed" type="decimal" required="true"/>
+	<apex:attribute name="styleNumber" description="Display values as red" type="boolean" required="false"/>
+	<apex:outputPanel rendered="{!value != null}">	
+	<apex:outputText value="{0, number,###,###,##0.00}" style="float:right;color:{!if(styleNumber == true, 'red','')};" rendered="{!value >= 0}">
+		<apex:param value="{!value}" />
+	</apex:outputText>
+	<apex:outputText value="({0, number,###,###,##0.00})" style="float:right;color:{!if(styleNumber == true, 'red','')};"  rendered="{!value < 0}">
+		<apex:param value="{!abs(value)}" />
+	</apex:outputText>
+	</apex:outputPanel>
+</apex:component>

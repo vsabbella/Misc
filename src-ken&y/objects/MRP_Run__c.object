@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <content>MRP_RunNewEditCloneDelete</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <content>MRP_RunNewEditCloneDelete</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <content>MRP_RunNewEditCloneDelete</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <content>MRP_RunNewEditCloneDelete</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpMRPRun</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>MRP Runtime Run ID and run time parameters</description>
+    <enableActivities>true</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Company</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Lookup to Company</inlineHelpText>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>MRP Runs</relationshipLabel>
+        <relationshipName>MRP_Runs</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Completion_Status__c</fullName>
+        <description>Indicates whether the MRP completed with Success or Failure</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Indicates whether the MRP completed with Success or Failure</inlineHelpText>
+        <label>Completion Status</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>None</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Facility__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Facility</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Lookup to Facility</inlineHelpText>
+        <label>Facility</label>
+        <referenceTo>Facility__c</referenceTo>
+        <relationshipLabel>MRP Runs</relationshipLabel>
+        <relationshipName>MRP_Runs</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Failure_Message__c</fullName>
+        <description>If the MRP failed to complete this is the message received from the system.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>If the MRP failed to complete this is the message received from the system.</inlineHelpText>
+        <label>Failure Message</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>Level_Zero_QOH_as_Supply__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Use Only Level Zero Item&apos;s Quantity On Hand as Supply in MRP</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Use Only Level Zero Item&apos;s Quantity On Hand as Supply in MRP</inlineHelpText>
+        <label>Level Zero QOH as Supply</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>MRP_Backward_Horizon_in_Days__c</fullName>
+        <description>The number of days in the past from today that MRP will search for demand and supply</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The number of days in the past from today that MRP will search for demand and supply</inlineHelpText>
+        <label>MRP Backward Horizon in Days</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>MRP_Demand_Time_Fence_in_Days__c</fullName>
+        <description>MRP uses forecasted demand outside of this time window and Sales Orders inside this time fence</description>
+        <externalId>false</externalId>
+        <inlineHelpText>MRP uses forecasted demand outside of this time window and Sales Orders inside this time fence</inlineHelpText>
+        <label>MRP Demand Time Fence in Days</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>MRP_Forward_Horizon_in_Days__c</fullName>
+        <description>The number of days in the future from today that MRP will search for demand and supply</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The number of days in the future from today that MRP will search for demand and supply</inlineHelpText>
+        <label>MRP Forward Horizon in Days</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>MRP_Planning_Time_Fence_in_Days__c</fullName>
+        <description>The number of days in the future from today before MRP creates any planned make order</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The number of days in the future from today before MRP creates any planned make order</inlineHelpText>
+        <label>MRP Planning Time Fence in Days</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Order_Forecast_as_Demand__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Use Order Forecast as Demand in MRP</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Use Order Forecast as Demand in MRP</inlineHelpText>
+        <label>Order Forecast as Demand</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Planning_Calendar2__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Planning Calendar</label>
+        <referenceTo>Calendar__c</referenceTo>
+        <relationshipLabel>MRP Runs</relationshipLabel>
+        <relationshipName>MRP_Runs</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Planning_Calendar__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Business Hours</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Lookup to Business Hours</inlineHelpText>
+        <label>Planning Calendar</label>
+        <referenceTo>BusinessHours</referenceTo>
+        <relationshipName>MRP_Runs</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Purchase_Orders_as_Supply__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Use Purchase Orders as Supply in MRP</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Use Purchase Orders as Supply in MRP</inlineHelpText>
+        <label>Purchase Orders as Supply</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Quantity_on_Hand_as_Supply__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Use Quantity on Hand as Supply in MRP</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Use Quantity on Hand as Supply in MRP</inlineHelpText>
+        <label>Quantity on Hand as Supply</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Receiving_Calendar2__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Receiving Calendar</label>
+        <referenceTo>Calendar__c</referenceTo>
+        <relationshipLabel>MRP Runs (Receiving Calendar)</relationshipLabel>
+        <relationshipName>MRP_Runs1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Receiving_Calendar__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Business Hours</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Lookup to Business Hours</inlineHelpText>
+        <label>Receiving Calendar</label>
+        <referenceTo>BusinessHours</referenceTo>
+        <relationshipName>MRP_Runs1</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Sales_Orders_as_Demand__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Use Sales Orders as Demand in MRP</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Use Sales Orders as Demand in MRP</inlineHelpText>
+        <label>Sales Orders as Demand</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Transfer_Orders_as_Demand__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Use Transfer Orders as Demand in MRP</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Use Transfer Orders as Demand in MRP</inlineHelpText>
+        <label>Transfer Orders as Demand</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Transfer_Orders_as_Supply__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Use Transfer Orders as Supply in MRP</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Use Transfer Orders as Supply in MRP</inlineHelpText>
+        <label>Transfer Orders as Supply</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Work_Orders_as_Demand__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Use Work Orders as Demand in MRP</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Use Work Orders as Demand in MRP</inlineHelpText>
+        <label>Work Orders as Demand</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Work_Orders_as_Supply__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Use Work Orders as Supply in MRP</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Use Work Orders as Supply in MRP</inlineHelpText>
+        <label>Work Orders as Supply</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <label>MRP Run</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Facility__c</columns>
+        <columns>Planning_Calendar__c</columns>
+        <columns>Receiving_Calendar__c</columns>
+        <columns>MRP_Backward_Horizon_in_Days__c</columns>
+        <columns>MRP_Forward_Horizon_in_Days__c</columns>
+        <columns>MRP_Demand_Time_Fence_in_Days__c</columns>
+        <columns>MRP_Planning_Time_Fence_in_Days__c</columns>
+        <columns>Quantity_on_Hand_as_Supply__c</columns>
+        <columns>Level_Zero_QOH_as_Supply__c</columns>
+        <columns>Purchase_Orders_as_Supply__c</columns>
+        <columns>Work_Orders_as_Supply__c</columns>
+        <columns>Order_Forecast_as_Demand__c</columns>
+        <columns>Sales_Orders_as_Demand__c</columns>
+        <columns>Work_Orders_as_Demand__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <displayFormat>MRP_Run - {0000000000}</displayFormat>
+        <label>MRP_Run</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>MRP Runs</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Company__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Facility__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Planning_Calendar__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Receiving_Calendar__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>MRP_Forward_Horizon_in_Days__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>MRP_Backward_Horizon_in_Days__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>MRP_Demand_Time_Fence_in_Days__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>MRP_Planning_Time_Fence_in_Days__c</customTabListAdditionalFields>
+        <excludedStandardButtons>New</excludedStandardButtons>
+        <excludedStandardButtons>ChangeOwner</excludedStandardButtons>
+        <excludedStandardButtons>Accept</excludedStandardButtons>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>QOH_Validation</fullName>
+        <active>true</active>
+        <errorConditionFormula>AND ( Level_Zero_QOH_as_Supply__c== true,  Quantity_on_Hand_as_Supply__c== true)</errorConditionFormula>
+        <errorDisplayField>Level_Zero_QOH_as_Supply__c</errorDisplayField>
+        <errorMessage>You cannot check both Use Quantity on Hand as Supply in MRP or Use Only Level Zero QOH as Supply in MRP</errorMessage>
+    </validationRules>
+    <webLinks>
+        <fullName>Erase_MRP_Run</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <height>600</height>
+        <linkType>page</linkType>
+        <masterLabel>Erase MRP Run</masterLabel>
+        <openType>sidebar</openType>
+        <page>EraseMRP_Run</page>
+        <protected>false</protected>
+    </webLinks>
+</CustomObject>

@@ -1,0 +1,45 @@
+<apex:page controller="ExportExcelController" contentType="txt/xml#{!JSENCODE(fileName)}.xls" cache="true">
+<apex:outputText value="{!xlsHeader}"/>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ 	<Styles>
+		<Style ss:ID="s1">
+	 	<Alignment/>
+	 	<Borders/>
+	 	<Font ss:Bold="1"/>
+	 	<Interior/>
+	 	<NumberFormat/>
+	 	<Protection/>
+	 	</Style>
+ 	</Styles>
+ 	<Worksheet ss:Name="Report">
+ 		<Table x:FullColumns="1" x:FullRows="1">
+ 			<apex:repeat value="{!gridColumns}" var="col">
+ 			<Column ss:Width="100"/>
+ 			</apex:repeat>
+			 <apex:repeat value="{!headerRows}" var="headerRow">
+			 <Row>
+			 	<Cell><Data ss:Type="String">{!headerRow}</Data></Cell>
+			 </Row>
+			 </apex:repeat>
+ 			<Row>
+ 				<apex:repeat value="{!gridColumns}" var="col">
+ 				<Cell ss:StyleID="s1"><Data ss:Type="String" >{!col['title']}</Data></Cell>
+ 				</apex:repeat>
+ 			</Row>
+			 <apex:repeat value="{!gridRows}" var="chunkOfRows">
+				 <apex:repeat value="{!chunkOfRows}" var="row">
+				 <Row>
+				 	<apex:repeat value="{!gridColumns}" var="col">
+				 	<Cell><Data ss:Type="{!IF(col['fieldtype']=='number', 'Number', 'String')}">{!row[col['field']]}</Data></Cell>
+				 	</apex:repeat>
+				 </Row>
+				 </apex:repeat>
+			 </apex:repeat>
+ 		</Table>
+ 	</Worksheet>
+ </Workbook>
+</apex:page>

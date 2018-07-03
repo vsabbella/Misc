@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <columns>
+        <field>Item_Specification__c$Name</field>
+    </columns>
+    <columns>
+        <field>Item_Specification__c.Components__r$Name</field>
+    </columns>
+    <crossFilters>
+        <operation>without</operation>
+        <primaryTableColumn>Item_Specification__c$Id</primaryTableColumn>
+        <relatedTable>Component__c</relatedTable>
+        <relatedTableJoinColumn>Assembly_Item_Specification__c</relatedTableJoinColumn>
+    </crossFilters>
+    <description>Item specifications without components</description>
+    <format>Summary</format>
+    <groupingsDown>
+        <dateGranularity>Day</dateGranularity>
+        <field>Item_Specification__c.Components__r$Company__c</field>
+        <sortOrder>Asc</sortOrder>
+    </groupingsDown>
+    <name>Item Specifications without Components</name>
+    <params>
+        <name>co</name>
+        <value>1</value>
+    </params>
+    <reportType>Item_Specifications_with_or_without_Components__c</reportType>
+    <scope>organization</scope>
+    <showDetails>true</showDetails>
+    <timeFrameFilter>
+        <dateColumn>Item_Specification__c$CreatedDate</dateColumn>
+        <interval>INTERVAL_CUSTOM</interval>
+    </timeFrameFilter>
+</Report>

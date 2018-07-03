@@ -1,0 +1,10 @@
+<apex:component controller="MiniDetail" >
+    <apex:attribute name="subject" description="id of the base sobject"
+        type="String" required="true" assignTo="{!subjectId}" />
+    
+    <apex:attribute name="title" description="title to display "
+        type="String" required="false"  />
+    
+    <apex:sectionHeader title="{!title}" subtitle="{!subjectRecord['Name']}" />
+    
+</apex:component>

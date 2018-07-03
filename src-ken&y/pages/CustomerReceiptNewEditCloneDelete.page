@@ -1,0 +1,18 @@
+<apex:page standardController="Customer_Receipt__c" extensions="NewEditCloneDeleteExt" action="{!errMsg}">
+    <apex:sectionHeader title="{!$ObjectType.Customer_Receipt__c.Label}" />
+    <apex:form >
+        <apex:PageMessages />
+        <apex:outputpanel style="padding:20px;">
+        	<apex:outputLink onClick="back()">Click here to go back</apex:outputLink>
+        </apex:outputpanel>
+    </apex:form>
+    <script>
+        function back() {
+            if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+                sforce.one.back(true);
+            } else {
+                window.history.back();
+            }
+        }
+    </script>
+</apex:page>

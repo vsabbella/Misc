@@ -1,0 +1,806 @@
+<apex:component controller="RelatedListEditCon">
+
+	<apex:includeScript value="{!URLFOR($Resource.jquery_ui_110,'/jquery-ui-1.10.0.custom/js/jquery-1.9.1.js')}" />
+	<apex:includeScript value="{!URLFOR($Resource.jquery_ui_110,'/jquery-ui-1.10.0.custom/js/jquery-ui-1.10.3.custom.js')}" />
+	<apex:stylesheet value="{!URLFOR($Resource.jquery_ui_110,'/jquery-ui-1.10.0.custom/css/aloha/jquery-ui-1.10.3.custom.css')}" />
+
+	<!--PQ Grid files-->
+	<apex:stylesheet value="{!URLFOR($Resource.pqgridpro,'/pqgrid.dev.css')}" />
+	<apex:includeScript value="{!URLFOR($Resource.pqgridpro,'/pqgrid.dev.js')}" />
+
+<!-- 	<apex:includeScript value="{!URLFOR($Resource.pqgridpro,'/jquery.hotkeys.js')}" />  -->
+
+	<apex:attribute name="subject" description="the SObject parent record "
+		type="sobject" required="true" />
+	<apex:attribute name="fieldset"
+		description="the object fieldset to invoke" type="string"
+		required="true" />
+
+	<apex:attribute name="relatedListTable"
+		description="edit a list of records from this related table"
+		type="string" required="true" />
+
+	<apex:attribute name="title" description="the title to show"
+		type="string" required="false" default="" />
+
+	<apex:attribute name="parentfield"
+		description="the parentfield of the related list table that will lookup to subject"
+		type="string" required="true" />
+
+	<apex:attribute name="relatedfields"
+		description="the extra fields from related record lookups used by client"
+		type="string" required="false" />
+
+	<apex:attribute name="editable"
+		description="the list of fields which are editable, comma seperated "
+		type="string" required="false" />
+
+	<apex:attribute name="editableFieldSet"
+		description="the name of a fieldset, which are all editable"
+		type="string" required="false" />
+
+	<apex:attribute name="buttons"
+		description="the list of fields buttons,comma seperated "
+		type="string" required="false"  default="edit,clone,save,delete"/>
+
+	<apex:pageBlock >
+		<div id="grid_array"
+			style="margin: 0px; min-width: 100%; height: 350px;"></div>
+	</apex:pageBlock>
+
+	<script>
+
+    var NS = '{!NamespaceUU}', $grid =$("#grid_array");
+
+    $(function () { loadAll();    } );
+    
+    function loadAll() { 
+         Visualforce.remoting.Manager.invokeAction( 
+                '{!$RemoteAction.RelatedListEditCon.queryTableWithFieldSet}',
+                '{!subject.id}'     , 
+                '{!relatedListTable}', 
+                '{!fieldset}'      	, 
+                '{!parentfield}'    	,
+                '{!relatedfields}'  ,
+                remotingCallback );              
+
+         
+    }
+    
+    //define editors
+    var dateEditor = function (ui) {
+        var $cell = ui.$cell.css('padding', '0'), data = ui.rowData,   column = ui.column;
+        var dc = dateToDateString( convertDateToUTC(new Date( data[ui.dataIndx] ) ) );
+        
+        var $inp = $("<input type='text' style='padding:3px;border:0;vertical-align:bottom;width:64px;'/>")
+            .appendTo($cell)
+            .val(dc).select()
+            .datepicker({    changeMonth: true,          changeYear:true,
+                onClose: function () {      $inp.focus();           }
+            }).focus();
+    }
+    
+    // populate select element, used on each row!!
+    function expandOptions(that, result, selectedValue){
+               
+        for (var i = 0; i < result.length; i++) {
+            var selected = result[i].value == selectedValue ?'selected' :''; 
+            that.append($("<option "+selected+"></option>")
+                .attr("value",result[i].value)
+                .text(result[i].label)); 
+                
+        }
+    }
+    
+    var picklistCache = {};  // cache each type of picklist first time we see it
+    
+    function getPicklistCache(that, field, selectedValue ) { // fetch and return, or just return picklist data
+        if ( picklistCache[field] == undefined ) { 
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.RelatedListEditCon.getPicklistValues}', 
+                '{!relatedListTable}'   , 
+                field,
+                function(result, event){
+                     checkErrors( event);
+                     cleanNS( result ); 
+                    picklistCache[field] = result;
+                    expandOptions(that, result, selectedValue);
+                } );
+        } else { 
+            expandOptions(that, picklistCache[field],selectedValue);
+        }
+    }
+    
+    var dropDownEditor = function ( ui ) {
+        var $cell = ui.$cell.css('padding', '0'), data = ui.rowData,   column = ui.column;
+        var dataCell = $.trim( data[ui.dataIndx] );
+        var str = "";
+       
+        var $sel = $("<select id='PICK"+column.dataIndx+"'></select>")
+        .appendTo($cell);
+        getPicklistCache($sel, column.dataIndx, dataCell    );
+ 
+    } 
+    
+    var boolEditor = function (ui) {
+        var $cell = ui.$cell.css('padding', '0'), data = ui.rowData,   column = ui.column;
+        var dataCell = eval( data[ui.dataIndx] );
+        var $inp = $("<input type='checkbox' style='padding:2px;border:0;height:16px;width:95%;'/>")
+        if ( dataCell) $inp.attr('checked','checked');
+        else   $inp.removeAttr('checked');  
+        $inp.appendTo($cell).focus(); 
+    }
+        
+    
+    var lookupEditor = function ( ui ) {
+        var $cell = ui.$cell.css('padding', '0'), data = ui.rowData, column = ui.column;
+            
+        var $inp = $("<input type='text' style='padding:3px;border:0;vertical-align:bottom;width:95%;'/>")
+            .attr('data-table', ui.dataIndx )
+            .attr('data-sobjectid', data.Id)
+            .appendTo($cell)
+            .val( resolveLookupName(data,ui.dataIndx) ).select()
+            .autocomplete({
+                source:  function( request, response) { 
+                    var which = this.element.attr('data-table');
+                    if ( which == null ) which =''; 
+                    
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.RelatedListEditCon.lookupSearch}', 
+                        request.term, 
+                        which ,
+                        function(result, event){
+                            checkErrors( event);
+                            cleanNS( result ); 
+                            response(result);
+                        }
+                    );
+                },
+                delay: 1,
+                focus: function( event, ui ) {
+                    $(this).val( ui.item.value);
+                   // event.preventDefault();
+                },
+                select: function( event, ui ) {
+                    var id = ui.item.id, 
+                        nam = ui.item.value,
+                        theId =  $(this).attr('data-sobjectid'),    
+                        field = $(this).attr('data-table'),
+                        DM = $grid.pqGrid("option", "dataModel");
+                    $.each( DM.data, function ( idx ) {                         
+                        if ( this.Id == theId ) {                       // find the one we want to change
+                            setLookupIdName( this, field, id, nam); // update the JS object at __r
+                            }
+                    } ) ;
+                },
+                minLength:2
+            });
+    }
+    
+    var saveCell = function (ui) {
+        var $cell = ui.$cell;
+        return $cell.children().val();
+    }
+    var saveLookup = function (ui) {
+        var $cell = ui.$cell;
+        return $cell.children('input').val();
+    }
+
+    function setLookupIdName( sobject, field, id, name ) { 
+        // change 3 things, the sobject field __c, __r.Name, __r.Id
+        var rpath = field.replace(/__c/,'__r');
+        sobject[field] = id; 
+        sobject[rpath].Id = id; 
+        sobject[rpath].Name = name;
+    }  
+    
+    function resolveLookupName( sobject, field ) {  // should use resolveLookup
+        var path = field.replace(/__c/,'__r'), ret = '';
+        if (  sobject[path] != undefined ) {  
+            ret = resolve ( sobject[path]['Name'] );
+        } return ret;  
+    }
+    
+    function resolveLookup( sobject, field ) { 
+        var path = field.replace(/__c/,'__r'), ret = null;
+        if (  sobject[path] != undefined ) {  
+            ret = sobject[path];
+        } return ret;
+    }
+    
+    function dateToDateString( dt ) { 
+        var dateString = dt.toString();
+        dateString = dateString.substring(4,dateString.lastIndexOf(':'));
+        try{ //Attempt to format datetime using sfdc DateUtil method
+            dateString = DateUtil.getDateStringFromUserLocale(dt);
+        }catch(err){
+            //Fail silently or alert devs DateUtil method is no longer working
+        } 
+        return dateString;
+    }
+    
+    function loadColumns( r, e )  // to look like       { title: "Rank", width: 100, dataType: "integer" }, 
+    { 
+            if (  r == null ) return; 
+            
+        var cols = []; var last = 0; 
+        for ( var i=0;i<r.fieldset.length; i++ ) 
+        {   
+            // on each column, set width, type and other info that paraquery wants to see 
+            // http://paramquery.com/api#option-column-colModel
+            
+            var     fld = r.fieldset[i],
+                        col  =  { title : fld.Label, 
+                                  soapType: fld.Type,
+                                  dataType: "string" , 
+                                  editable: false, 
+                                  dataIndx: fld.FieldPath 
+                                    };
+            
+            if ( fld.Label == 'Id' )  {             col.hidden = true;          }
+            
+            // make some fields editable
+            if ( "{!editable}".indexOf( fld.FieldPath ) > -1 ) { col.editable = true; }    
+            
+            if ( fld.Type == 'PICKLIST' ) {
+                    col.width = 85;
+                    col.editor = { type: dropDownEditor, getData: saveCell }; 
+            }
+            
+            if ( fld.Type == 'REFERENCE'  )    {
+                col.width = 165;
+                col.editor = { type: lookupEditor, getData:saveLookup }; 
+                col.render = function( ui ) { 
+                    return resolveLookupName( ui.rowData, ui.dataIndx );
+                };
+            }
+            
+			if ( fld.Type == 'DOUBLE' ) { 
+			    col.align = 'right';
+			    col.dataType = 'float';
+			    col.dataType = function( val1, val2 ){
+					if ( val1 == null ) return -1;
+					if ( val2 == null ) return 1; 
+					return val1-val2;   
+				};
+				col.width = 80;
+		       	/*
+		       	col.render = function ( ui ) {    TODO !!  should also select content
+              		return ui.rowData[ui.dataIndx].toFixed(2); };
+              	*/
+			}
+        
+            if ( fld.Type == 'DATE' )       {
+                col.align = 'right';
+                col.width = 90;
+                col.editor = { type: dateEditor, getData: saveCell },
+                col.render = function( ui ) { 
+                    var d = new Date(ui.rowData[ui.dataIndx]);                    		
+                    return dateToDateString( convertDateToUTC( d ) );
+                };
+            }
+            
+            if ( fld.Type == 'STRING' ) { 
+                col.dataType = 'string';
+                col.width = 90;
+            }
+            if ( fld.Type == 'TEXTAREA' ) { 
+                col.dataType = 'string';
+                col.width = 120;
+            }
+			
+			if ( fld.Type == 'PERCENT' ) { 
+			    col.width = 60;
+			    col.align = 'right';
+			col.dataType = 'float';
+			}
+			
+            if ( fld.Type == 'BOOLEAN' ) { 
+                col.width = 60;
+                col.editor = { type: boolEditor, 
+                    getData: function (ui) {
+                        var $cell = ui.$cell;
+                        return ($cell.children('input:checked').length > 0 ? 'true' : 'false');
+                        } 
+                    };
+            }
+            
+            cols[i] = col;
+            
+        } 
+        return cols;
+    }
+ 
+	function convertDateToUTC(date) { 	
+		return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds()); 
+	}
+	 
+    function remotingCallback( result, event) 
+    {               
+        checkErrors( event);
+        
+        // important, we must unpack the JSON we get from Visualforce, it uses serRefId to avoid sending duplicate 
+        // copies of identical data, but WE NEED separate data to allow edits on one row to not chagne other rows...
+        result = deepCloneObject( result);  
+        
+        cleanNS( result );
+ 	
+        var obj = {   // width and height are done on the grid div
+            recIndx: "Id",  // primary key, not sure if this is needed for local editing 
+             
+			cellEditKeyDown: function( event, ui ) {
+			    // some keys are intended for the jquery ui widget, block them from the grid
+			    var keyCodes = $.ui.keyCode;
+			    // TODO what about ENTER
+			    return event.which != keyCodes.DOWN && event.which != keyCodes.UP; 
+			},
+                
+            track: true, //to turn on the track changes.
+          
+            selectionModel: { type: 'row', mode: 'single'} ,
+            editModel: {
+                saveKey: $.ui.keyCode.ENTER,
+                keyUpDown: true,
+                cellBorderWidth: 1,
+                clicksToEdit: 1
+            },
+            resizable: false,
+            draggable: false, 
+            numberCell: false,      //Number cells indicating the row number are displayed in the grid.
+            showLoading: true, 
+            rowBorders: true,   	// Determines display of horizontal borders of the rows
+            columnBorders: false,	// Determines display of vertical borders of the columns.
+            collapsible: false,  		// The grid can be collapsed or expanded with help of toggle button on top right corner.
+                
+			flexWidth:true,
+            
+            minWidth: 70, 		// Minimum possible width of the columns in pixels. ( 50 default)
+            flexHeight:true,    	// The grid height is adjusted to the content height so that all the content is visible vertically.
+            title: "{!title}"               
+       };
+
+        obj.colModel = loadColumns( result, event);
+        
+        obj.dataModel = { data: result.lines, paging: 'local' };
+        
+		// build a simple toolbar, read buttons string, build items in that order
+        obj.toolbar = { cls: 'pq-toolbar-crud', items: [] };
+		$.each( '{!buttons}'.split(',') , function(j) {
+			var lab = this.trim();
+			$.each([
+				{ type: 'button', label: 'Clone', icon: 'ui-icon-plus', listeners: [{ click: clonehandler}] },
+				{ type: 'button', label: 'Edit', icon: 'ui-icon-pencil', listeners: [{ click: edithandler}] },
+				{ type: 'button', label: 'Save', icon: 'ui-icon-disk', listeners: [{ click: savehandler}] },
+				{ type: 'button', label: 'Delete', icon: 'ui-icon-minus', listeners: [{ click: deletehandler}] }
+				], function (i) {
+				if ( lab.toLowerCase() == this.label.toLowerCase() ) 
+					obj.toolbar.items.push(this);					
+				});
+		}); 
+		        
+        // launch the grid 
+        $grid.pqGrid(obj); 
+        
+        // add a message area, after buttons or ??
+        $('.pq-toolbar',$grid)
+        		.append('<div class="responseErrors message errorM4" style="display:none;">'+
+        			'<img alt="ERROR" class="errorSmall" src="/s.gif" title="ERROR"></img>' +
+        			'<div class="responseErrorsMsg" ></div>'+	
+        			'</div>'
+        		) ;
+         
+       	$('div.pq-grid-inner').bind('keydown', dispatchHotKey );
+       	
+    }
+    
+    // return the toolbar button for the label passed in , or null
+    function findButton( what ) { 
+    		var TB = $grid.pqGrid("option", "toolbar");
+    		return $.grep(TB.items, function(i) { return i.label.toLowerCase()==what;  });
+    }
+    
+    // return true if the label exists as a button
+    function hasButton( what ) { return findButton(what).length == 1;    }
+    
+    // run the specified hotkey 
+    function dispatchHotKey ( e ) { 
+       	if (event.ctrlKey /*|| event.metaKey*/ ) {
+			switch (String.fromCharCode(event.which).toLowerCase()) {
+			case 's':	
+				if ( hasButton( 'save' ) ) {
+					savehandler();
+					event.preventDefault();
+    }
+				break;
+    
+		    //case 'e': TODO edithandler();   event.preventDefault();		        break;
+		    //case 'g':  TODO   event.preventDefault();		        break;
+		    
+		    }
+            }
+        }
+ 
+    /* this can be optimized to only send changed rows, using trackchanges option */ 
+    function savehandler() {     
+      
+		$grid.pqGrid( "saveEditCell" );  	   // if the user id editing a cell, save acts like "enter&save" 
+		
+		var DM = $grid.pqGrid("option", "dataModel");
+		if ( DM.removed == null ) {DM.removed=[];	}
+		
+		$grid.pqGrid( "showLoading" );
+        Visualforce.remoting.Manager.invokeAction( 
+			'{!$RemoteAction.RelatedListEditCon.sobjectupdate}', 
+			fixupForRemoting( DM.data ),  // pass for insert and update     
+			'{!subject.id}'     , // pass params that enable re-query
+			'{!relatedListTable}'        , 
+			'{!fieldset}'           , 
+			'{!parentfield}'    ,
+			fixupForRemoting( DM.removed ),
+			function( result, event) {             
+				checkErrors( event);
+				cleanNS( result );
+				$grid.pqGrid( "hideLoading" );
+				if ( event.status ) { 		// check status before reloading                    		
+					$grid.pqGrid( "option", "dataModel.data", deepCloneObject( result)  );
+					$grid.trigger('afterSave');  // let the page hook this event
+				}  
+			} 
+        );        
+    }
+    
+    function findColumnModelForField( colM, field) { 
+		return $.grep( colM, function ( obj ) {  return obj.dataIndx == field; })[0];    
+    }
+    
+    /* the pq grid will store strings in the sobject, we need to 'restore' this data so that 
+     * force.com will see data formated correctly */
+    function fixupForRemoting( obj ) { 
+       
+        var colM = $grid.pqGrid( "option", "colModel" );
+        for (var i = 0, len = obj.length; i < len; i++) {
+            var  sobject = obj[i];
+            for (var field in sobject ) {
+               
+                // clean some properties that are not part of an sobject ( added by pqgrid ) 
+                if ( field.indexOf('pq_') > -1 ) delete sobject[field];
+                
+                var colDef = findColumnModelForField(colM,field), typ = typeof(sobject[field]);
+                
+                if ( colDef == undefined ) continue; // related records are not in the col model
+                
+                switch( colDef.soapType ) {
+                case 'REFERENCE':
+					var relatedRecord = resolveLookup( sobject,field);
+					sobject[field] = relatedRecord.Id;     
+					break;
+                case 'DATE' : 
+					if ( typ == 'string' ) 
+					sobject[field] = Date.parse(sobject[field]);     
+					break;
+                case 'BOOLEAN': 
+                    if ( typ != 'boolean' )
+                    sobject[field] = ( sobject[field] == 'true' );
+                    break;
+                }                
+            }
+        } 
+        return obj;
+    }
+    
+
+    
+    /* clone the currently selected row */ 
+    function clonehandler( event ) {
+     
+        var DM = $grid.pqGrid("option", "dataModel"),
+                data = DM.data,        
+                selectedRow = getRowIndx();   // will alert() if no row selected
+        if ( selectedRow == null ) return;
+        
+        // TODO show and hide the screen mask ? 
+        var sobject = deepCloneObject( data[selectedRow]);
+        
+        
+        sobject.Id = null;			// null out the id of this row 
+        sobject.sobjectType = '{!relatedListTable}'; // relatedListTable holds the actual sobject name we are loading into the grid
+        sobject['{!parentfield}'] =   '{!subject.id}' ;
+        
+        data.push(sobject); 
+        $grid.pqGrid("refreshDataAndView");
+        $grid.pqGrid( "selection", { type:'row', method:'replace', rowIndx:data.length-1 } );
+        
+        // page to show the new item....
+        var lastPg = $grid.pqGrid( "option", "dataModel.totalPages" );
+        $grid.pqGrid( "option", "dataModel.curPage", lastPg  );
+        
+        // should we save the new row or require user to hit save 
+        // as is , we don't save here ...
+	}  
+	
+	function edithandler( event ) { // focus the first edit field on the selected row or first row
+		var 	arr = $grid.pqGrid("selection", { type: 'row', method: 'getSelection' }),
+				DM = $grid.pqGrid("option", "dataModel"),
+				rowIndx = (DM.curPage-1)*DM.rPP;
+        if (arr && arr.length > 0) {
+            rowIndx = arr[0].rowIndx;
+        }
+        $grid.pqGrid( "editFirstCellInRow", { rowIndx: rowIndx } );
+	} 
+	     
+ /* 
+ function addhandler( event ) { 
+ could popup a dialog for new rows ?  
+        var $frm = $("form#crud-form");
+        $frm.find("input").val("");
+ 
+        $("#popup-dialog-crud").dialog({ title: "Add Record", buttons: {
+            Add: function () {                    
+                var row = [];
+                //save the record in DM.data.
+                row[0] = $frm.find("input[name='company']").val();
+                row[1] = $frm.find("input[name='symbol']").val();
+                row[3] = $frm.find("input[name='price']").val();
+                row[4] = $frm.find("input[name='change']").val();
+                row[5] = $frm.find("input[name='pchange']").val();
+                row[6] = $frm.find("input[name='volume']").val();
+                data.push(row);
+                $grid.pqGrid("refreshDataAndView");
+                $(this).dialog("close");
+            },
+            Cancel: function () {
+                $(this).dialog("close");
+            }
+        }
+        });
+        $("#popup-dialog-crud").dialog("open");
+      
+    }
+      */
+      
+    /* delete the selected row, but it's not commited, just removed from the array...
+     * TODO this does actually work yet ( never commited ) 
+     */
+    
+    function deletehandler( event ) {
+        var rowIndx = getRowIndx();
+        if (rowIndx != null) {
+            var DM = $grid.pqGrid("option", "dataModel");
+            if ( DM.removed==null) DM.removed=[];
+            DM.removed.push(DM.data[rowIndx]);
+            DM.data.splice(rowIndx, 1);
+            $grid.pqGrid("refreshDataAndView");
+            $grid.pqGrid("setSelection", { rowIndx: rowIndx });
+     
+            // TODO remember we deleted this when we update / save
+        }
+    }
+    
+    function getRowIndx() {
+        var arr = $grid.pqGrid("selection", { type: 'row', method: 'getSelection' });
+        if (arr && arr.length > 0) {
+            var rowIndx = arr[0].rowIndx;
+            return rowIndx;
+        }
+		alert("Please select a row.");	return null;
+    }
+
+    function resolve( v ) { return ( v != undefined ? v : '' ); }
+    
+    function checkErrors ( event ) { 
+		var $msg = $(".responseErrors",$grid);
+        if (event.status) { $msg.hide(); } 
+        else { 
+			$msg.show().find(".responseErrorsMsg").text( event.message );
+        }        
+    }        
+    
+    function cleanNS ( result ) {   // remove the namespace from json object, recursive
+        for ( var r in result ) {  
+            if ( typeof(r) !== 'string' ) continue; 
+            var cleanr = r.replace(NS,'');
+            result[cleanr] = result[r];
+            if ( typeof(result[cleanr]) === 'string' ) result[cleanr] = result[cleanr].replace(NS,'');
+            if ( cleanr !== r ) delete result[r];           
+            if ( typeof( result[cleanr] ) === 'object' ) cleanNS( result[cleanr] );
+        }   
+        return result != null; 
+    }
+	
+	/* make a copy of the sobjects that the grid has, so we can fix
+     * them up for passing back to controller    
+     */
+    function deepCloneObject(obj) {    
+        // Handle the 3 simple types, and null or undefined
+        if (null == obj || "object" != typeof obj) return obj;
+    
+        if (obj instanceof Date) {
+            var copy = new Date();
+            copy.setTime(obj.getTime());
+            return copy;
+        }
+    
+        if (obj instanceof Array) {
+            var copy = [];
+            for (var i = 0, len = obj.length; i < len; i++) {
+                copy[i] = deepCloneObject(obj[i]);
+            }
+            return copy;
+        }
+    
+        if (obj instanceof Object) {
+            var copy = {};
+            for (var attr in obj) {
+                // clean some properties that are not part of an sobject ( added by pqgrid ) 
+                if ( attr == 'selectedRow' ) continue;
+                if ( attr == 'pq_selectedrow') continue;
+                
+                if (obj.hasOwnProperty(attr)) copy[attr] = deepCloneObject(obj[attr]);
+            }
+            return copy;
+        }   
+        throw new Error("Unable to copy obj! Its type isn't supported.");
+    }
+</script>
+
+	<style>
+#ui-datepicker-div {
+	z-index: 5 !important;
+}
+
+div.pq-grid {
+	color: #333;
+}
+
+div.pq-grid-top {
+	background: #eee;
+}
+
+div.pq-grid-bottom {
+	background: #eee;
+	color: #333;
+}
+
+.pq-grid div.pq-header-outer {
+	background: #eee;
+	border-bottom: 1px solid #c5c5c5;
+}
+
+.pq-grid span.pq-grid-header {
+	background: url('images/column-header-bg.png');
+	background-image: linear-gradient(#fefefe, #e6e6e6);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fefefe',
+		endColorstr='#e6e6e6');
+	background: -webkit-gradient(linear, left top, left bottom, from(#fefefe),
+		to(#e6e6e6));
+	background: -moz-linear-gradient(top, #fefefe, #e6e6e6);
+	
+}
+
+.pq-grid-header td.pq-col-sort-asc,.pq-grid-header td.pq-col-sort-desc {
+	background: url(images/column-header-over-bg.gif) #ebf3fd repeat-x 0px top;
+}
+
+.pq-grid td.pq-grid-col { 
+	font-weight: bold;
+	text-shadow: 0 1px 0 #fff;
+	border-left-width: 0px;
+	border-bottom-width: 0px;
+}
+
+div.pq-cont {
+	background: #fff;
+}
+
+div.pq-cont * {
+	font-weight: normal;
+}
+
+td.pq-grid-cell {
+	background: #fff;
+}
+
+tr.pq-grid-oddRow td {
+	background: #fafafa;
+}
+
+div.pq-hvscroll-square {
+	background: #eee;
+}
+
+tr.pq-row-select td {
+	background-color: #6699cc;
+	color: #fff;
+}
+
+div.pq-grid tr td.pq-grid-cell-hover {
+	background: #d8e8fa;
+	border-width: 0px; 
+}
+
+.pq-grid tr td.pq-grid-number-cell {
+	background: #e4ecf7;
+}
+
+div.pq-grid tr td.pq-cell-select { }
+
+.pq-grid div.pq-loading-mask {
+	background: #dae5f3;
+	border: 1px solid steelblue;
+	color: #333;
+	font-weight: normal;
+}
+
+div.pq-loading-mask div {
+	border: 1px solid #999;
+	background: #ddd;
+}
+
+.ui-widget-header {
+	border: 1px solid #d5d6d6;
+	background: #f8f8f8;
+}
+
+div.pg-grid {
+	border-top-style: solid;
+	border-top-width: 1px;
+	border-left-color: #e0e3e5;
+	border-right-color: #e0e3e5;
+	border-bottom-color: #e0e3e5;
+}
+
+div.pq-toolbar .ui-button {
+    margin-left: 5px;
+} 
+
+button.ui-state-default,
+.ui-widget-content button.ui-state-default,
+.ui-widget-header button.ui-state-default,
+body button.ui-button 
+{
+	color: #333;
+	margin: 1px;
+	padding: 2px 3px;
+	border: 1px solid #b5b5b5;
+	border-bottom-color: #7f7f7f;
+	background: #e8e8e9 url('/img/alohaSkin/btn_sprite.png') repeat-x right
+		top;
+	/*font-weight: bold;*/
+	font-size: .9em;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+}
+
+.ui-state-active,.ui-widget-content .ui-state-active,.ui-widget-header .ui-state-active
+	{
+	border: 1px solid #b5b5b5;
+	background: #e8e8e9 url('/img/alohaSkin/btn_sprite.png') repeat-x right top;
+	font-weight: bold;
+	color: #333;
+}
+
+.ui-state-active a,.ui-state-active a:link,.ui-state-active a:visited {
+	color: #333;
+	text-decoration: none;
+}
+
+div.pq-grid  div.responseErrors { padding: 4px; font-weight: normal; }
+div.pq-grid  div.responseErrorsMsg { width: 95%; min-height: 18px; }
+div.pq-grid  img.errorSmall { margin: 1px 10px 0px 0px; float: left;  }
+
+table.pq-grid-header-table div.pq-grid-header-table-div{
+    padding:5px;
+    color: #333;
+}
+/* override a few jquery ui */
+.ui-button-text-icon-primary .ui-button-text,
+.ui-button-text-icons .ui-button-text {
+	padding: 0.2em 1em .2em 2.1em;
+}
+
+.pq-grid td.pq-cell-dirty {
+	background-image: url({!URLFOR($Resource.pqgridpro,'/images/square_dirty_blue.png')});
+}
+</style>
+</apex:component>

@@ -1,0 +1,32 @@
+<apex:page standardController="Plan__c" sidebar="true" id="pg" standardStylesheets="false" >
+	<apex:sectionHeader subtitle="{!Plan__c.Name}" title="Plan" /> 
+    <apex:form id="fm" styleClass="mainForm">
+        <div class="page-container"></div>
+            <apex:pageBlock mode="edit"  id="pb" >
+                <apex:pageBlockSection collapsible="true" columns="2"   >
+                   <apex:repeat value="{!$ObjectType.Plan__c.FieldSets.Plan_View}" 
+                            var="field">
+                      <apex:outputField value="{!Plan__c[field]}" />
+                   </apex:repeat>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+    </apex:form>
+    <script>
+
+    var PlanView = {};
+
+    $( document ).on( "KenandyErpReady", function( e ) {
+        PlanView = (function() {
+            var planStart = '{!Plan__c.Start_Date__c}';
+    		var planEnd = '{!Plan__c.End_Date__c}';
+
+            return {
+                planStart, 
+                planEnd
+            }
+        })();
+    } );
+    	
+    </script>
+    <c:AgreementView Plan="{!$CurrentPage.parameters.id}"/>
+</apex:page>

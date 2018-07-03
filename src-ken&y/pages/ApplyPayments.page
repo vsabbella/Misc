@@ -1,0 +1,14 @@
+<apex:page standardController="Company__c" extensions="ApplyPaymentsExt">
+    <apex:form >
+        <apex:sectionHeader subtitle="{!$Label.Apply_Payments}" title="{!$Label.Apply_Payments}"/>
+        <apex:pagemessages ></apex:pagemessages>
+        <apex:pageBlock >
+            <apex:pageBlockButtons >
+                <apex:commandButton value="{!$Label.Apply_Payments}" action="{!applyCash}" rendered="{!have_jobid == false}"/>
+                <apex:commandButton value="{!$Label.Cancel}" action="{!cancel}"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </apex:form>  
+      <div id="responseErrors" >
+    </div>
+</apex:page>

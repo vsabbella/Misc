@@ -1,0 +1,98 @@
+<apex:page standardController="Receiving_Document__c"   
+        extensions="ReceivingDocumentLinesAddManageExt,KSE"  
+        sidebar="false"  >
+  	
+  	<apex:includeScript value="{!$Resource.JQuery182}"/>
+	<apex:includeScript value="{!$Resource.AddManage}"/>
+   
+    <style type="text/css">
+    #RetrievePayBillsPBDivId .dateFormat { display: none;}
+    td.currency {       text-align: right;      }
+    td.dataCell.double input , 
+    td.dataCell.percent input {
+        width: 65px;
+    } 
+    td.dataCell.reference input {
+        width: 105px;
+    } 
+    td.dataCell.Item__c input {
+        width: 85px;
+    }
+    td.dataCell.Description__c input {
+        width: 135px;
+    } 
+    th{
+      text-align:center;
+    }
+   
+    </style>
+    
+    <apex:includeScript value="{!URLFOR($Resource.jquery_ui_110,'/jquery-ui-1.10.0.custom/js/jquery-1.9.0.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.jquery_ui_110,'/jquery-ui-1.10.0.custom/js/jquery-ui-1.10.0.custom.js')}" />
+  
+    <apex:sectionHeader title="{!$Label.Add_Manage_Receiving_Document_Lines}"/>
+    <apex:form id="mainFormID">                 <c:busyWait />
+
+      <div id="RetrievePayBillsPBDivId" >       
+        
+      <apex:outputpanel layout="block" id="ReceivingDocumentDetPBPanel"  >
+      <apex:pageBlock mode="edit" id="pageBlockID"  title="{!$ObjectType.Receiving_Document__c.Label}: {!Receiving_Document__c.Name}"> 
+
+        <apex:pageMessages />  
+        <apex:actionRegion >
+        <apex:pageBlockTable value="{!objectlist}"  var="rl" id="MainTable" >
+
+            <apex:column headerValue="{!$Label.Select}"  styleClass="removeCol" >
+                  <apex:inputCheckBox onclick=" enableDisableFuntion('RemoveButtonId'), enableDisableFuntion('CloneButtonId')" id="checkBoxId"  />
+            </apex:column>
+          
+              <apex:repeat value="{!$ObjectType.Receipt_Line__c.FieldSets.Receiving_Line}" var="f" >
+                    <apex:column headerValue="{!f.label}"  styleClass="{!f.Type}  {!IF(LEFT(f.FieldPath,LEN(namespace)) == namespace,RIGHT(f.fieldpath,LEN(f.fieldpath)-LEN(namespace)),f.fieldpath)}">
+                       <apex:inputField value="{!rl[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+                    </apex:column>
+                    
+            </apex:repeat>
+                
+        </apex:pageBlockTable>
+        </apex:actionRegion>        
+        <apex:pageBlockButtons id="btnoutpanel" >
+          <apex:commandButton action="{!addNewRow}" value="{!$Label.AddNew}" reRender="mainFormID" status="actionStatus" 
+          		rendered="{!not(selecterror)}"  oncomplete="focusTheNewRow('MainTable');"  /> 
+          <apex:commandButton id="CloneButtonId" value="{!$Label.Clone}" onclick="cloneAlert();return false;" rendered="{!not(selecterror)}" status="actionStatus" />               
+          <apex:commandButton action="{!save}" value="{!$Label.Save}" reRender="pageBlockID,mainFormID" 
+                              oncomplete="enableDisableFuntion('RemoveButtonId');"   status="actionStatus" rendered="{!not(selecterror)}" accessKey="s" />
+          <apex:commandButton action="{!cancel}" value="{!$Label.Cancel}"  immediate="true" reRender="mainFormID" status="actionStatus" />                   
+          <apex:commandButton id="RemoveButtonId" value="{!$Label.Remove}" immediate="true" onclick="deleteAlert();return false;" rendered="{!not(selecterror)}" reRender="mainFormID" status="actionStatus" /> 
+          
+        </apex:pageBlockButtons> 
+
+        <apex:actionFunction name="executeClone" action="{!cloneporline}"  immediate="true" 
+                                  status="actionStatus" reRender="ReceivingDocumentDetPBPanel, btnoutpanel" >
+                <apex:param name="selected_indexes"  value="" /> 
+        </apex:actionFunction>
+        <!-- The below actionFunction's IMMEDIATE property is set to false to address the JIRA - PTM-56 -->
+        <apex:actionFunction name="remove" action="{!remove}"  immediate="false" 
+                                  status="actionStatus" reRender="ReceivingDocumentDetPBPanel, btnoutpanel" >
+                <apex:param name="selected_indexes"  value="" />
+        </apex:actionFunction>
+                                                 
+    </apex:pageBlock>
+    </apex:outputpanel>
+ 
+ </div> 
+
+</apex:form>
+<div style="display: none; " >  <!--  used to convince the page controller to load the fields in the field set -->
+  <apex:outputText value="{!Receiving_Document__c.Company__c}" />
+  <apex:outputText value="{!Receiving_Document__c.Supplier__c}" />
+  <apex:repeat value="{!Receiving_Document__c.Receipt_Lines__r}" var="obj">
+    <apex:repeat value="{!$ObjectType.Receipt_Line__c.FieldSets.Receiving_Line}" var="f" >
+      <apex:outputText value="{!obj[f]}" />
+    </apex:repeat> 
+    <apex:outputText value="{!obj.Company__c}" />
+    <apex:outputText value="{!obj.Line__c}" />
+    <apex:outputText value="{!obj.Supplier__c}" />
+    <apex:outputText value="{!obj.Purchase_Order_Line__c}" />
+  </apex:repeat>
+</div> 
+</apex:page>

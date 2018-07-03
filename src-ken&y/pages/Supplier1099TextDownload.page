@@ -1,0 +1,8 @@
+<apex:page standardcontroller="Company__c" extensions="Supplier1099TextDownloadExt" 
+    cache="true" 
+    contentType="text/csv#TINMatch1099.txt" 
+    language="en-US"
+    readOnly="true">
+   <apex:repeat value="{!rows}" var="r">{!r}
+   </apex:repeat>
+</apex:page>

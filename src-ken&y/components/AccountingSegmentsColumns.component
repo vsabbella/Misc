@@ -1,0 +1,20 @@
+<apex:component controller="SegmentService" >
+
+<!--
+    This component knows about all the custom segments and accepts an sobject that also contains those 
+    fields, so the names in the Segment_Definition__c must match the fields on the sobject passed in !
+    
+    NB: This component must be included inside an Apex Form, AND a PageBlock
+    -->
+
+
+<apex:attribute name="accDefault" 
+        description="the SObject record to display, Accounting_Default, Accounting_Entry, etc.." 
+        type="SObject" 
+        required="true"  />
+
+        <apex:repeat value="{!segments}"  var="seg" >
+            <apex:inputField value="{!accDefault[seg.Name]}" />
+        </apex:repeat>
+
+</apex:component>

@@ -1,0 +1,46 @@
+<apex:page StandardController="Customer_Receipt__c" extensions="CustomerReceiptManageGatewayExt" docType="html-5.0" title="Refund" >
+    
+    <apex:sectionHeader title="{!Customer_Receipt__c.Name}" subtitle="Refund Transaction"/>
+    <script>
+    function changeInput(input){debugger;
+	    input.step = "any";
+	};
+    
+    
+    </script>
+    <apex:form id="form">
+        <apex:pageMessages />
+        <c:busyWait />
+    	<apex:pageBlock title="Transaction Details">
+        	<apex:pageBlockButtons location="top">
+                <apex:commandButton value="Go Back" action="{!cancel}"/>
+                <apex:commandButton value="Refund Payment" action="{!validateRefundAmount}" rerender="form"  rendered="{!isRefundable}" status="actionStatus"/>
+            </apex:pageBlockButtons>
+        	<apex:pageBlockSection collapsible="false" columns="1">
+            	<apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Status"/>
+                    <apex:outputText value="{!trxnStatus}"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Type"/>
+                    <apex:outputText value="{!trxnType}"/>
+                </apex:pageBlockSectionItem>
+                <apex:outputField value="{!Customer_Receipt__c.Payment_Method_3__c}"/>
+                <apex:outputField value="{!Customer_Receipt__c.Transaction_ID__c}"/>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Currency"/>
+                    <apex:outputField value="{!Customer_Receipt__c.Currency__r.ISO_Code__c}"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!isRefundable}">
+                    <apex:outputLabel value="Amount"/>
+                    <apex:input type="number" id="amtToRefund" value="{!amountToRefund}" onfocus="changeInput(this)" />
+                </apex:pageBlockSectionItem>
+                 <apex:pageBlockSectionItem rendered="{!NOT(isRefundable)}" >
+                    <apex:outputLabel value="Amount"/>
+                    <apex:outputField value="{!Customer_Receipt__c.Amount_Received__c}"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+    
+</apex:page>

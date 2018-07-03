@@ -1,0 +1,22 @@
+<apex:page standardController="Facility_Assignment__c" extensions="FacilityAssignmentNewExt">
+    <apex:form id="theForm">
+    <c:busyWait />
+        <apex:sectionHeader subtitle="{!$Label.New_Facility_Assignment}" title="{!$Label.New_Facility_Assignment}"/>
+        <apex:pagemessages ></apex:pagemessages>
+    <apex:pageBlock >
+        <apex:pageBlockButtons >
+        <apex:commandButton value="{!$Label.Save} " action="{!save}" reRender="theForm"   status="actionStatus" accessKey="s"/>
+        <apex:commandButton value="{!$Label.Cancel} " action="{!cancel}" reRender="theForm"   status="actionStatus"/>
+        </apex:pageBlockButtons>
+        
+        <apex:pageBlockSection title="{!$ObjectType.Facility_Assignment__c.Label}" columns="2" collapsible="false">
+           <apex:repeat value="{!$ObjectType.Facility_Assignment__c.FieldSets.NewFA}" var="f" > 
+            <apex:inputField value="{!Facility_Assignment__c[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+            </apex:repeat>            
+        </apex:pageBlockSection>
+  
+    </apex:pageBlock>
+    </apex:form>  
+      <div id="responseErrors" style="display:none;">
+    </div>
+</apex:page>

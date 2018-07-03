@@ -1,0 +1,146 @@
+<!--
+ - Created by aravindbabusadhanandham on 11/6/17.
+ -->
+
+<apex:page standardController="Agreement__c" extensions="ActivateFulfillmentsExt" sidebar="false" showHeader="false" id="ActivateFulfillments">
+
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+
+    <apex:form >
+        <apex:pageBlock >
+            <apex:pageBlockSection title="Activate Fulfillments" collapsible="false" columns="1">
+                <div class="grid-container">
+                    <div class="grid-message"></div>
+                    <div id="FulfillmentGrid"></div>
+                </div>
+            </apex:pageBlockSection>
+            <apex:pageBlockButtons location="bottom">
+                <apex:outputPanel layout="none">
+                    <input name="return" id="return" type="button" value="Save" class="k-button kndy-btn"  onclick="ActivateFulfillmentsUtil.Save();"/>
+                    <input name="cancel" id="cancel" type="button" value="Cancel" class="k-button kndy-btn" onclick="ActivateFulfillmentsUtil.RenderGrid();"/>
+                </apex:outputPanel>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </apex:form>
+
+    <script type="text/javascript">
+
+        function onComplete(errorMsg) {
+            KenandyErp.Messages(errorMsg, window.parent.$('.page-message'));
+            closeModalWindow();
+        }
+
+        function closeModalWindow(result) {
+            var win = window.parent.$("#agreementReturnwindow").data("kendoWindow");
+            if ( win) {
+                win.close();
+            }
+        }
+
+        var agrID = '{!agreementId}';
+		var fulfillmentData = function() {
+	        var deferred = $.Deferred();
+
+	        Visualforce.remoting.Manager.invokeAction(
+		        '{!$RemoteAction.ActivateFulfillmentsExt.getFulfillments}',
+                agrID,
+		        function (result, event) {
+		            deferred.resolve(result, event);
+		        },
+		        {escape: false}
+	        );
+
+	        return deferred.promise();
+	    };
+
+	    $(document).on('KenandyErpReady', function(e) {
+            KenandyErp.KendoGridOptions.DefaultPageSize = KenandyErp.KendoGridOptions.PageSizes[0];
+
+            ActivateFulfillmentsUtil.Init({
+                fulfillmentLinesConfigJson: '{!JSENCODE(fulfillmentLinesConfigJson)}',
+                fulfillmentLinesFieldList: '{!JSENCODE(fulfillmentLinesFieldList)}',
+            });
+		});
+
+		var ActivateFulfillmentsUtil = function() {
+
+			return {
+                FulfillmentLinesConfigJson: null,
+                FulfillmentLinesFieldList: null,
+                FulFillmentLinesDateFields: null,
+                FulfillmentGrid: null,
+
+                Init: function(args) {
+                   	this.FulfillmentLinesConfigJson = JSON.parse(args.fulfillmentLinesConfigJson);
+                   	this.FulfillmentLinesFieldList = JSON.parse(args.fulfillmentLinesFieldList);
+                    this.FulfillmentDateFields = KenandyErp.KendoGridOptions.GetDateFields(ActivateFulfillmentsUtil.FulfillmentLinesFieldList),
+                    this.RenderGrid();
+                },
+
+                RenderGrid: function() {
+
+                    if (this.FulfillmentGrid) {
+                        $('#{!FulfillmentConfig.uniqueId}').off();
+                        this.FulfillmentGrid.destroy();
+                        $('#{!FulfillmentConfig.uniqueId}').empty();
+                    }
+                    //initialize the grid
+                    this.FulfillmentGrid = $('#{!FulfillmentConfig.uniqueId}').kendoGridActionList({
+                        namespace: '{!JSENCODE(NamespaceUU)}',
+                        config: ActivateFulfillmentsUtil.fulfillmentLinesConfigJson,
+                        fieldList: ActivateFulfillmentsUtil.FulfillmentLinesFieldList,
+                        lookupSearchAction: '{!$RemoteAction.ActivateFulfillmentsExt.lookupSearch}',
+                        getActionListFunction: fulfillmentData,
+                    }).data('kendoGridActionList');
+                },
+
+                Save: function() {
+
+                    var grid = $('#{!FulfillmentConfig.uniqueId}').data('kendoGridActionList');
+                    var messageElement = grid.element.closest( "div.grid-container" ).find( "div.grid-message:first" );
+
+                    var selectedRows = _.filter(grid.dataSource.data(), function(item) {
+                        return item.Invoice_Ready__c;
+                    });
+
+                    var wrapperItems = [];
+                    $.each( selectedRows, function( index, item ) {
+                        item = Serializer.ConvertToSFDCDate( item, { dateFields: ActivateFulfillmentsUtil.FulfillmentDateFields } );
+                        item = item.toJSON();
+                        wrapperItems.push(item);
+                    });
+
+                    wrapperItems = Serializer.ParameterMap( wrapperItems );
+                    console.log(wrapperItems);
+                    if (wrapperItems.length > 0){
+                        KenandyErp.BlockUI(grid.element);
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.ActivateFulfillmentsExt.updateFulfillments}',
+                            wrapperItems,
+                            function( result, event ) {
+                                KenandyErp.UnBlockUI( grid.element );
+                                if ( event.type == "exception" ) {
+                                    KenandyErp.Message( event.message, KenandyErp.MessageType.Error, messageElement );
+                                } else {
+                                    if ( result.success ) {
+                                        //onComplete(result.messages)
+                                        KenandyErp.Messages( result.messages, messageElement );
+                                        ActivateFulfillmentsUtil.RenderGrid();
+                                    } else {
+                                        KenandyErp.Messages( result.messages, messageElement );
+                                    }
+                                }
+                            },
+                            { escape: false }
+                        );
+                    }else {
+                        KenandyErp.UnBlockUI( grid.element );
+                        return KenandyErp.Message( "Please check invoice ready flag for atleast one line", 'ERROR', messageElement );
+                    }
+                }
+            };
+		}();
+    </script>
+
+</apex:page>

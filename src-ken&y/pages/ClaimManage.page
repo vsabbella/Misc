@@ -1,0 +1,422 @@
+<apex:page showHeader="true" sidebar="true" 
+			extensions="ClaimManageExt,KSE" standardController="Claim__c" 
+			tabStyle="Claim__c" docType="html-5.0" title="Claim">
+			
+	<style type="text/css">
+        .column-label {
+            vertical-align: middle !important;
+            width: 15%;
+        }
+        
+        .column-field {
+            vertical-align: middle !important;
+            width: 85%;
+        }
+        
+        div.individualPalette.lookupHoverDetail[id^='lookup'] .pbButton input.btn:nth-child(2) {
+            display: none;
+        }
+        
+        body .bPageBlock .pbBody .kndy-pbHeader .pbSubheader{
+            background-color:#428bca;
+        }
+        
+        .disab {
+             opacity: 0.4;
+             cursor: default; 
+             pointer-events: none;
+        }
+    </style>
+    
+    <c:KendoResources />
+    <c:busyWait includeScripts="false" />
+	<apex:form id="ClaimManageForm">
+
+    	<div id="claimDiv" class="page-container">
+    	<apex:sectionHeader title="{!pageTitle}"  help="{!URLFOR($Page.HelpClaims)}" />
+    	
+    	 <div class="page-message"></div>
+         <apex:pageMessages id="msgs"/>
+         
+    	 <apex:pageBlock id="mainpage"> 
+	         <apex:pageBlockSection columns="1" >
+	               
+	        	<div class="grid-container"  >
+	                <div class="grid-message"></div>
+	                <div id="ClaimHeaderUI"></div>
+	            </div>
+	           
+	       </apex:pageBlockSection>
+	       <apex:pageBlockButtons location="top"> 
+               <apex:outputPanel layout="none"  >
+                        <button id="saveButton" class ="k-button kndy-btn save-command" type="button" accesskey="s">{!$Label.Save}</button>
+					</apex:outputPanel>
+					<a href="{!ReturnUrl}" style="text-decoration: none;"><input type="button" value="{!$Label.Go_Back}" class="k-button kndy-btn cancel-command" /></a>
+           </apex:pageBlockButtons>
+	        </apex:pageBlock>  
+		</div>
+    </apex:form>
+      <script type="text/javascript"> 
+            var isRenderGrid = ('{!renderEditable}' === 'true') ? true : false; 
+            var claimId = '{!Claim__c.ID}';
+            var ClaimHeaderFieldList= '{!ClaimHeaderFieldList}';
+             /***************** MODEL BINDINGS *******************/
+            
+            $(document).ready(function() {
+               // Bind button Events
+            
+                // unbind and bind the save, save & return button click events
+                $('.save-command, .save-new-command, .save-return-command').off("click",
+                    $.proxy(ClaimManageActions.Save, { actionType: 'Save' })
+                );
+                
+                $('.save-command, .save-new-command, .save-return-command').on("click",
+                    $.proxy(ClaimManageActions.Save, { actionType: 'Save' })
+                );
+                
+            });
+            $(document).on('KenandyErpReady', function(e) {
+            	ClaimManageActions.RenderSaveListDropdown();
+            	//Render Header Detail List
+            	ClaimManageUtils.InitializeHeaderDetailList();
+            });   
+            var ClaimManageUtils = function() {
+                return {
+                    
+                    InitializeHeaderDetailList: function(options) {
+                    		var crHeaderView = $('#ClaimHeaderUI').data('kendoDetailList');
+                    		if (crHeaderView) { //if it was rendered before destroy and recreate it. 
+			                    crHeaderView.destroy();
+			                    $('#ClaimHeaderUI').off();
+			                    $('#ClaimHeaderUI').empty();
+			                }
+			                var lookupSearchFilters = [];
+			                lookupSearchFilters.push({ field: "Parent_Customer__c", filter: "RecordType.DeveloperName = \'Corporate_Parent\' and Status__c =\'Approved\'" });
+			                 crHeaderView = $('#ClaimHeaderUI').kendoDetailList({
+				                    namespace: '{!NamespaceUU}',  
+				                    autoExpandSections: true,  //this will by default expand all the sections. TODO on widget: push this option to each section giving users more control. 
+				                    sections: [
+				                        {
+				                        	fields: ClaimManageUtils.GetFieldList('{!ClaimHeaderFieldList}')//JSON.parse('{!ClaimHeaderFieldList}') //the main sections
+				                        },
+				                        {
+				                            name: 'claim-additional-info', //keep adding as many sections as required. 
+				                            title: 'Additional Information',
+				                            fields: JSON.parse('{!ClaimAddlHeaderFieldList}')
+				                        },
+				                        
+				                    ],
+				                    lookupSearchAction: '{!$RemoteAction.ClaimManageExt.lookupSearchFilter}',
+				                    lookupSearchFilters: lookupSearchFilters,
+				                    getDetailListFunction: function() {
+				                        var deferred = $.Deferred();
+				                        
+				                        Visualforce.remoting.Manager.invokeAction(
+				                                '{!$RemoteAction.ClaimManageExt.getClaim}',
+				                                claimId,				                               
+				                                function (result, event) {
+				                                    if(result.success)
+				                                    	KenandyErp.Messages(result.messages);
+				                                    deferred.resolve(result, event);
+				                                    
+				                                },
+				                                {escape: false}
+				                            );
+				                        
+				                        return deferred.promise();
+				                    } 
+				                }).data('kendoDetailList');
+				                crHeaderView.element.bind('OnReadSuccess', this.ClaimHeaderReadSuccess);
+			                
+                    },
+                    GetFieldList: function(claimFieldList) {
+		   				var parsedClaimFieldList = JSON.parse(claimFieldList);
+		                    KenandyErp.CleanNamespace(parsedClaimFieldList, '{!NamespaceUU}');
+		                    $.each(parsedClaimFieldList, function(index, element){
+		                         if(element.field == "Amount__c" ){ 
+		                            element.min = "0";                          
+		                        } 
+		                    });
+		                    
+		                    return parsedClaimFieldList;
+		   			},
+
+                    //on type change populate dependent picklist values for subtype and reason
+                    onTypeChange: function(e){
+                   
+                        var TypeDropDown = $('#Type__c').data('kendoDropDownList');
+                        var SubTypeDropDown = $('#Subtype__c').data('kendoDropDownList');
+                        var ReasonDropDown = $('#Reason__c').data('kendoDropDownList');
+                        if(TypeDropDown != null && TypeDropDown.dataSource.view().length > 0){
+                            //get index of selected controlling picklist value
+                            var controllingFieldDescribe = JSON.parse('{!TypeDescribe}');
+                            var controllingValueIndex = controllingFieldDescribe.picklistValues.findIndex(function(picklistValue) {
+	   																			return picklistValue.value == $("#Type__c").data("kendoDropDownList").value();
+	   																 });
+                            //refresh kendodropdown list with dependent data from type using datasource
+                            $("#Subtype__c").kendoDropDownList({
+								dataTextField: "Subtype__c",
+								dataValueField: "Subtype__c",
+								dataSource: {
+									data: Serializer.getNewPickListValues('{!TypeDescribe}','{!SubTypeDescribe}',controllingValueIndex,true)
+								},
+								animation: false
+							});
+							
+							$("#Reason__c").kendoDropDownList({
+								dataTextField: "Reason__c",
+								dataValueField: "Reason__c",
+								dataSource: {
+									data: Serializer.getNewPickListValues('{!TypeDescribe}','{!ReasonDescribe}',controllingValueIndex,true)
+								},
+								animation: false
+							});
+							if (e != null){
+								SubTypeDropDown.text('--None--');
+								SubTypeDropDown.value(null);
+								SubTypeDropDown.select(0);
+								
+								ReasonDropDown.text('--None--');
+								ReasonDropDown.value("");
+								ReasonDropDown.select(0);
+							}else{
+							SubTypeDropDown.text($("#Subtype__c").data("kendoDropDownList").value());
+							ReasonDropDown.text($("#Reason__c").data("kendoDropDownList").value())
+							}
+                        }
+                    },
+                    
+		   			
+		   			
+                    ClaimHeaderReadSuccess: function () {
+						 $('.save-command, .save-return-command,.save-new-command').removeClass("disab");
+						 $('#ClaimHeaderUI input, .k-i-calendar').removeClass("disab");            
+                  		$('table .kndy-table .k-dropdown').removeClass("disab"); 
+	                    $('input[name="Company__c"]').bind('change', 
+	                        ClaimManageUtils.OnCompanyChange
+	                     );
+	                    $('input[name="Parent_Customer__c"]').bind('change', 
+	                        ClaimManageUtils.OnParentCustomerChange
+	                    );
+	                    $('input[name="Bill_to_Customer__c"]').bind('change', 
+	                        ClaimManageUtils.OnBillToCustomerChange
+	                    );
+	                    
+	                    //instantiate billtocustomer and soldtocustomer variable
+		                $.each($(".k-autocomplete input"), function(){
+	                        $(this).data("kendoLookup").options.minLength = 1;
+                            if(this.id=='Bill_to_Customer__r.Name'){
+                               ClaimManageUtils.billToCustomer = this;
+                            }
+                            if(this.id=='Sold_to_Customer__r.Name'){
+                               ClaimManageUtils.soldToCustomer = this;
+                            }
+		                });
+		                 //Bind Type change event
+	                    $('#Type__c').bind('change', ClaimManageUtils.onTypeChange);
+	                    ClaimManageUtils.onTypeChange();
+                    	ClaimManageUtils.UpdateBillToCustomerFilters();
+                    	ClaimManageUtils.UpdateSoldToCustomerFilters();
+                    },
+                    OnCompanyChange: function(e) {
+                    	if ( $('input[name="Company__c"]').length > 0) {
+                    	 	var companyId = $('#ClaimHeaderUI').data('kendoDetailList').element.find('#Company__c').val();
+                    	 	KenandyErp.BlockUI();
+                    	 	Visualforce.remoting.Manager.invokeAction(
+                                '{!$RemoteAction.ClaimManageExt.getCompanyDefaultCurrency}',
+                                companyId,
+                                function (result, event) {
+                                   if (event.type == 'exception' ) {
+                                   		KenandyErp.Message(event.message);
+                                   		KenandyErp.UnBlockUI();
+                                   }else {
+                                   		KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                          if (result.success ) {
+                                          	
+                                          	var currency = result.records[0];
+                                          	$('#ClaimHeaderUI').data('kendoDetailList').data.set('Currency__c', currency.Id);
+                                          	$('#ClaimHeaderUI').data('kendoDetailList').data.set('Currency__r', {Id: currency.Id, Name: currency.Name });
+
+                                           	KenandyErp.UnBlockUI();
+
+                                          }else {
+			                                KenandyErp.Messages(result.messages);
+			                                KenandyErp.UnBlockUI();
+			                              }
+                                   }
+                                },
+                                {escape: false}
+                            );
+                    	} 
+                    },
+                    
+                   
+                    //refine filters for sold to and bill to customers on parent customer on change
+                    OnParentCustomerChange: function(e){
+                    	ClaimManageUtils.UpdateBillToCustomerFilters(e);
+                   
+						$(ClaimManageUtils.billToCustomer).data('kendoLookup').value (  '' );
+						$(ClaimManageUtils.soldToCustomer).data('kendoLookup').value (  '' );
+                      	$('#ClaimHeaderUI').data('kendoDetailList').data.set('Bill_to_Customer__c', '') ;
+                      	$('#ClaimHeaderUI').data('kendoDetailList').data.set('Bill_to_Customer__r', {Id: '', Name: '' });
+                      	$('#ClaimHeaderUI').data('kendoDetailList').data.set('Sold_to_Customer__c', '') ;
+                      	$('#ClaimHeaderUI').data('kendoDetailList').data.set('Sold_to_Customer__r', {Id: '', Name: ''});
+						
+                    },
+                    //set billto customer filters
+                    UpdateBillToCustomerFilters: function(e) {
+                    	 var filterTextBillTo = [];
+                    	 
+                    	 filterTextBillTo.push("Status__c = \'Approved\'");
+                    	 filterTextBillTo.push("RecordType.DeveloperName = \'Bill_To\'");
+                    	 if($('input[name="Parent_Customer__c"]').length > 0) {
+                    	 	var parentCustomerId = $('#ClaimHeaderUI').data('kendoDetailList').element.find('#Parent_Customer__c').val();
+                    	 	filterTextBillTo.push("Parent_Customer__c = \'"+parentCustomerId+"\'");
+                    	 }
+                    	 if ($(ClaimManageUtils.billToCustomer).data('kendoLookup') != null){
+                    	 	$(ClaimManageUtils.billToCustomer).data('kendoLookup').options.criteria = filterTextBillTo.join(' and ');
+                    	 } 
+
+                    },
+                    //refine filters for sold to customers depending on bill to customers change
+                    OnBillToCustomerChange: function(e){
+                    	ClaimManageUtils.UpdateSoldToCustomerFilters(e);
+                   
+						$(ClaimManageUtils.soldToCustomer).data('kendoLookup').value (  '' );
+                      	
+                      	$('#ClaimHeaderUI').data('kendoDetailList').data.set('Sold_to_Customer__c', '') ;
+                      	$('#ClaimHeaderUI').data('kendoDetailList').data.set('Sold_to_Customer__r', {Id: '', Name: ''});
+						
+                    },
+                    //set soldto customer filters
+                    UpdateSoldToCustomerFilters: function(e) {
+                    	 var filterTextSoldTo= [];
+                    	
+                    	 filterTextSoldTo.push("Status__c = \'Approved\'");
+                    	 filterTextSoldTo.push("RecordType.DeveloperName = \'Sold_To\'");
+                    	 var billToCustomer = $('#ClaimHeaderUI').data('kendoDetailList').element.find('#Bill_to_Customer__c').val();
+                    	 if($('input[name="Bill_to_Customer__c"]').length > 0) {
+                    	 	filterTextSoldTo.push("Parent_Customer__c = \'"+billToCustomer+"\'");
+                    	 }
+						if ($(ClaimManageUtils.soldToCustomer).data('kendoLookup') != null){
+                    	 	$(ClaimManageUtils.soldToCustomer).data('kendoLookup').options.criteria = filterTextSoldTo.join(' and '); 
+						}
+                    },
+               };
+            }();
+            
+             var ClaimManageActions = function() {
+                return { 
+                	RenderSaveListDropdown: function() {        
+		                 $('#saveButton').kendoDropDownButton({
+			                type: 'splitButton',
+			                items: [
+			                    {
+			                        text: "Save and Return",
+			                        cssClass: "save-return-command"
+			                    },
+			                    {
+			                        text: "Save and New",
+			                        cssClass: "save-new-command"
+			                    }
+			                ]
+			            });
+			        },  
+                    Save: function(e) {  
+                      	var returnUrl = '{!ReturnUrl}';
+                      	var detailListHeader = $('#ClaimHeaderUI').data('kendoDetailList');
+
+				         var messageElementPopup = detailListHeader.element.closest("div.grid-container").find("div.grid-message:first");// todo
+		                 var isNewClaim = (!detailListHeader.data.get('Id')) ? true : false;
+				                
+		               	var headerDateFields = detailListHeader.getDateFields();
+		              
+		               	var headerRowsList = [];
+		               	var headerRows = [];
+						KenandyErp.ClearMessage();
+				                 if (!detailListHeader.validate()) {
+				                     KenandyErp.Message("Please fix the highlighted errors.",messageElementPopup);
+				                    	e.preventDefault();
+										return false;
+								}
+
+				                headerRowsList.push(detailListHeader.data);
+		               	//prepare claim object with editable fields to be saved
+				                headerRows = $.map(headerRowsList, function(item, index) {
+				                    item = item.toJSON();
+		                   	//need to convert the date time issues in kendo
+				                    item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+				                    var keysInItem = Object.keys(item);
+				             for (var i = 0; i < detailListHeader._fieldList.length; i++) {
+		                        var name = detailListHeader._fieldList[i].field;
+		                        var editable = detailListHeader._fieldList[i].editable;
+				                 
+	                            if (editable == false ){
+	                            	delete item[name];
+	                            }
+	                            if(claimId) {
+                                        item['Id'] = claimId;
+	                            }
+	                            if (editable == true && name == 'Subtype__c'){
+                                        item['Subtype__c'] = $("#Subtype__c").data("kendoDropDownList") != null ? $("#Subtype__c").data("kendoDropDownList").value() : null;
+	                            }
+	                            if (editable == true && name == 'Reason__c'){
+                                        item['Reason__c'] = $("#Reason__c").data("kendoDropDownList") != null ? $("#Reason__c").data("kendoDropDownList").value() : null;
+                                    }
+		                    }   
+                                
+				                    return item;
+				                });
+				                
+				                if (headerRows.length > 0) {
+				                    headerRows = Serializer.ParameterMap(headerRows);
+				                }
+				                
+				                headerDateFields = headerDateFields ? _.pluck(headerDateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+				                
+                                var dateFields = headerDateFields;
+                                
+                                KenandyErp.BlockUI();
+                        console.log ('headerRows=====');     
+                        console.log (headerRows);                       
+                                Visualforce.remoting.Manager.invokeAction(
+                                    '{!$RemoteAction.ClaimManageExt.save}', 
+                                    headerRows[0], 
+                                    dateFields,
+                                    function (result, event) {
+                               KenandyErp.UnBlockUI();             
+                                        if (event.type == 'exception' ) {
+                                            KenandyErp.Message(event.message);
+                                        } else {
+                                            KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                             if (result.success ) {
+                                            		var claim;
+                                            		claim = result.records[0];
+                                            		claimId = claim.Id;
+                                   		//return to claims list
+                                   		if ($(e.target.parentElement).hasClass('save-return-command') ) {
+                                 			KenandyErp.back(true, returnUrl);
+                                        }
+                                        //save and goes to new claim screen
+                                        if ($(e.target.parentElement).hasClass('save-new-command') ) {
+                                            KenandyErp.NavigateToURL('/apex/ClaimManage' + '?retURL='+returnUrl, true);
+                                        }
+                                        //return to claim record
+                                        if ( $(e.target).hasClass('save-command')){
+                                            KenandyErp.NavigateToURL('/apex/ClaimManage' + '?id=' + claimId ,true);
+								                        }
+                                          		KenandyErp.Messages(result.messages);
+                                            }
+                                            else {
+                                                KenandyErp.Messages(result.messages);
+                                            }
+                                        }
+                                    },
+                                    {escape: false}
+                                );
+                           
+                    },
+                };
+            }();
+     </script>
+</apex:page>

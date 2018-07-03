@@ -1,0 +1,50 @@
+<apex:page standardController="Claim__c" extensions="ClaimResolveExt" action="{!resolve}" docType="html-5.0" title="{!$Label.Write_Off} {!refClaim.Name}">
+
+    <apex:includeScript value="{!URLFOR($Resource.JQuery182)}" />
+	<apex:sectionHeader title="{!$ObjectType.Claim__c.Label} {!Claim__c.Name}" subtitle="{!$Label.Resolve}"/>
+	<apex:form id="form">
+		<apex:pageMessages />
+		<c:busyWait />
+		
+		<apex:outputpanel id="mainPanel" rendered="{!NOT(renderNonmatchingcodes)}">
+			<apex:pageBlock >
+				<apex:pageBlockButtons location="top">
+					<apex:commandButton value="{!$Label.Go_Back}" action="{!cancel}" status="actionStatus" reRender="form"/>
+					<apex:commandButton value="{!$Label.Resolve}" action="{!resolve}" disabled="{!disableAction}" status="actionStatus" reRender="form, navigateURL" oncomplete="goBack();"/>
+				</apex:pageBlockButtons>
+				<apex:pageBlockSection rendered="{!!isClosed}">
+					<apex:repeat value="{!$Objecttype.Claim__c.Fieldsets.Resolve}" var="f">
+						<apex:outputField value="{!Claim__c[f]}" rendered="{!f.fieldpath != 'Resolution_Code__c'}"/>
+					</apex:repeat>
+					<apex:inputField value="{!Claim__c.Resolution_Code__c}" required="true" rendered="{!refClaim.Claim_Lines__r.size == 0}">
+						<apex:actionSupport event="onchange" action="{!validateRecord}" status="actionStatus" rerender="form"/>
+					</apex:inputField>
+				</apex:pageBlockSection>
+				
+			</apex:pageBlock>
+		</apex:outputpanel>
+		
+		<apex:outputpanel id="NonMatchingPanel" rendered="{!renderNonmatchingcodes}">
+			<apex:pageBlock >
+				<apex:pageBlockButtons location="top">
+					<apex:commandButton value="{!$Label.Go_Back}" action="{!cancel}" status="actionStatus" reRender="form"/>
+					<apex:commandButton value="{!$Label.Resolve}" action="{!ResolveProcess}"  status="actionStatus" reRender="form"/>
+				</apex:pageBlockButtons>
+			</apex:pageBlock>
+		</apex:outputpanel>
+	</apex:form>
+    <apex:outputPanel id="navigateURL">
+        <script>
+
+        var goBack = function() {
+             if({!redirect}) {
+                if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+                    sforce.one.back(true);
+                } else {
+                    window.location.href = '/' + '{!JSENCODE(Claim__c.Id)}';
+                }
+            }
+        }
+    </script>
+    </apex:outputPanel>
+</apex:page>

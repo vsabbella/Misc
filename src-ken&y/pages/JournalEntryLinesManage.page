@@ -1,0 +1,1084 @@
+<apex:page standardcontroller="Journal_Entry__c" extensions="JournalEntryLinesManageExt" doctype="html-5.0" >
+
+<apex:sectionHeader title="{!pageTitle}" />
+<style type="text/css">
+        .line-errors {
+            cursor: pointer;
+        }
+
+        ul.error-messages {
+            padding-left: 20px;
+            text-align: left;
+        }
+
+        ul.error-messages li {
+            color: #fff;
+        }
+
+        ul.error-messages li a:link {
+            color: #fff;
+        }
+
+        ul.error-messages li a:visited {
+            color: #fff;
+        }
+
+        ul.error-messages li a:hover {
+            color: #fff; 
+        }
+
+        ul.error-messages li a:active {
+            color: #fff;
+        }
+        .text-red { border-color: red !important; }
+        .text-green { border-color: green !important; }
+        .line-total{border : 2px dashed red; text-align:right;}
+        .showTotals { display:block !important;}
+       
+
+    </style>
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" /> 
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+	<apex:form id="theForm">
+        <!--FIN-627 Prevent Error when Users Tab fast.Container for Error Message-->           	
+        <div class="page-container">
+            <div class="page-message"></div>
+            <apex:pageMessages id="msgs"/>
+		<c:busyWait includeScripts="false" />
+		<apex:pageBlock >
+			<apex:pageBlockButtons location="top">
+                 <button id="saveButton" class ="k-button kndy-btn save-command" type="button" accesskey="s">Save</button>
+                 <button class="k-button kndy-btn cancel-command"> <a href="{!ReturnUrl}" style="text-decoration: none;">Go Back</a></button> 
+                 <button id="actionButton" class ="k-button kndy-btn" type="button">Actions</button>				
+				<!-- <apex:commandButton value="{!$Label.Go_Back}" action="{!cancel}" status="actionStatus" rerender="theForm"/>
+				<input type='button' value='Save Changes' class='btn grid-save-command' id="SaveOnHeader"/> -->
+				
+			</apex:pageBlockButtons>
+		    <div id="JEHeaderDetailList"></div>
+            <br/>
+            <div style="padding: vertical horizontal;">
+                <apex:outputLink value="{!GenerateAccountingUrl}"  id="generateAccountingLink" disabled="{!Journal_Entry__c.Finalized__c == false}">Generate Accounting Entry</apex:outputLink> 
+            </div>
+            <br/>          
+            <div class="grid-container">
+                <div class="grid-message"></div> 
+              
+                <div id="GridAddManageJournalEntryLines"></div>
+            </div>    
+        </apex:pageBlock>
+		<!--  <apex:outputPanel rendered="true" >
+			<c:GridRelatedList uniqueId="Grid{!Journal_Entry__c.Id}" 
+					title="{!$Label.Manage_Lines}"
+					parentRecord="{!Journal_Entry__c}"
+					objectName="Journal_Entry_Line__c"  
+					fieldset="Journal_Entry_Line_Edit" 
+					parentField="Journal_Entry__c"
+					sortField="Name" 
+					readOnlyFields="Name, Company__c"
+					buttons="create, save, cancel, delete, search"/>
+    		</apex:outputPanel>	-->
+        </div>
+		<apex:inputHidden value="{!jeHeaderFields}" id="jeHeaderFields" />`
+	</apex:form>
+	<c:busyWait includeScripts="false" />
+	<script type="text/javascript">
+		var journalEntryStatus  = '{!journal.Status__c}';
+		var JournalEntryType    = '{!journal.Type__c}';
+		var totalAmntDR         = 0;
+		var totalAmntCR         = 0;
+        var returnUrl           = '{!ReturnUrl}';		
+        //var jeLinesHasNegEntry  = false;
+		var journalEntryLinesGridConfig = JSONUtils.Parse('{!JSENCODE(journalEntryLinesConfigJson)}');
+    	var expandedRows = [];
+        var jeIsFinalized = '{!Journal_Entry__c.Finalized__c}';
+        
+        if(jeIsFinalized == 'false'){
+            document.getElementById('j_id0:theForm:j_id61:generateAccountingLink').style = 'font-size: 12px; font-weight: bold; color: rgb(160,160,160);';
+        }else{
+             document.getElementById('j_id0:theForm:j_id61:generateAccountingLink').style = 'font-size: 12px; font-weight: bold; color: blue;';
+        }        
+
+
+        $(document).on('KenandyErpReady', function(e) {
+        
+            JournalEntryLinesManageUtils.init({
+              JEHeaderId:'{!JSENCODE(Journal.Id)}',
+              JEHeaderData:'{!JSENCODE(JERecJSON)}',
+        	  JEHeaderFieldList: '{!JSENCODE(jeHeaderFields)}',
+        	  JEAddlHeaderFieldList:'{!JSENCODE(jeAddlHeaderFields)}',
+              JELinesConfigJson: '{!JSENCODE(journalEntryLinesConfigJson)}',
+              JELinesFieldList: '{!JSENCODE(journalEntryLineFieldList)}',                           
+              //ExceptionFieldList: '{!JSENCODE(exceptionFieldList)}',                           
+              CustomViews: null,
+              CustomViewFields: null,
+              HeaderActions: null,
+              isDirtyInvoiceHeaderData: false                
+            
+            });
+         
+        });
+      
+      
+       
+        var JournalEntryLinesManageUtils = function() {
+
+            
+        	return {
+        	
+                JEHeaderData:null,
+                JEHeaderId:null,
+                JEHeaderDetailList: null,
+                JELinesGrid: null,
+                ExceptionsGrid: null,
+                JEHeaderFieldList: null,
+                JEAddlHeaderFieldList:null,
+                JELinesConfigJson: null,
+                JELinesFieldList: null,    
+                journalEntryLineDateFields:null,              
+                //ExceptionFieldList: null,                           
+                CustomViews: null,
+                CustomViewFields: null,
+                HeaderActions: null,
+                saveJELinesAction:null,
+                lookupSearchAction:null,
+                isDirtyInvoiceHeaderData: false,       	
+        	
+        	    init: function(args){
+ 	               this.JEHeaderId = args.JEHeaderId;       	    
+	               this.JEHeaderData = JSONUtils.Parse(args.JEHeaderData);
+	               this.JEHeaderFieldList= JSONUtils.Parse(args.JEHeaderFieldList);
+	               this.JEAddlHeaderFieldList= JSONUtils.Parse(args.JEAddlHeaderFieldList);	               
+	               this.JELinesFieldList = JSONUtils.Parse(args.JELinesFieldList);
+	               this.JELinesConfigJson = JSONUtils.Parse(args.JELinesConfigJson);
+	               //this.ExceptionFieldList= JSONUtils.Parse(args.ExceptionFieldList);
+	               this.journalEntryLineDateFields = KenandyErp.KendoGridOptions.GetDateFields(JSONUtils.Parse(this.JELinesFieldList));              
+ 				   this.lookupSearchAction ='{!$RemoteAction.JournalEntryLinesManageExt.lookupSearchFilter}' ;
+ 				   this.saveJELinesAction = '{!$RemoteAction.JournalEntryLinesManageExt.saveList}';
+                   this.RenderSaveListDropdown();	
+                   this.RenderActionListDropdown();                  			                        	               
+	               this.RenderWidgets();
+	             
+	               
+	                      	    
+        	    },
+        	    RenderErrors: function(data) {
+                    var errors = data.get('errors') ? data.get('errors') : [];
+                    var exceptions = data.get('exceptions') ? data.get('exceptions') : [];
+                    var template = (errors.length > 0 || exceptions.length > 0) ? '<div class="errors k-hidden">' : '';
+                    var iconClass = (errors.length > 0) ? ' kndy-red' : ' kndy-orange';
+
+                    if (errors.length > 0) {
+                        template = template + '<table cellspacing="3"><tr><td class="kndy-white kndy-text-left"><h3>Errors</h3></td></tr><tr><td>';
+                        template = template + '<ul class="error-messages">';
+
+                        for (var i = 0; i < errors.length; i++) {
+                            template = template + '<li>' + sanitize(errors[i]) + '</li>';
+                        }
+
+                        template =  template + '</ul>';
+                        template = template + '</td></tr></table>'
+                    }
+
+                    if (exceptions.length > 0) {
+                        template = template + '<table cellspacing="3"><tr><td class="kndy-white kndy-text-left"><h3>Exceptions</h3></td></tr><tr><td>';
+                        template = template + '<ul class="error-messages">';
+
+                        for (var i = 0; i < exceptions.length; i++) {
+                            template = template + '<li><a href="/' + sanitize(exceptions[i].Id) + '" target="_blank"><nobr>' + sanitize(exceptions[i].Subject) + '</nobr></a></li>';
+                        }
+
+                        template =  template + '</ul>';
+                        template = template + '</td></tr></table>'
+                    }
+
+                    if (errors.length > 0 || exceptions.length > 0) {
+                        showWarningHeader = true;
+                        template =  template + '</div>';
+                    }
+
+                    return (errors.length > 0 || exceptions.length > 0) ? '<i class="fa fa-exclamation-triangle fa-lg line-errors' + iconClass + '">' + template + '</i>' : '';
+                },                
+                RenderSaveListDropdown: function() {
+                    $('#saveButton').kendoDropDownButton({
+                        type: 'splitButton',
+                        items: [
+                            {
+                                text: "Save and Return",
+                                cssClass: "save-return-command"
+                            },
+                            {
+                                text: "Save and New",
+                                cssClass: "save-new-command"
+                            }
+                        ]
+                    });
+                }, 
+                RenderActionListDropdown: function() {
+                    $('#actionButton').kendoDropDownButton({
+                        items: [
+                            {
+                                text: "Clone",                                
+                                click: function(e) {
+                                    JournalEntryLinesManageUtils.ExecuteAction('Clone');  
+                                } 
+                            },
+                            {
+                                text: "Unfinalize",                                
+                                click: function(e) {
+                                    JournalEntryLinesManageUtils.ExecuteAction('Unfinalize');  
+                                } 
+                            },
+                            {
+                                text: "Void/Cancel",                                
+                                click: function(e) {
+                                    JournalEntryLinesManageUtils.ExecuteAction('Void/Cancel');  
+                                } 
+                            }                                                        
+                        ]
+                    });
+                },                              
+        	    RenderWidgets: function(){
+        	        
+        	        //Reset values;
+        	        $('#tot-amt-dr').val("0");
+                    $('#tot-amt-cr').val("0");
+                  
+                    
+                    var lookupSearchFilters = [];  
+        	        // Destroy journalEntryDetailList
+                    if (this.journalEntryDetailList) {
+                        this.journalEntryDetailList.destroy();
+                        $('#JEHeaderDetailList').empty();
+                    }
+                    // Destroy journalEntryDetailList
+                    if (this.JELinesGrid) {
+                        this.JELinesGrid.destroy();
+                        $('#GridAddManageJournalEntryLines').empty();
+                    }
+                   
+        	       this.journalEntryDetailList =  $('#JEHeaderDetailList').kendoDetailList({
+		               namespace: '{!NamespaceUU}',  
+		               sections: [
+		                   {
+		                       fields: this.JEHeaderFieldList
+		                   },
+		                   {
+		                       name: 'invoice-header-addl-info',
+	                           title: 'Additional Information',
+	                           fields: JournalEntryLinesManageUtils.JEAddlHeaderFieldList	   
+                           }                
+		               ],
+		               lookupSearchAction: '{!$RemoteAction.JournalEntryLinesManageExt.lookupSearchFilter}',
+		               getDetailListFunction: function(readOptions) {
+		               	var deferred = $.Deferred();
+		               
+						 if (!JournalEntryLinesManageUtils.JEHeaderId) {
+				           	var headerData = JournalEntryLinesManageUtils.JEHeaderData;
+				           	var records = [];
+				           	 
+				
+							delete headerData['attributes'];
+							records.push(headerData);
+							            
+				               setTimeout(function() {
+								deferred.resolve({ records: records, success: true, total: 1 }, { statusCode: 200 });
+				               }, 100);
+				           }
+				           else {
+				            Visualforce.remoting.Manager.invokeAction(
+				                    '{!$RemoteAction.JournalEntryLinesManageExt.getJournalEntryDetails}',
+				                    JournalEntryLinesManageUtils.JEHeaderId,
+	                                '{!$currentpage.parameters.clone}',			                    
+				                    function (result, event) {
+				                        deferred.resolve(result, event);
+				                    },
+				                    {escape: false}
+				            );
+						  }
+
+				            return deferred.promise();
+			            
+			        }
+		           }).data('kendoDetailList');
+ 
+
+	               this.journalEntryDetailList.element.bind('OnReadSuccess', this.OnInvoiceHeaderDetailListReadSuccess);
+	               
+	               this.journalEntryDetailList.element.bind('change', $.proxy(this.OnjournalEntryHeaderDetailListChange, { grid: this.journalEntryDetailList}));
+	                         
+                   lookupSearchFilters.push({field: "jeLine.GL_Account__c", filter: "Active__c = true" }); 
+		           this.JELinesGrid = $('#GridAddManageJournalEntryLines').kendoGridActionList({
+                    	namespace: '{!NamespaceUU}', 
+                        config: this.JELinesConfigJson, 
+                        fieldList: this.GetJournalEntryLinesFieldList(),
+                        lookupSearchAction: this.lookupSearchAction, 
+                        getActionListFunction: $.proxy(this.journalEntryLinesData,{ config: this.JELinesConfigJson}),
+                        saveAction: this.saveJELinesAction,
+                        lookupSearchFilters: lookupSearchFilters,                        
+                        toolbarButtons: [ 
+                        ],
+                     //FIN-627 Prevent Error when Users Tab fast.Validation done On save ,Not on Tab out                 
+                        validateLookupOnBlur: true,
+                        beforeEdit: function(e) {  //KNDY-15661	
+                        	if($("#Auto_Reverse__c").prop('checked')){
+                            	e.model.fields['jeLine.Bank_Account__c'].editable = false;
+                        	}else{
+                            	e.model.fields['jeLine.Bank_Account__c'].editable = true;
+                          	} 
+                      	},
+                        showIconButtons: true,                        
+                        //detailTemplate: kendo.template($("#detailTemplate").html()),
+                        modelIdField: 'jeLine.Id'
+                    }).data('kendoGridActionList');
+                   	
+                    
+                   	
+                    // unbind and bind the save, save & return button click events
+	                $('.save-command, .save-new-command, .save-return-command').off("click",
+	                    $.proxy(JournalEntryLinesManageUtils.HeaderSave, { grid: this.JELinesGrid, detailList:this.journalEntryDetailList, options: { config: this.JELinesConfigJson, dateFields: this.journalEntryLineDateFields } })
+	                );
+	                
+	                $('.save-command, .save-new-command, .save-return-command').on("click",
+	                    $.proxy(JournalEntryLinesManageUtils.HeaderSave, { grid: this.JELinesGrid, detailList:this.journalEntryDetailList, options: { config: this.JELinesConfigJson, dateFields: this.journalEntryLineDateFields } })
+	                );
+	                		            
+		            // bind grid detailInit event
+		            //this.JELinesGrid.bind("detailInit", $.proxy(JournalEntryLinesManageUtils.DetailInit, { fieldList: this.ExceptionFieldList }));
+										
+		            // bind grid detailExpand/detailCollapse events
+		            //JELinesGrid.bind("detailExpand", $.proxy(JournalEntryLinesManageUtils.DetailExpand, { grid: this.JELinesGrid }));
+		            //JELinesGrid.bind("detailCollapse", $.proxy(JournalEntryLinesManageUtils.DetailCollapse, { grid: this.JELinesGrid }));
+		            
+		            //----KNDY-15292--Add running total to Journal Entry create screen-- Restrict to Manual JE
+		            var currURI = URI('{!$CurrentPage.URL}');
+		            //if( (JournalEntryType=="Manual" || JournalEntryType=="Accrual - Manual") && jeIsFinalized !== 'true' 
+		                                               // || ( currURI.hasQuery("clone", "1") === true && (JournalEntryType=="Manual" || JournalEntryType=="Accrual - Manual"))  ){
+		                this.JELinesGrid.dataSource.bind("change", $.proxy(JournalEntryLinesManageUtils.JETotalsChange, { grid: this.JELinesGrid })); 
+		            //}
+		             //demo
+        	        //$('#tot-amt-dr').hide();
+                    //$('#tot-amt-cr').hide();
+                   
+                    
+                    // unbind and bind the save click events on the Header.
+	                $('#SaveOnHeader').off("click",
+	                    $.proxy(JournalEntryLinesManageUtils.HeaderSave, { grid: this.JELinesGrid, detailList:this.journalEntryDetailList, options: { config: this.JELinesConfigJson, dateFields: this.journalEntryLineDateFields } })
+	                );
+	                
+	                $('#SaveOnHeader').on("click",
+	                    $.proxy(JournalEntryLinesManageUtils.HeaderSave, { grid: this.JELinesGrid, detailList:this.journalEntryDetailList, options: { config: this.JELinesConfigJson,dateFields: this.journalEntryLineDateFields } })
+	                );		 
+	                		           
+                // show tooltip on click of errors column
+                this.JELinesGrid.table.kendoTooltip({
+                        autoHide: false,
+                        showOn: "click",
+                        filter: ".line-errors",
+                        position: "right",
+                        content: function(e) {
+                            return e.target.find('.errors').html();
+                        },
+                        show:function(e){
+                            this.target().addClass("has-clicked");
+                            
+                            if(activeHoverTooltip.target() && activeHoverTooltip.target()[0] == this.target()[0]){
+                                activeHoverTooltip.hide();
+                            }
+                        },
+                        hide:function (e){
+                            this.target().removeClass("has-clicked");
+                        }
+                    });
+                    
+                    // show tooltip on mouseenter of errors column
+                    activeHoverTooltip = this.JELinesGrid.table.kendoTooltip({
+                        autoHide: true,
+                        showOn: "mouseenter",
+                        filter: ".line-errors:not(.has-clicked)",
+                        position: "right",
+                        content: function(e) {
+                            return e.target.find('.errors').html();
+                        }
+                    }).data("kendoTooltip");
+                    
+                    console.log ( $('#Period__r.Name') ) ;
+ 					$('#Period__r.Name').prop('disabled',true);
+							           
+        	    },
+
+               OnInvoiceHeaderDetailListReadSuccess: function(e) {
+                    // Bind header events
+                	JournalEntryLinesManageUtils.BindHeaderEvents();
+                	if($('#Finalized__c').val() != true && $('#Type__c').val() != 'Year End Adjustment'){
+						$('input[id="Period__r.Name"]').parent().hide();
+                	
+                	}
+                    JournalEntryLinesManageUtils.RemoveItemFromTypeOnJE();
+
+                },     
+                OnjournalEntryHeaderDetailListChange: function(e){
+                	var grid = this.grid;
+					     if($('#Type__c').val() != 'Year End Adjustment' && $('#Finalized__c').val() != true)
+					         $('input[id="Period__r.Name"]').parent().hide();
+					     else
+					         $('input[id="Period__r.Name"]').parent().show();
+                },                    	    
+
+               RemoveItemFromTypeOnJE: function() {
+			        var ddl = $('#Type__c').data("kendoDropDownList");
+					if(ddl != null && typeof(ddl != 'undefined')){
+                    var oldData = ddl.dataSource.data();
+			        var dataLength = oldData.length;
+                        for (var i = 0; i < dataLength; i++) {
+                            var item = oldData[i];
+                            if (item.value == "Bank Transaction"){ 
+                                ddl.dataSource.remove(item);
+                                break;
+                            }
+                        }
+                    }    
+			   },					
+					
+				BindHeaderEvents: function() {
+				    this.journalEntryDetailList.data.bind('change', function() {
+                        JournalEntryLinesManageUtils.isDirtyInvoiceHeaderData = true;
+                    });
+                      //Bind Company change event
+                    $('input[name="Company__c"]').bind('change',
+                        JournalEntryLinesManageUtils.OnCompanyChange
+                    );  
+                                  
+                },
+                OnCompanyChange: function(e) {
+                    var self = this;
+                    var companyId = $(e.target).val();
+                    var JEId = !(JournalEntryLinesManageUtils.JEHeaderId)?null:JournalEntryLinesManageUtils.JEHeaderId;
+                    console.log('companyId');
+                    console.log(companyId);
+                     var uri = URI('{!$CurrentPage.URL}');
+                    if (uri.hasQuery("clone", "1") === true){
+                       JEId = null;
+                    }
+                    if (!companyId) {
+                        return;
+                    }
+                    if (!JEId) {
+                        return;
+                    }
+                    KenandyErp.BlockUI();
+                                
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.JournalEntryLinesManageExt.getCompanyDetails}',
+                        companyId,
+                        JEId,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();
+                            
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error);
+                            } else {
+                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                
+                                if (result.success) {
+                                    if (result.records && result.records.length > 0) {
+                                        var company = result.records[0];   
+                                        var transactionCurrencyDefault = (company.Default_Transaction_Currency__c) ? company.Default_Transaction_Currency__c : null;
+                                        JournalEntryLinesManageUtils.journalEntryDetailList.data.set('Currency__c', transactionCurrencyDefault);
+
+                                        
+                                        //Refresh company on lines. 
+										JournalEntryLinesManageUtils.RenderWidgets();
+                                        
+					                	
+                                    }
+                                }
+                                else{
+      
+                                    //Refresh company  to revert to DB persisted details. 
+								     JournalEntryLinesManageUtils.RenderWidgets();
+                                
+                                    KenandyErp.Message(result.message, KenandyErp.MessageType.Error);                            
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                },                
+                cloneJE: function(){  
+                    if(this.JEHeaderData.Id != '' ){
+                        KenandyErp.NavigateToURL('{!$Page.JournalEntryLinesManage}?id=' + this.JEHeaderData.Id + '&clone=1');
+                    }
+                    else {
+                        KenandyErp.Messages([{message:'{!$Label.Cannot_perform_any_action_save_the_Journal_Entry_to_proceed}', severity:'ERROR'}]);
+                    } 
+                },                 
+                ExecuteAction: function(actionType){
+                    var uri = URI('{!$CurrentPage.URL}');
+                    var pageParam;
+
+                    if(JournalEntryLinesManageUtils.IsPageDirty()){
+                        KenandyErp.Messages([{message:'{!$Label.Cannot_perform_any_action_save_the_Journal_Entry_to_proceed}', severity:'ERROR'}]);
+	                    return;                    
+                    }
+                    if(!JournalEntryLinesManageUtils.JEHeaderId ||
+                        uri.hasQuery("clone", "1") === true){
+                        KenandyErp.Messages([{message:'{!$Label.Cannot_perform_any_action_save_the_Journal_Entry_to_proceed}', severity:'ERROR'}]);
+                        return;
+                    }
+             
+                    if (actionType == 'Clone'){ 
+                       JournalEntryLinesManageUtils.cloneJE();
+                       return;
+                    }
+                    else if(actionType == 'Unfinalize'){
+                       pageParam = '{!$Page.sourcedocumentunfinalize}';
+                    
+                    }
+					else if(actionType == 'Void/Cancel'){
+					   pageParam = '{!$Page.JournalEntryVoidCancel}';
+					                    
+					}                    
+                    if(pageParam){
+                        KenandyErp.NavigateToURL(pageParam + '?id=' + JournalEntryLinesManageUtils.JEHeaderId);
+                        return;
+                    }
+                    
+                    
+                    KenandyErp.ClearMessage();      
+                },         
+                
+                ResetDirtyFlags: function() { 
+		            JournalEntryLinesManageUtils.isDirtyInvoiceHeaderData = false;
+		        },
+		        IsPageDirty: function(){
+		             var gridUtils_InvLines = new KendoGridUtils(JournalEntryLinesManageUtils.JELinesGrid);		             
+			         if (JournalEntryLinesManageUtils.isDirtyInvoiceHeaderData || gridUtils_InvLines.HasChanges() ){
+			              return true;
+			         }
+			         else{
+			              return false;
+			         }
+			    },
+		        
+                GetJournalEntryLinesFieldList: function() {
+			        var fieldList = JournalEntryLinesManageUtils.JELinesFieldList;	
+			        var currURI = URI('{!$CurrentPage.URL}');
+		               
+		             
+                    $.each(fieldList, function() { 
+                        if (this.field == 'errors') {
+                            this.headerTemplate = '';
+                            this.template =  '#= JournalEntryLinesManageUtils.RenderErrors(data)# ';
+                            this.width = '30px';
+                        } 
+                        if (this.field == 'jeLine.Amount_DR__c' && jeIsFinalized !== 'true' || 
+                                                    this.field == 'jeLine.Amount_DR__c' && currURI.hasQuery("clone", "1") === true){// && (JournalEntryType=="Manual" || JournalEntryType=="Accrual - Manual") 
+                                                   // ||  ( currURI.hasQuery("clone", "1") === true && this.field == 'jeLine.Amount_DR__c' 
+                                                              //  && (JournalEntryType=="Manual" || JournalEntryType=="Accrual - Manual") )   ) {
+                            this.headerTemplate = 'Total Debits <br/><input type="textbox" class="k-textbox line-total text-green" id="tot-amt-dr" readonly />';//this.title +  
+                        } 
+                       if (this.field == 'jeLine.Amount_CR__c'  && jeIsFinalized !== 'true' || 
+                       								this.field == 'jeLine.Amount_CR__c' && currURI.hasQuery("clone", "1") === true  ){//&& (JournalEntryType=="Manual" || JournalEntryType=="Accrual - Manual") 
+                                                   // ||( currURI.hasQuery("clone", "1") === true && this.field == 'jeLine.Amount_CR__c' 
+                                                         //   && (JournalEntryType=="Manual" || JournalEntryType=="Accrual - Manual")  ) ) {
+                            this.headerTemplate = 'Total Credits <br/><input type="textbox" class="k-textbox line-total text-green" id="tot-amt-cr" readonly />';//this.title +
+                       } 
+                        
+                    }); 
+
+                    return fieldList;		        
+		        },
+	        
+		        
+        	    journalEntryLinesData : function() {
+		            var deferred = $.Deferred();
+		            var self= this;
+		          	var remoteArgs = self.config;
+		            if (!remoteArgs.parentRecord.Id) {
+		                setTimeout(function() {
+		                    deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+		                }, 100);
+		            }
+		            else{		            
+			            if (remoteArgs.parentRecord) {
+			                // The stuff returned from Salesforce has extra properties like "attributes"
+			                // which couldn't be deserialised back
+			                remoteArgs.parentRecord = { Id: remoteArgs.parentRecord.Id };
+			            }
+		            
+		            Visualforce.remoting.Manager.invokeAction(
+		                '{!$RemoteAction.JournalEntryLinesManageExt.getJournalEntryLines}',
+		                remoteArgs, 
+		                '{!$currentpage.parameters.clone}',
+		                function (result, event) {
+		                    deferred.resolve(result, event);
+		                },
+		                {escape: false}
+		            );
+		
+		            }
+		           return deferred.promise();
+		            
+		        },
+		        /*
+        		DetailInit: function(e) {
+                    var self = this;
+                    var detailRow = e.detailRow;
+                    var detailGridContainer = detailRow.find("div.grid-container");
+                    var detailFieldList = self.fieldList;
+                    var uid = e.data.uid;
+                    
+                    var getDetailModel = function() {
+                        var fields = KenandyErp.KendoGridOptions.GetFields(detailFieldList); 
+                        var model = kendo.data.Model.define({ id: "Id", fields: fields });
+                                
+                        return model;
+                    };
+                            
+                    var getDetailColumns = function() {
+                        return KenandyErp.KendoGridOptions.GetColumns(detailFieldList);;
+                    };
+                    
+                    var getDetailDataSource = function() {
+                        var dataSource = new kendo.data.DataSource({
+                            data: e.data.get('exceptions'),
+                            batch: true,
+                            schema: {
+                                model: getDetailModel()
+                            }        
+                        });
+            
+                        return dataSource;
+                    };
+
+                    var grid = detailRow.find(".grid-exceptions").kendoGrid({
+                        dataSource: getDetailDataSource(), 
+                        navigatable: true,
+                        columns: getDetailColumns(),
+                        sortable: true,
+                        filterable: true, 
+                        resizable: true
+                    }).data('kendoGrid');
+                },*/
+                
+                DetailExpand: function(e) {
+                	var self = this;
+                	var grid = self.grid;
+                	var masterDataItem = grid.dataItem(e.masterRow);
+                	
+                	// Hide the detail grid if the Type is fixed/none
+					if (masterDataItem.get('Type__c') != 'Tiered') {
+						e.detailRow.find(".grid-tier-pricing").hide();
+						e.detailRow.find(".grid-tier-pricing-message").show();
+					}
+					else {
+						e.detailRow.find(".grid-tier-pricing").show();
+						e.detailRow.find(".grid-tier-pricing-message").hide();
+					}
+					
+					// add row uid to the expandedRows list
+					expandedRows.push(masterDataItem.uid);
+                },
+                
+                JETotalsChange : function(e){ 
+                    
+                 	var self                   = this;
+                	var grid                   = self.grid;
+                	totalAmntDR                = 0;
+		            totalAmntCR                = 0;
+                	currentData                = grid.dataSource.data(); 
+                	var outOfBal               = 0;
+                	var messageElement         = grid.element.closest(".grid-container").find(".grid-message");
+                	var diffElem               = $("[data-for='Out_Of_Balance']")[0];
+                	//var running_total_dr       = $("[data-for='Running_Total_DR']")[0];
+                	//var running_total_cr       = $("[data-for='Running_Total_CR']")[0];
+                	//running_total_dr.className = 'showTotals';
+                	//running_total_cr.className = 'showTotals';
+                	diffElem.className = 'showTotals';
+                	//---reset----//
+                	//jeLinesHasNegEntry = false;
+                    KenandyErp.ClearMessage(); 
+                   
+                    $.each(currentData, function(index, item) { 
+                        //-------Any of the amount field has negative entries-----------// 
+                        /*if(item.jeLine.Amount_DR__c < 0 || item.jeLine.Amount_CR__c<0 ){ 
+                            jeLinesHasNegEntry= true;
+                        } */
+                        totalAmntDR += item.jeLine.Amount_DR__c;//Math.abs(item.jeLine.Amount_DR__c);
+                        totalAmntCR += item.jeLine.Amount_CR__c;//Math.abs(item.jeLine.Amount_CR__c);
+                    });
+                    outOfBal       = totalAmntDR -totalAmntCR ;
+                    
+                    $('#tot-amt-dr').val(kendo.toString(totalAmntDR,'n6'));
+                    $('#tot-amt-cr').val(kendo.toString(totalAmntCR,'n6'));
+                    
+                    //running_total_dr.innerHTML = kendo.toString(totalAmntDR,'n6');
+                    //running_total_cr.innerHTML = kendo.toString(totalAmntCR,'n6');
+                     
+                   
+                   diffElem.innerHTML = kendo.toString(Math.abs(outOfBal),'n6'); 
+                    
+                    if (totalAmntDR == totalAmntCR) {
+                        $('.line-total').removeClass('text-red');
+                        $('.line-total').addClass('text-green');
+                    }
+                    else {
+                        $('.line-total').removeClass('text-green');
+                        $('.line-total').addClass('text-red');
+                    }
+                },
+                
+                DetailCollapse: function(e) {
+                	var self = this;
+                	var grid = self.grid;
+                	var masterDataItem = grid.dataItem(e.masterRow);
+                	
+                	// remove row uid to the expandedRows list
+					expandedRows.pop(masterDataItem.uid);
+                },
+                //FIN-627 Prevent Error when Users Tab fast.Validation done On save ,Not on Tab out
+                IsValidLookups: function(grid) {
+                    var fieldList = JSONUtils.Parse(this.JELinesFieldList);
+                    var referenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(fieldList); // get the list of reference fields
+                    var currentData = grid.dataSource.data();
+                    var messages = [];
+
+                	grid.tbody.find("tr").removeClass("kndy-error");
+                           var msg = [];
+                	
+                    $.each(currentData, function(index, item) {
+                        var invalidFields = [];
+                        
+                        for (var i = 0; i < referenceFields.length; i++) {
+                            if (!item.get(referenceFields[i]) && item.get(referenceFields[i].replace(/__c/, '__r.Name'))) {
+                                var fieldInfo = _.where(fieldList, { field: referenceFields[i] });
+                                var fieldTitle = (fieldInfo.length > 0) ? fieldInfo[0].title : '';
+                              //  invalidFields.push(fieldTitle);
+	                           var row = grid.tbody.find("tr[data-uid='" + item.uid + "']");
+	                           var dataItem = grid.dataItem(row);
+	                           msg.push('Invalid ' + fieldTitle);
+	                           dataItem.errors=msg;
+	                           grid.refresh();
+							}
+                        }
+
+                       /* if (invalidFields.length > 0) {
+                            grid.tbody.find("tr[data-uid='" + item.uid + "']").addClass("kndy-error");
+                            messages.push({ message: 'Invalid ' + invalidFields.join(', ') + '. Please correct the highlighted line(s).', severity: KenandyErp.MessageType.Error });
+                        }*/
+                    });
+                   
+                    
+                    
+                    if (msg.length > 0) {
+                        return false;
+                    }
+                    /*if(messages.length>0){
+                        return false;                 
+                    }*/
+                    
+                    return true;
+                },
+                
+                HeaderSave:function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    var detailList = self.detailList;
+                    var options = self.options;
+                    var modelIdField = grid.dataSource.options.schema.model.idField;
+                    var isNewJournalEntry = (!detailList.data.get('Id')) ? true : false;
+	                var columns = grid.columns;
+                    
+                    KenandyErp.ClearMessage();
+                    
+               
+                    //Insert any header validations here.        
+ 
+                     if (journalEntryStatus == 'Cancelled' || journalEntryStatus == 'Void') {
+                    	KenandyErp.Message('{!$Label.JournalEntries_Cancelled_Voided_cannot_be_changed}', KenandyErp.MessageType.Error);
+                    	return;
+                    }
+                    
+                    if(!detailList.validate() ){//|| jeLinesHasNegEntry == true){
+	                	//has errors
+	                	console.log('has errors');
+	                	KenandyErp.Message("Please fix the following errors.");
+	                    e.preventDefault();
+						return false;
+	                } 
+                    
+                    if (grid.editable && !grid.editable.validatable.validate()) {
+                        e.preventDefault();
+                        return false;
+                    }
+                   //FIN-627 Prevent Error when Users Tab fast.Validation done On save ,Not on Tab out                    
+                    if (!JournalEntryLinesManageUtils.IsValidLookups(grid)) {
+                        return false;
+                    }  
+
+                
+                	//var currentData = grid.dataSource.data();
+                                                 
+                    var headerDateFields = detailList.getDateFields();
+                    var headerRowsList = [];
+                    var headerRows = [];
+                    
+                    headerRowsList.push(detailList.data);
+                    
+                    headerRows = $.map(headerRowsList, function(item, index) {
+                        item = item.toJSON();
+                        item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+                        
+                        return item;
+                    });
+                    
+                    if (headerRows.length > 0) {
+                        headerRows = Serializer.ParameterMap(headerRows);
+                    }   
+                    
+                   var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields, isDml: false });
+                    
+                    var updatedRows = [];
+                    var newRows = [];
+                    var deletedRows = [];
+                    
+                    newRows = gridUtils.NewRows();
+					updatedRows = gridUtils.UpdatedRows();
+					deletedRows = gridUtils.DeletedRows(); 
+      				
+      				//KNDY-15661	
+					if($('#Auto_Reverse__c').prop('checked')){
+						var isValid = true;
+	                  	$.each(gridUtils.AllRows(), function() { 
+			            	console.log(this['jeLine']['Bank_Account__c']);
+			                if(this['jeLine']['Bank_Account__c'] != null){
+			                	KenandyErp.Message("{!$Label.Auto_Reverse_field_is_selected}", KenandyErp.MessageType.Error);
+			                	isValid = false;
+			                    return false;
+			                }
+			           });
+			           if(!isValid){
+			           		return false;
+			           }
+                   }
+					/*if (newRows.length > 0) {
+					  for(i=0;i< newRows.length;i++){
+			                if(newRows[i]['errors']==""){
+			                   newRows[i]['errors']=null;
+			                } 
+						}
+		             }   */
+                   /* if (newRows.length == 0 && updatedRows.length == 0 && deletedRows.length==0 && !JournalEntryLinesManageUtils.isDirtyInvoiceHeaderData ) {
+                        KenandyErp.Message("{!$Label.No_records_changed}", KenandyErp.MessageType.Info);
+                        return;
+                    }	*/	              
+
+                    KenandyErp.BlockUI();     
+                                
+                    headerDateFields = headerDateFields ? _.pluck(headerDateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+                    var dateFields = self.options.dateFields ? _.pluck(self.options.dateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;                    
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.JournalEntryLinesManageExt.saveAction}', 
+                        headerRows[0], 
+                        headerDateFields,           
+						updatedRows, 
+						newRows, 
+						deletedRows,
+                        dateFields,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();
+                                        
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message);
+                            } else {
+                            	KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                            	
+                                if (result.success) {
+                                    var id = (result.records && result.records[0].Id) ? result.records[0].Id : null;                                                                       
+                                    if ($(e.target.parentElement).hasClass('save-return-command')) {
+                                        KenandyErp.NavigateToSObject(id);
+                                    }
+                                    else if ($(e.target.parentElement).hasClass('save-new-command')) {
+                                        KenandyErp.NavigateToURL('{!$Page.JournalEntryLinesManage}');
+                                    }
+
+                                    else if (isNewJournalEntry && $(e.target).hasClass('save-command')){//User created a clone.
+                                         var uri = URI('{!$CurrentPage.URL}');
+                                         KenandyErp.NavigateToURL('{!$Page.JournalEntryLinesManage}' + '?id=' + result.records[0].Id);
+                                            }
+                                    else if(result.records[0].Finalized__c == true){//User has updated the finalized flag.
+                                        //Refresh the page to read only mode.
+                                        JournalEntryLinesManageUtils.JELinesConfigJson.parentRecord.Id=id;
+                                        JournalEntryLinesManageUtils.JEHeaderId = id;    
+                                        KenandyErp.NavigateToURL('{!$Page.JournalEntryLinesManage}' + '?id=' + result.records[0].Id);
+                                    }                                                                     
+                                    else{//User has done some updates                                  
+                                        // refresh widgets
+                                        JournalEntryLinesManageUtils.JELinesConfigJson.parentRecord.Id=id;
+                                        JournalEntryLinesManageUtils.JEHeaderId = id;
+                                        JournalEntryLinesManageUtils.ResetDirtyFlags();
+                                        JournalEntryLinesManageUtils.RenderWidgets();
+                                      
+                                        KenandyErp.Messages(result.messages);
+                                    }
+                                    
+                                }
+                                else {
+                                	$.each(result.records, function(index, item) {
+                                        var rowGUID = item['rowGUID'];
+                                        if(rowGUID){
+	                                        var row = grid.tbody.find("tr[data-uid='" + rowGUID + "']");
+	                                        var dataItem = grid.dataItem(row);			
+	                                        dataItem.errors = item['errors'];
+                                        }
+                                    });
+                                    
+                                    grid.refresh();
+                                    
+                                    KenandyErp.Messages(result.messages);
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                 }
+              };
+            }();
+            
+             
+           
+     </script>   
+	<script type="text/x-kendo-template" id="detailTemplate">
+        <div class="grid-container grid-detail-container k-block k-info-colored">
+			<div class="grid-exceptions-message k-hidden"></div>
+            <div class="grid-exceptions"></div>
+        </div>
+    </script>
+</apex:page>
+<!--  <apex:page standardController="Journal_Entry__c" extensions="JournalEntryLinesManageExt" sidebar="false">
+
+    <apex:includeScript value="{!$Resource.JQuery182}" />
+
+    <style type="text/css">
+        #journalPBDiv .dateFormat { display: none; }
+        
+        td.currency input ,
+        td.dataCell.double input,
+        td.dataCell.percent input {
+            width: 65px;
+            text-align: right;
+        }
+        
+        th { text-align: center; }
+        
+    </style>
+
+    <script>
+    
+        jQuery(document).ready(function() {
+            defaultButtonState();
+        });
+        
+        function defaultButtonState(){
+            toggleButton('removeButton');
+            toggleButton('cloneButton');
+        }
+        
+        function isAnyRecordSelected(){
+            return jQuery('td.selectCol input:checkbox:checked').size() > 0;
+        }
+        
+        function selectCheckBoxClicked(elemId){
+            toggleButton('removeButton');
+            toggleButton('cloneButton');
+        }
+        
+        function toggleButton(buttonId){
+            if(!isAnyRecordSelected()){
+                jQuery("input[id*='"+buttonId+"']").attr("disabled", true);
+                jQuery("input[id*='"+buttonId+"']").removeClass('btn').addClass('btnDisabled');
+            }else{
+                jQuery("input[id*='"+buttonId+"']").attr("disabled", false);
+                jQuery("input[id*='"+buttonId+"']").removeClass('btnDisabled').addClass('btn');
+            }
+        }
+        
+        function deleteLines(){
+            if(isAnyRecordSelected()){
+                result = window.confirm('{!$Label.ConfirmDelete}');
+                if(result == true) {
+                     var selected_indexes = '';
+                     jQuery('td.selectCol input:checkbox').each( function( i ) {
+                         if ( jQuery(this).is(':checked') )
+                             selected_indexes += i+',';
+                     });
+                     
+                     remove(selected_indexes);
+                }
+            }else{
+                alert('{!$Label.Check_atleast_one_record_to_remove}');
+            }
+            return false;
+        }
+        
+        function cloneLines(){
+            if(isAnyRecordSelected()){
+                result = window.confirm('{!$Label.ConfirmClone}');
+                if(result == true) {
+                     var selected_indexes = '';
+                     jQuery('td.selectCol input:checkbox').each( function( i ) {
+                         if ( jQuery(this).is(':checked') )
+                             selected_indexes += i+',';
+                     });
+
+                     clone(selected_indexes);
+                }
+    
+            }else{
+                alert('{!$Label.Check_at_least_one_record_to_clone}');
+            }
+            return false;
+        }
+    </script>
+    
+    <apex:form id="form">
+    <apex:pageMessages id="pageMessages" ></apex:pageMessages>
+        <apex:actionFunction name="addNewRow" action="{!addNewRow}" status="actionStatus" oncomplete="defaultButtonState();return false;" reRender="form" />
+        <apex:actionFunction name="remove" action="{!remove}" status="actionStatus" oncomplete="defaultButtonState();return false;" immediate="false" reRender="form" >
+            <apex:param name="selected_indexes" value="" />
+        </apex:actionFunction>
+        <apex:actionFunction name="clone" action="{!cloneLines}" status="actionStatus" oncomplete="defaultButtonState();return false;" immediate="true" reRender="form" >
+            <apex:param name="selected_indexes" value="" />
+        </apex:actionFunction>
+        <c:busyWait />
+        <apex:PageBlock mode="edit" id="journalPB" title="{!$ObjectType.Journal_Entry__c.Label}: {!Journal_Entry__c.Name}">
+           
+           <apex:PageBlockButtons >
+               <apex:outputPanel id="pageBlockButtons">
+                   <apex:commandButton styleClass="btn" onclick="addNewRow();return false;" value="{!$Label.AddNew}" />
+                   <apex:commandButton id="removeButton" styleClass="btnDisabled" onclick="deleteLines();return false;" value="{!$Label.Remove}" />
+                   <apex:commandButton id="cloneButton" styleClass="btnDisabled" onclick="cloneLines();return false;" value="{!$Label.Clone}" />
+                   <apex:commandButton action="{!saveLines}" value="{!$Label.Quick_Save}" status="actionStatus"/>
+                   <apex:commandButton action="{!saveAndReturn}" value="{!$Label.Save_Return}" status="actionStatus" reRender="form" />
+                   <apex:commandButton action="{!cancel}" value="{!$Label.Cancel}" immediate="true" />
+               </apex:outputPanel>
+           </apex:PageBlockButtons>
+           
+           <apex:PageBlockTable value="{!journalLines}" var="journalEntry" id="journalPBTable">
+               <apex:column style="text-align:center;" headerValue="{!$Label.Select}" styleClass="selectCol" >
+                   <apex:inputCheckbox onclick="selectCheckBoxClicked(this.id);" />
+               </apex:column>
+               <apex:repeat value="{!$ObjectType.Journal_Entry_Line__c.FieldSets.Journal_Entry_Line_Edit}" var="f">
+                    <apex:column style="text-align:center;" styleClass="{!f.Type} {!f.FieldPath}" >
+                        <apex:facet name="header">
+                            <apex:outputText value="{!f.label}" title="{!$ObjectType.Journal_Entry_Line__c.Fields[f].inlineHelpText}"/>
+                        </apex:facet>
+                        <apex:inputField value="{!journalEntry[f]}" required="{!OR(f.required, f.dbrequired)}" />
+                    </apex:column>
+               </apex:repeat>
+           </apex:PageBlockTable>
+        </apex:PageBlock>
+    </apex:form>
+</apex:page>
+-->

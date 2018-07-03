@@ -1,0 +1,20 @@
+<apex:page standardController="Budget_Line1__c" extensions="BudgetLineNewExt">
+  <apex:form id="theForm">
+  <c:busyWait />
+<apex:sectionHeader subtitle="Budget Line" title="New Budget Line"/>
+  <apex:pagemessages ></apex:pagemessages>
+  <apex:pageBlock >
+  <apex:pageBlockButtons >
+  <apex:commandButton value="{!$Label.Save} " action="{!save}" rerender="theForm" status="actionStatus" accessKey="s"/>
+  <apex:commandButton value="{!$Label.Cancel} " action="{!cancel}" rerender="theForm" status="actionStatus"/>
+  </apex:pageBlockButtons>
+  <apex:pageBlockSection columns="1">
+  <apex:repeat value="{!$ObjectType.Budget_Line1__c.FieldSets.New_BudgetLine}" var="f" > 
+  <apex:inputField value="{!newObj[f]}" required="{!OR(f.required, f.dbrequired)}" />
+  </apex:repeat>
+
+  </apex:pageBlockSection>
+  
+</apex:pageBlock>
+</apex:form>
+</apex:page>

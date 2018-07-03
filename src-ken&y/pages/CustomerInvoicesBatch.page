@@ -1,0 +1,14 @@
+<apex:page standardController="Company__c" extensions="CustomerInvoicesBatchExt">
+    <apex:form id="theForm" ><c:busyWait />
+        <apex:sectionHeader subtitle="{!$Label.Generate_Invoices}" title="{!$Label.Generate_Invoices}"/>
+        <apex:pagemessages ></apex:pagemessages>
+        <apex:pageBlock >
+            <apex:pageBlockButtons >
+                <apex:commandButton value="{!$Label.Generate}" status="actionStatus" rerender="theForm" action="{!generateInvoices}" rendered="{!have_jobid == false}"/>
+                <apex:commandButton value="{!$Label.Cancel} " status="actionStatus" rerender="theForm" action="{!cancel}"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </apex:form>  
+      <div id="responseErrors" >
+    </div>
+</apex:page>

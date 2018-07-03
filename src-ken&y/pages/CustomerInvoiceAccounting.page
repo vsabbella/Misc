@@ -1,0 +1,35 @@
+<apex:page standardController="Customer_Invoice__c" 
+					tabStyle="Customer_Invoice__c" 
+	               	 sidebar="false" 
+				recordSetVar="invoice"
+                  extensions="CustomerInvoiceAccountingExt">
+    <apex:form id="theForm">
+    <c:busyWait />
+        <apex:sectionHeader subtitle="{!$Label.Generate_CustomerInvoice_Accounting}" title="{!$Label.Generate_CustomerInvoice_Accounting}"/>
+   	
+    	<apex:pageBlock id="pblock">
+    	<apex:pageMessages id="pageMessages" ></apex:pageMessages>
+    		<apex:pageBlockTable value="{!objectList}" var="line" id="InvoiceLinePBTableId" rendered="{!not(selecterror)}">
+
+                    <apex:repeat value="{!$ObjectType.Customer_Invoice__c.FieldSets.Customer_Invoice_AE_RO}" var="f" >
+                        <apex:column headerValue="{!f.label}"  styleClass="{!f.Type}  {!f.FieldPath}"  rendered="{!f.FieldPath!='Line_Value__c'}">
+                            <apex:outputField value="{!line[f]}" />
+                        </apex:column>
+                    </apex:repeat>                    
+                                      
+            </apex:pageBlockTable>
+            
+        	<apex:pageBlockButtons >
+        		<apex:commandButton value="{!$Label.Generate}" 
+        												action="{!GenerateCustomerInvoiceAccounting}" 
+        												disabled="{!(requiredFielderror)||(BatchInitiated)}" status="actionStatus" rerender="theForm"/>
+        		<apex:commandButton value="{!$Label.Go_Back} " action="{!cancel}" status="actionStatus" rerender="theForm"/>
+        	</apex:pageBlockButtons> 
+        	   
+    	</apex:pageBlock>
+    	
+    </apex:form>
+    
+    <div id="responseErrors" >
+    </div>
+</apex:page>

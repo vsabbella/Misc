@@ -1,0 +1,41 @@
+<apex:component controller="SegmentService" >
+
+<!--
+    This component knows about all the custom segments and accepts an sobject that also contains those 
+    fields, so the names in the Segment_Definition__c must match the fields on the sobject passed in !
+    
+    NB: This component must be included inside an Apex Form, AND a PageBlock
+    -->
+
+<apex:attribute name="title" 
+        description="Title to display on the page block"
+        type="String" 
+        required="false"  
+        default="Accounting Segments" />
+
+<apex:attribute name="accDefault" 
+        description="the SObject record to display, Accounting_Default, Accounting_Entry, etc.." 
+        type="SObject" 
+        required="true"  />
+        
+<apex:attribute name="colCount" 
+        description="number of columns to show on the page block section, default 3"
+        type="String" 
+        required="false"  
+        default="3" />
+
+<!--    <apex:PageBlock mode="maindetail"   >-->
+<!--title="{!title}" -->
+    <span class="segmentBlock" > 
+            <apex:pageBlockSection collapsible="false" columns="{!colCount}"  >
+                <apex:repeat value="{!segments}"  var="seg" >
+                    <apex:inputField value="{!accDefault[seg.Name]}" />
+                </apex:repeat>
+            </apex:pageBlockSection>
+        </span>
+<!--    </apex:PageBlock>-->
+
+<style>
+.apexp .bPageBlock .detailList .list .segmentBlock td { border-bottom-width: 0 !important; } 
+</style>
+</apex:component>

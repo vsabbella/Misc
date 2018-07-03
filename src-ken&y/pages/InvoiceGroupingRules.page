@@ -1,0 +1,975 @@
+<apex:page controller="InvoiceGroupingRulesExt" tabStyle="InvoiceGroupingRules__tab" title="Invoice Grouping Rules"   sidebar="false">
+                   <apex:sectionHeader title="Invoice Grouping Rules" help="{!URLFOR($Page.HelpInvoiceGroupingRules)}" />
+    <style>
+	 .k-picker-wrap {
+		width: 100px;
+		
+	}
+	.k-multiselect  {
+		width: 400px;
+	}
+	</style>       
+    <apex:form id="mainForm">
+        <div id="page-container">
+            <div class="page-message"></div>
+            <apex:outputPanel id="errMsg">
+                <apex:pageMessages />
+            </apex:outputPanel>    
+            <c:KendoResources />
+            <apex:includeScript value="{!$Resource.GridActionListJS}" />
+            <c:busyWait includeScripts="false"/>
+            
+            <apex:pageBlock title="Invoice Grouping Rules" id="pbread" >
+                <apex:pageBlockSection title="Select"  collapsible="false" >
+                    <apex:outputPanel >
+                        <label class="company-label" for="companyFilter">{!$ObjectType.Company__c.Label}:</label>
+                        <input id="companyFilter" class="kendoWidgetSelector" />
+                    </apex:outputPanel>
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockSection title="Rules" collapsible="false" >
+                    <div class="grid-container"  >
+                    <div class="grid-message"></div>
+                        <div id="Gridigr">
+                            
+                        </div>
+                    </div>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+        </div>
+    </apex:form>
+    <!-- Create a separate div and apex: form for the pop up. This will store the Detail List which allows you to create/update a rule.  -->
+    <div id="popUp">
+        <apex:form id="popUpForm">
+        <apex:outputText >{!$Label.IGR_description}</apex:outputText>
+            <apex:pageBlock id="popupBlock" >
+            	
+                <apex:pageBlockSection columns="1">
+                    
+                    <div class="grid-container"  >
+                        <div class="grid-message"></div>
+                        <div id="NewRuleUI"></div>
+                    </div>
+                 </apex:pageBlockSection>
+                 
+                 <apex:pageBlockSection title="General Information" columns="1">
+	                 <apex:panelGrid title="General Information" columns="4" width="100%">
+		                    
+	                        
+	                         <apex:outputLabel value="Start Date " for="startDateTimePicker" />
+	                        <input id="startDate" class="kendoWidgetSelector" />
+	                        
+	                         <apex:outputLabel value="End Date " for="endDateTimePicker" />
+	                        <input id="endDate" class="kendoWidgetSelector" />
+	                        
+		             </apex:panelGrid>
+                 </apex:pageBlockSection>   
+                 		
+                 <apex:pageBlockSection title="Billing Information" columns="1">
+	                 <apex:panelGrid title="Billing Information" columns="4" width="100%">
+		                    
+	                        
+	                         <apex:outputLabel value="Billing UOM " for="billingUOM" />
+	                        <input id="billingUOM" class="kendoWidgetSelector" />
+	                        
+	                         <apex:outputLabel value="Recurrence Start Date " for="recurrenceStartDateTimePicker" />
+	                        <input id="recurrenceStartDateTimePicker" class="kendoWidgetSelector" />
+	                        
+	                        <apex:outputLabel value="Use Billing Frequency on Fulfillments " for="useBillingOnFulfillments" />
+	                        <input type="checkbox" id="useBillingOnFulfillments"  checked="checked" />
+		             </apex:panelGrid>
+                 </apex:pageBlockSection>       
+                       
+                 
+                  <apex:pageBlockSection columns="1" title="Grouping Criteria">
+                  		<apex:panelGrid title="General Info" columns="4" width="100%">
+	                  		<!-- ROW 1 -->
+	                  		<apex:outputLabel value="Group By Customer Hierarchy " for="groupByCustomer" />
+		                    <input id="groupByCustomer" class="kendoWidgetSelector" />
+	                        
+	                        <apex:outputLabel value="For Customers " for="forCustomers" />
+	                        <input id="forCustomers" class="kendoWidgetSelector"/>
+	                        <!-- ROW 2 -->
+	                         <apex:outputLabel value="Group By Agreements " for="groupByAgreements" />
+	                         <input type="checkbox" id="groupByAgreements"  checked="checked" />
+	                        
+	                         <apex:outputLabel value="For Agreements " for="forAgreements" />
+	                        <input id="forAgreements" class="kendoWidgetSelector" />
+	                        <!-- ROW 3 -->
+	                        <apex:outputLabel value="Group By Sales Orders " for="groupBySalesOrders" />
+		                    <input type="checkbox" id="groupBySalesOrders"  checked="checked" />
+	                        
+	                        <apex:outputLabel value="Group By Sales Orders If " for="groupBySalesOrdersIf" />
+	                        <input id="groupBySalesOrdersIf" class="kendoWidgetSelector" />
+	                        
+	                        <!-- ROW 4 -->
+	                        <apex:outputLabel value="Group By Shipments " for="groupByShipments" />
+	                        <input type="checkbox" id="groupByShipments"  checked="checked" />
+	                        
+	                        <apex:outputLabel value=""  />
+	                        <apex:outputLabel value=""  />
+	                         
+	                        <!-- ROW 5 -->
+	                        <apex:outputLabel value="Group By Categories " for="groupByCategories" />
+		                    <input type="checkbox" id="groupByCategories"  checked="checked" />
+	                        
+	                        <apex:outputLabel value="For Categories " for="forCategories" />
+	                        <input id="forCategories" class="kendoWidgetSelector" />
+	                        
+	                        <!-- ROW 6 -->
+	                        <apex:outputLabel value="Group By Products " for="groupByProducts" />
+		                    <input type="checkbox" id="groupByProducts"  checked="checked" />
+	                        
+	                        <apex:outputLabel value="For Products " for="forProducts" />
+	                        <input id="forProducts" class="kendoWidgetSelector" />
+                        </apex:panelGrid>
+                  </apex:pageBlockSection>
+                    <apex:outputPanel style="text-align: left;" layout="block" >
+	                    <br/>
+	                    	<input type="button" id="saveButton" class="btn" value="Save" style="margin-left: 40%;" onclick="IGRUtils.Upsert();" accesskey="s" />
+	                    <br/>
+	                </apex:outputPanel>
+                    
+                
+            </apex:pageBlock>
+        </apex:form>
+    </div>
+    <style>
+        .highlightblue { 
+         background-color: #03a9f4;
+        }
+   
+        .k-tooltip{display: block;
+                                  position:absolute;
+                                  top:1.25em; 
+                                  left : 30px;
+                                  width:15em;
+                                  border:1px solid orange;
+                                  background-color:#FEFDB9;
+                                  color:black;
+        }
+        
+        .k-grid tbody tr {
+                    cursor: move;	
+         }
+        
+      
+    </style>
+    
+    <script type="text/javascript">
+    
+    
+    var getIgrData = function(readOptions) { 
+        var companyId = (readOptions && readOptions.companyId) ? readOptions.companyId : '{!igrC.Company__c}';
+        var deferred = $.Deferred();
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.InvoiceGroupingRulesExt.getIGRs}',
+            companyId,
+            function (result, event) {
+                deferred.resolve(result, event);
+            },
+            {escape: false}
+        );
+        
+        return deferred.promise();
+    }
+    
+    var fieldList = JSONUtils.Parse('{!igrFieldList}');
+    var dateFields = KenandyErp.KendoGridOptions.GetDateFields(fieldList);
+    var saveActions=  {!$RemoteAction.InvoiceGroupingRulesExt.saveIgrs};
+    
+    
+    
+    var companyDropdown;
+    var showInactive;
+    $(document).on('KenandyErpReady', function(e) {
+        companyDropdown = $.fn.KendoComboBox($('#companyFilter'), { lookupSearchAction: '{!$RemoteAction.InvoiceGroupingRulesExt.lookupSearchFilter}', referenceTo: 'Company__c', title: '{!$ObjectType.Company__c.Label}', value: '{!igrC.Company__c}' });
+        showInactive ='{!igrc.Is_active__c}';
+        companyDropdown.bind('change', function(e) { 
+            var companyId = this.value();
+            
+            $('#Gridigr').data('kendoGridActionList').dataSource.read({
+                readOptions: {
+                    companyId: companyId
+                },
+                
+                
+            });                              
+        });
+        
+        //Initialize the dropdown for the pop-up
+		$.fn.KendoMultiSelect($('#forCustomers'), { lookupSearchAction: '{!$RemoteAction.InvoiceGroupingRulesExt.lookupSearchFilter}', referenceTo: 'Customer__c', title: 'Customers', cascadeFrom: 'companyFilter', filterCriteria: 'Company__c = \'#=Id#\''});
+		$.fn.KendoMultiSelect($('#forAgreements'), { lookupSearchAction: '{!$RemoteAction.InvoiceGroupingRulesExt.lookupSearchFilter}', referenceTo: 'Agreement__c', title: 'Agreements', cascadeFrom: 'companyFilter', filterCriteria: 'Company__c = \'#=Id#\''});
+		$.fn.KendoMultiSelect($('#forProducts'), { lookupSearchAction: '{!$RemoteAction.InvoiceGroupingRulesExt.lookupSearchFilter}', referenceTo: 'Product__c', title: 'Products', cascadeFrom: 'companyFilter', filterCriteria: 'Company__c = \'#=Id#\''});
+		$.fn.KendoMultiSelect($('#forCategories'), { lookupSearchAction: '{!$RemoteAction.InvoiceGroupingRulesExt.lookupSearchFilter}', referenceTo: 'Category__c', title: 'Categories'});                
+        $.fn.KendoComboBox($('#billingUOM'), { lookupSearchAction: '{!$RemoteAction.InvoiceGroupingRulesExt.lookupSearchFilter}', title: '', referenceTo: 'UOM__c', filterCriteria: 'Type__c = \'Time\'' });
+        
+        //KENDO WINDOW
+        var window = $("#popUp");
+        if(!window.data("kendoWindow")) {
+            window.kendoWindow({
+                height: "80%",
+                width: "1200px",
+                title: "New Grouping Rule: ", 
+                visible: false, //ENSURES POPUP DOESNT LOAD ON PAGELOAD
+                modal: true,
+                position: {
+                    top: 100,
+                    left: 100
+                },
+                actions: [
+                    "Pin",
+                    "Minimize",
+                    "Maximize",
+                    "Close"
+                ]
+            });
+        }
+        //  window.wrapper.on("close", ".grid-new-custom-command", $.proxy(IGRUtils.NewRule, { grid: rulesGrid, options: { } }));
+        //actionColumnButtons is a new way to add buttons to a row. In this case we use it to updatea record by showing the popup window       
+        var gridConfig = '{!igrGridConfigJson}';
+		gridConfig = JSON.parse(gridConfig);
+        gridConfig['actionColumnWidth'] = 100;
+        gridConfig['scrollable'] = true;
+        var rulesGrid = $('#Gridigr').width('1200px').kendoGridActionList({
+            namespace: '{!NamespaceUU}', 
+            config: gridConfig, 
+            fieldList: JSON.stringify(fieldList),
+            saveAction: saveActions,
+            lookupSearchAction: '{!$RemoteAction.InvoiceGroupingRulesExt.lookupSearchFilter}', 
+            getActionListFunction: getIgrData,
+            modelIdField: 'invoicegroupingrule.Id', //since we are using a wrapper we need to pass the full path to the id here
+            filterable: true,
+            toolbarButtons: [ 
+                // { name: "grid-save-custom-command", text:"", template: "<input type='button' value='Save' class='btn grid-save-custom-command' />" }, //OUR SAVE METHOD
+                { name: "grid-new-custom-command", text:"", template: "<a class='k-button' title='Add New'><span class='fa fa-plus-circle fa-lg kndy-green grid-new-custom-command'></span></a> "},
+              //  { name: "grid-delete-custom-command", text:"", template: "<a class='k-button' title='Delete'><span class='fa fa-trash fa-lg kndy-red grid-delete-custom-command'></span></a>"},
+            ],
+                actionColumnButtons: [
+                { name: "custom-update-command", text:"", template: "<input type='button' value='{!$Label.view_details}' class='btn grid-custom-update-command' />" },
+            ]
+        }).data('kendoGridActionList');
+       // rulesGrid.wrapper.on("click", ".grid-save-custom-command", $.proxy(IGRUtils.SaveIgr, { grid: rulesGrid, options: { } }));
+        rulesGrid.wrapper.on("click", ".grid-new-custom-command", $.proxy(IGRUtils.NewRule, { grid: rulesGrid, options: { } }));
+        rulesGrid.table.on("click", ".grid-custom-update-command", $.proxy(IGRUtils.UpdateRule, { grid: rulesGrid, options: {} }));
+       // rulesGrid.wrapper.on("click", ".grid-delete-custom-command", $.proxy(IGRUtils.deleteIgr, { grid: rulesGrid, options: { } }));
+        
+        rulesGrid.dataSource.bind("change", function (e) {
+            // IGRUtils.SaveIgr(e);
+            //alert('method fired');
+        });
+        
+        rulesGrid.dataSource.sort({ field: "sortorder", dir: "asc" });
+        
+        //DRAGGABLE CODE TO BE ADDED               
+        rulesGrid.table.kendoDraggable({
+            filter: "tbody > tr",
+            group: "gridGroup",
+            drag: function (e) { 
+               $(e.target.closest("tr")).addClass("highlightblue").siblings().removeClass("highlightblue");   
+              },
+             
+            container: $("#container"),
+            hint: function(e) {
+                return $('<div id ="tempDrag"   class="k-grid k-widget" style="white-space: nowrap; margin-top:50px "  > <table><tbody><tr>' + e.html() + '</tr></tbody></table> </div>');                
+            }
+        });
+        //END  DRAGGABLE CODE     
+        
+        //DROP ROW CODE                   
+        rulesGrid.table.kendoDropTarget({
+            group: "gridGroup",
+            drop: function(e) {   
+                tgttrowid= e.target.closest("tr").dataset.uid;
+                desttrowid= e.draggable.currentTarget.closest("tr").data().uid;          
+                
+                var tgtt =rulesGrid.dataItem(rulesGrid.tbody.find("tr[data-uid='"+tgttrowid+ "']")).get('rank'),
+                    destt = rulesGrid.dataItem(rulesGrid.tbody.find("tr[data-uid='"+desttrowid+ "']")).get('rank');
+                
+                if((tgtt!=null || tgtt !=undefined )   && (destt!=null || destt!=undefined) ){
+                    rulesGrid.dataItem(rulesGrid.tbody.find("tr[data-uid='"+tgttrowid+ "']")).rank= destt;       
+                    rulesGrid.dataItem(rulesGrid.tbody.find("tr[data-uid='"+desttrowid+ "']")).rank=tgtt;                  
+                    rulesGrid.dataItem(rulesGrid.tbody.find("tr[data-uid='"+tgttrowid+ "']")).sortorder =destt;
+                    rulesGrid.dataItem(rulesGrid.tbody.find("tr[data-uid='"+desttrowid+ "']")).sortorder = tgtt;
+                    
+                    
+                    rulesGrid.dataSource.sort({ field: "sortorder", dir: "asc" });
+                    var cell= rulesGrid.tbody.find("tr[data-uid='"+tgttrowid+ "']").find("td:nth-child(2)"); 
+                    var cell2= rulesGrid.tbody.find("tr[data-uid='"+desttrowid+ "']").find("td:nth-child(2)"); 
+                    
+                    
+                    
+                    IGRUtils.dirtyCells.push(cell);
+                    IGRUtils.dirtyCells.push(cell2);
+                    
+                    for (i = 0; i < IGRUtils.dirtyCells.length; i++) {
+                        IGRUtils.dirtyCells[i].dirty=true;
+                        IGRUtils.dirtyCells[i].addClass("k-dirty-cell");
+                        IGRUtils.dirtyCells[i].prepend("<span class='k-dirty'></span>");
+                    }
+                    
+                }
+                IGRUtils.SaveIgr(rulesGrid);  
+            }                        	
+            
+            //END DROP ROW CODE                            
+        }); 
+        
+    });
+    
+  var kendotip=    $("#NewRuleUI").kendoTooltip({
+    								filter: "input",
+    							    autoHide: true,
+        							 showOn: 'mouseenter',
+                                      show: function (e) {
+                                    var target = this.target(); // the element for which the tooltip is shown
+                            
+                                    if (target) {
+                                   
+                                       this.refresh();
+                                      
+                                    }else{
+                                        
+                                         IGRUtils.returnVal ='';
+                                        //this.refresh();
+                                        
+                                        
+                                    }
+                                },
+                                    content: function(e){
+                                  
+                                       Visualforce.remoting.Manager.invokeAction(
+                                                    '{!$RemoteAction.InvoiceGroupingRulesExt.fetchHelpText}', 
+                                                    e.target[0].name, 
+                                                    function(result, event){
+                                                        
+                                                        if (result.success) {
+                                                           IGRUtils.returnVal= result.message ;
+                                                           
+                                                        } else {
+                                                        IGRUtils.returnVal = '';  
+                                                       }
+                                                        
+                                                    },
+                                            {escape: false}
+                                                );   
+                                        //  }
+                                        return IGRUtils.returnVal ;
+                                       
+     								 },
+     							 position: "right",
+                                        animation: {
+                                        close: {
+                                            effects: "fade:out",
+                                           
+                                        },
+                                        open: {
+                                            effects: "fade:in",
+                                            duration: 500
+                                        }
+                                    }
+                                }).data("kendoTooltip");					  
+          // }).data("kendoTooltip");
+   
+
+    var IGRUtils = function() {
+        
+        return {
+            returnVal: '' ,
+            igrConfigJson: null,
+            igrFieldList: null,  
+            igrGrid: null,                         
+            dirtyCells : [] ,
+            NewRule: function(e) {
+                var self = this;
+                var grid = self.grid;
+                var options = self.options;
+                var modelIdField = grid.dataSource.options.schema.model.idField;
+                var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                KenandyErp.ClearMessage(messageElement);
+                IGRUtils.RenderRuleDetailView(null);
+                var window = $("#popUp").data("kendoWindow");
+                window.title("New Rule: ");
+                window.center();
+                window.open();	
+                //KNDY-15790
+                $('#startDate').prop('disabled',false);
+		        $('#billingUOM').data('kendoComboBox').readonly(false);
+		        $('#recurrenceStartDateTimePicker').prop('disabled',false);
+		        $('#useBillingOnFulfillments').prop('disabled',false);
+		        $('#groupByCustomer').prop('disabled',false);
+		        $('#forCustomers').data('kendoMultiSelect').readonly(false);
+		        $('#groupByAgreements').prop('disabled',false);
+		        $('#forAgreements').data('kendoMultiSelect').readonly(false);
+		        $('#groupBySalesOrders').prop('disabled',false);
+		        $('#groupBySalesOrdersIf').prop('disabled',false);
+		        $('#groupByShipments').prop('disabled',false);
+		        $('#groupByCategories').prop('disabled',false);
+		        $('#forCategories').data('kendoMultiSelect').readonly(false);
+		        $('#groupByProducts').prop('disabled',false);
+		        $('#forProducts').data('kendoMultiSelect').readonly(false);	
+            },
+            
+            RenderRuleDetailView: function(ruleId) {
+                var lookupSearchFilters = [];
+                
+                var newRule = $('#NewRuleUI').kendoDetailList({
+                    namespace: '{!NamespaceUU}',  
+                    autoExpandSections: false,  //this will by default expand all the sections. TODO on widget: push this option to each section giving users more control. 
+                    sections: [],
+                    getDetailListFunction: function() {
+                        var deferred = $.Deferred();
+                        
+                        if (ruleId) { //if you have a ruleID query the data and load the detail list
+                            Visualforce.remoting.Manager.invokeAction(
+                                '{!$RemoteAction.InvoiceGroupingRulesExt.getRule}',
+                                ruleId,
+                                function (result, event) {
+                                    deferred.resolve(result, event);
+                                },
+                                {escape: false}
+                            );
+                        }
+                        else { //just UI gimmick to show a progress bar. 
+                            setTimeout(function() {
+                                deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+                            }, 100);
+                        }
+                        
+                        
+                        return deferred.promise();
+                    } 
+                }).data('kendoDetailList');
+                
+                if (!ruleId) { //if a new record default the company from main filter to the popup. 
+                    newRule.element.bind('OnReadSuccess', function() {
+                        var companyFilter = $('#companyFilter').data('kendoComboBox');
+                        var ruleDetailList = $(this).data('kendoDetailList');
+                        
+                        ruleDetailList.data.set('Company__r', { Id: companyFilter.value(), Name: companyFilter.text() });
+                        ruleDetailList.data.set('Company__c', companyFilter.value());
+                    });
+                }
+                
+
+                var rulePromise = IGRUtils.GetRule(ruleId);
+                rulePromise.done(function(result, event){
+						if(event.type === 'exception'){
+							console.log("There was an error on refreshing the balance");
+							console.log(event);
+							//KenandyErp.Messages(result.messages, messageElementPopup);
+						}
+						else{
+							IGRUtils.LoadDetailUI(result.records[0]);
+						}
+					});
+            },
+            NormalizeDate: function (value){
+		  		return moment(value).tz(KenandyErp.TimeZone).format('M/D/YYYY');
+		  	},
+            LoadDetailUI: function(ruleRecord) {
+            	KenandyErp.CleanNamespace(ruleRecord, '{!NamespaceUU}');
+            	
+            	var detailList = $('#NewRuleUI').data('kendoDetailList');
+                var messageElementPopup = detailList.element.closest("div.grid-container").find("div.grid-message:first");// todo
+                
+                KenandyErp.ClearMessage(messageElementPopup);
+            	ruleRecord = ruleRecord ? ruleRecord : [];
+           
+            
+               
+             
+			// START DATE	    
+               var startDate = $('#startDate').data('kendoDatePicker');
+               if(startDate)
+               		startDate.destroy();
+                startDate = $('#startDate').kendoDatePicker({
+						    	culture: KenandyErp.Culture,
+						    	format: KenandyErp.DateFormat
+						    	}).data('kendoDatePicker');
+               startDate.value(ruleRecord['Start_Date__c'] ? IGRUtils.NormalizeDate(ruleRecord['Start_Date__c']) : '');
+               
+             // END DATE  
+               var endDate = $('#endDate').data('kendoDatePicker');
+               if(endDate)
+               		endDate.destroy();
+                endDate = $('#endDate').kendoDatePicker({
+						    	culture: KenandyErp.Culture,
+						    	format: KenandyErp.DateFormat
+						    	}).data('kendoDatePicker');
+               endDate.value(ruleRecord['End_Date__c'] ? IGRUtils.NormalizeDate(ruleRecord['End_Date__c']) : '');
+               
+               
+               //FOR BILLING UOM
+                $('#billingUOM').data('kendoComboBox').dataSource.read();           
+                $("#billingUOM").data("kendoComboBox").value(ruleRecord['Billing_UOM__c'] ? ruleRecord['Billing_UOM__c'] : []);
+                
+                
+                // RECURRENCE START DATE  
+               var recurrenceStartDateTimePicker = $('#recurrenceStartDateTimePicker').data('kendoDatePicker');
+               if(recurrenceStartDateTimePicker)
+               		recurrenceStartDateTimePicker.destroy();
+                recurrenceStartDateTimePicker = $('#recurrenceStartDateTimePicker').kendoDatePicker({
+						    	culture: KenandyErp.Culture,
+						    	format: KenandyErp.DateFormat
+						    	}).data('kendoDatePicker');
+               recurrenceStartDateTimePicker.value(ruleRecord['Recurrence_Start_Date__c'] ? IGRUtils.NormalizeDate(ruleRecord['Recurrence_Start_Date__c']) : '');
+                
+               
+               //USE BILLING FREQUENCY ON FULFILLMENTS
+             $('#useBillingOnFulfillments').prop('checked', (ruleRecord['Id'] != null ? ruleRecord['Use_Billing_Frequency_on_Fulfillment__c'] : true));
+               
+               
+               // CUSTOMER HIERARCHY	
+            	var customerHierarchy = $('#groupByCustomer').data('kendoDropDownList');
+                if(customerHierarchy)
+               		customerHierarchy.destroy();	
+            	customerHierarchy = $('#groupByCustomer').kendoDropDownList({
+                        	valuePrimitive: true,
+                        	dataValueField: 'value',
+                        	dataTextField: 'text',
+                            dataSource: JSON.parse('{!CustomerHierarchyDropDown}')
+                       	}).data('kendoDropDownList');
+               customerHierarchy.value(ruleRecord['Group_By_Customer_Hierarchy__c'] ? ruleRecord['Group_By_Customer_Hierarchy__c'] : customerHierarchy.dataSource.data()[0].value);
+               
+              //FOR CUSTOMERS
+                $('#forCustomers').data('kendoMultiSelect').dataSource.read();           
+                $("#forCustomers").data("kendoMultiSelect").value(ruleRecord['For_Customers__c'] ? JSON.parse(ruleRecord['For_Customers__c']) : []);
+             
+             
+             //GROUP BY AGREEMENTS
+             $('#groupByAgreements').prop('checked', (ruleRecord['Group_By_Agreements__c'] ? ruleRecord['Group_By_Agreements__c'] : false));
+             
+             //FOR AGREEMENTS
+              $('#forAgreements').data('kendoMultiSelect').dataSource.read();           
+              $("#forAgreements").data("kendoMultiSelect").value(ruleRecord['For_Agreements__c'] ? JSON.parse(ruleRecord['For_Agreements__c']) : []);
+              
+              //GROUP BY Sales Orders
+             $('#groupBySalesOrders').prop('checked', (ruleRecord['Group_By_Sales_Orders__c'] ? ruleRecord['Group_By_Sales_Orders__c'] : false));
+             
+             // GROUP BY SO IF
+            	var groupBySOIf = $('#groupBySalesOrdersIf').data('kendoDropDownList');
+                if(groupBySOIf)
+               		groupBySOIf.destroy();	
+            	groupBySOIf = $('#groupBySalesOrdersIf').kendoDropDownList({
+                        	valuePrimitive: true,
+                        	dataValueField: 'value',
+                        	dataTextField: 'text',
+                            dataSource: JSON.parse('{!GroupBySOIf}')
+                       	}).data('kendoDropDownList');
+               groupBySOIf.value(ruleRecord['Group_By_Sales_Order_If__c'] ? ruleRecord['Group_By_Sales_Order_If__c'] : groupBySOIf.dataSource.data()[0].value);
+               
+             //GROUP BY SHIPMENTS
+             $('#groupByShipments').prop('checked', (ruleRecord['Group_By_Shipments__c'] ? ruleRecord['Group_By_Shipments__c'] : false));
+             
+             //GROUP BY CATEGORIES
+             $('#groupByCategories').prop('checked', (ruleRecord['Group_By_Categories__c'] ? ruleRecord['Group_By_Categories__c'] : false));
+             
+             //FOR CATEGORIES
+              $('#forCategories').data('kendoMultiSelect').dataSource.read();           
+              $("#forCategories").data("kendoMultiSelect").value(ruleRecord['For_Categories__c'] ? JSON.parse(ruleRecord['For_Categories__c']) : []);
+              
+             //GROUP BY PRODUCTS
+              $('#groupByProducts').prop('checked', (ruleRecord['Group_By_Product__c'] ? ruleRecord['Group_By_Product__c'] : false)); 
+             
+             //FOR Products
+              $('#forProducts').data('kendoMultiSelect').dataSource.read();           
+              $("#forProducts").data("kendoMultiSelect").value(ruleRecord['For_Products__c'] ? JSON.parse(ruleRecord['For_Products__c']) : []);
+            },
+            GetRule: function(ruleId) {
+                var deferred = $.Deferred();
+                
+                if (ruleId) { //if you have a ruleID query the data and load the detail list
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.InvoiceGroupingRulesExt.getRule}',
+                        ruleId,
+                        function (result, event) {
+                            deferred.resolve(result, event);
+                        },
+                        {escape: false}
+                    );
+                }
+                else { //just UI gimmick to show a progress bar. 
+                    setTimeout(function() {
+                        deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+                    }, 100);
+                }
+                
+                
+                return deferred.promise();
+
+            },
+            
+            
+            
+            
+            Upsert: function(e) {
+            	KenandyErp.BlockUI();
+                var self = this;
+                var grid = $('#Gridigr').data('kendoGridActionList');
+                var messageElementGrid = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                var detailList = $('#NewRuleUI').data('kendoDetailList');
+                var messageElementPopup = detailList.element.closest("div.grid-container").find("div.grid-message:first");// todo
+                //var isNewRule = (!detailList.data.get('Id')) ? true : false;
+                var ruleIdValue = detailList.data.get('Id');
+                
+                var groupingRuleArray = [];
+                
+                var myGroupingObj = jQuery.parseJSON('{!invGrpRule}');
+                delete myGroupingObj['attributes'];
+                
+                myGroupingObj.Id = ruleIdValue;
+                var forCustomersArr = [];
+				forCustomersArr = $("#forCustomers").data("kendoMultiSelect").value(); 
+				myGroupingObj.For_Customers__c = (forCustomersArr.length > 0) ? JSON.stringify(forCustomersArr) : null;
+                
+              
+                if(forCustomersArr != null && forCustomersArr.length == 1){
+                    var lookupItem = new Object();
+                    lookupItem.id = forCustomersArr[0];
+                    lookupItem.name = $('#forCustomers').data('kendoMultiSelect').dataItems()[0].text;
+                    myGroupingObj.For_Customer__r = lookupItem;
+                    myGroupingObj.For_Customer__c = $('#forCustomers').data('kendoMultiSelect').dataItems()[0].value;
+                    console.log(forCustomersArr[0] +' '+$('#forCustomers').data('kendoMultiSelect').dataItems()[0].value+' '+$('#forCustomers').data('kendoMultiSelect').dataItems()[0].text);
+                }
+                
+                var forAgreementsArr = [];
+				forAgreementsArr = $("#forAgreements").data("kendoMultiSelect").value(); 
+                myGroupingObj.For_Agreements__c = (forAgreementsArr.length > 0) ? JSON.stringify(forAgreementsArr) : null; 
+                
+                if(forAgreementsArr != null && forAgreementsArr.length == 1){
+                    var lookupItem = new Object();
+                    lookupItem.id = forAgreementsArr[0];
+                    lookupItem.name = $('#forAgreements').data('kendoMultiSelect').dataItems()[0].text;
+                    myGroupingObj.For_Agreement__r = lookupItem;
+                    myGroupingObj.For_Agreement__c = $('#forAgreements').data('kendoMultiSelect').dataItems()[0].value;
+                
+					}
+
+                var forCategoriesArr = [];
+                forCategoriesArr = $("#forCategories").data("kendoMultiSelect").value();
+                myGroupingObj.For_Categories__c = (forCategoriesArr.length > 0) ? JSON.stringify(forCategoriesArr) : null; 
+               
+                if(forCategoriesArr != null && forCategoriesArr.length == 1){
+                    var lookupItem = new Object();
+                    lookupItem.id = forCategoriesArr[0];
+                    lookupItem.name = $('#forCategories').data('kendoMultiSelect').dataItems()[0].text;
+                    myGroupingObj.For_Category__r = lookupItem;
+                    myGroupingObj.For_Category__c = $('#forCategories').data('kendoMultiSelect').dataItems()[0].value;
+                
+                }
+                    
+                var forProductsArr = [];
+				forProductsArr = $("#forProducts").data("kendoMultiSelect").value(); 
+                myGroupingObj.For_Products__c = (forProductsArr.length > 0) ? JSON.stringify(forProductsArr) : null; 
+               
+                if(forProductsArr != null && forProductsArr.length == 1){
+                	var lookupItem = new Object();
+                    lookupItem.id = forProductsArr[0];
+                    lookupItem.name = $('#forProducts').data('kendoMultiSelect').dataItems()[0].text;
+                    myGroupingObj.For_Product__r = lookupItem;
+                    myGroupingObj.For_Product__c = $('#forProducts').data('kendoMultiSelect').dataItems()[0].value;
+                
+                }
+                
+                myGroupingObj.Start_Date__c = new Date($('#startDate').data('kendoDatePicker').value()).getTime();
+                myGroupingObj.End_Date__c = new Date($('#endDate').data('kendoDatePicker').value()).getTime();
+                myGroupingObj.Group_By_Customer_Hierarchy__c = $('#groupByCustomer').data('kendoDropDownList').value();
+                myGroupingObj.Group_By_Agreements__c = $('#groupByAgreements').is(":checked");
+                myGroupingObj.Group_By_Category__c = $('#groupByCategories').is(':checked');
+                myGroupingObj.Group_By_Product__c = $('#groupByProducts').is(':checked');
+                myGroupingObj.Group_By_Sales_Order_If__c = $('#groupBySalesOrdersIf').data('kendoDropDownList').value();
+                myGroupingObj.Group_By_Sales_Orders__c = $('#groupBySalesOrders').is(':checked');
+                myGroupingObj.Group_By_Shipments__c = $('#groupByShipments').is(':checked');
+                myGroupingObj.Company__c = $('#companyFilter').data('kendoComboBox').value();
+                myGroupingObj.Billing_UOM__c = $('#billingUOM').data('kendoComboBox').value() == '' ? null :  $('#billingUOM').data('kendoComboBox').value();
+                myGroupingObj.Recurrence_Start_Date__c  = new Date($('#recurrenceStartDateTimePicker').data('kendoDatePicker').value()).getTime();
+                myGroupingObj.Use_Billing_Frequency_on_Fulfillment__c = $('#useBillingOnFulfillments').is(":checked");
+                groupingRuleArray.push(myGroupingObj);
+                
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.InvoiceGroupingRulesExt.upsertRule}',
+                     groupingRuleArray,
+                    function (result, event) {
+                        KenandyErp.UnBlockUI(grid.element);
+                        if (event.type == 'exception') {
+                            KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                        } else {
+                            if (result.success) {
+                                // reset detailData
+                                                               
+                                grid.dataSource._destroyed = [];
+                                grid.dataSource.read({
+                                    readOptions: {
+                                        companyId: $('#companyFilter').data('kendoComboBox').value()
+                                    }
+                                });
+                                KenandyErp.Messages(result.messages, messageElementGrid);
+                                var window = $("#popUp").data("kendoWindow");  
+                                window.close();
+                            }
+                            else {
+                                KenandyErp.ClearMessage(messageElementPopup);
+                                KenandyErp.Messages(result.messages, messageElementPopup);
+                            }
+                            var window = $("#popUp").data("kendoWindow");
+                            
+                        }
+                    },
+                    {escape: false}
+                );
+                
+                
+            },
+            
+            
+            UpdateRule: function(e) {
+                var self = this;
+                var grid = self.grid;
+                var options = self.options; 
+                var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                KenandyErp.ClearMessage(messageElement);
+                var row = $(e.target).closest("tr"); //get the row for deletion
+                var dataItem = grid.dataItem(row); // get the row data
+                KenandyErp.BlockUI();
+                //KNDY-15790
+                var isIGRUsedPromise = IGRUtils.IsIGRUsedForInvoicing(dataItem.invoicegroupingrule.Id);
+                isIGRUsedPromise.then(
+                	function(result){
+                		var isIgrUsed = result.total>0?true:false;
+                		IGRUtils.RenderRuleDetailView(dataItem.invoicegroupingrule.Id);
+		                var window = $('#popUp').data('kendoWindow');
+		                window.title('Update Rule: '+ dataItem.invoicegroupingrule.Name );
+		                window.center();
+		                window.open();
+		                var detailList = $('#NewRuleUI').data('kendoDetailList');
+		                var messageElementPopup = detailList.element.closest("div.grid-container").find("div.grid-message:first");
+		                KenandyErp.ClearMessage(messageElementPopup);
+		                if(isIgrUsed){
+		                	$('#startDate').prop('disabled',true);
+		                	$('#billingUOM').data('kendoComboBox').readonly(true);
+		                	$('#recurrenceStartDateTimePicker').prop('disabled',true);
+		                	$('#useBillingOnFulfillments').prop('disabled',true);
+		                	$('#groupByCustomer').prop('disabled',true);
+		                	$('#forCustomers').data('kendoMultiSelect').readonly(true);
+		                	$('#groupByAgreements').prop('disabled',true);
+		                	$('#forAgreements').data('kendoMultiSelect').readonly(true);
+		                	$('#groupBySalesOrders').prop('disabled',true);
+		                	$('#groupBySalesOrdersIf').prop('disabled',true);
+		                	$('#groupByShipments').prop('disabled',true);
+		                	$('#groupByCategories').prop('disabled',true);
+		                	$('#forCategories').data('kendoMultiSelect').readonly(true);
+		                	$('#groupByProducts').prop('disabled',true);
+		                	$('#forProducts').data('kendoMultiSelect').readonly(true);	
+		                }else{
+		                	$('#startDate').prop('disabled',false);
+		                	$('#billingUOM').data('kendoComboBox').readonly(false);
+		                	$('#recurrenceStartDateTimePicker').prop('disabled',false);
+		                	$('#useBillingOnFulfillments').prop('disabled',false);
+		                	$('#groupByCustomer').prop('disabled',false);
+		                	$('#forCustomers').data('kendoMultiSelect').readonly(false);
+		                	$('#groupByAgreements').prop('disabled',false);
+		                	$('#forAgreements').data('kendoMultiSelect').readonly(false);
+		                	$('#groupBySalesOrders').prop('disabled',false);
+		                	$('#groupBySalesOrdersIf').prop('disabled',false);
+		                	$('#groupByShipments').prop('disabled',false);
+		                	$('#groupByCategories').prop('disabled',false);
+		                	$('#forCategories').data('kendoMultiSelect').readonly(false);
+		                	$('#groupByProducts').prop('disabled',false);
+		                	$('#forProducts').data('kendoMultiSelect').readonly(false);
+		                }
+		                KenandyErp.UnBlockUI();
+                	},function(result,event){
+                		if(event.message){
+                			KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                		}else{
+                			KenandyErp.Messages(result.messages, messageElement);
+                		}
+                		KenandyErp.UnBlockUI();
+                	}
+                );
+            },
+            
+            SaveIgr: function(e) {
+                var grid ;
+                var options={};
+                if(e.grid){
+                    var self = this;
+                    grid = self.grid;
+                    options = self.options;
+                }else{
+                    grid = e;
+                    
+                }
+                
+                
+                var columns = grid.columns;
+                var modelIdField = grid.dataSource.options.schema.model.idField;
+                var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                //Reset the warning header
+                showWarningHeader = false;
+                
+                KenandyErp.ClearMessage(messageElement);
+                var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields, isDml: false });
+                var allRows = grid.dataSource.data();
+                var updatedRows = [];
+                $.each(allRows, function(index, item) {
+                    
+                    item = item.toJSON();
+                    item = Serializer.ConvertToSFDCDate(item, { dateFields: dateFields });
+                    // Remove the extra attributes Kendo Grid creates for supporting wrapper classes
+                    for (var i = 0; i < columns.length; i++) {
+                        var name = columns[i].field;
+                        if (name && name.indexOf('.') != -1) {
+                            delete item[name];
+                        }
+                    }
+                    updatedRows.push(item);
+                    
+                    
+                });
+                if (updatedRows.length > 0) {
+                    allRows = Serializer.ParameterMap(updatedRows);
+                }
+                var dFields = KenandyErp.KendoGridOptions.GetDateFields(fieldList);
+                dFields = dFields ? _.pluck(dFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.InvoiceGroupingRulesExt.saveIgrs}',
+                    allRows,
+                    dFields, 
+                    function (result, event) {
+                        KenandyErp.UnBlockUI(grid.element);
+                        if (event.type == 'exception') {
+                            KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                        } else {
+                            if (result.success) {
+                                // reset detailData
+                                grid.dataSource._destroyed = [];
+                                grid.dataSource.read({
+                                    readOptions: {
+                                        companyId: $('#companyFilter').data('kendoComboBox').value()
+                                    }
+                                });
+                                KenandyErp.Messages(result.messages, messageElement);
+                            }
+                            else {
+                                KenandyErp.Messages(result.messages, messageElement);
+                            }
+                        }
+                    },
+                    {escape: false}
+                );
+            },
+            
+            deleteIgr: function(e) {
+                var answer = window.confirm("Selected Invoice grouping rules will be deleted permanently. Proceed anyway?");
+                if (answer == false){
+                    return;
+                }
+                var self = this;
+                var grid = self.grid;
+                var selectedRows = [];
+                var gridDataSource = grid.dataSource;
+                
+                var options = self.options;
+                var columns = grid.columns;
+                // var modelIdField = grid.dataSource.options.schema.model.idField;
+                var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                
+                var allocatedRows = [];
+                
+                selectedRows = $.map(grid.dataSource.data(), function(item, index) {
+                    if (item.IsSelected__custom) {
+                        return item;
+                    }
+                });
+                
+                //
+                
+                var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields, isDml: false });
+                var allRows = grid.dataSource.data();
+                var updatedRows = [];
+                if(selectedRows.length==0){
+                    return;
+                }
+                $.each(selectedRows, function(index, item) {
+                    
+                    item = item.toJSON();
+                    item = Serializer.ConvertToSFDCDate(item, { dateFields: dateFields });
+                    // Remove the extra attributes Kendo Grid creates for supporting wrapper classes
+                    for (var i = 0; i < columns.length; i++) {
+                        var name = columns[i].field;
+                        if (name && name.indexOf('.') != -1) {
+                            delete item[name];
+                        }
+                    }
+                    updatedRows.push(item);
+                    
+                    
+                });
+                
+                if (updatedRows.length > 0) {
+                    allRows = Serializer.ParameterMap(updatedRows);
+                }
+                
+                
+                var dFields = KenandyErp.KendoGridOptions.GetDateFields(fieldList);
+                dFields = dFields ? _.pluck(dFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.InvoiceGroupingRulesExt.deleteIgrs}',
+                    allRows,
+                    dFields, 
+                    function (result, event) {
+                        KenandyErp.UnBlockUI(grid.element);
+                        if (event.type == 'exception') {
+                            KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                        } else {
+                            if (result.success) {
+                                // reset detailData
+                                grid.dataSource._destroyed = [];
+                                grid.dataSource.read({
+                                    readOptions: {
+                                        companyId: $('#companyFilter').data('kendoComboBox').value()
+                                    }
+                                });
+                                KenandyErp.Messages(result.messages, messageElement);
+                                
+                            }
+                            else {
+                                KenandyErp.Messages(result.messages, messageElement);
+                            }
+                        }
+                    },
+                    {escape: false}
+                );
+            },
+            
+            //KNDY-15790
+            IsIGRUsedForInvoicing: function(ruleId){
+    			var deferred = $.Deferred();
+                if(ruleId){
+	                Visualforce.remoting.Manager.invokeAction(
+	                    '{!$RemoteAction.InvoiceGroupingRulesExt.IsIGRUsedForInvoicing}',
+	                     ruleId, 
+	                    function(result, event){
+	                        if(event.type == 'exception') {
+	                            deferred.reject(result,event);
+	                        }else {
+	                            if(result.success){
+	                                deferred.resolve(result,event);
+	                            }else{
+	                            	deferred.reject(result,event);
+	                            }
+	                        }
+	                    },
+	                    {escape: false}
+	                );
+	            }
+	            return deferred.promise();
+            }
+        };
+    }();
+
+    </script>  
+</apex:page>
+

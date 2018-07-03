@@ -1,0 +1,1678 @@
+<apex:page showHeader="true" sidebar="true" extensions="PurchaseOrderManageExt,KSE" standardController="Purchase_Order__c" tabStyle="Purchase_Order__c" docType="html-5.0">
+    <style type="text/css">
+        .line-total {
+            border: 2px dashed !important;
+            font-weight: bold;
+            width: 100px;
+            text-align: right;
+        }
+        
+        .text-red { border-color: red !important; }
+        .text-green { border-color: green !important; }
+        
+        .amount {
+            padding: .3em .4em !important;
+        }
+
+        .column-label {
+            vertical-align: middle !important;
+            width: 15%;
+        }
+        
+        .column-field {
+            vertical-align: middle !important;
+            width: 85%;
+        }
+        
+        div.individualPalette.lookupHoverDetail[id^='lookup'] .pbButton input.btn:nth-child(2) {
+            display: none;
+        }
+	
+	.disab {
+            opacity: 0.4;
+            cursor: default;
+            pointer-events: none;
+        }
+    </style>
+    
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+
+    <apex:form id="PurchaseOrderManageForm">
+        <div class="page-container">
+            <apex:sectionHeader title="{!pageTitle}" />
+            
+            <div class="page-message"></div>
+            <apex:pageMessages id="msgs"/>
+            
+            <apex:pageBlock id="POHeaderDetailBlock">  
+                <apex:pageBlockSection columns="1">
+                    <div id="POHeaderDetailList">
+                    </div>
+                </apex:pageBlockSection>
+                <apex:pageBlockButtons location="top">
+                    <apex:outputPanel layout="none">
+                        <button id="saveButton" class ="k-button kndy-btn save-command" type="button" accesskey="s">Save</button>
+                        <a href="{!ReturnUrl}" style="text-decoration: none;"><input type="button" value="Cancel" class="k-button kndy-btn cancel-command" /></a>
+                        <button id="actionButton" class ="k-button kndy-btn" type="button">Actions</button>
+                    </apex:outputPanel>
+                </apex:pageBlockButtons>
+            </apex:pageBlock>
+            
+            <apex:pageBlock title="Purchase Order Lines">    
+                <div class="grid-container">
+                    <div class="grid-message"></div>
+                    <div id="POLinesGrid"></div>
+                </div>
+            </apex:pageBlock>
+            
+        </div>
+        <apex:inputHidden value="{!Purchase_Order__c.Name}" />
+        <apex:inputHidden value="{!Purchase_Order__c.Company__c}" />
+        <apex:inputHidden value="{!Purchase_Order__c.Approval_Status__c}"/>
+        <apex:inputHidden value="{!Purchase_Order__c.Status__c}"/>
+        <apex:inputHidden value="{!Purchase_Order__c.Type__c}"/>
+    </apex:form>
+    
+    <script type="text/javascript">
+        var companyRef_global; // KNDY-11133
+        var invoiceMatching_global;  //KNDY-12006
+        var overagePercent_global; //KNDY- 12038
+        var customApprovalProcess = {!isUsingCustomApprovalProcess};
+        
+        var poHeaderData = function(readOptions) {
+            var deferred = $.Deferred();
+            var poId = PurchaseOrderManageUtil.POId;
+            
+            if (!poId) {
+                var headerData = PurchaseOrderManageUtil.POHeaderData;
+                var records = [];
+                delete headerData['attributes'];
+                records.push(headerData);
+                
+                setTimeout(function() {
+                    deferred.resolve({ records: records, success: true, total: 1 }, { statusCode: 200 });
+                }, 100);
+            }
+            else {
+                Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.PurchaseOrderManageExt.getPODetails}',
+                        poId,
+                        '{!$CurrentPage.parameters.clone}',
+                        function (result, event) {
+                            deferred.resolve(result, event);
+                        },
+                        {escape: false}
+                    );
+            }
+            return deferred.promise();
+        };
+        
+        var poLinesData = function(readOptions) {
+            var deferred = $.Deferred();
+            var config = PurchaseOrderManageUtil.POLinesConfigJson;
+
+            if (!config.parentRecord.Id) {
+                setTimeout(function() {
+                    deferred.resolve({ records: [], success: true, total: 0 }, { statusCode: 200 });
+                }, 100);
+            }
+            else {
+                var remoteArgs = config;
+                // The stuff returned from Salesforce has extra properties like "attributes"
+                // which couldn't be deserialised back
+                remoteArgs.parentRecord = { Id: remoteArgs.parentRecord.Id };
+                 var allFields = {!AllFields};
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.PurchaseOrderManageExt.getPOLines}',
+                    remoteArgs,
+                    '{!$CurrentPage.parameters.clone}',
+                    allFields,
+                    function (result, event) {
+                        deferred.resolve(result, event);
+                        // KNDY-8783 reset maxLineNumber
+                        // Assumption - The last record in list has the highest line number
+                        PurchaseOrderManageUtil.maxLineNumber = 0;
+                        if (result.records.length > 0){
+                            var sobjList = result.records;
+                            PurchaseOrderManageUtil.maxLineNumber = sobjList[sobjList.length-1].poLine.Line__c;
+                        }
+                    },
+                    {escape: false}
+                );
+            }
+            
+            return deferred.promise();
+        };
+        
+        
+        var createPOLinesData = function(readOptions) {
+            var deferred = $.Deferred();
+            var config = PurchaseOrderManageUtil.POLinesConfigJson;
+            var remoteArgs = config;
+            remoteArgs.parentRecord = null;
+            var reqsfromurl = getURLParameter('reqs');
+            var reqsIdstring = reqsfromurl.slice(0, reqsfromurl.indexOf('?'));
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.PurchaseOrderManageExt.createPOLines}',
+                 reqsIdstring,
+                 function (result, event) {
+                     deferred.resolve(result, event);
+                     PurchaseOrderManageUtil.maxLineNumber = 0;
+                     if (result != null && result.records.length > 0){
+                         var sobjList = result.records;
+                         PurchaseOrderManageUtil.maxLineNumber = sobjList[sobjList.length-1].poLine.Line__c;
+                     }
+                },
+                {escape: false}
+            );
+            return deferred.promise();
+        }; 
+
+        function getURLParameter(name) {
+           return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))||null;
+        };
+     
+        $(document).on('KenandyErpReady', function(e) {
+            KenandyErp.KendoGridOptions.DefaultPageSize = KenandyErp.KendoGridOptions.PageSizes[0];
+                            
+            PurchaseOrderManageUtil.Init({
+                // Header
+                poId: '{!JSENCODE(po.Id)}',
+                poApprovalStatus: '{!JSENCODE(po.Approval_Status__c)}',
+                poStatus: '{!JSENCODE(po.Status__c)}',
+                poHeaderData: '{!JSENCODE(PurchaseOrderJson)}',
+                poHeaderFieldList: '{!JSENCODE(purchaseOrderHeaderFieldList)}',
+                poAddlHeaderFieldList: '{!JSENCODE(purchaseOrderAddlHeaderFieldList)}',
+                
+                poLinesFieldList: '{!JSENCODE(POLinesFieldList)}',
+                poLinesConfigJson: '{!JSENCODE(POLinesConfigJson)}',
+                segmentLinesFieldList: '{!JSENCODE(segmentLinesFieldList)}',
+
+                customViews: '{!JSENCODE(CustomViews)}',
+                customViewFields: '{!JSENCODE(CustomViewFields)}',
+             
+                 // Clone is not specified here as it does not execute a remote action
+                poHeaderActions: {
+                    'Approve': '{!$RemoteAction.PurchaseOrderManageExt.approvePO}',
+                    'Cancel': '{!$RemoteAction.PurchaseOrderManageExt.cancelPO}',
+                    'Close': '{!$RemoteAction.PurchaseOrderManageExt.closePO}',
+                    'Delete': '{!$RemoteAction.PurchaseOrderManageExt.deletePO}',
+                },
+                
+                // KNDY-8783 initialize to 0
+                // This is updated based on lines queried when lines grid is loaded
+                maxLineNumber: 0
+            });
+        });
+        
+        var PurchaseOrderManageUtil = function() {
+            
+            return {
+                POId: null,
+                POApprovalStatus: null,
+                POStatus: null,
+                POHeaderDetailList: null,
+                POHeaderData: null,
+                POHeaderFieldList: null,
+                POAddlHeaderFieldList: null,
+                POHeaderActions: null,
+                
+                POLinesGrid: null,
+                POLinesFieldList: null,
+                POLinesFields: null,
+                POLinesConfigJson: null,
+                CustomViews: null,
+                CustomViewFields: null,
+                maxLineNumber: null,
+
+                SegmentLinesFieldList: null,
+                isDirtyPOHeaderData: false,
+
+                POTypeEnum: {
+                    DropShip: 'Drop Ship',
+                    Production: 'Production',
+                    Shipment: 'Shipment',
+                    Standard: 'Standard',
+                    SubContract: 'Subcontract'
+                    
+                },
+                
+                Init: function(args) {
+                   // Header - initialize defaults
+                   this.POId = args.poId;
+                   this.POApprovalStatus = args.poApprovalStatus;
+                   this.POStatus = args.poStatus;
+                   this.POHeaderData = JSON.parse(args.poHeaderData);
+                   this.POHeaderFieldList = JSON.parse(args.poHeaderFieldList);
+                   this.POAddlHeaderFieldList = JSON.parse(args.poAddlHeaderFieldList);
+                   // Lines - initialize defaults
+                   this.POLinesFieldList = JSON.parse(args.poLinesFieldList);
+                   this.SegmentLinesFieldList = JSON.parse(args.segmentLinesFieldList);
+                   this.POLinesFields = _.pluck(PurchaseOrderManageUtil.POLinesFieldList, 'field');
+                   this.POLinesConfigJson = JSON.parse(args.poLinesConfigJson);
+                   this.CustomViews = JSON.parse(args.customViews);
+                   this.CustomViewFields = JSON.parse(args.customViewFields);
+                   this.maxLineNumber = args.maxLineNumber;
+                   this.POHeaderActions = args.poHeaderActions;
+                   
+                   if (this.POLinesFields.length > 0) {
+                       this.POLinesFields.shift();
+                   }
+                   this.RenderSaveListDropdown();
+                   this.RenderActionListDropdown();
+                   this.RenderWidgets();
+                },
+                
+                RenderSaveListDropdown: function() {
+
+                    saveOptions = [];
+
+                    if({!HasTax}){
+                        saveOptions.push({
+                            text: "Save and Get Tax",
+                            cssClass: "save-tax-command"
+                        }); 
+                    }
+
+                    saveOptions.push({
+                        text: "Save and Return",
+                        cssClass: "save-return-command"
+                    });
+
+                    saveOptions.push({
+                        text: "Save and New",
+                                cssClass: "save-new-command"
+                    });
+
+                    $('#saveButton').kendoDropDownButton({
+                        type: 'splitButton',
+                        items: saveOptions
+                        /*items: [
+                            {
+                                text: "Save and Get Tax",
+                                cssClass: "save-tax-command"
+                            },
+                            {
+                                text: "Save and Return",
+                                cssClass: "save-return-command"
+                            },
+                            {
+                                text: "Save and New",
+                                cssClass: "save-new-command"
+                            }
+                        ]*/
+                    });
+                },
+                
+                RenderActionListDropdown: function() {
+                    var dropDownItems = [
+                        {
+                            text: "Approve",
+			    cssClass: "action-approve-command",
+                            click: function(e) {
+                                PurchaseOrderManageUtil.ExecuteAction("Approve");
+                            }
+                        },
+                        {
+                            text: "Cancel",
+                            click: function(e) {
+                            var r = confirm("Are you sure you want to cancel the Order?");
+	                            if (r == false){
+	                                return;
+	                            }
+                                PurchaseOrderManageUtil.ExecuteAction("Cancel");
+                            }
+                        },
+                        {
+                            text: "Close",
+                            click: function(e) {
+                                PurchaseOrderManageUtil.ExecuteAction("Close");
+                            }
+                        }
+                    ];
+
+                    if (PurchaseOrderManageUtil.POHeaderData.{!NamespaceUU}Type__c != "SubContract") {
+                        dropDownItems.push({
+                            text: "Clone",
+                            click: function(e) {
+                                PurchaseOrderManageUtil.ExecuteAction("Clone");  // KNDY-10509
+                            }
+                        });
+                        dropDownItems.push({ separator: true });
+                        dropDownItems.push({
+                            text: "Delete",
+                            click: function(e) {
+                                PurchaseOrderManageUtil.ExecuteAction("Delete");
+                            }
+                        });
+                    }
+
+                    $("#actionButton").kendoDropDownButton({
+                        items: dropDownItems
+                    });
+                },
+                
+                RenderWidgets: function() {
+                    // Show header detail list
+                    this.RenderPOHeaderDetailList();
+                },
+                GetColumnIndexFromName: function (grid, fieldName) {
+                    var index = -1;
+                    var columns = grid.columns;
+                    if (columns.length > 0) {
+                        for (var i = 0; i < columns.length; i++) {
+                            if (columns[i].field == fieldName) { // columns[i].title -- You can also use title property here but for this you have to assign title for all columns
+                                index = i;
+                                break;
+                            }
+                        }
+                    }
+                    return index;
+                },
+                RenderPOHeaderDetailList: function(e) {
+                    var lookupSearchFilters = [];
+                    var companyId = (typeof e === 'undefined') ? '{!JSENCODE(po.Company__c)}' : e.companyId;
+                    lookupSearchFilters.push({ field: "Supplier__c", filter: "Type__c = \'Purchasing\' and Status__c = \'Active\' and Hold_Purchasing__c = false and Company__c = \'" + companyId + "\' " },
+                                             { field: "Delivery_Facility__c", filter: "Company__c = \'" + companyId + "\' " }
+                                             );                   
+
+                    // Destroy POHeaderDetailList
+                    if (this.POHeaderDetailList) {
+                        this.POHeaderDetailList.destroy();
+                        $('#POHeaderDetailList').empty();
+                    }
+                    
+                    this.POHeaderDetailList = $('#POHeaderDetailList').kendoDetailList({
+                        namespace: '{!NamespaceUU}',  
+                        sections: [
+                            {
+                                fields: PurchaseOrderManageUtil.GetPOHeaderFieldList()
+                            },
+                            {
+                                name: 'po-header-addl-info',
+                                title: 'Additional Information',
+                                fields: PurchaseOrderManageUtil.POAddlHeaderFieldList
+                            }
+                        ],
+                        lookupSearchAction: '{!$RemoteAction.PurchaseOrderManageExt.lookupSearchFilter}',
+                        lookupSearchFilters: lookupSearchFilters,
+                        getDetailListFunction: poHeaderData 
+                    }).data('kendoDetailList');
+                    
+                    this.POHeaderDetailList.element.bind('OnReadSuccess', this.OnPOHeaderDetailListReadSuccess);
+                },
+                
+                GetPOHeaderFieldList: function() {
+                    var fieldList = PurchaseOrderManageUtil.POHeaderFieldList;
+                    return fieldList;
+                },
+                
+                OnPOHeaderDetailListReadSuccess: function(e) {
+                    // KNDY-11133 save current company value
+                    companyRef_global = ('{!po.Company__c}') ? '{!po.company__r}' : { Id: null, Name: null };
+                    if (customApprovalProcess){
+                   	$('.action-approve-command').addClass("disab");
+                    }
+                    // Bind header events
+                     PurchaseOrderManageUtil.BindHeaderEvents();
+                    
+                    // Show invoice lines grid
+                    PurchaseOrderManageUtil.RenderPOLinesGrid();
+                },
+                
+                BindHeaderEvents: function() {
+                    $('input[name="Supplier__c"]').bind('change',
+                        PurchaseOrderManageUtil.OnHeaderSupplierChange
+                    );
+                    
+                    // KNDY-11133
+                    $('input[name="Company__c"]').bind('change',
+                        PurchaseOrderManageUtil.OnHeaderCompanyChange
+                    );
+                    
+                    //KNDY-10509
+                    $('input[name="Need_Date__c"]').bind('change',
+                        PurchaseOrderManageUtil.OnHeaderNeedDateChange
+                    );
+                    
+                    //KNDY-10509
+                    if ( $('input[name="Need_Date__c"]').data('kendoDatePicker')){
+                        $('input[name="Need_Date__c"]').data('kendoDatePicker').min(new Date());
+                    }
+                    
+                    this.POHeaderDetailList.data.bind('change', function() {
+                        PurchaseOrderManageUtil.isDirtyPOHeaderData = true;
+                    });
+                    
+                },
+                
+                RenderPOLinesGrid: function(options) {
+                    var configOptions = PurchaseOrderManageUtil.POLinesConfigJson;
+                    var linesLookupSearchFilters = [];
+                    var filterCriteria = [];
+
+                    linesLookupSearchFilters.push({ field: "Item__c", filter: "Company__c = \'{!po.Company__c}\'" });
+                    if (PurchaseOrderManageUtil.POHeaderDetailList.data.get('Company__c')) {
+	                		filterCriteria.push("Company__c = \'" + PurchaseOrderManageUtil.POHeaderDetailList.data.get('Company__c') + "\'");
+	                		 
+	               	}
+	                if (filterCriteria.length > 0) {
+                    		linesLookupSearchFilters.push({ field: "poLine.Item__c", filter: filterCriteria.join(' AND ') });
+	                }
+                    var dateFields = KenandyErp.KendoGridOptions.GetDateFields(PurchaseOrderManageUtil.POLinesFieldList);
+                    var cancelAction = '{!$RemoteAction.PurchaseOrderManageExt.cancelLines}';
+                    var closeAction = '{!$RemoteAction.PurchaseOrderManageExt.closeLines}';
+
+                    // Destroy InvoiceLinesGrid
+                    if (this.POLinesGrid) {
+                        this.POLinesGrid.destroy();
+                        $('#POLinesGrid').empty();
+                    }
+                    
+                    this.POLinesGrid = $('#POLinesGrid').width($('#POLinesGrid').width()).kendoGridActionList({
+                        namespace: '{!NamespaceUU}', 
+                        config: configOptions, 
+                        fieldList: PurchaseOrderManageUtil.GetPOLinesFieldList(),
+                        lookupSearchAction: '{!$RemoteAction.PurchaseOrderManageExt.lookupSearchFilter}', 
+                        getActionListFunction: (window.location.href.indexOf('reqs') == -1) ? poLinesData : createPOLinesData,
+                        aggregates: { field: "amount", aggregate: "sum" },
+                        showIconButtons: true,
+                        modelIdField: 'poLine.Id',
+			highlightFirst: true,
+                        toolbarButtons: [ 
+                           { template: "<input class='grid-view-options' />" },
+                           { name: "grid-cancel-custom-command", text:"", template: "<a class='k-button' title='Cancel'><span class='fa fa-ban fa-lg kndy-red grid-cancel-custom-command'></span></a>" },
+                           { name: "grid-close-custom-command", text:"", template: "<a class='k-button' title='Close'><span class='fa fa-times-circle fa-lg grid-close-custom-command'></span></a>" }
+                        ],
+                        beforeEdit: function(e) {
+                            // disable read only fields
+                            PurchaseOrderManageUtil.POLinesGridBeforeEdit.call(this, e);
+                        },
+                        validateLookupOnBlur: true,
+                        lookupSearchFilters: linesLookupSearchFilters
+                    }).data('kendoGridActionList');
+                    
+                    // Delete any existing messages in poLines grid
+                    var grid = this.POLinesGrid;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                    messageElement.empty();
+                    
+                    this.POLinesGrid.bind('edit', $.proxy(PurchaseOrderManageUtil.POLinesGridEdit, { detailList: this.POHeaderDetailList, grid: this.POLinesGrid }));
+                    
+                    this.POLinesGrid.bind('save', function(data) {
+                        if(!data.model.get('poLine.Order_Quantity__c')) {
+                            data.model.set('poLine.Order_Quantity__c', null);
+                        }
+                        if (data.values['poLine.Order_Quantity__c']) {
+                            var orderAmt = data.values['poLine.Order_Quantity__c'] * data.model.get('poLine.Unit_Price__c');
+                            data.model.set('amount', orderAmt.round(2));
+                        }
+                        else if (data.values['poLine.Unit_Price__c']) {
+                            var orderAmt = data.model.get('poLine.Order_Quantity__c') * data.values['poLine.Unit_Price__c'];
+                            data.model.set('amount', orderAmt.round(2));
+                        }
+                    });
+                    
+                    this.POLinesGrid.dataSource.bind('change', function() {
+                        PurchaseOrderManageUtil.SetLineTotal();
+                    });
+                    
+                    this.POLinesGrid.element.bind('OnReadSuccess', this.OnPOLinesGridReadSuccess);
+                    
+                    // unbind and bind the add line button click events
+                    this.POLinesGrid.wrapper.off("click", ".grid-create-command", $.proxy(PurchaseOrderManageUtil.AddLine, { detailList: this.POHeaderDetailList, grid: this.POLinesGrid, options: { config: configOptions, dateFields: dateFields } }));
+                    this.POLinesGrid.wrapper.on("click", ".grid-create-command", $.proxy(PurchaseOrderManageUtil.AddLine, { detailList: this.POHeaderDetailList, grid: this.POLinesGrid, options: { config: configOptions, dateFields: dateFields } }));
+
+                    //KNDY-8783 unbind and bind the clone line button click events
+                    this.POLinesGrid.wrapper.off("click", ".grid-clone-command", $.proxy(PurchaseOrderManageUtil.CloneLine, { grid: this.POLinesGrid}));
+                    this.POLinesGrid.wrapper.on("click", ".grid-clone-command", $.proxy(PurchaseOrderManageUtil.CloneLine, { grid: this.POLinesGrid}));
+
+                    // disable the delete lines icon
+                    if (PurchaseOrderManageUtil.POApprovalStatus == 'Approved'){
+                        $('.grid-mass-delete-command').css({ "opacity": "0.4", "cursor": "default" , "pointer-events":"none"});
+                    }
+                    // enable the delete lines icon
+                    else{
+                        $('.grid-mass-delete-command').css('pointer-events','');
+                    }
+                    
+                    // disable/enable the add lines and clone lines icon
+                    if (PurchaseOrderManageUtil.POStatus == 'Closed' || PurchaseOrderManageUtil.POStatus == 'Cancelled'){
+                        $('.grid-create-command').css({ "opacity": "0.4", "cursor": "default" , "pointer-events":"none"});
+                        $('.grid-clone-command').css({ "opacity": "0.4", "cursor": "default" , "pointer-events":"none"}); //KNDY-8783
+                    }
+                    else{
+                        $('.grid-create-command').css('pointer-events','');
+                        $('.grid-clone-command').css('pointer-events','');//KNDY-8783
+                    }
+                    
+                    // unbind and bind the save, save & return button click events
+                    $('.save-command, .save-new-command, .save-return-command, .save-tax-command').off("click",
+                        $.proxy(PurchaseOrderManageUtil.Save, { detailList: this.POHeaderDetailList, grid: this.POLinesGrid, options: { config: configOptions, dateFields: dateFields } })
+                    );
+                    
+                    $('.save-command, .save-new-command, .save-return-command, .save-tax-command').on("click",
+                        $.proxy(PurchaseOrderManageUtil.Save, { detailList: this.POHeaderDetailList, grid: this.POLinesGrid, options: { config: configOptions, dateFields: dateFields } })
+                    );
+                     
+                    //bind grid cancel & close agreement line events
+                    this.POLinesGrid.wrapper.off("click", ".grid-cancel-custom-command", $.proxy(PurchaseOrderManageUtil.CloseCancelLines, { detailList: this.POHeaderDetailList, grid: this.POLinesGrid, options: { CloseCancelLinesAction: cancelAction, config: configOptions, dateFields: dateFields} }));
+                    this.POLinesGrid.wrapper.on("click", ".grid-cancel-custom-command", $.proxy(PurchaseOrderManageUtil.CloseCancelLines, { detailList: this.POHeaderDetailList, grid: this.POLinesGrid, options: { CloseCancelLinesAction: cancelAction, config: configOptions, dateFields: dateFields} }));
+                    this.POLinesGrid.wrapper.off("click", ".grid-close-custom-command", $.proxy(PurchaseOrderManageUtil.CloseCancelLines, { detailList: this.POHeaderDetailList, grid: this.POLinesGrid, options: { CloseCancelLinesAction: closeAction, config: configOptions, dateFields: dateFields } }));
+                    this.POLinesGrid.wrapper.on("click", ".grid-close-custom-command", $.proxy(PurchaseOrderManageUtil.CloseCancelLines, { detailList: this.POHeaderDetailList, grid: this.POLinesGrid, options: { CloseCancelLinesAction: closeAction, config: configOptions, dateFields: dateFields } }));
+
+                    $(".grid-view-options").kendoDropDownList({
+                        index: 0,
+                        dataTextField: "text",
+                        dataValueField: "value",
+                        dataSource: PurchaseOrderManageUtil.CustomViews,
+                        change: function(e) {  
+                            debugger;
+                            var fieldNames = PurchaseOrderManageUtil.POLinesFields;
+                            for (var fld in fieldNames) {
+                                if (fieldNames[fld] == 'segments.GL_Account__c' || fieldNames[fld] == 'segments.Company__c' || fieldNames[fld] == 'amount'){
+                                    PurchaseOrderManageUtil.POLinesGrid.showColumn(fieldNames[fld]);
+                                }
+                                else{
+                                    PurchaseOrderManageUtil.POLinesGrid.hideColumn(fieldNames[fld]);
+                                    
+                                }
+                            }
+                            
+                            if (this.value() != '') {
+                                fieldNames = _.values(_.pick(PurchaseOrderManageUtil.CustomViewFields, this.value()))[0];
+                               PurchaseOrderManageUtil.DisplayViewFields(fieldNames);
+                            }
+                         },
+                         
+                         dataBound: function(e) {
+                            var fieldNames = PurchaseOrderManageUtil.POLinesFields;
+                            for (var fld in fieldNames) {
+                                if (fieldNames[fld] == 'segments.GL_Account__c' || fieldNames[fld] == 'segments.Company__c'|| fieldNames[fld] == 'amount'){
+                                    PurchaseOrderManageUtil.POLinesGrid.showColumn(fieldNames[fld]);
+                                }
+                                else{
+                                    PurchaseOrderManageUtil.POLinesGrid.hideColumn(fieldNames[fld]);
+                                    
+                                }
+                            }
+                            if (this.value() != '') {
+                                fieldNames = _.values(_.pick(PurchaseOrderManageUtil.CustomViewFields, this.value()))[0];
+                                PurchaseOrderManageUtil.DisplayViewFields(fieldNames);
+                            }
+                         }
+                    });// end of kendodropdownList
+                    
+                    this.POLinesGrid.refresh();//KNDY-10320
+                },// end of render POLines grid
+                
+                DisplayViewFields: function(fieldNames){
+                    var grid = this.POLinesGrid;
+                    var i = 0;//Starting index of View columns(After checkbox, errors and id)
+                    for (fld = 0; fld < fieldNames.length; fld++) { 
+                        i = i + 1;
+                        //Get column index for field name
+                        var colIndex = PurchaseOrderManageUtil.GetColumnIndexFromName(grid, fieldNames[fld]);
+
+                        //Show columns
+                        if(colIndex >= 1){
+                        if(fieldNames[fld] != ''){
+                            //Re-order columns based on the field set order
+                            grid.reorderColumn(i, grid.columns[colIndex]);
+                            grid.showColumn(i);
+                        }
+                        }
+                    }
+
+                },
+                GetPOLinesFieldList: function() {
+                    var fieldList = PurchaseOrderManageUtil.POLinesFieldList;
+                    $.each(fieldList, function() { 
+                         if (this.field == 'amount') {
+                            this.editable = true;
+                            this.headerTemplate = this.title + '<br/><input type="textbox" class="k-textbox line-total text-green" value="0.000000" readonly />';
+                            this.editor = function(container, options) {
+                                PurchaseOrderManageUtil.POLinesGrid.closeCell(container);
+                            }
+                        }
+                        this.width = this.width ? this.width : '100px';
+                    });
+                    return fieldList;
+                },
+                
+                POLinesGridBeforeEdit: function(e) {
+                    var grid = this;
+                    var columnIndex = grid.cellIndex(e.container);
+                    var fieldName = grid.thead.find("th").eq(columnIndex).data("field");
+                    var isDefaultPrevented = false;
+                    
+                    if (fieldName == 'poLine.Line__c') {
+                        isDefaultPrevented = true;
+                    }
+                    if (fieldName == 'poLine.Status__c') {
+                        isDefaultPrevented = true;
+                    }
+                    if (fieldName == 'poLine.Consigned__c') {
+                        isDefaultPrevented = true;
+                    }
+                    if (e.model.get('poLine.Id')) {
+                        if (fieldName == 'poLine.Item__c') {
+                            isDefaultPrevented = true;
+                        }
+                        
+                        if (fieldName == 'poLine.Item_Specification__c') {
+                            isDefaultPrevented = true;
+                        }
+                        if (fieldName == 'poLine.Purchase_UOM__c' && 
+                            (e.model.get('poLine.Contract_Line__c') || e.model.get('poLine.Approved__c'))){
+                            isDefaultPrevented = true; //KNDY-10597
+                        }
+                    }
+
+                    if (PurchaseOrderManageUtil.POHeaderData.{!NamespaceUU}Type__c == "SubContract" && (fieldName == "poLine.Order_Quantity__c" || fieldName == "poLine.Delivery_Facility__c")) {
+                        isDefaultPrevented = true;
+                    }
+                    
+                    if (isDefaultPrevented) {
+                        e.preventDefault();
+                    }
+                },
+                
+                AddLine: function(e) {
+                    var self = this;
+                    var grid = self.grid; 
+                    var detailList = self.detailList;
+                    //var row = $(e.target).closest("tr"); //get the row
+                    var row = $(".k-grid-edit-row"); //commented the above line as it does not work in lightning
+                    var dataItem = grid.dataItem(row); // get the row data
+                    var deliveryFacility = (detailList.data.get('Delivery_Facility__c')) ? detailList.data.get('Delivery_Facility__c'): null;
+                    var deliveryFacilityRef = (detailList.data.get('Delivery_Facility__r')) ? detailList.data.get('Delivery_Facility__r') : null;
+                    var deliveryLocation = (detailList.data.get('Delivery_Location__c')) ? detailList.data.get('Delivery_Location__c'): null;
+                    var deliveryLocationRef = (detailList.data.get('Delivery_Location__r')) ? detailList.data.get('Delivery_Location__r') : null;
+                    var poSupplier = (detailList.data.get('Supplier__c')) ? detailList.data.get('Supplier__c'): null;
+                    var poSupplierRef = (detailList.data.get('Supplier__r')) ? detailList.data.get('Supplier__r') : null;
+                    var poInvoiceMatching = (detailList.data.get('Supplier__r.Invoice_Matching__c')) ? detailList.data.get('Supplier__r.Invoice_Matching__c') : invoiceMatching_global;
+                    var poOveragePercentage = (detailList.data.get('Supplier__r.Default_Receiving_Tolerance__c')) ? detailList.data.get('Supplier__r.Default_Receiving_Tolerance__c') : overagePercent_global; 
+                    var poCompany = (detailList.data.get('Company__c')) ? detailList.data.get('Company__c'): null;
+                    var poCompanyRef = (detailList.data.get('Company__r')) ? detailList.data.get('Company__r') : null;
+                    var needDate = (detailList.data.get('Need_Date__c')) ? detailList.data.get('Need_Date__c'): null;
+                    var pa = (detailList.data.get('Purchase_Agreement__c')) ? detailList.data.get('Purchase_Agreement__c') : null;
+                    
+                    if (needDate){ //KNDY-10509
+                        needDate = new Date (needDate);// Convert String to Date
+                        dataItem.set('poLine.Need_Date__c', needDate);
+                    }
+                    
+                    if (deliveryFacility){
+                        dataItem.set('poLine.Delivery_Facility__c', deliveryFacility);
+                        dataItem.set('poLine.Delivery_Facility__r', deliveryFacilityRef);
+                    }
+                    
+                    if (deliveryLocation){
+                        dataItem.set('poLine.Delivery_Location__c', deliveryLocation);
+                        dataItem.set('poLine.Delivery_Location__r', deliveryLocationRef);
+                    }
+                    dataItem.set('poLine.Consigned__c', false);
+                    
+                    if(poSupplier){
+                        dataItem.set('poLine.Supplier__c', poSupplier);
+                        dataItem.set('poLine.Supplier__r', poSupplierRef);
+                    }
+                    dataItem.set('poLine.Overage_Percentage__c', poOveragePercentage);
+                    dataItem.set('poLine.Unit_Price__c', null); //KNDY-10935
+                   
+                    if(pa == null && poInvoiceMatching && poSupplierRef){
+                        dataItem.set('poLine.Invoice_Matching__c', poInvoiceMatching);
+                    }
+                        
+                    if(poCompany){
+                        dataItem.set('poLine.Company__c', poCompany);
+                        dataItem.set('poLine.Company__r', poCompanyRef);
+                    }
+                    PurchaseOrderManageUtil.SetNewLineDefaultsJS(); //KNDY-8783
+
+                    var fieldList = PurchaseOrderManageUtil.POLinesFieldList;
+                    $.each(fieldList, function() {
+                        if ((this.fieldtype == 'boolean') && (dataItem.get(this.field) != true) ){
+                            dataItem.set(this.field, false); 
+                        }
+                    });
+                    
+                    grid.refresh();
+                },
+                
+                CloneLine: function(e) {//KNDY-8783
+                    var self = this;
+                    var grid = self.grid; 
+                    console.log('In clone curr max line number');
+                    PurchaseOrderManageUtil.SetNewLineDefaultsJS(); 
+                    grid.refresh();
+                },
+                
+                // KNDY-8783 JS methods calling this method should refresh grid
+                SetNewLineDefaultsJS: function(){
+                    var grid = PurchaseOrderManageUtil.POLinesGrid; 
+                    var curr_maxLineNumber = PurchaseOrderManageUtil.maxLineNumber; 
+                    console.log('getlinenumberJS curr_maxLineNumber');
+                    console.log(curr_maxLineNumber);
+                    var currentData = grid.dataSource.data();
+                    $.each(currentData, function(index, item) {
+                        if (item.id == null){
+                           curr_maxLineNumber ++;
+                           item.poLine.Line__c = curr_maxLineNumber;
+                           item.IsSelected__custom = false;
+                           item.poLine.Id = null;
+                           item.poLine.Status__c = 'Open'; //KNDY-8783
+                           item.poLine.Approved__c = false;
+                           item.poLine.Contract_Line__c = null;
+                           // New accounting defaults will be created if there are line segments
+                           item.segments.Id = null; 
+                        }
+                    });
+                },
+                
+                POLinesGridEdit: function(e) {
+                   var self = this;
+                   var detailList = self.detailList;
+                   var grid = self.grid;
+                   if (e.model.isNew() && !e.model.dirty) {
+                      // set defaults
+                      if (e.model.Line__c == 0){
+                          PurchaseOrderManageUtil.maxLineNumber++;
+                          e.model.Line__c = PurchaseOrderManageUtil.maxLineNumber;
+                          grid.refresh();
+                      }
+                   }
+                        
+                   // Get Item Details
+                    $(e.container).find('input[name="poLine.Item__c"]').bind('blur', 
+                        $.proxy(PurchaseOrderManageUtil.OnItemChange, { detailList: detailList, grid: grid, focusNextElement: true  })
+                    );
+                    
+                    $(e.container).find('input[name="poLine.Item_Specification__c"]').bind('blur', 
+                        $.proxy(PurchaseOrderManageUtil.OnItemSpecificationChange, { detailList: detailList, grid: grid })
+                    );
+                    
+                    //KNDY-10509
+                    if ( $(e.container).find('input[name="poLine.Need_Date__c"]').data('kendoDatePicker')){
+                        $(e.container).find('input[name="poLine.Need_Date__c"]').data('kendoDatePicker').min(new Date());
+                    }
+                    
+                    //KNDY-10836 When delivery facility changes on line, blank dependent line fields
+                    if ($(e.container).find('input[name="poLine.Delivery_Facility__c"]').length > 0) {
+                        var deliveryFacility = $(e.container).find('input[name="poLine.Delivery_Facility__c"]');
+                        deliveryFacility.on('change',
+                            $.proxy(PurchaseOrderManageUtil.OnPOLineFacilityChange, { grid: grid })
+                        );
+                    }
+                    
+                    //KNDY-10836
+                    if ($(e.container).find('input[name="poLine.Delivery_Location__c"]').length > 0) {
+                        var deliveryLocationCell = $(e.container).find('input[name="poLine.Delivery_Location__c"]');
+                        var lookupSearchFilters = [];
+                        if (e.model.get('poLine.Delivery_Facility__c')) {
+                            lookupSearchFilters.push({ field: "poLine.Delivery_Location__c", filter: "Facility__c = \'" + e.model.get('poLine.Delivery_Facility__c') + "\'" });
+                        }
+                        deliveryLocationCell.data('kendoLookup').options.criteria = lookupSearchFilters;
+                        
+                        deliveryLocationCell.on('focus', function() {
+                             $(this).data('default_value', $(this).val());
+                        });
+                        deliveryLocationCell.focus();
+                    }
+                },
+
+                OnPOLineFacilityChange: function(e) {//KNDY-10836
+                    if ($(e.target).val() == $(e.target).data('default_value')) {
+                        return;
+                    }
+                    
+                    var grid = this.grid;
+                    var cell = grid.editable.element;
+                    var row = $(e.target).closest("tr"); //get the row
+                    var dataItem = grid.dataItem(row); // get the row data
+                    var nullRef = { Id: null, Name: null };
+                    
+                    dataItem.set('poLine.Delivery_Location__r', nullRef);
+                    dataItem.set('poLine.Delivery_Location__c', null);
+                    grid.refresh;
+                },
+                
+                OnItemSpecificationChange: function(e) {
+                   if ($(e.target).val() == $(e.target).data('default_value')) {
+                        return;
+                   }
+                        
+                   var self = this;
+                   var grid = this.grid;
+                   var detailList = this.detailList;
+                   if (detailList.data.get('Type__c') != 'SubContract'){
+                        return;
+                   }
+                   var messageElement = grid.element.closest("div.grid-container").find("div.grid-message");
+                   var cell = grid.editable.element;
+                   var row = $(e.target).closest("tr"); //get the row
+                   var dataItem = grid.dataItem(row); // get the row data
+                   var itemSpecId = dataItem.get('poLine.Item_Specification__c');
+                   // convert javascript Date to UTC String so visualforce remoting understands it.
+                   var needDate = dataItem.get('poLine.Need_Date__c')? (dataItem.get('poLine.Need_Date__c')).toUTCString(): null;
+                   var facilityId = dataItem.get('poLine.Delivery_Facility__c');
+                   var companyId = dataItem.get('poLine.Company__c');
+                   if (!companyId) { // Get company from Header if required
+                        companyId = detailList.data.get('Company__c');
+                   }
+                    
+                   if (!itemSpecId || !companyId || !needDate) {
+                      return;
+                   }
+                   // reset defaults
+                   dataItem.set('poLine.Item__c', null);
+                   dataItem.set('poLine.Item__r', null);
+                   dataItem.set('poLine.Description__c', null);
+                   dataItem.set('poLine.Purchase_UOM__c', null);       
+                   dataItem.set('poLine.Purchase_UOM__r', null);
+                   grid.refresh();
+                   
+                   KenandyErp.BlockUI(grid.element);
+                                   
+                   Visualforce.remoting.Manager.invokeAction(
+                       '{!$RemoteAction.PurchaseOrderManageExt.getServiceItem}',
+                       itemSpecId,
+                       companyId,
+                       facilityId,
+                       needDate,
+                       function (result, event) {
+                           KenandyErp.UnBlockUI(grid.element);
+                           
+                           if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                           } else {
+                               KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                               
+                               if (result.success) {
+                                   if (result.records && result.records.length > 0) {
+                                       var item = result.records[0];   
+                                       var uom = (item.Purchasing_UOM__c) ? item.Purchasing_UOM__c : null;     
+                                       var uomRef = (item.Purchasing_UOM__r) ? item.Purchasing_UOM__r : null;
+                                       dataItem.set('poLine.Item__c', item.Id);
+                                       dataItem.set('poLine.Item__r', item);
+                                       dataItem.set('poLine.Purchase_UOM__c', uom);        
+                                       dataItem.set('poLine.Purchase_UOM__r', uomRef);
+                                       dataItem.set('poLine.Description__c', item.Description__c);
+                                   }
+                               }
+                           }
+                          
+                       },
+                       {escape: false}
+                   );
+                },
+                
+                OnItemChange: function(e) {
+                   if ($(e.target).val() == $(e.target).data('default_value')) {
+                        return;
+                   }
+                        
+                   var self = this;
+                   var grid = this.grid;
+                   var detailList = this.detailList;
+                   var messageElement = grid.element.closest("div.grid-container").find("div.grid-message");
+                   var cell = grid.editable.element;
+                   self.cellIndex = grid.cellIndex(cell) //Set the cell index for future reference.
+                   var row = $(e.target).closest("tr"); //get the row
+                   var dataItem = grid.dataItem(row); // get the row data
+                   var itemName= dataItem.get('poLine.Item__r.Name');
+                   var itemId = dataItem.get('poLine.Item__c');
+                   
+                   // convert javascript Date to UTC String so visualforce remoting understands it.
+                   var needDate = dataItem.get('poLine.Need_Date__c')? (dataItem.get('poLine.Need_Date__c')).toUTCString(): null;
+                   var facilityId = dataItem.get('poLine.Delivery_Facility__c');
+                   var companyId = dataItem.get('poLine.Company__c');
+                   if (!companyId) { // Get company from Header if required
+                        companyId = detailList.data.get('Company__c');
+                   }
+                   var invoiceMatching = dataItem.get('poLine.Invoice_Matching__c'); 
+                   dataItem.set('poLine.Description__c', null);
+                   dataItem.set('poLine.Purchase_UOM__c', null);     
+                   dataItem.set('poLine.Purchase_UOM__r', null); 
+                   //dataItem.set('poLine.Unit_Price__c', null);
+                   // recaculate the line amount in UI
+                   var orderAmt = dataItem.get('poLine.Order_Quantity__c') * dataItem.get('poLine.Unit_Price__c');
+                   dataItem.set('amount', orderAmt.round(2));
+                   
+                   if (!itemId) {
+                      return;
+                   }
+                        
+                   KenandyErp.BlockUI(grid.element);
+                   Visualforce.remoting.Manager.invokeAction(
+                       '{!$RemoteAction.KSE.getItemJSONRecord}',
+                       itemName, companyId, facilityId, needDate,
+                       function (result, event) {
+                           KenandyErp.UnBlockUI(grid.element);
+                           
+                           if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                           } else {
+                                // KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                KenandyErp.CleanNamespace(result, '{!NamespaceUU}'); // TODO - ask Mark
+                               
+                                if (result) {
+                                   var item = result;   
+                                   var itemRef = item; //KNDY-10604
+                                   var uom = (item.Purchasing_UOM__c) ? item.Purchasing_UOM__c : null;     
+                                   var uomRef = (item.Purchasing_UOM__r) ? item.Purchasing_UOM__r : null;
+                                   dataItem.set('poLine.Purchase_UOM__c', uom);       
+                                   dataItem.set('poLine.Purchase_UOM__r', uomRef);
+                                   dataItem.set('poLine.Description__c', item.Description__c);
+                                   dataItem.set('poLine.Item__r', item); //KNDY-10604
+                                  // dataItem.set('poLine.Unit_Price__c', item.Last_Cost__c);
+                                   dataItem.set('poLine.Invoice_Matching__c', item.Non_Inventory__c ? "Two Way" : invoiceMatching);
+                                 
+                                   // recaculate the line amount in UI
+                                   var orderAmt = dataItem.get('poLine.Order_Quantity__c') * dataItem.get('poLine.Unit_Price__c');
+                                   dataItem.set('amount', orderAmt.round(2));
+                                   grid.refresh();//KNDY-11664
+                                    //KNDY-18041
+                                    //If focusNextElement is true
+                                    if(self.focusNextElement){
+                                        //Go through the columns after the blured out cell and get the index of the first unhidden column found.
+                                        function getNextUnhiddenElement(){
+                                            for(var i = self.cellIndex ; i < grid.columns.length-1 ; i++){
+                                                if(grid.columns[i+1].hidden === true){
+                                                    continue;
+                                                }
+                                                else{
+                                                    return i+1;
+                                                }
+                                            }
+                                        }
+                                        grid = $("#POLinesGrid").data('kendoGridActionList');
+                                        var newIndex = getNextUnhiddenElement();
+                                        //If the next unhidden element exists, focus on that element.
+                                        if(newIndex) {
+                                            grid.editCell($("#POLinesGrid td:eq("+(newIndex)+")"));
+                                        }
+
+                                    }
+
+                                }
+                           }
+                       },
+                       {escape: false}
+                   );
+                },
+                
+                OnPOLinesGridReadSuccess: function(e) {
+                    var hasPOLines = (e.event && e.event.result && e.event.result.total > 0);
+                    if (PurchaseOrderManageUtil.POHeaderDetailList.data.get('Id')) {
+                        PurchaseOrderManageUtil.DisableHeaderFields({
+                            hasPOLines: true
+                        });
+                    }
+                },
+                
+                GetLineTotal: function() {
+                // KNDY-7324 Exclude Cancelled Lines
+                    var lineAmountTotal = 0;
+                    if (PurchaseOrderManageUtil.POLinesGrid && PurchaseOrderManageUtil.POLinesGrid.dataSource.total() > 0){
+                        var currentData = PurchaseOrderManageUtil.POLinesGrid.dataSource.data();
+                        $.each(currentData, function(index, item) {
+                            if (item.get('poLine.Status__c') != 'Cancelled'){
+                                lineAmountTotal += item.get('amount');
+                            }
+                        });
+                    }
+                    return lineAmountTotal;
+                },
+                
+                SetLineTotal: function() {
+                    var headerAmount = (PurchaseOrderManageUtil.POHeaderDetailList.data && PurchaseOrderManageUtil.POHeaderDetailList.data.get('Purchase_Order_Value__c')) ? PurchaseOrderManageUtil.POHeaderDetailList.data.get('Purchase_Order_Value__c') : 0;
+                    var linesAmount = PurchaseOrderManageUtil.GetLineTotal();
+                    if (headerAmount.round(2) == linesAmount.round(2)) {
+                        $('.line-total').removeClass('text-red');
+                        $('.line-total').addClass('text-green');
+                    }
+                    else {
+                        $('.line-total').removeClass('text-green');
+                        $('.line-total').addClass('text-red');
+                    }
+                    
+                    $('.line-total').val(kendo.toString(linesAmount, 'n6'));
+                },
+                
+                GetCompanyInfo: function(e){ //KNDY-11133
+                    var detailList = PurchaseOrderManageUtil.POHeaderDetailList;
+                    var companyId = (typeof e === 'undefined') ? detailList.data.get('Company__c') : e.companyId;
+                    if (!companyId) {
+                        companyRef_global = {Id : null, Name : null};
+                        detailList.data.set('Delivery_Facility__r', { Id: null, Name: null });                                        
+                        detailList.data.set('Delivery_Facility__c', null);
+                        detailList.data.set('Delivery_Location__r', { Id: null, Name: null });                                        
+                        detailList.data.set('Delivery_Location__c', null);
+                        detailList.data.set('Currency__c', null);
+                        detailList.data.set('Currency__r', { Id: null, Name: null });    
+                        return;
+                    }
+                    KenandyErp.BlockUI();
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.PurchaseOrderManageExt.getCompanyInfo}',
+                        companyId,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                if (result.success) {
+                                    if (result.records && result.records.length > 0) {
+                                        var company = result.records[0];   
+                                        companyRef_global = company; // update current company variable
+                                        var transactionCurrency = (company.Default_Transaction_Currency__c) ? company.Default_Transaction_Currency__c : null;
+                                        var transactionCurrencyRef = (company.Default_Transaction_Currency__r) ? company.Default_Transaction_Currency__r : null;                                        
+                                        if(!detailList.data.get('Delivery_Facility__c') && (typeof e === 'undefined')){
+                                            var defaultDeliveryFacility = (company.Default_Purchasing_Deliver_To_Facility__c) ? company.Default_Purchasing_Deliver_To_Facility__c : null;
+                                            var defaultDeliveryFacilityRef= (company.Default_Purchasing_Deliver_To_Facility__r) ? company.Default_Purchasing_Deliver_To_Facility__r : null;
+                                            var defaultDeliveryLocation = null;
+                                            var defaultDeliveryLocationRef = null;
+                                            if (defaultDeliveryFacility){
+                                                defaultDeliveryLocation = (company.Default_Purchasing_Deliver_To_Facility__r.Default_Purchasing_Delivery_Location__c) ? company.Default_Purchasing_Deliver_To_Facility__r.Default_Purchasing_Delivery_Location__c : null;
+                                                defaultDeliveryLocationRef= (company.Default_Purchasing_Deliver_To_Facility__r.Default_Purchasing_Delivery_Location__r) ? company.Default_Purchasing_Deliver_To_Facility__r.Default_Purchasing_Delivery_Location__r : null;
+                                            }
+                                            detailList.data.set('Delivery_Facility__c', defaultDeliveryFacility);
+                                            detailList.data.set('Delivery_Facility__r', defaultDeliveryFacilityRef);
+                                            detailList.data.set('Delivery_Location__c', defaultDeliveryLocation);
+                                            detailList.data.set('Delivery_Location__r', defaultDeliveryLocationRef);
+                                        }
+                                        detailList.data.set('Currency__c', transactionCurrency);
+                                        detailList.data.set('Currency__r', transactionCurrencyRef); 
+                                        detailList.data.set('Company__c', companyId);
+                                        detailList.data.set('Company__r', company);
+                                        if(typeof e != 'undefined'){
+                                            detailList.data.set('Delivery_Facility__r', { Id: null, Name: null });                                        
+                                            detailList.data.set('Delivery_Facility__c', null);
+                                            detailList.data.set('Delivery_Location__r', { Id: null, Name: null });                                        
+                        					detailList.data.set('Delivery_Location__c', null);    
+                                        }
+                                        
+                                    }
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                },
+                
+                // KNDY-10509: carry over header need date on 
+                // lines with blank need dates
+                OnHeaderNeedDateChange: function(e) {
+                    var self = this;
+                    var needDate = $(e.target).val();
+                    needDate = new Date (needDate); //Convert String to Date
+                    var grid = PurchaseOrderManageUtil.POLinesGrid;
+                    if (!needDate) {
+                        return;
+                    }
+                    KenandyErp.BlockUI();
+                    var currentData = grid.dataSource.data();
+                    for (var i=0; i< currentData.length; i++){
+                        if (!currentData[i].poLine.Need_Date__c){
+                            currentData[i].poLine.Need_Date__c = needDate;
+                        }
+                    }
+                    KenandyErp.UnBlockUI();
+                    grid.refresh();
+                },
+                
+                OnHeaderSupplierChange: function(e) {
+                    var self = this;
+                    var supplierId = $(e.target).val();
+                    var detailList = PurchaseOrderManageUtil.POHeaderDetailList;
+                    if (!supplierId) {
+                        detailList.data.set('Remit_To_Supplier__r', { Id: null, Name: null });                                        
+                        detailList.data.set('Remit_To_Supplier__c', null);
+                        detailList.data.set('Payment_Term__c', null);
+                        detailList.data.set('Payment_Term__r', { Id: null, Name: null });
+                        detailList.data.set('FOB_Term__r', { Id: null, Name: null });
+                        detailList.data.set('FOB_Term__c', null);
+                        
+                        // KNDY-11133 Get transaction currency from company
+                        PurchaseOrderManageUtil.GetCompanyInfo();
+                        return;
+                    }
+                    KenandyErp.BlockUI();
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.PurchaseOrderManageExt.getSupplierDefaults}',
+                        supplierId,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                if (result.success) {
+                                    if (result.records && result.records.length > 0) {
+                                        var supplier = result.records[0];   
+                                        var remitToSupplierRef = (supplier.Remit_To__r) ? supplier.Remit_To__r : { Id: null, Name: null };
+                                        var remitToSupplier = (supplier.Remit_To__c) ? supplier.Remit_To__c : null;
+                                        var paymentTermRef = (supplier.Payment_Term__r) ? supplier.Payment_Term__r : { Id: null, Name: null };
+                                        var paymentTerm = (supplier.Payment_Term__c) ? supplier.Payment_Term__c : null;
+                                        var fobTermRef = (supplier.FOB_Term__r) ? supplier.FOB_Term__r : { Id: null, Name: null };
+                                        var fobTerm = (supplier.FOB_Term__c) ? supplier.FOB_Term__c : null;
+                                        var currencySupplier = (supplier.Currency__c) ? supplier.Currency__c : null;
+                                        var currencySupplierRef = (supplier.Currency__r) ? supplier.Currency__r : { Id: null, Name: null };
+                                        
+                                            invoiceMatching_global = (supplier.Invoice_Matching__c) ? (supplier.Invoice_Matching__c) : null;
+                                            overagePercent_global = (supplier.Default_Receiving_Tolerance__c) ? (supplier.Default_Receiving_Tolerance__c) : null;
+                                        
+                                        detailList.data.set('Remit_To_Supplier__r', remitToSupplierRef);
+                                        detailList.data.set('Remit_To_Supplier__c', remitToSupplier);
+                                        detailList.data.set('Payment_Term__c', paymentTerm);//KNDY-11133
+                                        detailList.data.set('Payment_Term__r', paymentTermRef);//KNDY-11133
+                                        detailList.data.set('FOB_Term__c', fobTerm);
+                                        detailList.data.set('FOB_Term__r', fobTermRef);
+                                        detailList.data.set('Currency__c', supplier.Currency__c);
+                                        detailList.data.set('Currency__r', supplier.Currency__r);                                        
+                                        
+                                        if (currencySupplier == '' || currencySupplier == null){ //KNDY-11133
+                                        PurchaseOrderManageUtil.GetCompanyInfo();
+                                      
+                                        }
+                                        
+                                    }
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                },
+                
+                // KNDY-11133 Blank out supplier fields on header when company changes
+                // and reset company related defaults
+                OnHeaderCompanyChange: function(e) {
+                    var self = this;
+                    var companyId = $(e.target).val();
+                    var detailList = PurchaseOrderManageUtil.POHeaderDetailList;
+                    
+                    // Alert user that this will erase supplier fields on header
+                    var r = confirm("Are you sure? Changing the company will erase Company and Supplier related fields.");
+                    if (r == false){
+                        // reset company to old value
+                        detailList.data.set('Company__c', companyRef_global.Id);
+                        detailList.data.set('Company__r', companyRef_global);
+                        return;
+                    }
+                    
+                    // Blank out supplier related fields
+                    detailList.data.set('Supplier__r', { Id: null, Name: null });                                        
+                    detailList.data.set('Supplier__c', null);
+                    detailList.data.set('Remit_To_Supplier__r', { Id: null, Name: null });                                        
+                    detailList.data.set('Remit_To_Supplier__c', null);
+                    detailList.data.set('Payment_Term__r', { Id: null, Name: null });
+                    detailList.data.set('Payment_Term__c', null);
+                    detailList.data.set('FOB_Term__r', { Id: null, Name: null});
+                    detailList.data.set('FOB_Term__c', null);
+                    detailList.data.set('Delivery_Facility__r', { Id: null, Name: null});
+                    detailList.data.set('Delivery_Facility__c', null);
+                    var e = { 'companyId': companyId };
+                    PurchaseOrderManageUtil.RenderPOHeaderDetailList(e);
+                    PurchaseOrderManageUtil.GetCompanyInfo(e);
+                },
+                
+                DisableHeaderFields: function(options) {
+                    var hasPOLines = (options.hasPOLines) ? options.hasPOLines : false;
+                    var isEnabled = !hasPOLines;
+                    var enabledFields = [];
+                    var disabledFields = [];
+                    var disabledHeaderFields = [];
+                    var poObj = PurchaseOrderManageUtil.POHeaderDetailList.data;
+                    
+                    if (hasPOLines && poObj.get('Id')) {
+                        disabledFields = ['Company__c', 'Supplier__c', 'Type__c', 'Buyer__c'];
+                        if (poObj.get('Currency__c')){
+                            disabledFields.push('Currency__c');
+                        }
+                        
+                        var headerFields = PurchaseOrderManageUtil.POHeaderDetailList.getFieldList();
+                        
+                        for (var i = 0; i < headerFields.length; i++) {
+                            var field = headerFields[i].field;
+                            
+                            if (_.contains(enabledFields, field) && _.contains(disabledFields, field)) {
+                                disabledHeaderFields.push(field);
+                            }
+                        }
+                        disabledHeaderFields = _.union(disabledFields, disabledHeaderFields);
+                    }
+                    
+                    // Disable Header Fields
+                    if (this.POHeaderDetailList) {
+                        this.POHeaderDetailList.enable(isEnabled, { 
+                            disabledFields: disabledHeaderFields 
+                        });
+                    }
+                },
+                
+                Save: function(e) {
+                    var self = this;
+                    var grid = self.grid;
+                    var detailList = self.detailList;
+                    var options = self.options;
+                    var modelIdField = grid.dataSource.options.schema.model.idField;
+                    
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                    var isNewPO = (!detailList.data.get('Id')) ? true : false;
+                    var returnUrl = '{!ReturnUrl}';
+                            
+                    KenandyErp.ClearMessage();
+                                            
+                    if (!detailList.validate()) {
+                        KenandyErp.Message("Please fix the following errors.");
+                        e.preventDefault();
+                        return false;
+                    }
+                    var currentData = grid.dataSource.data();
+                    if (currentData.length> 0){
+                        PurchaseOrderManageUtil.resetLookups(currentData);
+                    }
+                    
+                    if (!PurchaseOrderManageUtil.IsValidSegments(grid)) {
+                        return false;
+                    }
+
+                    var headerDateFields = detailList.getDateFields();
+                    var headerRowsList = [];
+                    var headerRows = [];
+                    
+                    headerRowsList.push(detailList.data);
+                    
+                    headerRows = $.map(headerRowsList, function(item, index) {
+                        item = item.toJSON();
+                        item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+                        
+                        return item;
+                    });
+                    
+                    if (headerRows.length > 0) {
+                        headerRows = Serializer.ParameterMap(headerRows);
+                    }
+                    
+                    var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields, isDml: false });
+                    
+                    var updatedRows = [];
+                    var newRows = [];
+                    var deletedRows = [];
+                    
+                    newRows = gridUtils.NewRows();
+                    updatedRows = gridUtils.UpdatedRows();
+                    deletedRows = gridUtils.DeletedRows();
+                     
+                    var lineNumbersWithoutUOM = ''; //KNDY-10604
+                    $.map(updatedRows, function(line, index) {
+                            if (!line.poLine.Purchase_UOM__c  && line.poLine.Item__c &&
+                                (line.poLine.Item__r.Source__c == 'Purchased' ||
+                                line.poLine.Item__r.Source__c == 'Miscellaneous' ||
+                                line.poLine.Item__r.Source__c == 'Expense' ||
+                                line.poLine.Item__r.Source__c == 'Outside Processing')){
+                                    lineNumbersWithoutUOM += line.poLine.Line__c +',';
+                            }
+                    });
+                    $.map(newRows, function(line, index) {
+                            if (!line.poLine.Purchase_UOM__c  && line.poLine.Item__c &&
+                                (line.poLine.Item__r.Source__c == 'Purchased' ||
+                                line.poLine.Item__r.Source__c == 'Miscellaneous' ||
+                                line.poLine.Item__r.Source__c == 'Expense' ||
+                                line.poLine.Item__r.Source__c == 'Outside Processing')){
+                                    lineNumbersWithoutUOM += line.poLine.Line__c +',';
+                            }
+                    });
+                    if (lineNumbersWithoutUOM){
+                            KenandyErp.Message("Purchase UOM is required. Lines - " + lineNumbersWithoutUOM);
+                            e.preventDefault();
+                            return false;
+                    }
+                    if (newRows.length > 0){
+                        newRows = Serializer.ParameterMap(newRows);
+                    }
+                    if (updatedRows.length > 0){
+                        updatedRows = Serializer.ParameterMap(updatedRows);
+                    }
+                    if (deletedRows.length > 0){
+                        deletedRows = Serializer.ParameterMap(deletedRows);
+                    }
+                    
+                    KenandyErp.BlockUI();
+                    KenandyErp.ClearMessage();
+                    headerDateFields = headerDateFields ? _.pluck(headerDateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+
+                    var dateFields = self.options.dateFields ? _.pluck(self.options.dateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;          
+                    var statusFlag = false; // flag to restrict accessing clone code
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.PurchaseOrderManageExt.saveAction}', 
+                        headerRows[0], 
+                        headerDateFields,           
+                        updatedRows,
+                        newRows,
+                        deletedRows,
+                        dateFields,
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();
+                                        
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message);
+                            } else {
+                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                
+                                if (result.success) {
+                                    if ($(e.target.parentElement).hasClass('save-return-command')) {
+                                        KenandyErp.NavigateToURL(returnUrl, true);
+                                    }
+                                    else if ($(e.target.parentElement).hasClass('save-new-command')) {
+                                        KenandyErp.NavigateToURL('{!$Page.PurchaseOrderManage}', true);
+                                    }else if($(e.target.parentElement).hasClass('save-tax-command')){
+                                        KenandyErp.BlockUI();
+                                        KenandyErp.ClearMessage();
+
+                                        Visualforce.remoting.Manager.invokeAction(
+                                            '{!$RemoteAction.PurchaseOrderManageExt.getTax}',
+                                            result.records[0].Id,result.records[0],
+                                            function(result, event){
+                                                KenandyErp.UnBlockUI();
+                                                if(result.success){
+                                                    KenandyErp.NavigateToURL('{!$Page.PurchaseOrderManage}' + '?id=' + result.records[0].Id + '&',true);
+                                                }else{
+                                                    KenandyErp.Messages(result.messages);
+                                                }
+                                            },
+                                            {escape: false}
+                                        );
+
+                                    }
+                                    else if (isNewPO && $(e.target).hasClass('save-command')){
+                                        var uri = URI('{!$CurrentPage.URL}');
+                                      
+                                        //KNDY-10084 Reqs to PO without Agreement 
+                                        if (uri.hasQuery("reqs") && window.location.href.indexOf('?reqs=') != -1){
+                                            statusFlag = true;
+                                            KenandyErp.NavigateToURL('{!$Page.PurchaseOrderManage}' + '?id=' + result.records[0].Id + '&',true);
+                                        }
+                                        
+                                        if(!statusFlag){
+                                        if (uri.hasQuery("clone", "1") === false){ // not creating a clone
+                                            KenandyErp.NavigateToURL('{!$Page.PurchaseOrderManage}' + '?id=' + result.records[0].Id + '&',true);
+                                         }
+                                         else{ // created a clone
+                                             KenandyErp.NavigateToURL('{!$Page.PurchaseOrderManage}' + '?id=' + result.records[0].Id,true);
+                                         }
+                                     }
+                                    }
+                                    else {
+                                        KenandyErp.NavigateToURL('{!$Page.PurchaseOrderManage}' + '?id=' + result.records[0].Id + '&',true);
+                                    }
+                                }
+                                else {
+                                    // hilite rows with invalid segment validations
+                                    var invalidRowGuids = result.records;
+                                    
+                                    if (invalidRowGuids) {
+                                        grid.tbody.find("tr").removeClass("kndy-error");
+                                        
+                                        for (var guid in invalidRowGuids) {
+                                            grid.tbody.find("tr[data-uid='" + invalidRowGuids[guid] + "']").addClass("kndy-error");
+                                        }
+                                    }
+                                    
+                                    KenandyErp.Messages(result.messages);
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                },
+                
+                IsValidSegments: function(grid) {
+                    var fieldList = PurchaseOrderManageUtil.POLinesFieldList;
+                    var referenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(fieldList); // get the list of reference fields
+                    var currentData = grid.dataSource.data();
+                    var messages = [];
+
+                    grid.tbody.find("tr").removeClass("kndy-error");
+                    
+                    $.each(currentData, function(index, item) {
+                        var invalidFields = [];
+                        
+                        for (var i = 0; i < referenceFields.length; i++) {
+                            var fieldName = referenceFields[i];
+                            var referenceFieldName = fieldName;
+                    
+                            if (referenceFieldName.endsWith('__c')) {
+                                referenceFieldName = referenceFieldName.replace(/__c/, '__r');
+                            } else if (referenceFieldName.toLowerCase().endsWith('id')) {
+                                referenceFieldName = referenceFieldName.substring(referenceFieldName, referenceFieldName.length - 2);
+                            }
+                            
+                            if (!item.get(fieldName) && item.get(referenceFieldName + '.Name')) {
+                                var fieldInfo = _.where(fieldList, { field: fieldName });
+                                var fieldTitle = (fieldInfo.length > 0) ? fieldInfo[0].title : '';
+                                
+                                invalidFields.push(fieldTitle);
+                            }
+                        }
+                        
+                        if (invalidFields.length > 0) {
+                            grid.tbody.find("tr[data-uid='" + item.uid + "']").addClass("kndy-error");
+                            messages.push({ message: 'Invalid ' + invalidFields.join(', ') + '. Please correct the highlighted line(s).', severity: KenandyErp.MessageType.Error });
+                        }
+                    });
+                    
+                    if (messages.length > 0) {
+                        KenandyErp.Messages(messages);
+                        return false;
+                    }
+                    
+                    return true;
+                },
+                
+                CloseCancelLines: function(e) {
+                   var self = this;
+                   var detailList = self.detailList;
+                   var grid = self.grid;
+                   var options = self.options;
+                   if (!detailList.validate()) {
+                       KenandyErp.Message("Please fix the following errors.");
+                       e.preventDefault();
+                       return false;
+                   }
+                  
+                   
+                   if (PurchaseOrderManageUtil.isDirtyPOHeaderData){
+                        KenandyErp.Messages([{message:'{!$Label.Cannot_perform_action_because_of_unsaved_changes_Please_save_the_PO_to_proceed}', severity:'ERROR'}]);
+                        return false;
+                   }
+                   
+                   // Get the Lines
+                   var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                   var gridUtils = new KendoGridUtils(grid, { dateFields: options.dateFields, isDml: false });
+                        
+                   var selectedRows = gridUtils.SelectedRows();
+                   var modelIdField = grid.dataSource.options.schema.model.idField;
+                   KenandyErp.ClearMessage(); // Delete any header messages
+                   
+                   // Delete any existing messages in poLines grid
+                   var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                   messageElement.empty();
+                    
+                   if (selectedRows.length == 0) {
+                       KenandyErp.Message("No records selected.", KenandyErp.MessageType.Info, messageElement);
+                       return;
+                   }
+                   var dateFields = self.options.dateFields ? _.pluck(self.options.dateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;          
+
+                   KenandyErp.BlockUI(grid.element);
+                   Visualforce.remoting.Manager.invokeAction(
+                            options.CloseCancelLinesAction,
+                            detailList.data.get('Id'),
+                            selectedRows,
+                            dateFields,
+                            function (result, event) {
+                                KenandyErp.UnBlockUI(grid.element);
+                                            
+                                if (event.type == 'exception') {
+                                    KenandyErp.Message(event.message);
+                                } 
+                                else {
+                                    KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                    if (result.success) {
+                                        // refresh widgets
+                                        var id = (result.records && result.records[0].Id) ? result.records[0].Id : null;
+                                        var approvalStatus = (result.records && result.records[0].Approval_Status__c) ? result.records[0].Approval_Status__c : 'Pending Authorizaion';
+                                        var status = (result.records && result.records[0].Status__c) ? result.records[0].Status__c : 'Open';
+
+                                        PurchaseOrderManageUtil.POId = id;
+                                        PurchaseOrderManageUtil.POApprovalStatus = approvalStatus;
+                                        PurchaseOrderManageUtil.POStatus = status;
+
+                                        PurchaseOrderManageUtil.ResetDirtyFlags();
+                                        PurchaseOrderManageUtil.RenderWidgets();
+                                    }
+                                    if (result.messages){
+                                        KenandyErp.Messages(result.messages);
+                                    }
+                                }
+                            },
+                            {escape: false}
+                        );
+                },
+
+                ExecuteAction: function(actionType){
+                    var uri = URI('{!$CurrentPage.URL}'); //KNDY-10509
+                    if(!PurchaseOrderManageUtil.POId ||
+                        uri.hasQuery("clone", "1") === true){
+                        KenandyErp.Messages([{message:'{!$Label.Cannot_perform_any_action_save_the_purchase_order_to_proceed}', severity:'ERROR'}]);
+                        return;
+                    }
+                    if (!PurchaseOrderManageUtil.POHeaderDetailList.validate()) {
+                        KenandyErp.Message("Please fix the following errors.");
+                        e.preventDefault();
+                        return false;
+                    }
+                    if (PurchaseOrderManageUtil.IsPageDirty()) {
+                        KenandyErp.Messages([{message:'{!$Label.Cannot_perform_action_because_of_unsaved_changes_Please_save_the_PO_to_proceed}', severity:'ERROR'}]);
+                        return false;
+                    }
+                    var deferred = $.Deferred();
+                    var returnUrl = '{!DeleteUrl}';
+                    
+                    if (actionType == 'Delete'){
+                        var r = confirm("Are you sure?");
+                        if (r == false){
+                            return;
+                        }
+                    }
+                    
+                    // KNDY-10509 Clone does not execute a controller method, but redirects to a new page
+                    if (actionType == 'Clone'){ 
+                        PurchaseOrderManageUtil.clonePO();
+                        return;
+                    }
+                    
+                    KenandyErp.BlockUI();
+                    KenandyErp.ClearMessage();
+                    Visualforce.remoting.Manager.invokeAction(
+                        PurchaseOrderManageUtil.POHeaderActions[actionType],
+                        '{!po.Id}',
+                        function (result, event) {
+                            KenandyErp.UnBlockUI();          
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message);
+                            } 
+                            else {
+                                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                KenandyErp.Messages(result.messages);
+                                if (result.success) {
+                                    if (actionType == "Delete") {
+                                        KenandyErp.NavigateToURL(returnUrl, true);
+                                    }
+                                    else{
+                                       // refresh widgets
+                                        var id = (result.records && result.records[0].Id) ? result.records[0].Id : null;
+                                        var approvalStatus = (result.records && result.records[0].Approval_Status__c) ? result.records[0].Approval_Status__c : 'Pending Authorizaion';
+                                        var status = (result.records && result.records[0].Status__c) ? result.records[0].Status__c : 'Open';
+                                        if (actionType == 'Cancel'){
+                                            approvalStatus = 'Pending Authorization';
+                                        }
+                                        PurchaseOrderManageUtil.POId = id;
+                                        PurchaseOrderManageUtil.POApprovalStatus = approvalStatus;
+                                        PurchaseOrderManageUtil.POStatus = status;
+                                        PurchaseOrderManageUtil.ResetDirtyFlags();
+                                        PurchaseOrderManageUtil.RenderWidgets();
+                                    }
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                },
+                
+                ResetDirtyFlags: function() {
+                    PurchaseOrderManageUtil.isDirtyPOHeaderData = false;
+                },
+                
+                IsPageDirty: function(){
+                     var gridUtils_POLines = new KendoGridUtils(PurchaseOrderManageUtil.POLinesGrid);
+                     if (PurchaseOrderManageUtil.isDirtyPOHeaderData || gridUtils_POLines.HasChanges() ){
+                          return true;
+                     }
+                     else{
+                          return false;
+                     }
+                },
+                
+                //KNDY-10509 - Cloning a PO adds a url parameter clone=1
+                //Controller looks for this parameter to display copies of records on page
+                clonePO: function(){  
+                    if (window.location.href.indexOf('?') != -1 && window.location.href.indexOf('id') != -1) {
+                        KenandyErp.NavigateToURL('{!$Page.PurchaseOrderManage}' + '?clone=1&id='+PurchaseOrderManageUtil.POId,true);
+                    }
+                    else {
+                        KenandyErp.Messages([{message:'{!$Label.Cannot_clone_save_the_Purchase_Order_to_proceed}', severity:'ERROR'}]);
+                    }
+                },
+                
+                // Lookup fields on new lines change when lookups on header change
+                // This will cause lookup Id fields on lines to be out of sync with corresponeding __r object fields
+                resetLookups: function(lineWrapperList){
+                    for (var i=0; i< lineWrapperList.length; i++){
+                        if (lineWrapperList[i].poLine.Delivery_Facility__r){
+                            var deliveryFacilityId = lineWrapperList[i].poLine.Delivery_Facility__r.Id;
+                            if (deliveryFacilityId && deliveryFacilityId !=  lineWrapperList[i].poLine.Delivery_Facility__c){
+                                lineWrapperList[i].poLine.Delivery_Facility__c = deliveryFacilityId;
+                            }
+                        }
+                        if (lineWrapperList[i].poLine.Delivery_Location__r){
+                            var deliveryLocationId = lineWrapperList[i].poLine.Delivery_Location__r.Id;
+                            if (deliveryLocationId && deliveryLocationId !=  lineWrapperList[i].poLine.Delivery_Location__c){
+                               lineWrapperList[i].poLine.Delivery_Location__c = deliveryLocationId;
+                            }
+                        }
+                        
+                        if (lineWrapperList[i].poLine.Supplier__r){
+                            var supplierId = lineWrapperList[i].poLine.Supplier__r.Id;
+                            if (supplierId && supplierId !=  lineWrapperList[i].poLine.Supplier__c){
+                                lineWrapperList[i].poLine.Supplier__c = supplierId;
+                            }
+                        }
+                        
+                        if (lineWrapperList[i].poLine.Company__r){
+                            var companyId = lineWrapperList[i].poLine.Company__r.Id;
+                            if (companyId && companyId !=  lineWrapperList[i].poLine.Company__c){
+                                lineWrapperList[i].poLine.Company__c = companyId;
+                            }
+                        }
+                    }
+                }
+            };
+        }();
+    </script>
+</apex:page>

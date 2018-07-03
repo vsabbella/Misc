@@ -1,0 +1,21 @@
+<apex:page standardController="Item_Specification__c" extensions="ItemSpecificationNewExt">
+    <apex:form id="theForm">
+        <c:busyWait />
+        <apex:sectionHeader subtitle="{!$ObjectType.Item_Specification__c.Label}" title="{!$Label.New_Item_Specification}" />
+        <apex:pageMessages />
+        <apex:pageBlock mode="edit">
+
+            <apex:pageBlockButtons >
+                <apex:commandButton value="{!$Label.Save}" action="{!save}" rerender="theForm" status="actionStatus" accessKey="s" />
+                <apex:commandButton value="{!$Label.Cancel}" action="{!cancel}" rerender="theForm" status="actionStatus" />
+            </apex:pageBlockButtons>
+
+            <apex:pageBlockSection columns="2" title="Information">
+                <apex:repeat value="{!$ObjectType.Item_Specification__c.FieldSets.New_Item_Specification}" var="f"> 
+                    <apex:inputField value="{!Item_Specification__c[f]}" required="{!OR(f.required, f.dbrequired)}" />
+                </apex:repeat>
+            </apex:pageBlockSection>
+
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

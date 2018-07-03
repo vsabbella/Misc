@@ -1,0 +1,90 @@
+<apex:page standardController="Agreement__c" 
+		   extensions="DownpaymentInvoiceExt"
+		   action="{!createDownPaymentInvoice}" 
+		   title="Create Downpayment Invoice" 
+		   showHeader="false"
+		   sidebar="false">
+    <c:KendoResources />
+    <c:busyWait />
+    <script>
+			
+			var isSuccess = '{!isSuccess}';
+			var errorMsg = '{!errorMsg}';
+			function closeModalWindow(result) {
+		        var win = window.parent.$("#generateDownPaymentwindow").data("kendoWindow");
+		        if ( win) { 
+		        	win.close(); 
+		        }
+		    }
+		    
+		    function onReleaseComplete() { 
+		    	if (isSuccess == 'true') {
+					KenandyErp.Message(errorMsg, KenandyErp.MessageType.Success, window.parent.$('.page-message'));
+		        	closeModalWindow();
+		        }
+		    }
+		
+		</script>
+
+	<apex:sectionHeader title="{!$ObjectType.Customer_Invoice__c.Label}" subtitle="Generate One Time Charge"/>
+		<apex:form id="form">
+			<apex:outputPanel id="outputPanel">
+		
+			<script>
+                function checkAll(cb)
+                {
+                    var inputElem = document.getElementsByTagName("input");
+                    for(var i=0; i<inputElem.length; i++)
+                    {
+                        if(inputElem[i].id.indexOf("checkedone")!=-1)
+                        inputElem[i].checked = cb.checked;
+                    }
+                } 
+				isSuccess = '{!isSuccess}';                                                   
+			    errorMsg = '{!errorMsg}';
+			</script>
+				<apex:pageMessages escape="false" id="errorMsg"/>
+				<apex:pageBlock >
+					<apex:pageBlockButtons location="top">
+						<apex:commandButton value="{!$Label.Confirm}"  action="{!saveInvoice}" status="actionStatus" reRender="outputPanel" disabled="{!isDisabled}" oncomplete="onReleaseComplete();" >
+							
+						</apex:commandButton>
+							
+					</apex:pageBlockButtons>
+					<apex:pageBlockSection id="DPCI" rendered="{!isDisabled = false}" >
+					
+						<apex:repeat value="{!$Objecttype.Customer_Invoice__c.Fieldsets.DownPaymentInvoice}" var="c">
+                                <apex:outputField value="{!wrapper.ci[c]}" rendered="{!c.fieldpath != NamespaceUU+'Bill_To_Customer__c' &&  c.fieldpath != NamespaceUU+'Sold_To_Customer__c'}"/>
+                                <apex:inputField value="{!wrapper.ci[c]}" rendered="{!c.fieldpath == NamespaceUU+'Bill_To_Customer__c' ||  c.fieldpath == NamespaceUU+'Sold_To_Customer__c'}"/>
+                         </apex:repeat>
+                        
+					</apex:pageBlockSection>
+					
+					<apex:pageBlockTable value="{!wrapper.lCILs}" var="lineWrp" rendered="{!isDisabled = false}">
+                    <apex:column >
+                    <apex:facet name="header"> 
+								<apex:inputCheckbox id="checkAll">
+									<apex:actionSupport event="onclick" onsubmit="checkAll(this)" rerender=""/>
+								</apex:inputCheckbox>
+							</apex:facet>
+					<apex:inputCheckbox id="checkedone" value="{!lineWrp.selected}"/>	
+                    </apex:column>
+						<apex:column value="{!lineWrp.cil.Company__c}"/>
+						<apex:column value="{!lineWrp.cil.Product__c}"/>
+						<apex:column value="{!lineWrp.cil.Quantity_Shipped__c}"/>
+						<apex:column value="{!lineWrp.cil.Unit_Price__c}"/>
+					</apex:pageBlockTable>
+
+				</apex:pageBlock>
+			 
+			  <div id="hiddenFields" style ="display: none">
+				<apex:inputField value="{!wrapper.ci.Customer__c}"/>
+				<apex:inputField value="{!wrapper.ci.Sold_To_Customer__r.Parent_Customer__c}"/>
+				<apex:inputField value="{!wrapper.ci.Sold_To_Customer__r.Top_Parent_Customer__c}"/>
+			</div> 
+			</apex:outputPanel>
+			</apex:form>
+			
+		
+		    
+</apex:page>

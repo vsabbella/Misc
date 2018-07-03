@@ -1,0 +1,145 @@
+<apex:component controller="Datatable">
+
+    <apex:includeScript value="{!URLFOR($Resource.DataTables,'/media/js/jquery.js')}" /> 
+    <apex:includeScript value="{!URLFOR($Resource.DataTables,'/media/js/jquery.dataTables.js')}" /> 
+    
+	<!-- 	for jquery dialog  -->
+	<apex:includeScript value="{!URLFOR($Resource.DataTables,'/media/js/jquery-ui-1.8.24.custom.js')}" />
+    
+	<!-- 	Kenandy styles make grid look like a related list     -->
+    	<apex:stylesheet value="{!URLFOR($Resource.DataTables,'/media/css/kenandy.dataTables.css')}" /> 
+    
+    
+<script type="text/javascript" charset="utf-8">
+var oTable; 
+/* these JS functions are generally useful for any sobject 
+ * and they know about datatable API as well as sobject and 
+ * Datatable.fieldSetData {} 
+ * 
+ */
+
+/* expects the following data structure in 'r.fieldset' see Datatable.cls
+    public class fieldSetData { 
+        public String FieldPath; 
+        public string Label; 
+        public string Type; } 
+ */
+    function loadColumns( r, e ) 
+    { 
+    		if (  r == null ) return; 
+    		
+        var cols = []; var last = 0; 
+        for ( var i=0;i<r.fieldset.length; i++ ) 
+        { 
+            var fld = r.fieldset[i];
+            
+            var ob  =  { "sTitle" : fld.Label };
+            if ( fld.Label == 'Id' )  {
+                ob.bSearchable = false;
+                 ob.bVisible =   false ;
+            }
+            if ( fld.Type == 'DOUBLE' ) { 
+        			// set a classname
+        			ob.sClass = 'numericalColumn';
+        		}
+            cols[i] = ob;
+            last = i;
+        } 
+        return cols;
+    }
+    
+    function parseSobjectToDataRow( sobject , fieldset ) { 
+        if ( sobject == undefined) return;
+        var dataRow = new Array;        
+                    
+        for ( var c=0; c< fieldset.length; c++ ) { // loop across each column in result.fieldset   
+            var fld = fieldset[c]; 
+            dataRow[c] = ''; 
+            
+            if ( fld.Type == 'REFERENCE'  )         // look for __r.Name
+            {   
+                var path = fld.FieldPath.replace(/__c/,'__r');
+                if (  sobject[path] != undefined ) {
+                    	dataRow[c] = resolve ( sobject[path]['Name'] );
+                    	
+                    	// make this into a link if we have the ID available 
+                    	/* 
+                    	 * needs more work, should be configurable based on the user of the component...
+				 	if (  sobject[path]['Id'] != undefined ) { 
+						dataRow[c] = '<a href="/'+sobject[path]['Id']+'">'+dataRow[c]+'</a>';
+					}
+					*/
+                }
+                    
+            } else if ( fld.Type == 'DATE' )        // is this format ok ? 
+            {           
+                dataRow[c] = resolve ( sobject[fld.FieldPath] );
+                dataRow[c] = new Date( dataRow[c]).toDateString();
+                
+                // comes with a local time for a GMT data element TODO 
+                // dataRow[c] =new Date( dataRow[c]).toLocaleDateString();
+                
+                
+            } else if ( fld.Type == 'DOUBLE' )        // 2 or 6 for now ?
+            {           
+            		var num = resolve ( sobject[fld.FieldPath] );
+            		var fixed_len = (fld.Fixed != null ? fld.Fixed : 2 ); 
+            		dataRow[c] =  ( num == "" ) ? "" : num.toFixed(fixed_len);
+                
+            } else                                  // string, picklist, percent, textarea, ...
+            {                                       
+                dataRow[c] = resolve ( sobject[fld.FieldPath] );
+            }
+        }
+        return dataRow;
+    }
+
+    function resolve( v ) { return ( v != undefined ? v : '' ); }
+
+    function fnGetSelected( oTableLocal ) 
+    {
+        var aReturn = new Array();
+        var aTrs = oTableLocal.fnGetNodes();
+        
+        for ( var i=0 ; i<aTrs.length ; i++ )
+        {
+            if ( $(aTrs[i]).hasClass('row_selected') )
+            {
+                aReturn.push( aTrs[i] );
+            }
+        }
+        return aReturn;
+    }
+    
+    function clearSelectedRows() {
+        var aTrs = oTable.fnGetNodes();
+        
+        for ( var i=0 ; i<aTrs.length ; i++ )
+        {
+            if ( $(aTrs[i]).hasClass('row_selected') )
+                $(aTrs[i]).removeClass('row_selected');
+        }
+    }
+</script>
+
+<style type="text/css">
+
+body .datePicker, body .helpText  { z-index: 103; }
+.datePicker { position:fixed; }  /* important */
+
+
+/* common to dataTable in a pageblock */
+.dataTables_wrapper div.foot { height: 25px; }
+div.foot { height: 23px; }
+.dataTables_paginate { width: 38%; }
+
+body .pbBody table.list.dataTable tr td {
+	border-width: 0 0 1px 0;
+	vertical-align: middle;
+	 padding: 4px 2px 4px 5px; 
+}
+ 
+.instructions {  font-style: italic; padding-top: 8px; display: block; }
+ 
+</style>
+</apex:component>

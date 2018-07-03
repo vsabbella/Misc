@@ -1,0 +1,72 @@
+<apex:page standardController="Fixed_Asset__c" sidebar="false" showHeader="false" extensions="FixedAssetManualAdjustmentExt" docType="">
+  <c:KendoResources /> 
+ <style>
+       .pageType{
+           font-size:15px !important;
+       }
+       #datePicker  {
+        	z-index : 100000 !important;
+       }
+   </style>
+
+<div class="page-container" id="dialog">
+
+   <apex:form >
+       <apex:sectionHeader title="Add New Adjustment to " subtitle="{!assetName}"  help="{!HelpURL}"/> 
+       <apex:pageMessages />
+       <apex:pageBlock mode="edit" rendered="{!!notRetiredAsset}">
+           <apex:pageBlockButtons >
+             <apex:commandButton action="{!saveAdjustment}" value="Save"/>
+             <apex:commandButton action="{!saveAndNew}" value="Save and New"/>
+             <apex:commandButton action="{!CancelGoBack}" value="Cancel" immediate="true" html-formnovalidate="formnovalidate"/>
+           </apex:pageBlockButtons>
+
+           <apex:pageBlockTable value="{!faAdjustmentsList}" var="faa"> 
+
+              <apex:repeat value="{!$ObjectType.Fixed_Asset_Adjustment__c.FieldSets.New_Manual_Adjustment}" var="f">
+                      <apex:column headerValue="{!f.label}">
+                         <apex:outputField value="{!faa[f]}"  rendered="{!IF(CONTAINS(f,'Fixed_Asset__c') , true , false)}"  />
+                         <apex:outputField value="{!faa[f]}"  rendered="{!IF(CONTAINS(f,'Company__c') , true , false)}"  />
+                         <apex:inputField value="{!faa[f]}"  rendered="{!IF(CONTAINS(f,'Amount__c') , true , false)}"           
+                                                              required="{!OR(f.required, f.dbrequired)}" />
+                         <apex:outputField value="{!faa.Currency__c}"  rendered="{!IF(CONTAINS(f,'Currency__c') , true , false)}"  />
+                         <apex:inputField value="{!faa[f]}"  rendered="{!IF(CONTAINS(f,'Adjustment_Date__c') , true , false)}"  
+                                                              required="{!OR(f.required, f.dbrequired)}"  />
+                         <apex:inputField value="{!faa[f]}"  rendered="{!IF(CONTAINS(f,'Type__c') , true , false)}"             
+                                                              required="{!OR(f.required, f.dbrequired)}" /> 
+                      </apex:column> 
+                    </apex:repeat>
+        </apex:pageBlockTable>
+          
+       </apex:pageBlock>
+   </apex:form>
+</div>
+  <script>
+   $(document).ready(function(){
+        $("#dialog").kendoWindow({
+              title: "",
+              visible: false,
+              scrollable: true,
+              resizable: true,
+              modal: true,
+              height: "50%",
+              width:"80%",
+              animation: {
+                close: {effects: "fade:out", duration: 200}
+              },
+              pinned: true,
+              visible: false
+              
+            });
+            setTimeout(function() {
+              $("#dialog").data("kendoWindow").center().open();
+            }, 10);
+             //---Bind the kendowWindow close event to return to FA detail page
+            $("#dialog").data("kendoWindow").bind("close",function(){
+                var returnUrl = '{!ReturnUrl}';
+                window.location.href = returnUrl;               
+            }); 
+    });
+   </script>
+
+</apex:page>

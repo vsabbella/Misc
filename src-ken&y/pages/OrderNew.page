@@ -1,0 +1,47 @@
+<apex:page standardController="Order__c" extensions="OrderNewExt">
+<apex:includeScript value="{!URLFOR($Resource.jquery_ui_110,'/jquery-ui-1.10.0.custom/js/jquery-1.9.0.js')}" />
+    <apex:form id="theForm">
+    <c:busyWait />
+        <apex:sectionHeader subtitle="{!$Label.New_Order}" title="{!$Label.New_Order}"/>
+        <apex:pagemessages ></apex:pagemessages>
+
+	<script>
+        
+        function onShippingCompanyChange(e) {
+            changeAF($('.shippingCompany').parent().parent().find('input[name*="lkid"]').val());
+        }
+    </script>
+          
+    <apex:pageBlock id="thePageBlock" >
+      <apex:actionFunction name="changeAF" action="{!chg_save}" rerender="thePageBlock" immediate="true"   status="actionStatus">
+      <apex:param id="param" name="companyId" value=""/>
+      </apex:actionFunction>
+        <apex:pageBlockButtons >
+        <apex:commandButton value="{!$Label.Save} " action="{!save}"   reRender="theForm"   status="actionStatus" accessKey="s" />
+        <apex:commandButton value="{!$Label.Cancel} " action="{!cancel}"  reRender="theForm"   status="actionStatus"/>
+        </apex:pageBlockButtons>
+        
+       
+        
+        <apex:pageBlockSection title="{!$Label.Shipment_Information}" columns="2" collapsible="false">
+            <apex:inputField value="{!newObj['Shipping_Company__c']}" styleClass="shippingCompany" required="true" onchange="onShippingCompanyChange(this);"  />
+            <apex:repeat value="{!$ObjectType.Order__c.FieldSets.New_Order_Shipment_Information}" var="f" > 
+            <apex:inputField value="{!newObj[f]}" required="{!OR(f.required, f.dbrequired)}" />
+            </apex:repeat>            
+        </apex:pageBlockSection>
+        
+        <apex:pageBlockSection title="{!$Label.CODelivery_Information}" columns="2" collapsible="false">
+            <apex:repeat value="{!$ObjectType.Order__c.FieldSets.New_Order_Delivery_Information}" var="f" > 
+            <apex:inputField value="{!newObj[f]}" required="{!OR(f.required, f.dbrequired)}" />
+            </apex:repeat>            
+        </apex:pageBlockSection>
+        
+         <apex:pageBlockSection title="{!$Label.Information}" columns="2" collapsible="false">
+            <apex:repeat value="{!$ObjectType.Order__c.FieldSets.New_Order_Information}" var="f" > 
+            <apex:inputField value="{!newObj[f]}" required="{!OR(f.required, f.dbrequired)}" />
+            </apex:repeat>            
+        </apex:pageBlockSection>
+    </apex:pageBlock>
+    </apex:form>  
+
+</apex:page>

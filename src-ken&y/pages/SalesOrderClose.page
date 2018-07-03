@@ -1,0 +1,56 @@
+<apex:page standardController="Sales_Order__c" 
+			extensions="SalesOrderCloseExt">
+			
+	<apex:sectionHeader subtitle="{!Sales_Order__c.Name}" title="{!$ObjectType.Sales_Order__c.Label}"/>
+	
+	<script>
+		function closeSalesOrder(){
+            result = window.confirm('{!$Label.ConfirmClose}');
+            if(result == true) {
+       			closeSalesOrderAF();
+            }
+            return false;
+		}
+		function goback(){
+			if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+				sforce.one.back(true);
+			} else {
+				window.location.href = '/{!Sales_Order__c.Id}';
+			}
+		}
+	</script>
+	<apex:form id="mainFormID">
+		<apex:actionFunction name="closeSalesOrderAF" action="{!closeSalesOrder}" status="actionStatus" rerender="mainFormID" />
+		
+		<apex:pageBlock title="{!$Label.Close_Sales_Order}" mode="edit">
+			<apex:pageMessages />
+			<c:busyWait /><br/>
+			<apex:pageBlockSection title="{!$Label.Backordered_Sales_Order_Lines}" collapsible="false" columns="1" rendered="{!showConfirm}">
+		        <apex:pageBlockTable var="soLine" value="{!backorderedLines}" rendered="{!backorderedLines.size > 0}">
+		        	<apex:repeat value="{!$ObjectType.Sales_Order_Line__c.FieldSets.Close_RO}" var="f">
+		        		<apex:column headerValue="{!f.label}">
+			        	    <apex:outputField value="{!soLine[f]}"  styleClass="{!f.Type}  {!f.FieldPath}"  />
+		                </apex:column>
+	                </apex:repeat>
+	                <apex:repeat value="{!$ObjectType.Sales_Order_Line__c.FieldSets.Close_WR}" var="f">
+		        		<apex:column headerValue="{!f.label}">
+			        	    <apex:inputField value="{!soLine[f]}"  styleClass="{!f.Type}  {!f.FieldPath}" required="{!OR(f.required, f.dbrequired)}" />
+		                </apex:column>
+	                </apex:repeat>
+		        </apex:pageBlockTable>
+		        <apex:outputText rendered="{!backorderedLines.size==0}">
+                	<span style="font-weight:bold;">{!$Label.No_open_SOL}</span>
+                </apex:outputText>
+		    </apex:pageBlockSection>
+	        
+			<apex:pageBlockButtons location="both">
+				<apex:commandButton value="{!$Label.Confirm}" onclick="closeSalesOrder();" status="actionStatus" disabled="{!NOT(showConfirm)}" rerender="mainFormID" />
+				<apex:commandButton value="{!$Label.Cancel}" onclick="goback();return false;" status="actionStatus" rerender="mainFormID" />
+			</apex:pageBlockButtons>
+		</apex:pageBlock>
+	</apex:form>
+	
+	<div style="display:none;">
+		<apex:outputField value="{!Sales_Order__c.Status__c}" />
+	</div>
+</apex:page>

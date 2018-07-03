@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpStockpoints</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Sort criteria to be used during picking inventory.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>false</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fields>
+        <fullName>Active__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Indicates whether the sort criteria is active.</description>
+        <externalId>false</externalId>
+        <label>Active</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>the company for which this sort criteria should be applied.</description>
+        <externalId>false</externalId>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipName>Movement_Sort_Criterias</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Customer__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>the customer for which this sort criteria should be applied.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>For sales orders, the criteria can be applied at the company or customer level. If customer is not specified, the sort criteria applies to the company.</inlineHelpText>
+        <label>Customer</label>
+        <referenceTo>Customer__c</referenceTo>
+        <relationshipName>Movement_Sort_Criterias</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Null_Values__c</fullName>
+        <description>In which order the empty values should be sorted.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Determines the order in which inventory is picked if the Sort Field value is missing from the inventory. For example, if you allocate by expiration date, but the expiration date is missing, then the Null Value (first or last) is applied.</inlineHelpText>
+        <label>Null Values</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>First</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Last</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Sort_Field__c</fullName>
+        <description>The field of the Skid object to sort the available skids by.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Used in conjunction with the Sort Order, these two values determine the order in which inventory is picked. For example for FIFO methodology, the sort field may be set to Expiration_Date__c and the Sort Order to Ascending.</inlineHelpText>
+        <label>Sort Field</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Quantity__c</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Date_Received__c</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Expiration_Date__c</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Consigned_Owner__r.Name</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Bin__r.Picking_Order__c</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Lot__r.Name</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Sort_Order__c</fullName>
+        <description>Sort order to sort the available skids during picking.</description>
+        <externalId>false</externalId>
+        <label>Sort Order</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+        <valueSet>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Asc</fullName>
+                    <default>false</default>
+                </value>
+                <value>
+                    <fullName>Desc</fullName>
+                    <default>false</default>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Sort_Priority__c</fullName>
+        <description>The order in which the sort criteria should be applied when there are multiple sort criteria.</description>
+        <externalId>false</externalId>
+        <label>Sort Priority</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Unique_Key__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>Unique key for pick sort criteria.</description>
+        <externalId>false</externalId>
+        <label>Unique Key</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <label>Pick Sort Criteria</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Customer__c</columns>
+        <columns>Company__c</columns>
+        <columns>Null_Values__c</columns>
+        <columns>Sort_Field__c</columns>
+        <columns>Sort_Order__c</columns>
+        <columns>Sort_Priority__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Pick Sort Criteria Name</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Pick Sort Criteria</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

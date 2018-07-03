@@ -1,0 +1,146 @@
+<apex:page controller="APForecastExt" id="thePg2" docType="html-5.0" readOnly="true">
+<apex:form id="theForm">
+<html>
+<head>
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"/>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+    <apex:variable value="{!1}" var="counter"/>
+
+    <apex:variable value="{!1}" var="counter2"/>
+
+
+    
+            <apex:sectionHeader title="Daily Accounts Payable Forecast As of {!currdate}" help="{!HelpURL}" />
+            <b>Days Previous: </b>
+            <Apex:input type="number" title="Custom Previous Date" value="{!customPreviousInteger}"/>
+            <b>Days Future: </b>
+            <apex:input title="Custom Future Date" value="{!customFutureInteger}" type="number"/>
+            <apex:commandButton action="{!customDateGen}" title="Generate Custom Report" value="Go"/>
+            <apex:commandButton action="{!resetCustomDateGenFilter}" title="Reset" value="Reset"/>
+            <apex:pageBlock >
+<apex:pageMessages ></apex:pageMessages>
+
+    <apex:pageBlockSection title="Previously Anticipated" collapsible="false" id="redSection">
+
+</apex:pageBlockSection>
+
+
+    <table  styleclass="grid" width="100%" cellpadding="2">
+
+    <Div style="font-weight: bold;font-size: 12px;">Amount Prior To:  
+            <apex:outputText value="{0, date, YYYY-MM-dd}"> 
+                <apex:param value="{!previousListDate[0]}"/> 
+            </apex:outputText> <br/>
+            <apex:outputText style=" text-decoration: underline; font-weight:normal;" 
+                value="{0, number, #,###}" styleClass="myNumber"> 
+                <apex:param value="{!priorAmountTotal}"/>
+            </apex:outputText> 
+    </Div>
+            <hr/>
+    <br/> 
+
+
+     <tr>
+
+        <apex:repeat value="{!previousList}" var="k">
+
+        <td width="12%" hieght="25px" >
+            <div class="AProw"  style=" position: relative; margin-left: auto; margin-right: auto; width: 7em;" hieght="40px" width="6px">
+            <h1 style="font-size: 12px; text-align: justify; text-justify: inter-word;">{!k.forecastdate}</h1>  
+                <br>
+                <div class="myNumber">
+                <apex:outputText value="{0, number, #,###}" style=" position: relative; margin-left: auto; margin-right: auto; width: 7em;">
+                <apex:param value="{!k.apDollarAmount}"/>
+                </apex:outputText>
+                </div>
+            </br>
+
+        </div>
+
+        <apex:outputText rendered="{!AND((MOD(counter, 8) == 0), (counter < previousList.size))}" value="</tr><tr>" escape="false" style="float:left;"/>
+        <apex:variable var="counter" value="{!counter + 1}"/>                                
+    </td>
+
+
+
+    </apex:repeat>
+    </tr>
+
+
+   
+    </table>
+
+    <apex:pageBlockSection title="Future Forecast" collapsible="false">
+
+    </apex:pageBlockSection>    
+
+<table border="0" styleclass="grid" width="100%" cellpadding="2">
+
+
+   <tr>
+
+    <apex:repeat value="{!currentList}" var="k">
+
+        <td width="12%" hieght="25px">
+            <div class="AProwLater"  style=" position: relative; margin-left: auto; margin-right: auto; width: 7em;" hieght="40px">
+                <h1 style="font-size: 12px; text-align: justify; text-justify: inter-word;">{!k.forecastdate}</h1>  
+                    <br>
+                    <div class="apDollarAmount" style=" position: relative; margin-left: auto; margin-right: auto; width: 7em;">
+                        <apex:outputText value="{0, number, #,###}" >
+                        <apex:param value="{!k.apDollarAmount}"/>
+                        </apex:outputText>                   
+                    </div>
+                </br>
+            </div> 
+            <apex:outputText rendered="{!AND((MOD(counter2, 8) == 0), (counter2 < currentList.size))}" value="</tr><tr>" escape="false" style="float:left;"/>
+            <apex:variable var="counter2" value="{!counter2 + 1}"/>                                
+        </td>    
+
+
+
+
+</apex:repeat>
+
+</tr>
+
+
+
+
+
+</table>
+
+    <hr/>
+
+    <div style="font-weight: bold;font-size: 12px;">After:   
+    <apex:outputText value="{0, date, YYYY-MM-dd}"> 
+        <apex:param value="{!currentListDate[currentListDate.size -1]}"/> 
+    </apex:outputText> <br> 
+    <apex:outputText style=" text-decoration: underline; font-weight: Normal;" value="{0, number, #,###}">
+        <apex:param value="{!laterTotal}"/>
+    </apex:outputText> </br> 
+    </div>
+
+
+        <hr/>
+
+    <br/>
+    <div style="font-weight: bold;font-size: 20px;"> <apex:outputText value="Grand Total"/>
+        <apex:outputText style=" text-decoration: underline; border-bottom: 1px solid #000;float: right;" value="{0, number, #,###}">
+            <apex:param value="{!grandTotal}"/>
+        </apex:outputText>
+
+    
+    </div>
+
+</apex:pageBlock>
+
+
+
+</body>
+</HTML>
+</apex:form>
+</apex:page>

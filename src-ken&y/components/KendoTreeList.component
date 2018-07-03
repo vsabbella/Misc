@@ -1,0 +1,231 @@
+<apex:component allowDML="true" controller="KendoTreeListHierarchyController" layout="none" > <!--TODO:access= "global" is not set Check with SK if There is any usecase where this component might be needed outside our namespace-->
+
+    <c:KendoResources />
+    <apex:attribute name="HierarchyType" description="Hierarchy Type" type="string" required="false" assignTo="{!CompHierarchyType}" />
+    <apex:attribute name="ObjectName" description="Object API Name to be used to  the records" type="string" required="false" assignTo="{!CompObjectName}"  />    
+    <apex:attribute name="FieldSet" description="Field set which defines the columns to be displayed" type="string" required="true" assignTo="{!CompFieldSet}"  />  
+    <apex:attribute name="asOfDate" description="Serialized Hierarchy effective date" type="string" required="true" assignTo="{!AsOfDateSer}"  />    
+    <apex:attribute name="sobjectList" type="string" description="List of sobjects to be displayed" assignTo="{!compsobjectlistser}" required="false"></apex:attribute>
+    <apex:attribute name="HierField" type="string" description="The field on sobjectlist which defines the hierarchy" assignTo="{!compHierField}" required="false"></apex:attribute>
+    <apex:attribute name="buttons" description="Comma seperated list of action buttons" type="string" required="false" assignTo="{!Compbuttons}" />
+    <apex:attribute name="whereClause" description="filter condition for records" type="string" required="false" assignTo="{!CompWhereClause}" />   
+
+        <div class="page-container">
+            <div id="MessagesBlock">  
+                <div class="page-message"></div>
+            </div>
+            <div id="treelist"></div>
+        </div> 
+      <script>
+    
+                var HierarchyType = '{!JSENCODE(CompHierarchyType)}';// Future Use.
+                var asOfDateSer   = '{!JSENCODE(asOfDateSer)}';
+                var ObjectName    = '{!JSENCODE(CompObjectName)}';
+                var FieldSet      = '{!JSENCODE(CompFieldSet)}';
+                var WhereClause   = '{!JSENCODE(CompWhereClause)}';
+    
+    			var sobjectList   = '{!JSENCODE(compSobjectListSer)}';
+    			var HierField     = '{!JSENCODE(compHierField)}'
+    
+    
+                var fieldInfoList = [];
+                var dateFields = [];
+                var referenceFields = [];               
+                var NamespaceUU = '';
+                var treeList = null;
+   
+                $(document).on('KenandyErpReady', function(e) {
+
+                                console.log('Attribute values passed from controller --' + ObjectName + asOfDateSer);
+                                
+                                NamespaceUU  = '{!NamespaceUU}';
+                                $('#MessagesBlock').hide();
+
+                                //Get Field Details to be used for binding
+                                var fieldInfoListPromise = getFieldInfoListData();
+                                fieldInfoListPromise.done(function(result, event){
+                                                                if(result.hasExceptions == true){   
+                                                                    throwException(result);
+                                                                }
+                                                                else{
+                                                                    fieldInfoList=JSON.parse(result.records);
+                                                                    dateFields = KenandyErp.KendoGridOptions.GetDateFields(fieldInfoList);
+                                                                    referenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(fieldInfoList);                    
+                                                                    treeList = $("#treelist").kendoTreeList({
+                                                                        //toolbar:kendo.template("<input type='button' class='create-command' value='Create parent GL Account' />"),
+                                                                        dataSource: getDataSource(),
+                                                                        filterable: true,
+                                                                        resizable: true,
+                                                                        editable: true,
+                                                                        columnMenu: true,
+                                                                        //selectable:true,
+                                                                        sortable: true,
+                                                                        columns: getColumns()
+                                                                    }).data('kendoTreeList');                                                                  
+                                                                }
+         
+                                                            } 
+                                                           );
+
+                 }
+               );//End of KenandyERPReady
+
+                var getDataSource = function() {
+                    
+                    var dataSource = new kendo.data.TreeListDataSource({
+                        
+                        transport:{
+                            read:  function (options){
+                                var promise = getTreeViewData();
+                                promise.done(function(result, event){
+                                    if (event.type == 'exception') {
+                                        
+                                        // trigger onreadfailure
+                                        $('#treelist').trigger({
+                                            type: "OnReadFailure",
+                                            result: result, 
+                                            event: event 
+                                        }); 
+                                        
+                                    } else {
+                                        options.success(result.records);
+                                        
+                                        // trigger onreadsuccess
+                                        $('#treelist').trigger({
+                                            type: "OnReadSuccess",
+                                            result: result, 
+                                            event: event 
+                                        });
+                                    }
+                                });
+                                
+                            },
+                            create: function(options){
+                                //callRemoteCreate(options);
+                            },
+                            update: function(options) {
+                                //callRemoteCreate(options);
+                            }
+                        },
+                        schema: {
+                            model: getModel(),
+                            parse: function (response) {
+                                $.each(response, function (idx, item) {
+                                    
+                                    if(item.parentIdHier === undefined){
+                                        item.parentIdHier = null;
+                                    }          
+                                    item = Serializer.IncludeNulls(item, { fields: referenceFields });
+                                    item = Serializer.ConvertFromSFDCDate(item, { dateFields: dateFields });
+                                });
+                                
+                                return response;
+                            },    
+                            expanded: true
+                        }
+                    });
+                    
+                    return dataSource;
+                };      
+                
+                function getModel() {
+                    var model = {};
+                    var sobj  = {};
+                    model.id = "HierRec.Id";
+                   
+                    var fields = KenandyErp.KendoGridOptions.GetFields(fieldInfoList);
+                    fields.parentId = { field: 'parentIdHier',  nullable: true };
+                    model.fields = fields;
+                    console.log(model);
+                    return model;
+                }       
+                function getColumns() {
+                    var columns = [];
+                    var buttons = [];
+                    buttons.push("edit");
+                    buttons.push("createchild");
+        
+                    columns = KenandyErp.KendoGridOptions.GetColumns(fieldInfoList, {
+                                lookupSearchAction: '{!$RemoteAction.KendoTreeListHierarchyController.lookupSearchFilter}',
+                                lookupSearchFilters: []
+                              });
+                    columns.shift(0);//TODO:CHeck with Lakshman the implication.
+                    
+                    //Add Hyperlink for Name.
+                    for(var i=0;i<columns.length;i++) {
+                        
+                         if (columns[i].field == 'HierRec.Name') {
+                            columns[i].template = function(data) {
+                                if (data['HierRec.Name']) {
+                                    return '<span><a href="/' + data['HierRec.Id'] + '">' + data['HierRec.Name'] + '</a></span>';
+                                }
+                                else {
+                                    return '';
+                                }
+                            };
+                        }
+        
+                        //TODO:Check if we can exclude filters on system dates here.
+                        if (!columns[i].hidden) {
+                            columns[i].filterable = true;
+                            columns[i].width  = 200;
+                        }
+                    }
+                    //Commenting out edit/add child capacity as they are not compatible with current kendo versions.
+                  /*  var columnObj= {};   
+                    
+                    columnObj.command=buttons;
+                    columns.push(columnObj); */    
+                    
+                    return columns;
+                }    
+          
+        var getTreeViewData = function() {
+            var deferred = $.Deferred();
+            var invalidIdIndex = [];    
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.KendoTreeListHierarchyController.treeListRead}',asOfDateSer,ObjectName,FieldSet,WhereClause,sobjectList,HierField,
+                function (result, event) {
+                    if(result.hasExceptions == true){
+						throwException(result);
+                    }
+                    else
+                    {
+                         for(i=0;i<result.records.length;i++){
+                          if(result.records[i].isInvalid == true){
+                            
+                            KenandyErp.Message(result.records[i].Message, KenandyErp.MessageType.Warning);  
+                            $('#MessagesBlock').show();       
+                            invalidIdIndex.push(i);
+                          }                    
+                        }
+                        for(i=0;i<invalidIdIndex.length;i++){
+                           result.records.splice(invalidIdIndex[i],1);     
+                        }                                             
+                    }
+                    deferred.resolve(result, event);
+                },
+                {escape: false}
+            );
+
+            return deferred.promise();
+        };
+       var getFieldInfoListData = function() {
+                                   var deferred = $.Deferred();
+                                   Visualforce.remoting.Manager.invokeAction(
+                                       '{!$RemoteAction.KendoTreeListHierarchyController.getFieldInfoList}',ObjectName,FieldSet,sobjectList,NamespaceUU,
+                                       function (result, event) {
+                                           deferred.resolve(result, event); 
+                                           
+                                       },
+                                       {escape: false}
+                                   );
+                                   return deferred.promise();
+                                 }
+       function throwException(result){           
+           KenandyErp.Message(result.message, KenandyErp.MessageType.FATAL);  
+           $('#MessagesBlock').show();             
+       }
+        </script>
+
+</apex:component>

@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <content>RoutingDisable</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <content>RoutingDisable</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <content>RoutingDisable</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <content>RoutingDisable</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <customHelpPage>HelpWorkOrder</customHelpPage>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Routing Detail object:  contains the detailed operations required to make an Assembly</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fieldSets>
+        <fullName>RequiredFields</fullName>
+        <description>RequiredFields</description>
+        <label>RequiredFields</label>
+    </fieldSets>
+    <fieldSets>
+        <fullName>Routing_Edit</fullName>
+        <description>ManageItemSpecWorkOrder</description>
+        <displayedFields>
+            <field>Resource_Sequence__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Name</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Description__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Work_Center__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Work_Center_Resource__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Resource_Quantity__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Standard_Hours__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Backflush_Resource__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Fixed_Hours__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <displayedFields>
+            <field>Notes__c</field>
+            <isFieldManaged>false</isFieldManaged>
+            <isRequired>false</isRequired>
+        </displayedFields>
+        <label>Routing Edit</label>
+    </fieldSets>
+    <fields>
+        <fullName>Assembly_Item_Specification_Sequence__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>Hidden field for uniqueness of Assembly Item Specification + Sequence</description>
+        <externalId>false</externalId>
+        <label>Assembly Item Specification + Sequence</label>
+        <length>100</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Assembly_Item_Specification__c</fullName>
+        <description>Routing for this assembly</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Routing for this assembly</inlineHelpText>
+        <label>Assembly Item Specification</label>
+        <referenceTo>Item_Specification__c</referenceTo>
+        <relationshipLabel>Routings</relationshipLabel>
+        <relationshipName>Routings</relationshipName>
+        <relationshipOrder>0</relationshipOrder>
+        <reparentableMasterDetail>false</reparentableMasterDetail>
+        <trackTrending>false</trackTrending>
+        <type>MasterDetail</type>
+        <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    </fields>
+    <fields>
+        <fullName>Assembly_Revision__c</fullName>
+        <description>Assembly Item Specification&apos;s Revision</description>
+        <externalId>false</externalId>
+        <formula>Assembly_Item_Specification__r.Revision__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <inlineHelpText>Assembly item specification&apos;s revision</inlineHelpText>
+        <label>Assembly Revision</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Autonumber__c</fullName>
+        <displayFormat>{0000000000}</displayFormat>
+        <externalId>false</externalId>
+        <label>Autonumber</label>
+        <trackTrending>false</trackTrending>
+        <type>AutoNumber</type>
+    </fields>
+    <fields>
+        <fullName>Backflush_Resource__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>If checked time is backflushed</description>
+        <externalId>false</externalId>
+        <inlineHelpText>If checked time is backflushed</inlineHelpText>
+        <label>Backflush Resource</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Company__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Company this routing belongs to</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Company this routing belongs to. After a routing has been created, you cannot change the company.</inlineHelpText>
+        <label>Company</label>
+        <referenceTo>Company__c</referenceTo>
+        <relationshipLabel>Routings</relationshipLabel>
+        <relationshipName>Routings</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Description__c</fullName>
+        <externalId>false</externalId>
+        <label>Description</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>ExtId__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <externalId>true</externalId>
+        <label>External Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Facility__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Facility</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Lookup to Facility</inlineHelpText>
+        <label>Facility</label>
+        <referenceTo>Facility__c</referenceTo>
+        <relationshipLabel>Routings</relationshipLabel>
+        <relationshipName>Routings</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Fixed_Hours__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>If checked hours at this operation sequence, if backflushed, are not quantity dependent.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>If checked hours at this operation sequence, if backflushed, are not quantity dependent.</inlineHelpText>
+        <label>Fixed Hours</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Notes__c</fullName>
+        <description>Notes about this sequence</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Notes about this sequence</inlineHelpText>
+        <label>Notes</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>Operation_Sequence__c</fullName>
+        <description>Operations sequence in this routing</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Operations sequence in this routing</inlineHelpText>
+        <label>Operation Sequence</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Operation__c</fullName>
+        <description>Operation code associated with this routing operation</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Operation code associated with this routing operation</inlineHelpText>
+        <label>Operation</label>
+        <length>10</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Resource_Quantity__c</fullName>
+        <defaultValue>1</defaultValue>
+        <description>Quantity of Resource needed at this operation</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Quantity of Resource needed at this operation</inlineHelpText>
+        <label>Resource Quantity</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Resource_Sequence__c</fullName>
+        <description>Resource&apos;s sequence in this operation</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Resource&apos;s sequence in this operation</inlineHelpText>
+        <label>Resource Sequence</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Schedule__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Checked if this resource is scheduled</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Checked if this resource is scheduled</inlineHelpText>
+        <label>Schedule</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Standard_Hours__c</fullName>
+        <description>Standard hours at for this resource</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Standard hours at for this resource</inlineHelpText>
+        <label>Standard Hours</label>
+        <precision>12</precision>
+        <required>false</required>
+        <scale>6</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Work_Center_Resource__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Lookup to Work Center Resource</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Lookup to Work Center Resource</inlineHelpText>
+        <label>Work Center Resource</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>Work center resource&apos;s work center must match routing&apos;s work center</errorMessage>
+            <filterItems>
+                <field>Work_Center_Resource__c.Work_Center__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Work_Center__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Work_Center_Resource__c</referenceTo>
+        <relationshipLabel>Routings</relationshipLabel>
+        <relationshipName>Routings</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Work_Center__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <description>Work Center for this operation</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Work center used for this operation</inlineHelpText>
+        <label>Work Center</label>
+        <lookupFilter>
+            <active>true</active>
+            <errorMessage>Work center&apos;s company must match routing&apos;s company</errorMessage>
+            <filterItems>
+                <field>Work_Center__c.Company__c</field>
+                <operation>equals</operation>
+                <valueField>$Source.Company__c</valueField>
+            </filterItems>
+            <isOptional>false</isOptional>
+        </lookupFilter>
+        <referenceTo>Work_Center__c</referenceTo>
+        <relationshipLabel>Routings</relationshipLabel>
+        <relationshipName>Routings</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <label>Routing</label>
+    <nameField>
+        <label>Routing</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Routings</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Assembly_Item_Specification__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Description__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Resource_Sequence__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Work_Center__c</customTabListAdditionalFields>
+        <excludedStandardButtons>Accept</excludedStandardButtons>
+        <excludedStandardButtons>ChangeOwner</excludedStandardButtons>
+        <excludedStandardButtons>New</excludedStandardButtons>
+        <lookupDialogsAdditionalFields>Assembly_Item_Specification__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Description__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Resource_Sequence__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Work_Center__c</lookupDialogsAdditionalFields>
+        <lookupPhoneDialogsAdditionalFields>Assembly_Item_Specification__c</lookupPhoneDialogsAdditionalFields>
+        <lookupPhoneDialogsAdditionalFields>Description__c</lookupPhoneDialogsAdditionalFields>
+        <lookupPhoneDialogsAdditionalFields>Resource_Sequence__c</lookupPhoneDialogsAdditionalFields>
+        <lookupPhoneDialogsAdditionalFields>Work_Center__c</lookupPhoneDialogsAdditionalFields>
+        <searchFilterFields>NAME</searchFilterFields>
+        <searchFilterFields>Assembly_Item_Specification__c</searchFilterFields>
+        <searchResultsAdditionalFields>Assembly_Item_Specification__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Description__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Resource_Sequence__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Work_Center__c</searchResultsAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ControlledByParent</sharingModel>
+    <validationRules>
+        <fullName>Company_must_match</fullName>
+        <active>true</active>
+        <errorConditionFormula>Assembly_Item_Specification__r.Company__c  !=  Company__c</errorConditionFormula>
+        <errorMessage>Routing Company must match Item Specification Company.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Fixed_and_backflushed</fullName>
+        <active>true</active>
+        <errorConditionFormula>AND( Backflush_Resource__c == false,  Fixed_Hours__c == true)</errorConditionFormula>
+        <errorDisplayField>Fixed_Hours__c</errorDisplayField>
+        <errorMessage>Fixed Hours can only be checked if Backflush Resource is checked</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Negative_Resource_Quantity</fullName>
+        <active>true</active>
+        <errorConditionFormula>Resource_Quantity__c &lt; 0.0</errorConditionFormula>
+        <errorDisplayField>Resource_Quantity__c</errorDisplayField>
+        <errorMessage>Resource quantity cannot be less than zero</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Negative_Standard_Hours</fullName>
+        <active>true</active>
+        <errorConditionFormula>Standard_Hours__c &lt; 0</errorConditionFormula>
+        <errorDisplayField>Standard_Hours__c</errorDisplayField>
+        <errorMessage>Standard hours cannot be less than zero</errorMessage>
+    </validationRules>
+</CustomObject>

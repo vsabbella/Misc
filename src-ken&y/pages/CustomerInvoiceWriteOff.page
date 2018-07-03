@@ -1,0 +1,23 @@
+<apex:page standardcontroller="Customer_Invoice__c" extensions="CustomerInvoiceWriteOffExt" title="Customer Invoice Write Off">
+
+	<apex:sectionHeader title="{!$ObjectType.Customer_Invoice__c.Label}" subtitle="{!$Label.Write_Off}"/>
+	<apex:form id="form">
+		<apex:pageMessages />
+		<c:busyWait />
+		<apex:pageBlock >
+			<apex:pageBlockButtons location="top">
+				<apex:commandButton value="{!$Label.Go_Back}" action="{!cancel}" status="actionStatus" rerender="form" />
+				<apex:commandButton value="{!$Label.Write_Off}" onclick="confirm('{!$Label.ConfirmWriteOff} {!Customer_Invoice__c.Name}?')" action="{!writeoff}" rerender="form" disabled="{!disableAction}" status="actionStatus"/>
+			</apex:pageBlockButtons>
+			<apex:pageBlockSection >
+				<apex:repeat value="{!$Objecttype.Customer_Invoice__c.Fieldsets.Write_Off}" var="ci">
+					<apex:outputField value="{!Customer_Invoice__c[ci]}" rendered="{!ci.fieldpath != 'Resolution_Code__c'}" />
+				</apex:repeat>
+				
+				<apex:inputField value="{!Customer_Invoice__c.Resolution_Code__c}" required="true" />
+				
+			</apex:pageBlockSection>
+		</apex:pageBlock>
+	</apex:form>
+	
+</apex:page>

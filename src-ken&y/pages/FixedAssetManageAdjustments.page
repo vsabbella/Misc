@@ -1,0 +1,212 @@
+<apex:page standardController="Fixed_Asset__c" extensions="FixedAssetManageAdjustmentsExt" tabStyle="Fixed_Asset__c" id="page" sidebar="false">
+   
+    <style>
+        .panelLeft {
+            width: 45%;
+            vertical-align: top;
+        }
+        .panelRight {
+            width: 55%;
+            vertical-align: top;
+        }
+        .ui-state-active{
+
+			background: #A6C6E9;
+			font-weight: bold;
+			color: #A6C6E9;
+		}
+		.btn{
+            text-decoration:none !important;
+        }
+		
+    </style>
+    
+    <script>
+		function checkAll(cb)
+		{
+			var inputElem = document.getElementsByTagName("input");
+			for(var i=0; i<inputElem.length; i++)
+			{
+				if(inputElem[i].id.indexOf("checkedone")!=-1)
+				inputElem[i].checked = cb.checked;
+			}
+		}   
+	</script>
+    
+    <apex:form id="form">
+        <apex:sectionHeader title="{!$ObjectType.Fixed_Asset__c.LabelPlural}" subtitle="{!pageSubtitle}"/>
+        <apex:pageMessages id="msgs"/>
+        <c:busyWait />
+        
+        <apex:panelGrid width="100%" columns="2" columnClasses="panelLeft,panelRight" rendered="{!!notRetiredAsset}">
+            <apex:panelGroup id="pgLeft" style="width:300px">
+            
+                <apex:pageBlock title="{!$Label.Supplier_Invoice_Lines}" >
+                
+                	<apex:pageBlockButtons location="top">
+                        <apex:commandButton value="{!$Label.Cancel}" action="{!cancel}" immediate="true" status="actionStatus" rerender="form" />
+                        <!--<apex:commandButton value="Save" action="{!save}" rendered="{!rils.size > 0}"/>-->
+                        <apex:commandButton value="{!$Label.Group_Lines_to_New_Asset}" action="{!updateAction}" rendered="{!renderGroupLinesButton}" status="actionStatus" rerender="form" >
+                        	<apex:param name="selectedAction" value="GROUP" assignTo="{!selectedAction}" />
+                        </apex:commandButton>
+                    </apex:pageBlockButtons>
+                    
+                      <apex:outputPanel layout="block" style="height:auto;overflow-y:scroll;"> 
+	                    <apex:pageBlockTable value="{!rilDetails}" var="rd" rendered="{!rilDetails.size>0}" id="rils" style="margin-bottom:100px;">
+	                    	<apex:column headervalue="{!$Label.Select}" styleClass="{!IF(rd.ril.Id == selectedRIL,'ui-state-active','')}">
+								<apex:facet name="header"> 
+									<apex:inputCheckbox >
+										<apex:actionSupport event="onclick" onsubmit="checkAll(this)" rerender="theForm" />
+									</apex:inputCheckbox>
+								</apex:facet>
+								<apex:inputCheckbox value="{!rd.selected}" id="checkedone" />
+							</apex:column>
+							<apex:repeat value="{!$ObjectType.Supplier_Invoice_Line__c.Fieldsets.FixedAssetManage}" var="f">
+								<apex:column value="{!rd.ril[f]}" styleClass="{!IF(rd.ril.Id == selectedRIL,'ui-state-active','')}"/>
+							</apex:repeat>
+                    		<apex:column headervalue="{!$Label.Action}" styleClass="{!IF(rd.ril.Id == selectedRIL,'ui-state-active','')}">
+	                        	<apex:commandLink value="{!$Label.Add_as_Adjustment}" action="{!updateAction}" 
+	                        					  status="actionStatus" rerender="form" immediate="true"
+	                        					  styleClass="btn" rendered="{!renderAdjustmentOptions==false}">
+										<apex:param name="selectedRIL" value="{!rd.ril.Id}" assignTo="{!selectedRIL}" />
+										<apex:param name="selectedAction" value="ADJUST" assignTo="{!selectedAction}" />
+								</apex:commandLink>
+	                        	<c:multiSelectButton uniqueId="{!rd.ril.Id}" buttonText="{!$Label.Actions}" rendered="{!renderAdjustmentOptions}">	
+	                        		
+									<apex:commandLink value="{!$Label.Create_Single_Asset}" action="{!updateAction}" status="actionStatus" rerender="form" immediate="true">
+										<apex:param name="selectedRIL" value="{!rd.ril.Id}" assignTo="{!selectedRIL}" />
+										<apex:param name="selectedAction" value="SINGLE" assignTo="{!selectedAction}" />
+									</apex:commandLink>
+									
+									<apex:commandLink value="{!$Label.Create_Multiple_Assets}" action="{!updateAction}" status="actionStatus" rerender="form" immediate="true">
+										<apex:param name="selectedRILMultiple" value="{!rd.ril.Id}" assignTo="{!selectedRIL}" />
+										<apex:param name="selectedAction" value="MULTIPLE" assignTo="{!selectedAction}" />
+									</apex:commandLink>
+									
+									<apex:commandLink rendered="{!displayAddCustomButton}" value="{!$Label.Add_Custom}" action="{!updateAction}" status="actionStatus" rerender="form" immediate="true">
+										<apex:param name="selectedRIL" value="{!rd.ril.Id}" assignTo="{!selectedRIL}" />
+										<apex:param name="selectedAction" value="CUSTOM" assignTo="{!selectedAction}" />
+									</apex:commandLink>
+									
+									<apex:commandLink value="{!$Label.Add_Adjustments}" action="{!updateAction}" status="actionStatus" rerender="form" immediate="true">
+										<apex:param name="selectedRIL" value="{!rd.ril.Id}" assignTo="{!selectedRIL}" />
+										<apex:param name="selectedAction" value="ADJUST" assignTo="{!selectedAction}" />
+									</apex:commandLink>
+								</c:multiSelectButton>
+					            <apex:outputPanel layout="block" style="width:140px;"/>
+	                        </apex:column>
+	                    </apex:pageBlockTable>
+	                    <apex:outputText value="{!$Label.No_available_Receipt_Invoice_Lines_for_processing}" style="font-weight: bold;" rendered="{!rils.size==0}"/>
+                    </apex:outputPanel>
+                </apex:pageBlock>
+                
+            </apex:panelGroup>
+            
+            <apex:panelGroup id="groupright" >
+                <apex:pageBlock id="lineblock" title="{!selectedRILDetail.ril.name} {!$Label.Details}" rendered="{!selectedAction == 'ADJUST'}">
+                	
+                	<apex:pageBlockButtons location="top">
+                   		<apex:commandButton value="{!$Label.Save}" action="{!save}" rerender="form" status="actionStatus"/>
+                   </apex:pageBlockButtons>
+                	
+                    <apex:pageBlockSection title="{!$Label.New_Adjustments}" id="pbsAdjustments" columns="1" collapsible="false">
+                        
+                        <apex:facet name="header">
+                            <apex:panelGrid columns="2" width="100%">
+                                <apex:outputText style="text-align:left;color:white;" value="{!$Label.Total_Adjustments} {!selectedRILDetail.ril.Total_Fixed_Asset_Adjustments__c}"/>
+                                <apex:outputPanel layout="block" style="text-align:right;">
+                                    <apex:commandButton value="{!$Label.Add_Adjustment}" action="{!addAdjustment}" rerender="pbsAdjustments" status="actionStatus"/>
+                                </apex:outputPanel>
+                            </apex:panelGrid>
+                        </apex:facet>
+                        
+                        <apex:outputPanel layout="block" style="height:150px;overflow-y:scroll;">
+                        	<apex:variable var="rowNo" value="{!0}" /> 
+                        	<apex:pageBlockTable value="{!newAdjustments}" var="faa" rendered="{!newAdjustments != null}">
+                        		<apex:repeat value="{!$ObjectType.Fixed_Asset_Adjustment__c.Fieldsets.Fixed_Asset_Adjustment_New}" var="f">
+	                        		<apex:column headervalue="{!f.label}">
+	                        			<apex:inputField value="{!faa[f]}"/>
+	                        		</apex:column>
+	                        	</apex:repeat>
+	                        	<apex:column >
+                                 <apex:commandLink action="{!removeAdjustment}" 
+                                                      reRender="pbsAdjustments" 
+                                                      styleClass="btn"
+                                                      immediate="true"
+                                                      html-formnovalidate="formnovalidate"> 
+                                    Remove
+                                    <apex:param name="faaAdjustmentListIndex" value="{!rowNo}" assignTo="{!faaAdjustmentListIndex}"/>
+                                  </apex:commandLink>
+                                </apex:column>
+                                <apex:column >
+                                     <apex:variable var="rowNo" value="{!rowNo+1}"/>
+                                </apex:column>
+                        	</apex:pageBlockTable>
+                        </apex:outputPanel>
+                    </apex:pageBlockSection>
+                     
+                    <apex:pageBlockSection title="{!$Label.Existing_Adjustments}" columns="1" collapsible="false">
+                        <apex:outputPanel layout="block" style="height:150px;overflow-y:scroll;">
+                            <apex:pageBlockTable value="{!selectedRILDetail.ril.Fixed_Asset_Adjustments__r}" var="faa" rendered="{!selectedRILDetail.ril.Fixed_Asset_Adjustments__r != null && selectedRILDetail.ril.Fixed_Asset_Adjustments__r.size > 0}">
+                        		
+                        		<apex:repeat value="{!$ObjectType.Fixed_Asset_Adjustment__c.Fieldsets.Fixed_Asset_Adjustment_New}" var="f">
+	                        		<apex:column value="{!faa[f]}"/>
+	                        	</apex:repeat>
+                        	
+                        	</apex:pageBlockTable>
+                        	<apex:outputText value="{!$Label.No_Fixed_Asset_Adjustments_for_this_Receipt_Invoice_Line}" style="font-weight: bold;" rendered="{!existingAdjustments.size == 0}"/>
+                        </apex:outputPanel>
+                    </apex:pageBlockSection>
+                    
+               </apex:pageBlock>
+               
+               <apex:pageBlock title="{!$Label.New_Fixed_Asset}" rendered="{!selectedAction == 'SINGLE' || selectedAction == 'GROUP'}">    
+                 	
+                 	<apex:pageBlockButtons location="top">
+                   		<apex:commandButton value="{!$Label.Save}" action="{!save}" rerender="form" status="actionStatus"/>
+                   </apex:pageBlockButtons>
+                 	
+                    <apex:pageBlockSection title="{!$Label.Add_New_Fixed_Asset}" id="pbsNewFixedAsset" columns="2" collapsible="false" >
+                    	<!-- 
+                     	<apex:facet name="header">
+                            <apex:panelGrid columns="2" width="100%">
+                                <apex:outputText style="text-align:left;color:white;" value="Add New Fixed Asset"/>
+                                <apex:outputPanel layout="block" style="text-align:right;">
+                                    <apex:commandButton value="Add Fixed Asset" action="{!addFixedAsset}" status="actionStatus" rerender="pbsNewFixedAsset,pbsAdjustments,msgs"/>
+                                </apex:outputPanel>
+                            </apex:panelGrid>
+                        </apex:facet>
+                        -->
+	                    <apex:repeat value="{!$Objecttype.Fixed_Asset__c.Fieldsets.Fixed_Asset_New}" var="f" >
+	                    	<apex:inputField required="{!f.required}" value="{!fa[f]}" />
+	                    </apex:repeat>
+                    </apex:pageBlockSection>
+                </apex:pageBlock>
+                
+                <apex:pageBlock id="pbMulti" title="{!$Label.New_Fixed_Asset}" rendered="{!selectedAction == 'MULTIPLE' || selectedAction == 'CUSTOM'}">      
+                   <apex:pageBlockButtons location="top">
+                   		<apex:commandButton rendered="{!displayAddAdditionalButton}"  value="{!$Label.Add_Additional}" action="{!addAdditional}" status="actionStatus" rerender="form" />
+                   		<apex:commandButton value="{!$Label.Save}" action="{!save}" rerender="form" status="actionStatus"/>
+                   </apex:pageBlockButtons>
+					<apex:variable value="{!1}" var="count"/> 
+						<apex:outputPanel layout="block" style="height:500px;overflow-y:scroll;">
+						<apex:repeat value="{!fas}" var="fa">
+							<apex:pageBlockSection title="{!count} - {!$Label.New_Asset}" collapsible="false">
+						 		<apex:repeat value="{!$Objecttype.Fixed_Asset__c.Fieldsets.Fixed_Asset_New}" var="f" >
+						 		
+									<apex:inputField value="{!fa[f]}"/>
+							
+								</apex:repeat>
+							 </apex:pageBlockSection>
+							 <apex:variable var="count" value="{!count+ 1}"/>
+						</apex:repeat>
+					</apex:outputPanel>
+	                    
+                   
+                </apex:pageBlock>
+            </apex:panelGroup>
+        </apex:panelGrid>
+        
+    </apex:form>
+    
+</apex:page>

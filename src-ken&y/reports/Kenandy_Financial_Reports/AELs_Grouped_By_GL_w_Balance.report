@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <columns>
+        <field>Accounting_Entry__c.Company__c</field>
+    </columns>
+    <columns>
+        <field>Accounting_Entry_Line__c.Period_Name__c</field>
+    </columns>
+    <columns>
+        <field>Accounting_Entry__c.COMP_Total_Debit__c</field>
+    </columns>
+    <columns>
+        <field>Accounting_Entry__c.COMP_Total_Credit__c</field>
+    </columns>
+    <columns>
+        <aggregateTypes>Sum</aggregateTypes>
+        <field>Accounting_Entry_Line__c.Balance_f__c</field>
+    </columns>
+    <columns>
+        <field>FK_$GL_Account__c.Report_Section_Grouping__c</field>
+    </columns>
+    <columns>
+        <field>FK_$GL_Account__c.Income_Statement_Report_Section_Grouping__c</field>
+    </columns>
+    <format>Summary</format>
+    <groupingsDown>
+        <dateGranularity>Day</dateGranularity>
+        <field>FK_NAME</field>
+        <sortOrder>Asc</sortOrder>
+    </groupingsDown>
+    <name>AELs Grouped By GL w Balance</name>
+    <params>
+        <name>co</name>
+        <value>1</value>
+    </params>
+    <reportType>CustomEntityCustomEntity$Accounting_Entry__c$Accounting_Entry_Line__c@Accounting_Entry_Line__c.GL_Account__c</reportType>
+    <scope>organization</scope>
+    <showDetails>true</showDetails>
+    <timeFrameFilter>
+        <dateColumn>Accounting_Entry__c.Transaction_Date__c</dateColumn>
+        <interval>INTERVAL_CUSTOM</interval>
+    </timeFrameFilter>
+</Report>

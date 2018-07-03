@@ -1,0 +1,43 @@
+<apex:page standardcontroller="Claim__c" extensions="ClaimChargebackExt" doctype="html-5.0" action="{!chargeback}">
+
+    <apex:includeScript value="{!URLFOR($Resource.JQuery182)}" />
+	<apex:sectionHeader title="{!$ObjectType.Claim__c.Label} {!Claim__c.Name}" subtitle="{!$Label.Chargeback}"/>
+	<apex:form id="form">
+		<apex:pageMessages />
+		<c:busyWait />
+		<apex:pageBlock >
+			<apex:pageBlockButtons location="top">
+				<apex:commandButton value="{!$Label.Go_Back}" action="{!cancel}" status="actionStatus" reRender="form"/>
+				<apex:commandButton value="{!$Label.Chargeback}" action="{!chargeback}" disabled="{!disableAction}" status="actionStatus"  reRender="form"/>
+			</apex:pageBlockButtons>
+		</apex:pageBlock>
+		<apex:outputPanel rendered="{!refClaim.Claim_Lines__r.size > 0 && !disableAction}">
+			<c:GridRelatedList uniqueId="Grid{!Claim__c.Id}" 
+					title="{!$Label.Manage_Lines}"
+					parentRecord="{!Claim__c}"
+					objectName="Claim_Line__c"  
+					fieldset="Manage" 
+					parentField="Claim__c"
+					sortField="Name" 
+					readOnlyFields="Name,Total_Amount__c"
+					buttons="create, save, cancel, delete, search"/>
+		</apex:outputPanel>
+	</apex:form>
+	
+	<apex:outputpanel rendered="false">
+		{!Claim__c.Status__c}
+		{!Claim__c.Resolution_Code__c}
+	</apex:outputpanel>
+
+	<script>
+		$(document).ready(function() {
+			if({!redirect}) {
+                if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+                    sforce.one.back(true);
+                } else {
+                    window.location.href = '/' + '{!JSENCODE(Claim__c.Id)}';
+                }
+			}
+		});
+	</script>
+</apex:page>

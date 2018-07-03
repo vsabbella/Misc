@@ -1,0 +1,29 @@
+<apex:page showheader="true" sidebar="true" standardController="Work_Order__c" extensions="WorkOrderClosedExt">
+    <apex:sectionHeader title="{!$Label.Close_WO}" />
+    <apex:form id="mainFormID">  
+        <c:busyWait />
+        <script type="text/javascript"> 
+            function confirmClose() {
+                if (window.confirm('{!$Label.ConfirmCloseWorkOrder}'))
+                    closeWorkOrder();
+                return false;
+            }
+            function navigateToSObject() {
+                var recordId='{!Work_Order__c.Id}';
+                if(typeof sforce !== "undefined" && typeof sforce.one !== "undefined") {
+                    sforce.one.navigateToSObject(recordId, 'detail');
+                } else {
+                    window.location.href = "/" + recordId;
+                }
+            }
+        </script>
+        <apex:pageMessages />
+        <apex:pageBlock >
+            <apex:actionFunction name="closeWorkOrder" action="{!closeWorkorder}" status="actionStatus" rerender="mainFormID"/>         
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="{!$Label.Close_WO}" onClick="return confirmClose();" disabled="{!disableCloseButton}"/>
+                <apex:commandButton value="{!$Label.Go_Back}" onClick="navigateToSObject()" status="actionStatus" rerender="mainFormID"/>
+            </apex:pageBlockButtons>    
+        </apex:pageBlock>
+    </apex:form>  
+</apex:page>

@@ -1,0 +1,38 @@
+<apex:page standardController="Sales_Order__c" extensions="SalesOrderCloneExt">
+
+    <script>
+        function setFocusOnLoad() {} 
+        onload = setFocusOnLoad;
+    </script>
+
+    <apex:form id="form">
+        <c:busyWait />
+        <apex:sectionHeader subtitle="{!$Label.Clone_Sales_Order}" title="{!$Label.Clone_Sales_Order}" />
+        <apex:pagemessages ></apex:pagemessages>
+    <apex:pageBlock >
+        <apex:pageBlockButtons >
+        <apex:commandButton value="{!$Label.Save} " action="{!save}" status="actionStatus" rerender="form" accessKey="s"/>
+        <apex:commandButton value="{!$Label.Cancel} " action="{!cancel}" status="actionStatus" rerender="form"/>
+        </apex:pageBlockButtons>
+        
+        <apex:pageBlockSection title="{!$Label.Sales_Order_Information}" columns="2" collapsible="false">
+            <!-- When implementing multi-company, you will neeed to remove the outputField as well as the rendered portion of the inputField-->
+            <apex:outputField value="{!Sales_Order__c.Company__c}" /> 
+            <apex:repeat value="{!$ObjectType.Sales_Order__c.FieldSets.Clone}" var="f" > 
+                <apex:inputField value="{!Sales_Order__c[f]}" required="{!OR(f.required, f.dbrequired)}" rendered="{!f.fieldpath != 'Company__c'}"/>
+            </apex:repeat>            
+        </apex:pageBlockSection>
+        
+        <apex:pageBlockSection title="{!$Label.Tax_Information}" columns="2" collapsible="false">   
+            <apex:repeat value="{!$ObjectType.Sales_Order__c.FieldSets.Clone_Tax}" var="f" > 
+            <apex:inputField value="{!Sales_Order__c[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+            </apex:repeat> 
+        </apex:pageBlockSection>  
+  
+    </apex:pageBlock>
+    </apex:form>  
+      <div id="responseErrors" style="display:none;">
+        <apex:outputText value="{!Sales_Order__c.Company__c}" />
+        <apex:outputText value="{!Sales_Order__c.Type__c}" /> //pxp added so Adjusment SO Type gets cloned to support KNDY-5071
+    </div>
+</apex:page>

@@ -1,0 +1,568 @@
+<apex:component id="RepairGrid" controller="RepairGridCon">
+    <apex:attribute name="elementSelector" description="The HTML Element where the Grid will be instantiated" type="String" />
+    <style type="text/css">
+        .k-grid tbody button.k-button {
+            min-width: 10px;
+        }
+
+        .k-button-icontext .k-icon, .k-button-icontext .k-image {
+            margin-right: auto;
+            margin-left: auto;
+        }
+    </style>
+
+    <script>
+        var element = "#" + '{!elementSelector}';
+
+        var repairGrid = repairGrid || {};
+
+        (function (repairGrid) {
+
+            var lookupSearchAction = '{!$RemoteAction.RepairGridCon.lookupSearchFilter}';
+            var namespaceUU = '{!JSENCODE(NamespaceUU)}';
+            var lookupSearchFilters = [];
+            var fieldListParsed = JSONUtils.Parse(
+                    {!repairFieldList} );
+            var detailFieldListParsed = JSONUtils.Parse(
+                    {!warrantyDetailFieldList} );
+
+            detailFieldListParsed.splice(0, 1); // remove ID from list
+
+            var dateFieldsParsed = KenandyErp.KendoGridOptions.GetDateFields(
+                    fieldListParsed);
+            var detailDateFieldsParsed = KenandyErp.KendoGridOptions.GetDateFields(
+                    detailFieldListParsed);
+            var _nestedFields = KenandyErp.KendoGridOptions.GetNestedFields(
+                    fieldListParsed); // get the list of nested fields
+
+            repairGrid.loadGrid = function (data) {
+                var serializedData = data;
+                var columns = KenandyErp.KendoGridOptions.GetColumns(
+                        fieldListParsed,
+                        {
+                            lookupSearchAction: lookupSearchAction,
+                            buttons: null,
+                            lookupSearchFilters: lookupSearchFilters,
+                            allowMassDelete: null,
+                            validateOnBlur: null
+                        });
+
+                //Remove Id Column
+                columns.shift();
+                columns.unshift({
+                    command: [
+                        {name: "createChild", className: "kndy-btn-add"},
+                        {name: "edit", className: "kndy-btn-edit"},
+                        {name: " ", className: "fa fa-newspaper-o grid-checkWarranty-command"}
+                    ],
+                    title: " ",
+                    width: "10em"
+                });
+
+                columns[1].expandable = true;
+
+                $.each(columns, function (index, item) {
+                    if (item.headerAttributes && item.field) {
+                        item.headerAttributes.class = item.headerAttributes.class + " k-header";
+                    }
+                });
+
+                var fields = KenandyErp.KendoGridOptions.GetFields(fieldListParsed);
+                $.each(fields, function (i, v) {
+                    delete v.validation;
+                });
+
+                var model = model || {};
+                model.fields = fields;
+                model.expanded = false;
+
+                var dataSource = new kendo.data.TreeListDataSource({
+                    transport: {
+                        read: function (e) {
+                            KenandyErp.CleanNamespace( serializedData,
+                                    namespaceUU );
+                            e.success(serializedData);
+                        },
+                        create: function (e) {
+                            // assign an ID to the new item
+                            e.data.models[0].id = kendo.guid();
+                            e.data.models[0].sol.Id = e.data.id;
+                            // save data item to the original datasource
+                            serializedData.push(e.data.models[0]);
+                            // on success
+                            e.success(e.data.models[0]);
+                        },
+                        update: function (e) {
+                            if (e.data.models.length = 1) {
+                                var index;
+                                for (var i = 0; i < serializedData.length; i++) {
+                                    if (serializedData[i].id == e.data.models[0].id) {
+                                        index = i;
+                                    }
+                                }
+                                serializedData[index] = e.data.models[0];
+                                // on success
+                                e.success(serializedData[index]);
+                            }
+
+                        },
+                    },
+                    batch: true,
+                    schema: {
+                        model: model,
+                        parse: function (response) {
+
+                            $.each(response, function (idx, item) {
+                                if (_.isNumber(idx)) {
+                                    if (item.parentId === undefined) {
+
+                                        //item.parentId = null;
+                                        item.parentId = null;
+                                    }
+
+                                    item.sol.Id = item.sol.Id ? item.sol.Id : kendo.guid();
+                                    item.id = item.sol.Id;
+                                    if (item.parentId === null) {
+                                        item.sol.Primary_Key__c = item.sol.Id.replace(/-/g, "");
+                                    }
+                                    //item.sol = Serializer.IncludeNulls(item.sol, {fields: _nestedFields});
+                                    item.sol = Serializer.ConvertFromSFDCDate(item.sol, {dateFields: dateFieldsParsed});
+                                    if (item.warranty) {
+                                        item.warranty = Serializer.ConvertFromSFDCDate(item.warranty, {dateFields: detailDateFieldsParsed});
+                                    }
+                                }
+                            });
+
+                            if (response.models) {
+                                $.each(response.models[0], function (idx, item) {
+                                    if (idx) {
+                                        response[idx] = response[idx] ? response[idx] : response.models[0][idx];
+                                        response.Id = response.Id ? response.Id : kendo.guid();
+                                        response.id = response.Id;
+                                    }
+                                });
+
+                                delete response.models;
+                            }
+
+                            return response;
+                        }
+                    }
+                });
+
+                var toolBarButtons = "<button class=\"k-button k-button-icontext k-grid-createRepairsOrder\">Create Repair Documents</button>";
+                
+                if ($(element).data("kendoTreeList")){
+                	$(element).data("kendoTreeList").destroy();
+                	$(element).empty();
+                }
+
+                var treeList = $(element).kendoTreeList({
+                    dataSource: dataSource,
+                    resizable: true,
+                    scrollable: true,
+                    columns: columns,
+                    navigatable: true,
+                    editable: "inline",
+                    toolbar: toolBarButtons,
+                    messages: {
+                        noRows: "No records to display",
+                        loading: "Loading...",
+                        requestFailed: "Request failed.",
+                        retry: "Retry",
+                        commands: {
+                            edit: " ",
+                            update: " ",
+                            canceledit: " ",
+                            create: "Add new record",
+                            createchild: " ",
+                            destroy: "Delete",
+                            excel: "Export to Excel",
+                            pdf: "Export to PDF"
+                        }
+                    },
+                    dataBound: function (e) {
+                        var grid = this;
+                        var gridRows = grid.tbody.find("tr");
+                        for (var i = 0; i < gridRows.length; i++) {
+                            var row = $(gridRows[i]);
+                            var dataItem = grid.dataItem(row);
+                            if (dataItem.parentId) {
+                                row.find(".kndy-btn-add").hide();
+                                row.find(".grid-checkWarranty-command").hide();
+                            }
+                            if (!dataItem.warranty) {
+                                row.find(".grid-checkWarranty-command").removeClass("fa-newspaper-o").addClass("fa-search");
+                            }
+                        }
+
+                        warrantySetup(grid);
+                    },
+                    edit: function (e) {
+                        var grid = this;
+                        var gridRows = grid.tbody.find("tr");
+                        for (var i = 0; i < gridRows.length; i++) {
+                            var row = $(gridRows[i]);
+                            row.find(".k-grid-update").show();
+                        }
+                        e.model.id = e.model.id === null ? undefined : e.model.id;
+                        if (e.model.isNew()) {                     // if row is new, then set defaults
+                            e.model.sol.set('Non_Shippable__c', true);
+                            var parentItem;
+                            for (var i = 0; i < serializedData.length; i++) {
+                                if (serializedData[i].id == e.model.parentId) {
+                                    parentItem = serializedData[i];
+                                }
+                            }
+                            var invoiceable = parentItem.warranty ? false : true;
+                            e.model.sol.set("Invoiceable__c", invoiceable);
+                            e.model.sol.set("Pricebook__c", parentItem.sol.Pricebook__c);
+                            e.model.sol.set("Pricebook__r", parentItem.sol.Pricebook__r);
+                            e.model.sol.set("Sales_Order__c", parentItem.sol.Sales_Order__r.Id);
+                            e.model.sol.set("Sales_Order__r", parentItem.sol.Sales_Order__r);
+                        }
+                        getPriceForProduct(e);
+                    },
+                    cancel: function (e) {
+                        this.refresh();
+                    }
+                }).data("kendoTreeList");
+
+                function warrantySetup(treeList) {
+                    var treeListRows = treeList.tbody.find("tr");
+                    for (var i = 0; i < treeListRows.length; i++) {
+                        var row = $(treeListRows[i]);
+                        row.find(".grid-checkWarranty-command").bind("click", function (e) {
+                            var title;
+                            var context;
+                            var divId;
+                            var windowHeight;
+                            var windowWidth;
+                            var dataItem = treeList.dataItem(this);
+
+                            if (dataItem.warranty) {
+                                title = "Review Warranty";
+                                context = "detail";
+                                divId = "warrantyReview";
+                                windowHeight = "200em";
+                                windowWidth = "50%";
+                            } else {
+                                title = "Check Warranty";
+                                context = "search";
+                                divId = "warrantyCheck";
+                                windowHeight = "500em";
+                                windowWidth = "80%";
+                            }
+                            var winElement = $("#" + divId);
+                            var kWindow = winElement.data("kendoWindow") ? winElement.data("kendoWindow") : null;
+                            if (!kWindow) {
+                                kWindow = winElement.kendoWindow({
+                                    title: title,
+                                    modal: true,
+                                    height: windowHeight,
+                                    width: windowWidth,
+                                    open: function (e) {
+                                        renderModal(dataItem, context);
+                                    }
+                                }).data("kendoWindow");
+                                kWindow.center().open();
+                            } else {
+                                kWindow.refresh().open();
+                            }
+                        });
+                    }
+                }
+
+                function renderModal(dataItem, context) {
+                    if (context == "detail") {
+                        renderDetailList(dataItem);
+                    } else {
+                        renderSearch(dataItem);
+                    }
+                }
+
+                function renderDetailList(dataItem) {
+                    var detailLookupFilters = [];
+
+                    var detailData = function () {
+                        var deferred = $.Deferred();
+                        var event = {type: "success"};
+                        var result = {records: [dataItem.warranty], total: 1, success: true};
+                        deferred.resolve(result, event);
+                        return deferred.promise();
+                    };
+                    var detailList = $("#warrantyDetail").data("kendoDetailList");
+                    if (detailList) {
+                        detailList.destroy();
+                        $("#warrantyDetail").empty();
+                    }
+
+                    detailList = $("#warrantyDetail").kendoDetailList({
+                        namespace: namespaceUU,
+                        sections: [
+                            {
+                                fields: detailFieldListParsed
+                            }
+                        ],
+                        lookupSearchAction: lookupSearchAction,
+                        lookupSearchFilters: detailLookupFilters,
+                        getDetailListFunction: detailData
+                    }).data('kendoDetailList');
+
+                    detailList.enable(false, {disabledFields: _.pluck(detailFieldListParsed, "field")});
+                }
+
+                function renderSearch(dataItem) {
+                    $('[id$=warrantyLinesGridContainer]').hide();
+
+                    var solFilter = $("#repairGridSolFilter").data("kendoComboBox");
+                    var serialFilter = $("#repairGridSerialFilter").data("kendoComboBox");
+                    if (!solFilter) {
+                        $.fn.KendoComboBox($('#repairGridSolFilter'), {
+                            lookupSearchAction: '{!$RemoteAction.RepairGridCon.lookupSearchFilter}',
+                            referenceTo: 'Sales_Order_Line__c',
+                            title: '{!$ObjectType.Sales_Order_Line__c.Label}'
+                        });
+                    }
+                    if (!serialFilter) {
+                        $.fn.KendoComboBox($('#repairGridSerialFilter'), {
+                            lookupSearchAction: '{!$RemoteAction.RepairGridCon.lookupSearchFilter}',
+                            referenceTo: 'Serial__c',
+                            title: '{!$ObjectType.Serial__c.Label}'
+                        });
+                    }
+                    $("#repairGridSearchFilter").unbind("click").bind("click", function (e) {
+                        var sol = $("#repairGridSolFilter").data("kendoComboBox").value();
+                        var serial = $("#repairGridSerialFilter").data("kendoComboBox").value();
+
+                        var warrantySearchData = function () {
+                            var deferred = $.Deferred();
+
+                            Visualforce.remoting.Manager.invokeAction(
+                                    '{!$RemoteAction.RepairGridCon.getWarrantySearchResults}',
+                                    sol,
+                                    serial,
+                                    function (result, event) {
+                                        deferred.resolve(result, event);
+                                    },
+                                    {escape: false}
+                            );
+
+                            return deferred.promise();
+                        };
+                        $('[id$=warrantyLinesGridContainer]').show();
+                        if ($('#warrantySearchGrid').data("kendoGridActionList")) {
+                            $('#warrantySearchGrid').data("kendoGridActionList").destroy();
+                            $('#warrantySearchGrid').off();
+                            $('#warrantySearchGrid').empty();
+                        }
+                        var dateFields = KenandyErp.KendoGridOptions.GetDateFields(detailFieldListParsed);
+                        var warrantyGrid = $('#warrantySearchGrid').kendoGridActionList({
+                            namespace: namespaceUU,
+                            config: JSONUtils.Parse('{!JSEncode(configJson)}'),
+                            fieldList: detailFieldListParsed,
+                            lookupSearchAction: lookupSearchAction,
+                            toolbarButtons: [{
+                                name: "grid-select-warranty-custom-command",
+                                text: "",
+                                template: "<input type='button' value='Select Warranty' class='k-button kndy-btn grid-select-warranty-custom-command' />"
+                            },],
+                            getActionListFunction: warrantySearchData
+                        }).data('kendoGridActionList');
+
+                        warrantyGrid.wrapper.on("click", ".grid-select-warranty-custom-command", function (e) {
+                            var gridUtils = new KendoGridUtils(warrantyGrid, {isDml: false});
+                            var selectedRows = gridUtils.SelectedRows();
+
+                            var messageElement = $('#warrantySearchGrid').closest("div.grid-container").find("div.grid-message:first");
+
+                            if (selectedRows.length == 0) {
+                                KenandyErp.Message("No records selected.", KenandyErp.MessageType.Info, messageElement);
+                                return;
+                            }
+
+                            if (selectedRows.length > 1) {
+                                KenandyErp.Message("Please only select one Warranty.", KenandyErp.MessageType.Info, messageElement);
+                                return;
+                            }
+
+                            dataItem.warranty = selectedRows[0];
+
+                            var index;
+                            for (var i = 0; i < serializedData.length; i++) {
+                                if (serializedData[i].id == dataItem.id) {
+                                    index = i;
+                                }
+                            }
+
+                            serializedData[index] = dataItem;
+
+                            $("#warrantyCheck").data("kendoWindow").close();
+                            $(element).data("kendoTreeList").destroy();
+                            $(element).empty();
+                            repairGrid.loadGrid(serializedData);
+                        });
+                    });
+                    $("#repairGridClearFilter").unbind("click").bind("click", function(e) {
+                        e.preventDefault();
+                        $("#repairGridSolFilter").data("kendoComboBox").value("");
+                        $("#repairGridSerialFilter").data("kendoComboBox").value("");
+                    } );
+                }
+
+                $(element).find(".k-grid-createRepairsOrder").bind("click", function (e) {
+                    e.preventDefault();
+
+                    var treeList = $(element).data("kendoTreeList");
+
+                    var selectedRows = treeList.dataSource.data();
+
+                    var messageElement = treeList.element
+                            .closest("div.grid-container")
+                            .find("div.grid-message:first");
+
+                    var wrapperItems = [];
+                    $.each(selectedRows, function (index, item) {
+                        var wrapper = {};
+                        if (item.warranty) {
+                            item.warranty = Serializer.ConvertToSFDCDate(item.warranty, {dateFields: detailDateFieldsParsed});
+                            item.warranty = convert(item.warranty);
+                            delete item.warranty.parent;
+                            delete item.warranty.attributes;
+                            delete item.warranty._events;
+                            delete item.warranty.uid;
+                            for (key in item.warranty) {
+                                if (item.warranty[key] === null) {
+                                    delete item.warranty[key];
+                                }
+                            }
+                        }
+                        item.sol = Serializer.ConvertToSFDCDate(item.sol, {dateFields: dateFieldsParsed});
+                        for (key in item.sol) {
+                            if (item.sol[key] === null) {
+                                delete item.sol[key];
+                            }
+                        }
+                        item.sol = convert(item.sol);
+                        delete item.sol.sol;
+                        delete item.sol.attributes;
+                        delete item.sol._events;
+                        delete item.sol.uid;
+                        delete item.sol.parent;
+                        item.parentId = item.parentId ? item.parentId.replace(/-/g, "") : null;
+                        wrapper = _.pick(item, 'sol', 'warranty', 'hasChildren', 'parentId');
+                        wrapperItems.push(wrapper);
+                    });
+
+                    // if ( wrapperItems.length > 0 ) {
+                    //     wrapperItems = Serializer.ParameterMap( wrapperItems );
+                    // }
+
+                    // wrapperItems = JSON.stringify(wrapperItems);
+
+                    KenandyErp.BlockUI(treeList.element);
+
+                    Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.RepairGridCon.createRepairOrder}',
+                            wrapperItems,
+                            function (result, event) {
+                                KenandyErp.UnBlockUI(treeList.element);
+                                if (event.type == "exception") {
+                                    KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                                } else {
+                                    if (result.success) {
+                                        KenandyErp.Messages(result.messages);
+                                    } else {
+                                        KenandyErp.Messages(result.messages, messageElement);
+                                    }
+                                }
+                            },
+                            {escape: false}
+                    );
+                });
+
+                function convert(values) {
+                    for (var key in values) {
+                        // Removes all __r and __custom properties from the record getting saved, as we can't use them in DML
+                        if (((/__r/i.test(key))) || (/__custom$/i.test(key))) {
+                            delete values[key];
+                        }
+                        else if ((/__r/i.test(key))) {	// Remove all __r if the Id is null
+                            if (values[key] && $.isPlainObject(values[key]) && !values[key].Id) {
+                                delete values[key];
+                            }
+                        }
+
+                        var value = values[key];
+
+                        if (value instanceof Date) {
+                            values[key] = (value) ? Date.parse(value) : null;
+                        }
+                    }
+
+                    return values;
+                }
+
+                function getPriceForProduct(e) {
+                    var productSelector = $("input[name='sol.Product__c']");
+                    var treeList = $(element).data("kendoTreeList");
+                    productSelector.bind("select", e, function(e) {
+                        if(e.data.model.sol.Product__c) {
+                            KenandyErp.BlockUI(treeList.element);
+                            Visualforce.remoting.Manager.invokeAction(
+                                    '{!$RemoteAction.RepairGridCon.getPriceForProduct}',
+                                    JSON.stringify(e.data.model.sol),
+                                    function (result, event) {
+                                        e.data.model.set("sol.Unit_Price__c", result);
+                                        KenandyErp.UnBlockUI(treeList.element);
+                                    },
+                                    {escape: false}
+                            );
+                        }
+                    } );
+                }
+            }
+        })(repairGrid);
+
+        $(document).on('KenandyErpReady', function(e) {
+            $(document).trigger('RepairGridReady');
+        } );
+    </script>
+
+    <div id="warrantyReview" class="kndy-hidden">
+        <div id="warrantyDetail"></div>
+    </div>
+    <div id="warrantyCheck" class="kndy-hidden">
+        <apex:pageBlock title="{!$Label.Filters}" >
+            <table class="kndy-table" >
+                <tr>
+                    <td class="column-label">
+                        <apex:outputLabel value="{!$ObjectType.Sales_Order_Line__c.Label}" for="repairGridSolFilter" />:
+                    </td>
+                    <td class="column-field">
+                        <input id="repairGridSolFilter" class="kendoWidgetSelector" />
+                    </td>
+                    <td class="column-label">
+                        <apex:outputLabel value="{!$ObjectType.Serial__c.Label}"  for="repairGridSerialFilter" />:
+                    </td>
+                    <td class="column-field">
+                        <input id="repairGridSerialFilter" class="kendoWidgetSelector" />
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="1">&nbsp;</td>
+                    <td>
+                        <input name="repairGridSearchFilter" id="repairGridSearchFilter" type="button" value="{!$Label.Search}" class="k-button kndy-btn" />
+                        <input name="repairGridClearFilters" id="repairGridClearFilters" type="button" value="{!$Label.CSReset}" class="k-button kndy-btn" />
+                    </td>
+                </tr>
+            </table>
+        </apex:pageBlock>
+        <apex:pageBlock id="warrantyLinesGridContainer">
+            <div class="grid-container k-block k-info-colored">
+                <div class="grid-message"></div>
+                <div id="warrantySearchGrid" ></div>
+            </div>
+        </apex:pageBlock>
+    </div>
+</apex:component>

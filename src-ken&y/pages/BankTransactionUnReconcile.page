@@ -1,0 +1,186 @@
+<apex:page showHeader="true"  standardController="Bank_Account__c" id="page" extensions="BankTransactionUnReconcileExt" tabStyle="Bank_Account__c"  docType="html-5.0" title="Unreconcile Bank Transactions">
+
+	<apex:form id="mainForm">
+		<div id = "page-container" >
+			<c:KendoResources />
+	        <apex:includeScript value="{!$Resource.GridActionListJS}" />
+	        <c:busyWait includeScripts="false"/>
+	        <apex:sectionHeader subtitle="Unreconcile Bank Transactions" />
+	        <div class="page-message"></div>
+	        <apex:outputPanel id="errMsg">
+	            <apex:pageMessages />
+	        </apex:outputPanel>
+	        <apex:pageBlock > 
+	        		<apex:panelGrid columns="2" width="50%" >
+	        			<label value="Most Recent Reconciled Date: " for="rDate" >Most Recent Reconciled Date: 
+                        </label>
+                         <label  id="rDate" />
+		        		<div style="visibility: hidden; display:inline;">
+                            
+                        <input id="reconciledDate" class="kendoWidgetSelector filterDateInput page-container" />
+                             </div>
+	        		</apex:panelGrid>
+	        		<apex:outputPanel style="text-align:center;" layout="block" >
+		    	        <br/>
+		                <input name="unreconcile" style="left-margin: 40%;" id="unreconcile" type="button" value="Unreconcile" class="btn"  onclick="Utils.UnReconcile();"/>
+		                <input name="cancel" id="cancel" type="button" value="{!$Label.Go_Back}" onclick="Utils.Cancel();" class="btn"/>
+		                <br/>
+		            </apex:outputPanel> 
+	        </apex:pageBlock>
+	    </div>
+	</apex:form>
+	
+	<script>
+		$(document).on('KenandyErpReady', function(e) {
+					
+					//Initialize month picker
+				    $('#reconciledDate').kendoDatePicker({
+		                // defines the start view
+		                start: "year",
+		                // defines when the calendar should return date
+		                depth: "year",
+		                // display month and year in the input
+		                format: "MM/dd/yyyy" //hidden and not used
+		            });
+		            Utils.GetLatestReconciledDate();
+		            
+        });
+        
+        var Utils = function(){
+        	return{
+                
+        		GetLatestReconciledDate: function(){ //GETS THE LATEST DATE OF REONCILIATION FOR A GIVEN BANK ACCOUNT
+        			KenandyErp.BlockUI();
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.BankTransactionUnReconcileExt.getLatestReconciliationDate}',
+                        '{!Bank_Account__c.Id}',
+                         function (result, event) {
+                          	KenandyErp.UnBlockUI();
+                                        
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error);
+                            } else {
+                            	var recDate = $('#reconciledDate').data('kendoDatePicker');
+                            	recDate.enable(false);
+                                if (result.success) {
+                                    KenandyErp.Messages(result.messages);
+                                    var uidateTime = KenandyErp.ParseSFDCDateTime(result.records[0]); //KNDY-15495
+                                    //get date formatted in user`s locale
+                                    var uidate = moment(uidateTime).format(KenandyErp.DateFormat.toUpperCase());
+                                    document.getElementById('rDate').innerHTML=uidate;
+                                    recDate.value(uidateTime);
+                                }
+                                else {
+                                    $("#unreconcile").attr('disabled','disabled');
+                                    recDate.value('');
+                                    document.getElementById('rDate').innerHTML='';//KNDY-15495
+                                    KenandyErp.Messages(result.messages);
+                                    
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+        		},
+        		UnReconcile: function() {//KISCKS OFF THE PROCESS 1. GET MAX OF 50K RECORDS THAT NEED TO BE UNRECONCILED 2. UNRECONCILE THEM 3. AGAIN QUERY FOR NEXT BATCH
+        		//4. IF RETURN SIZE IS 0 THEN DO FINAL ON SUCCESS CALL
+        			var recDate = $('#reconciledDate').data('kendoDatePicker');
+        			var recDateValue  = recDate.value();
+        			var ApexDateValue = recDateValue.toUTCString();
+        			
+        			var uidateTime = KenandyErp.ParseSFDCDateTime(recDateValue); //KNDY-15495
+        			//get date formatted in user`s locale
+        			var uidate = moment(uidateTime).format(KenandyErp.DateFormat.toUpperCase());
+        			var dateString = uidate;
+        			
+        			var cnfrm = window.confirm(' All bank transactions associated with reconciliation as of '+dateString+' will no longer show as reconciled.');
+        			if(cnfrm) {
+        				KenandyErp.BlockUI();
+        				Utils.StartToUnreconcile({apexDate : ApexDateValue});
+        			}
+        			
+        		},
+        		StartToUnreconcile: function(options) {
+        			Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.BankTransactionUnReconcileExt.getRecordsToUnReconcile}',
+                        '{!Bank_Account__c.Id}',
+                         options.apexDate,
+                         function (result, event) {
+                          	
+                                        
+                            if (event.type == 'exception') {
+                            	KenandyErp.UnBlockUI();
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error);
+                            } else {
+                            	if (result.success) {
+                                    var chunkSize = 5000; //NEED TO SEND ONLY 5K RECORDS AT A TIME
+                                    var arrays = []; 
+                                    if(result.records.length == 0) { //IF ON SUCCESS QUERY COUNT IS 0 -->THEN FINAL ON SUCCESS CODE GOES HERE
+                                    	Utils.GetLatestReconciledDate();
+                                    }
+                                   	
+                                    	
+                                    while (result.records.length > 0) {
+                                    	arrays.push(result.records.splice(0, chunkSize)); //CREATE ARRAY OF 50K RECORDS
+                                    }
+                                    for(var i=0; i< arrays.length; i++) {
+                                    	var isLastChunk = false;
+                                    	isLastChunk = i == (arrays.length - 1) ? true : false; //SEND ISLASTCHUNK INFO
+                                    	Utils.UnreconcileInChunk({apexDate : options.apexDate, records : arrays[i], isLastChunk : isLastChunk});
+                                    }
+                                    
+                                }
+                                else {
+                                	KenandyErp.UnBlockUI();
+                                    KenandyErp.Messages(result.messages);
+                                    
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+        		},
+        		UnreconcileInChunk: function(options) {
+        			Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.BankTransactionUnReconcileExt.UnReconcileBankTransactions}',
+                        options.records,
+                        '{!Bank_Account__c.Id}',
+                        options.apexDate,
+                         function (result, event) {
+                          	KenandyErp.UnBlockUI();
+                                        
+                            if (event.type == 'exception') {
+                            	KenandyErp.UnBlockUI();
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error);
+                            } else {
+                            	if (result.success) {
+                            		if(options.isLastChunk) {
+                            			Utils.StartToUnreconcile({apexDate : options.apexDate}); //KICKS OFF NEXT ROUND OF QUERYING
+                            		}
+                                    KenandyErp.Messages(result.messages);
+                                }
+                                else {
+                                    KenandyErp.UnBlockUI();
+                                    KenandyErp.Messages(result.messages);
+                                    
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+        		},
+        		Cancel: function(e){
+                       //e.stopPropagation();
+                       var cnfrm = window.confirm('{!$Label.ConfirmGoBack} ');
+                       var retunUrl = '/{!Bank_Account__c.ID}';
+                       if(cnfrm){
+                           KenandyErp.BlockUI();
+                       	KenandyErp.back(true, retunUrl);
+                       }
+               },
+        	};
+        }();
+	
+	
+	</script>
+</apex:page>

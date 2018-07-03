@@ -1,0 +1,478 @@
+<apex:page standardController="Pricebook__c" showHeader="true" docType="html-5.0" extensions="PricebookRelatedListExt"> 
+
+<div style="display:none;">
+    <!-- 
+    Reason : http://salesforce.stackexchange.com/questions/7973/i-am-getting-a-sobject-row-was-retrieved-via-soql-without-querying-the-requested        
+    Moving some merge fields used in Javascript code and other places in page at top, to ensure they are loaded correctly by JS run time.
+    -->
+    <apex:outputField value="{!Pricebook__c.Company__c}"/>
+</div>
+
+
+
+<c:KendoResources />
+<c:busyWait includeScripts="false" />
+<apex:includeScript value="{!$Resource.GridActionListJS}" />
+<!-- <apex:includeScript value="{!$Resource.GridRelatedListJS}" /> -->
+<apex:includeScript value="{!$Resource.PricebookSharedJScript}" />
+
+
+<apex:form id="theForm" >
+    <div class="page-container">
+        <apex:sectionHeader subtitle="{!pricebook.Name}"/>
+
+        <apex:pageMessages id="msg" />
+
+        <apex:pageBlock title="Pricebook Details">
+
+            <div class="header-container">
+                <div class="header-message" />
+                <div id="HeaderDetailList" />
+            </div>
+
+            <apex:pageBlockButtons location="bottom">
+                <apex:outputPanel layout="none">
+                    <input type="button" class="btn update-pb" value="Update" />
+                </apex:outputPanel>
+            </apex:pageBlockButtons>
+
+        </apex:pageBlock>
+
+        <apex:pageBlock title="Pricebook Lines Filter" >
+
+            <apex:panelGrid columns="4" cellspacing="4" width="100%" styleClass="search-filters" >
+            <!-- <apex:pageBlockSection id="section2" columns="4" collapsible="true" title="Title"> -->
+
+                <!-- Row 1 -->
+                <apex:outputLabel value="Product" styleClass="filterLabel" />
+
+                <apex:outputLabel value="Price Type" styleClass="filterLabel" />
+
+                <!-- <apex:outputLabel value="Active" styleClass="filterLabel" /> -->
+
+                <apex:outputLabel value="Start Date" styleClass="filterLabel" />
+
+                <apex:outputLabel value="End Date" styleClass="filterLabel" />
+
+                <!-- <apex:outputLabel value="Actions" styleClass="filterLabel" rendered="false" /> -->
+
+                <!-- Row 2-->
+                <apex:outputPanel layout="block">
+                    <input id="productFilter" class="kendoWidgetSelector" />
+                </apex:outputPanel>
+
+                <apex:outputPanel layout="block">
+                    <input id="priceTypeFilter" class="kendoWidgetSelector" />
+                </apex:outputPanel>
+
+                <!-- <apex:outputPanel layout="block">
+                        <input type="checkbox" id="showActivePricebooks" checked="true"/>
+                </apex:outputPanel> -->
+
+                <apex:outputPanel layout="block" styleClass="dateRange">
+                    <input name="startDateFilter" id="startDateFilter" data-role="datepicker"
+                    class="kendoWidgetSelector filterDateInput" type="date" />
+                </apex:outputPanel>
+
+                <apex:outputPanel layout="block" styleClass="dateRange">
+                    <input name="endDateFilter" id="endDateFilter" data-role="datepicker"
+                    class="kendoWidgetSelector filterDateInput" type="date"/>
+                </apex:outputPanel>
+            <!-- </apex:pageBlockSection> -->
+            </apex:panelGrid>
+            <apex:pageBlockButtons location="bottom">
+                <apex:outputPanel layout="none">
+                    <input type="button" class="btn" id="applyfilters" value="Apply Filters" />
+                    <input type="button" class="btn" id="clearFilters"  value="{!$Label.CSReset}" />
+                    <apex:commandButton value="Go Back" action="{!goback}"/>
+                </apex:outputPanel>
+            </apex:pageBlockButtons>
+
+        </apex:pageBlock>
+
+        <apex:pageBlock title="Pricebook Lines">
+
+<div class="grid-container">
+	<div class="grid-message"></div>
+	<div id="{!config.uniqueId}" > </div>
+</div>    
+
+        </apex:pageBlock>
+
+        <!-- </apex:pageBlock> -->
+
+    </div>
+</apex:form>
+
+
+
+<script type="text/javascript">
+    function getKendoGridDomId() {
+        return '{!config.uniqueId}';
+    }  
+
+	$(document).on('KenandyErpReady', function(e) {
+
+        // render header
+        HeaderDetailListUtils.RenderHeaderDetailList({});
+
+        // bind clicks
+        $('#applyfilters').on("click", $.proxy(LinesActions.ApplyFilters));
+        $('#clearFilters').on("click", $.proxy(LinesActions.ClearFilters));
+
+        // Initialize Product filter
+        $.fn.KendoComboBox($('#productFilter'), { lookupSearchAction: '{!$RemoteAction.PricebookRelatedListExt.lookupSearchFilter}', referenceTo: 'Product__c', title: '{!$ObjectType.Product__c.Label}'});
+
+        // init price type as kendo dropdown list. See example on Agreement View page
+        $('#priceTypeFilter').kendoDropDownList({
+            optionLabel: "",
+             dataTextField: "text",
+             dataValueField: "value",
+             dataSource: [
+                { text: "None",   value: "" },
+                { text: "Sales",   value: "Sales" },
+                { text: "Recurring",   value: "Recurring" }
+             ]
+        }); 
+
+        // Initialize Date Filters
+        $('#startDateFilter').kendoDatePicker();
+        $('#endDateFilter').kendoDatePicker();
+            
+        // bind button to action
+        $('.update-pb').on("click", $.proxy(HeaderActions.UpdatePricebook));
+
+        PricebookLinesManageUtils.Init({
+            PriceBookLinesFieldList: '{!priceBookLinesFieldList}'
+        });
+	    
+	    /**
+	     * Need to pass lookup filters to avoid showing unrelated lookup items
+	     */
+        var lookupSearchFilters = [];
+        lookupSearchFilters.push({ field: "Product__c", filter: "Company__c = \'{!Pricebook__c.Company__c}\'" });
+        lookupSearchFilters.push({ field: "Product_Group__c", filter: "Company__c = \'{!Pricebook__c.Company__c}\'" });
+        lookupSearchFilters.push({ field: "Pricebook__c", filter: "Company__c = \'{!Pricebook__c.Company__c}\'" });
+        lookupSearchFilters.push({ field: "Customer__c", filter: "RecordType.DeveloperName = \'Sold_To\'" });
+        lookupSearchFilters.push({ field: "Pricing_UOM__c", filter: "Type__c = \'Time\'" }); //KNDY-13352
+		
+        var config = JSON.parse('{!JSENCODE(configJson)}');
+        delete config.parentRecord["attributes"];
+
+        $('#{!config.uniqueId}').kendoGridActionList({
+            namespace: '{!JSENCODE(NamespaceUU)}', 
+            config: config,
+            fieldList: PricebookLinesManageUtils.PriceBookLineFormat(), 
+            lookupSearchAction: '{!$RemoteAction.PricebookRelatedListExt.lookupSearchFilter}', 
+            getActionListFunction: loadActionData,
+            saveActionListAction: '{!$RemoteAction.PricebookRelatedListExt.savePriceBookList}',
+            lookupSearchFilters : lookupSearchFilters,
+            beforeEdit: function(e) {
+                PricebookLinesManageUtils.PriceBookGridBeforeEdit.call(this, e);
+            }
+        });
+                
+        var grid = $('#{!config.uniqueId}').data("kendoGridActionList");
+
+    	grid.bind("edit", onAddNewRow);
+        grid.bind("change". onChangeRow);
+
+	});
+
+    var HeaderData = function(readOptions) {
+        var deferred = $.Deferred();
+
+        var messageElement = $("#HeaderDetailList").closest("div.header-container").find("div.header-message");
+
+        var pricebookId = '{!pricebook.Id}';
+
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.PricebookRelatedListExt.getPBDetails}',
+            pricebookId,
+            function (result, event) {
+                var errorMessage = [];
+
+                if (event.type == 'exception'){
+                    KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                }
+                else {
+                    KenandyErp.CleanNamespace(result.records, KenandyErp.NamespacePrefix);
+
+                    if (result.messages.length > 0){
+                        KenandyErp.Message(result.messages[0].message, KenandyErp.MessageType.Error, messageElement);
+                    }
+
+                    if (result.success == true){
+                        deferred.resolve(result, event);
+                    }
+                }
+            },
+            {escape: false}
+        );
+        return deferred.promise();
+    };
+
+    var loadActionData = function() {
+        var deferred = $.Deferred();
+
+        // config
+        var remoteArgs = JSON.parse('{!configJson}');
+
+        remoteArgs.parentRecord = { Id: '{!Pricebook__c}' };
+
+        var messageElement = $('.grid-message');
+
+        // filters
+        var pricebookId = '{!pricebook.Id}';
+        var productId = $('#productFilter').data('kendoComboBox').value();
+        var startDate = $('#startDateFilter').val(); // .data('kendoDatePicker').value(); //dates.startDate;  //
+        var endDate = $('#endDateFilter').val(); // .data('kendoDatePicker').value(); //dates.endDate;
+        var priceType = $('#priceTypeFilter').data('kendoDropDownList').value();
+
+        var dates = {startDate: $('#startDateFilter').data('kendoDatePicker').value(),
+                        endDate: $('#endDateFilter').data('kendoDatePicker').value()};
+
+        Serializer.ConvertToSFDCDate(dates,
+            {'dateFields':
+                [
+                    {'field':'startDate', 'fieldtype':'date'},
+                    {'field':'endDate', 'fieldtype':'date'}
+                ]
+        });
+
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.PricebookRelatedListExt.getFilteredPBLs}',
+            remoteArgs,
+            productId,
+            startDate,
+            endDate,
+            priceType,
+            function (result, event) {
+
+                KenandyErp.ClearMessage();
+                KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                KenandyErp.UnBlockUI();
+
+                if (result.success){
+                    deferred.resolve(result, event);
+
+                } else if (!result.success){
+                    KenandyErp.Message(result.messages[0].message, KenandyErp.MessageType.Error, messageElement);
+                }
+
+            },
+            {escape: false}
+        );
+
+        return deferred.promise();
+
+    }
+    var FilterUtilities = function(){
+        return {
+            startDate: null,
+            endDate: null,
+            product: null,
+            priceType: null,
+            HeaderDetailList: null,
+            HeaderDateFields: null,
+            HeaderFieldSet: null,
+
+            InitFilters: function(e){
+
+                var productId = $('#productFilter').data('kendoComboBox').value();
+                var priceType = $('#priceTypeFilter').data('kendoComboBox').value();
+                // var activeFlag = $('#showActivePricebooks').val();
+                var startDate = $('#startDateFilter').val();
+                var endDate = $('#endDateFilter').val();
+            }
+        };
+    }();
+
+    var HeaderActions = function(){
+        return {
+            UpdatePricebook: function(e){
+                var self = this;
+
+                // handling header
+                var messageElement = $("#HeaderDetailList").closest("div.header-container").find("div.header-message"); // using header message element if lines pageblock are hidden aren't available
+
+                var headerDetailList = HeaderDetailListUtils.HeaderDetailList;
+                var headerDateFields = HeaderDetailListUtils.HeaderDateFields;
+                var headerRowsList = [];
+                var headerRows = [];
+
+                if (!$("#HeaderDetailList").data('kendoDetailList').validate()) {
+                    KenandyErp.Message("Please fix the following errors.");
+                    e.preventDefault();
+                    return false;
+                }
+
+                KenandyErp.BlockUI();
+
+                headerRowsList.push(headerDetailList.data);
+                headerRows = $.map(headerRowsList, function(item, index) {
+                    item = item.toJSON();
+                    item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+                    return item;
+                });
+
+                if (headerRows.length > 0) {
+                    headerRows = Serializer.ParameterMap(headerRows);
+                }
+
+                KenandyErp.ClearMessage( messageElement);
+
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.PricebookRelatedListExt.updatePricebook}',
+                    headerRows[0],
+                    function (result, event) {
+                        KenandyErp.UnBlockUI();
+
+                        if (event.type == 'exception') {
+                            KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                        } else {
+                            if (result.success) {
+                                deferred.resolve(result, event);
+                            }
+                            else {
+                                KenandyErp.Messages(result.messages, messageElement);
+                            }
+                        }
+                    },
+                    {escape: false}
+                );
+            }
+        };
+    }();
+
+    var LinesActions = function(){
+        return {
+            ClearFilters: function(e){
+                $('#productFilter').data('kendoComboBox').value("");
+                $('#priceTypeFilter').data('kendoDropDownList').value("");
+                $('#startDateFilter').data('kendoDatePicker').value("");
+                $('#endDateFilter').data('kendoDatePicker').value("");
+                 // $('#showActivePricebooks').prop('checked', true);
+            },
+
+            ApplyFilters: function(e){
+                var grid = $('#{!config.uniqueId}').data('kendoGridActionList');
+                grid.dataSource._destroyed = [];
+                grid.dataSource.read();
+            }
+        };
+    }();
+
+     var PricebookLinesManageUtils = function() {
+        return {
+            PriceBookLinesFieldList : null,
+            Init: function(arg){
+                PricebookLinesManageUtils.PriceBookLinesFieldList = JSON.parse(arg.PriceBookLinesFieldList);
+            },
+
+            PriceBookGridBeforeEdit : function(e){
+                var grid = this;
+                var dataItem = e.model; // get the row data
+                var columnIndex = grid.cellIndex(e.container);
+                var fieldName = grid.thead.find("th").eq(columnIndex).data("field");
+
+                var isDefaultPrevented = false;
+
+                if ((fieldName == 'Min__c' || fieldName == 'Max__c')){
+                    if(dataItem.get('Use_Fixed_Pricing__c') == true){
+
+                        // disable Min and Max from being edited
+                        isDefaultPrevented = true;
+                    } else {
+                        isDefaultPrevented = false;
+                    }
+                }
+
+                if (isDefaultPrevented) {
+                    e.preventDefault();
+                }
+            },
+
+            PriceBookLineFormat: function(){
+                var fieldList = PricebookLinesManageUtils.PriceBookLinesFieldList;
+
+                $.each(fieldList, function() { 
+                    if (this.field == 'Name') {
+                        this.template = '<a href="/#=sanitize(Id)#" target="_blank">#= (Name == null) ? "" : sanitize(Name) #</a>'; 
+                        this.fieldtype='reference';
+                    }            
+                });
+                
+                return fieldList;
+            }
+        };
+    }();
+
+    var HeaderDetailListUtils;
+    HeaderDetailListUtils = function () {
+        return {
+            HeaderDetailList: null,
+            HeaderDateFields: null,
+            HeaderFieldSet: null,
+
+            DisableFields: function (e) {
+                this.HeaderDetailList.enable(false, {disabledFields: _.pluck(this.HeaderFieldSet, "field")});
+
+            },
+
+            RenderHeaderDetailList: function (e) {
+                var HeaderDetailList = this.HeaderDetailList;
+
+                var lookupSearchAction =  '{!$RemoteAction.PricebookRelatedListExt.lookupSearchFilter}';
+                var lookupSearchFilters = [];
+                var HeaderFieldList = JSON.parse('{!HeaderFieldList}');
+                this.HeaderFieldSet = _.clone(HeaderFieldList);
+                this.HeaderDateFields = KenandyErp.KendoGridOptions.GetDateFields(JSONUtils.Parse(HeaderFieldList));
+
+                if (this.HeaderDetailList) {
+                    this.HeaderDetailList.destroy();
+                    $('#HeaderDetailList').empty();
+                }
+
+                this.HeaderDetailList = $('#HeaderDetailList').kendoDetailList({
+                    namespace: '{!NamespaceUU}',
+                    sections: [
+                        {
+                            fields: HeaderFieldList
+                        }
+                    ],
+                    lookupSearchAction: lookupSearchAction,
+                    lookupSearchFilters: lookupSearchFilters,
+                    getDetailListFunction: HeaderData
+                }).data('kendoDetailList');
+
+
+                this.HeaderDetailList.element.bind('OnReadSuccess', HeaderDetailListUtils.OnHeaderDetailListReadSuccess);
+
+            },
+
+            OnHeaderDetailListReadSuccess: function (e) {
+                this.companyId = HeaderDetailListUtils.HeaderDetailList.data.Company__c;
+            },
+
+            Edit: function(e) {
+                var self = this;
+                var grid = self.grid;
+                var options = grid.options;
+                var config = options.config;
+
+                var row = e.container.closest('tr');
+                var dataItem = this.grid.dataItem(row);
+
+                var columnIndex = grid.cellIndex(e.container);
+                var fieldName = grid.thead.find("th").eq(columnIndex).data("field");
+                var isDefaultPrevented = false;
+
+            },
+        };
+    }();
+
+</script>
+
+
+</apex:page>

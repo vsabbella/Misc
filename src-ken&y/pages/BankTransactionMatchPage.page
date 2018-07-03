@@ -1,0 +1,3188 @@
+<apex:page docType="html-5.0" title="{!$Label.Manage_Bank_Transactions}" standardController="Bank_Account__c" extensions="BankTransactionMatchExt,YodleeTransactionSearchExt">  
+
+     
+    <style>
+    
+		.clearfix:after {
+		   content: " "; /* Older browser do not support empty content */
+		   visibility: hidden;
+		   display: block;
+		   height: 0;
+		   clear: both;
+		}    
+        .tableContainer {
+        
+        display: table;
+        } 
+        
+        .tableRow {
+        display: table-row; 
+        } 
+        
+        .tableCell {
+        display: table-cell;
+        }
+        
+        .comment{
+        color: red;
+        } 
+        
+        div.Fcontainer{
+        width: 90%;
+        }   
+        
+        div.column25{
+        box-sizing: border-box;
+        float: left;
+        width: 25%;
+        }
+        
+        div.column33{
+        box-sizing: border-box;
+        float: left;
+        width: 33.3333333%;
+        }
+        div.column15{
+         box-sizing: border-box;
+         float: left;
+         text-align: left;
+         padding-left: 10px;
+         width: 15%;
+         }
+        
+        div.column15{
+        box-sizing: border-box;
+        float: left;
+        text-align: left;
+        padding-left: 10px;
+        width: 15%;
+        } 
+        
+        div.column50{
+        box-sizing: border-box;
+        float: left;
+        width: 50%;
+        } 
+        
+        div.columnpx{
+        box-sizing: border-box;
+        float: left;
+        width: 230px;        
+        }
+        
+        div.inlineFC{
+        width: 100%;
+        }
+        
+        div.inlineCol{
+        box-sizing: border-box;
+        float: left;
+        text-align: left;         
+        margin-right: 10px;    
+        }
+        
+        div.inlineCol3{
+        box-sizing: border-box;
+        float: left;
+        text-align: left;         
+        margin-right: 10px;    
+        width: 25%;
+        }        
+        div.inlineCol3 > .RItem{
+        float: right;
+        }
+        div.inlineCol:last-child{
+        	margin-right: 0px;   
+        }
+        
+        div.column60{
+        box-sizing: border-box;
+        float: left;
+        width: 60%;
+        }
+        
+		.LItem{
+			font-weight: bold;
+		}        
+        
+		.widthLabel{
+			width: 25%;
+		}       
+        
+        .col1{
+        text-align: left;
+        padding-right: 15px;
+        }
+        
+        .col2{
+        text-align: right;
+        }
+        
+        .pointer{
+        	cursor: pointer;
+        }
+        
+        .k-multiselect{
+        
+        width: 150px;
+        }
+        
+        .bottomPad{
+        padding-bottom: 4px;
+        }
+        
+    	span.k-widget.k-tooltip-validation {
+                    display; inline-block;
+                    width: 110px;
+                    text-align: left;
+                    border: 0;
+                    padding: 4px 0px 4px 0px;
+                    margin: 0;
+                    background: none;
+                    box-shadow: none;
+                    position: absolute; 
+    				left: 0px; 
+    				top: 28px;
+    				background-color:#FFF4C9;
+    				border-color:#FFE79E;
+    				color:#263248;
+                }
+    
+        
+    </style>
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.BankTransactionYodleeJS}" />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+    <apex:includeScript value="{!$Resource.BankTransactionMatch}" />
+   
+    <apex:includeScript value="{!$Resource.GridHierarchicalA}" />
+    <c:busyWait includeScripts="false" />
+    <script src="../../soap/ajax/38.0/connection.js" type="text/javascript"/>
+    
+    
+    
+    <div id = "page-container">
+	        <div class="page-message" id="page-message"></div>
+	        <apex:outputPanel id="errMsg">
+	            <apex:pageMessages />
+	        </apex:outputPanel> 	
+  <apex:outputPanel layout="block" rendered="{!NOT(loadScreen)}">
+    	<input name="back" id="back" type="button"
+               value="Back" class="btn" /> 
+    </apex:outputPanel>	        
+  <apex:sectionHeader subtitle="{!$Label.Manage_Bank_Transactions}" help="{!URLFOR($Page.HelpManageBankTransactions)}" rendered="{!loadScreen}"/>  
+    <apex:outputPanel layout="block" rendered="{!loadScreen}">
+     
+
+        <input name="viewrs" id="viewrs" type="button"
+               value="View Reconciliation Summary" class="btn" />       
+        <input name="bankacc" id="bankacc" type="button"
+               value="Bank Account" class="btn" />                 
+         <button id="actionButton" class ="k-button kndy-btn" type="button">Actions</button>
+  
+    </apex:outputPanel>
+    <br/>
+    <apex:pageBlock title="Bank Account Details"  rendered="{!loadScreen}">
+          <div id="HiddenFields" style="display:none;">
+             <apex:outputText value="{!Bank_Account__c.name}" />
+              <apex:outputText value="{!Bank_Account__c.Id}" />
+              <apex:outputText value="{!Bank_Account__c.Company__c}" />
+			  <apex:outputText value="{!Bank_Account__c.company__r.name}" />
+              <apex:outputText value="{!Bank_Account__c.Currency__c}" />
+              <apex:outputText value="{!Bank_Account__c.Currency__r.ISO_Code__c}" />
+              <apex:outputText value="{!Bank_Account__c.GL_Account__c}" />
+              <apex:outputText value="{!Bank_Account__c.GL_Account__r.Name}" />
+              <apex:outputText value="{!Bank_Account__c.Opening_Balance__c}" />
+              <apex:outputText value="{!Bank_Account__c.Balance_Offset__c}" />
+              <apex:outputText value="{!Bank_Account__c.Opening_Balance_Date__c}" /> 
+              <apex:outputText value="{!Bank_Account__c.Yodlee_Account_Number__c}" />   
+             </div>
+        <!--  Make selections-->
+        <div class="tableContainer">
+            <div class="tableRow"> 
+                <div class="tableCell">
+                    <apex:panelGrid columns="4" columnClasses="col1" width="100%">
+                        <apex:outputLabel value="Bank Account" />
+                        <apex:outputLabel id="bankAccCoName" />
+                        <apex:outputLabel value="GL Account" style="padding-left: 25px;"/>
+                        <a href="/{!Bank_Account__c.GL_Account__c}">{!Bank_Account__c.GL_Account__r.Name}</a> 
+                        <apex:outputLabel value="Bank Account Currency" />
+                        <a href="/{!Bank_Account__c.Currency__c}">{!Bank_Account__c.Currency__r.ISO_Code__c}</a> 
+                        <apex:outputLabel value="Most Recent Reconciled Date"  style="padding-left: 25px;"/>
+                        <apex:outputLabel id="reconcileDate"/>
+                    </apex:panelGrid>
+
+                </div>
+
+                </div>
+            </div>
+    </apex:pageBlock>
+    
+    
+    <apex:pageBlock title="Transactions and Statement Summary" id="bankTxnPageBlock" rendered="{!loadScreen}">
+    
+                    <div id="date-message"></div>
+                    <h1>Enter Dates</h1>
+                    <div class="inlineFC">
+                    <div class="inlineCol"><span class="">From Date </span>
+                    <input id="datepickerfrom" name="datepickerfrom" data-role="datepicker"  class="kendoMassUpdateWidgetSelector" type="datetime"/>
+              
+                    </div>
+                    <div class="inlineCol"><span class="">To Date </span><apex:outputPanel > <input id="datepickerto" name="datepickerto" data-role="datepicker" class="kendoMassUpdateWidgetSelector" type="datetime" />
+                    <span id ="test" class="k-invalid-msg" data-for="datepickerto" style="position: absolute; left: 0px; top: 28px;"></span>
+                    </apex:outputPanel></div>
+                    <div class="inlineCol"><span class=""><input name="searchFilter" style="left-margin: 40%;" id="searchFilter" type="button" value="{!$Label.Search}" class="btn" /></span></div>
+                  <!--    <div class="inlineCol"><span class=""><input name="allTransaction" style="left-margin: 40%;" id="allTransaction" type="button" value="Import All Transactions" class="btn" /></span></div> -->
+                    <br/>
+                    <br/>
+                    </div>     
+                    <br/>
+                    <div class="clearfix"></div>                    
+
+			<div id="searchResultBlock">
+			
+			
+			
+		<div class="grid-container">
+
+					
+					<br/>
+					
+	<div class="columnpx">
+				<!-- First Row -->
+		        <div class="column50 bottomPad">
+		         <apex:outputLabel value="Beginning Balance" for="beginningbalance" />
+		        </div>
+		        <div class="column50 bottomPad col2">
+		            <span id="beginningbalance">Loading...</span>
+		        </div>
+		           <div style="clear: both;"></div>	
+		        <div class="column50 bottomPad">
+		          <apex:outputLabel value="Deposits and Credits" for="depositscredit" />
+		        </div>
+		        <div class="column50 bottomPad col2">
+		            <span id="depositscredit">Loading...</span>
+		        </div>
+		           <div style="clear: both;"></div>	
+		        <div class="column50 bottomPad">
+		          <apex:outputLabel value="Payments and Debits" for="paymentsdebit" />
+		        </div>
+		        <div class="column50 bottomPad col2">
+		            <span id="paymentsdebit">Loading...</span>
+		        </div>
+		           <div style="clear: both;"></div>	
+		        <div class="column50 bottomPad">
+                        <apex:outputLabel value="Ending Balance" for="endingbalance" />
+		        </div>
+		        <div class="column50 bottomPad col2">
+		            <span style="border-top: 2px solid black;" id="endingbalance">Loading...</span>
+		        </div>		        		        		        
+	</div>
+	<div class="clearfix"></div>
+		
+                <br/>  
+<!-- BankTransaction Grid -->           
+<div class="grid-message"></div>        
+						<input name="approvematches" id="approvematches" type="button"
+							value="Approve" class="btn" />		
+                     	<input name="unmatchpotentialmatches" id="unmatchpotentialmatches" type="button"
+							value=" Unmatch" class="btn" />
+                     <input name="createJE" id="createJE" type="button"
+							value="Create Journal Entry" class="btn" />
+           <div id="bankTransactionGrid"></div>
+       </div>
+			</div>
+
+    </apex:pageBlock>	        
+	        
+    </div>
+    
+    <!-- Declaration of all modals -->
+    
+	  <!--    <p id="openWindow">Open a kendo widow</p> -->
+	  <div id="test"></div>
+	  <div id="dialog"></div>    
+	  <div id="yodleePopUp"></div>
+    <!-- To be matched modal (kendo window) -->
+                              
+     <div id="createJEWindow">
+                              <div id="contmessage"/>
+                              <div id="jeerrormessage"/>
+                              <div id="JELgrid"></div>
+                              
+                                                     
+                              
+    </div>
+    <div id="toBeMatchedWindow">
+        <div id="errMsgFindModal"></div>
+					<div class="inlineFC">
+					<div class="inlineCol3"><span class="LItem">Amount: </span><span class="RItem" id="fmAmt">Loading...</span></div>
+					<div class="inlineCol"><span class="LItem">Date: </span><span class="RItem" id="fmDate">Loading...</span></div>
+					<div class="inlineCol"><span class="LItem">Reference Number: </span><span class="RItem" id="fmRefNum">Loading...</span></div>
+					<div class="inlineCol"><span class="LItem">Transacted With: </span><span class="RItem" id="fmTxnWith">Loading...</span></div>
+					</div>     
+                    <div class="clearfix"></div>
+					<div class="inlineFC">
+					<div class="inlineCol3"><span class="LItem">Already Matched: </span><span class="RItem" id="prevmatched">Loading...</span></div>
+					</div>     
+                    <div class="clearfix"></div>       
+					<div class="inlineFC">
+					<div class="inlineCol3"><span class="LItem">Remaining: </span><span class="RItem" id="amtremaining">Loading...</span></div>
+					<span id="btID" style="display:none"></span>
+                     <span id="btAmount" style="display:none"></span>
+					</div>     
+                    <div class="clearfix"></div>                                 
+                   
+<!--    <table>
+   <tr><td>Previously Matched</td><td style="text-align: right;"><span id="prevmatched">Loading...</span></td></tr>
+   <tr><td>Remaining</td><td style="text-align: right;"><span id="amtremaining">Loading...</span></td></tr>
+   </table> -->
+                    <hr/>                     
+
+	<div class="Fcontainer">
+				<!-- First Row -->
+		        <div class="column25 bottomPad">
+	         		<apex:outputLabel value="{!$Label.from_date}" for="txnDate" />
+	         	</div>
+	         	<div class="column25 bottomPad">
+	         		<input id="txnDateFrom" name="txnDate" data-role="datepicker"  class="kendoMassUpdateWidgetSelector" type="datetime"/>
+	            	<span class="k-invalid-msg" data-for="txnDateFrom" style="position: absolute;left: 0px;top: 28px;"></span>
+	         	</div>
+	         	<div class="column15 bottomPad">
+	         		<apex:outputLabel value="{!$Label.to_date}" for="txnDateTo" />
+	        	 </div>
+	         	<div class="column25 bottomPad">
+	         		<input id="txnDateTo" name="txnDateTo" data-role="datepicker"  class="kendoMassUpdateWidgetSelector" type="datetime"/>
+	            	<span class="k-invalid-msg" data-for="txnDateTo" style="position: absolute;left: 0px;top: 28px;"></span>
+	         	</div> 
+	         	<br/> 
+		        <!-- Second Row -->
+		        <div class="column25 bottomPad">
+	        		<apex:outputLabel value="{!$Label.from_amount}" for="amtFrom" />  
+	        	</div>
+	        	<div class="column25 bottomPad">
+	        		<input type="number"  name="amtFrom" id="amtFrom" onkeyup="BankTxnMatch.ValidateSDSearchFilters();"/>
+	       		 </div>
+	        	<div class="column15 bottomPad">
+	        		<apex:outputLabel value="{!$Label.to_amount}" for="amtTo" />  
+	        	</div>
+	        	<div class="column25 bottomPad">
+	        		<input type="number"  name="amtTo" id="amtTo" onkeyup="BankTxnMatch.ValidateSDSearchFilters();"/>
+	       		</div> 
+	       		<br/>
+	      	</div>
+          	<div style="clear: both;"></div> 
+          	<div class="Fcontainer">
+				<!-- Third Row -->
+		        <div class="column25 bottomPad">
+		           <apex:outputLabel value="Type" for="type"  />  
+		        </div>
+		        <div class="column60 bottomPad">
+		             <select id="crjespType"></select>	
+		        </div>
+		        <!-- Fourth Row -->
+		        <div class="column25 bottomPad">
+		           <apex:outputLabel value="Reference Number" for="refnumber" />  
+		        </div>
+		        <div class="column60 bottomPad">
+                    <input name="refnumber" id="refnumber" class="k-textbox" onkeyup="BankTxnMatch.ValidateSDSearchFilters();"/>
+		        </div>		
+		        <div class="column25 bottomPad">
+	            	<apex:outputLabel value="Transacted With" for="transactedWith" />
+		        </div>
+		        <div class="column60 bottomPad">
+                    <input type="text" name="transactedWith" id="transactedWith" class="k-textbox" onkeyup="BankTxnMatch.ValidateSDSearchFilters();"/>
+		        </div>
+                <div class="column25 bottomPad">
+                    <apex:outputLabel value="{!$ObjectType.Customer_Receipt__c.fields.Deposit_Identifier__c.Label}" for="depositId" />
+                </div>
+                <div class="column60 bottomPad">
+                    <input type="text" name="depositId" id="depositId" class="k-textbox" onkeyup="BankTxnMatch.ValidateSDSearchFilters();"/>
+                </div>
+			</div>
+   <div style="clear: both;"></div>	   	        
+				        <apex:outputPanel layout="block" rendered="{!loadScreen}">
+				            <input name="searchMatched" style="left-margin: 40%;"
+				                   id="searchMatched" type="button" value="{!$Label.Search}" class="btn" />
+				            <input name="clearMatched" id="clearMatched" type="button"
+				                   value="{!$Label.CSReset}" class="btn" />
+				        </apex:outputPanel>
+				         <br />
+						<div id="MatchTabstrip">
+						    <ul>
+						        <li id="tab1">Search Results</li>
+						        <li id="tab2">Already Matched</li>
+						    </ul>
+						    <div>
+						<div class="grid-container">
+			                        <div class="grid-message" ></div>
+			                        <div id="{!searchedResultGridConfig.uniqueId}"></div>
+	                    </div>
+	                    <br/>
+	 					<div><span style="font-weight: bold; font-size: 1em;">Total Amount Selected&nbsp;&nbsp;&nbsp;</span><span id="amtselected">0.00</span></div>
+	                    
+	                    </div>
+						    <div>
+								<div class="grid-container">
+			                        <div class="grid-message" ></div>
+			                        <div id="alreadyMatched" ></div>
+			                    </div>						    
+						    </div>
+						</div>				         
+                    	</div>
+
+    <!-- End of the matching modal-->
+    
+    <script>
+      Visualforce.remoting.timeout = 120000;
+      var kwindow;
+      var  refreshWindow = function(){
+        kwindow.refresh();    
+        
+        } 
+/**********Global Variable**************/
+	var bankid = "{!$CurrentPage.parameters.Id}";
+    var companyid="{!Bank_Account__c.Company__c}";
+    var BankAccName = "{!Bank_Account__c.Name}";   
+    var glAccId ='{!Bank_Account__c.GL_Account__c}';
+    var companyName = "{!Bank_Account__c.Company__r.Name}";
+    var rulesList = JSON.parse("{!JSENCODE(rulesListJson)}");
+    var detailData = [];
+    var expandedRows = [];
+    var banktxnObj;
+    var stdate = "{!stDate}";
+   //multi-select dropdown
+    var crjespTypeField;
+    //tab to activate
+    var matchTabstrip;
+    var nspaceForYodlee = '{!nspace}';
+    var namespace ='{!namespace}';
+    var nomatchfound = '{!$Label.No_Match_Results_Are_Found}';
+    
+    //Override value in static resource BankTransactionMatch
+    var btmChunkSize = '{!BTMChunkSize}'; 
+    if (btmChunkSize){
+        AutoMatchUtil.btmChunkSize = btmChunkSize;
+    }
+    var btIdRemainningAmountMap = new Map();
+    var btList;
+    var categoryToStt = JSON.parse('{!categoryToStt}');
+    console.log('categoryToStt #### ' + categoryToStt);
+    // find window create journal entry variables
+    var transactionCurrency="{!Bank_Account__c.Currency__c}";
+    var isDateUpdated = false;
+	var isAmtUpdated = false;
+    //custom labels
+    var From_Amount_cant_be_greater_than_the_To_Amount = "{!$Label.From_Amount_cant_be_greater_than_the_To_Amount}";
+    var From_date_cant_be_greater_than_the_To_date = "{!$Label.From_date_cant_be_greater_than_the_To_date}";
+                         
+    var MATCHED_COLOR_CODES = {
+    	AllMatched : 'G',
+    	NoneMatched : 'R',
+    	SomeMatched : 'Y',
+    	Finalized : 'NC'
+    };
+
+    
+/**********End of Global Variables**************/  
+//Object to initialize the grid
+var ConfigObj = function(uniqueId, title, objectName, fieldset, buttons, alwaysUseFullDateTimeFormat, renderCheckboxes, scrollable, actionColumnButtons,  actionColumnPos){
+        this.uniqueId = uniqueId;
+        this.title = title;
+        this.objectName = objectName;
+        this.fieldset = fieldset;
+        this.buttons = '';
+        this.alwaysUseFullDateTimeFormat = alwaysUseFullDateTimeFormat;
+        this.renderCheckboxes = renderCheckboxes;
+        this.scrollable = scrollable;
+        this.actionColumnButtons = actionColumnButtons;
+        this.actionColumnPos = actionColumnPos;
+       };
+       
+		var FSObj = (function(){
+			function FSObj(FSVal){
+				if(FSVal){
+					if(FSVal.editable !== undefined){ this.editable = FSVal.editable;}
+					if(FSVal.field !== undefined){this.field = FSVal.field;}
+					if(FSVal.fieldtype !== undefined){this.fieldtype = FSVal.fieldtype;}
+					if(FSVal.filterable !== undefined){this.filterable = FSVal.filterable;}
+					if(FSVal.format !== undefined){this.format = FSVal.format;}
+					if(FSVal.hidden !== undefined){this.hidden = FSVal.hidden;}
+					if(FSVal.nullable !== undefined){this.nullable = FSVal.nullable;}
+					if(FSVal.precision !== undefined){this.precision = FSVal.precision;}
+					if(FSVal.referenceTo !== undefined){this.referenceTo = FSVal.referenceTo;}
+					if(FSVal.required !== undefined){this.required = FSVal.required;}
+					if(FSVal.scale !== undefined){this.scale = FSVal.scale;}
+					if(FSVal.selectList !== undefined){this.selectList = FSVal.selectList;}
+					if(FSVal.sortable !== undefined){this.sortable = FSVal.sortable;}
+					if(FSVal.title !== undefined){this.title = FSVal.title;}
+					if(FSVal.validation !== undefined){this.validation = FSVal.validation;}
+					if(FSVal.width !== undefined){this.width = FSVal.width;}
+					if(FSVal.nonhoverable !== undefined){this.nonhoverable = FSVal.nonhoverable;}						
+				}
+				else{
+					console.log("Invalid FSVal = "+FSVal);
+					return {};
+				}		
+			}
+	           	FSObj.prototype.editable =  false;
+	           	FSObj.prototype.field =  null;
+	           	FSObj.prototype.fieldtype = null;
+	           	FSObj.prototype.filterable = false;
+	           	FSObj.prototype.format = null;
+	           	FSObj.prototype.hidden = false;
+	           	FSObj.prototype.nullable = false;
+	           	FSObj.prototype.precision = 0;
+	           	FSObj.prototype.referenceTo = null;
+	           	FSObj.prototype.required = false;
+	           	FSObj.prototype.scale = 0;
+	           	FSObj.prototype.selectList = false;
+	           	FSObj.prototype.sortable = false;
+	           	FSObj.prototype.title = null;
+	           	FSObj.prototype.validation = null;
+	           	FSObj.prototype.width = null;
+	           	FSObj.prototype.nonhoverable = false;			
+		return FSObj;
+		})();	       
+//End of objects to initialize the grid        
+		         
+     //Code to initialize statementSummary values
+     var NUMBER_OF_ITEMS = 3;
+     
+   var checkCompleted = (function(){
+	     var i = 0;
+	     return {
+	    	Increment: function(){return ++i;},
+			SetValue: function(j, reset){ 
+			i = (reset === true)? j : i;
+			}
+			}
+		 }
+)();   
+     
+     function isComplete(label, options){
+     var count = checkCompleted;
+     if(options!== undefined){
+     //Going to reset the counter.
+     count.SetValue(options, true);
+     }
+     var testcount = count.Increment();
+     //console.log("Just finished: "+label+". Counter value is: "+testcount);
+     if(NUMBER_OF_ITEMS===testcount ){
+         //Initalize the UI here
+		$(document).trigger("SummaryValuesReady");
+     }
+     }        
+      //End of code to initialize Statement Summary   
+      
+//Object for StatementSummary
+var StmtSmryObj = (function(){
+	function StmtSmryObj(){
+		this.SumBeginningBalance = 0;
+		this.SumDepCredit = 0;
+		this.PaymntDebits = 0;
+		this.EndingBalance = 0;
+	}
+	
+	StmtSmryObj.prototype.setSumBeginningBalance = function(BalSumMAthchedApproved,BalBeginingBal,BankAcctOpeningBalAdjustment ){
+		this.SumBeginningBalance = Number(BalSumMAthchedApproved) +Number(BalBeginingBal) + Number(BankAcctOpeningBalAdjustment);
+		return this;
+	};
+	StmtSmryObj.prototype.getSumBeginningBalance = function(){
+		return this.SumBeginningBalance
+	};
+	
+	StmtSmryObj.prototype.setSumDepCredit = function(SumDepCredit){
+		this.SumDepCredit = SumDepCredit;
+	};
+	StmtSmryObj.prototype.getSumDepCredit = function(){
+		return this.SumDepCredit;
+	};
+	
+	StmtSmryObj.prototype.setPaymntDebits = function(PaymntDebits){
+		this.PaymntDebits = PaymntDebits;
+	};
+	StmtSmryObj.prototype.getPaymntDebits = function(){
+		return this.PaymntDebits;
+	};
+	
+	StmtSmryObj.prototype.setEndingBalance = function(){
+		this.EndingBalance = this.SumBeginningBalance + this.SumDepCredit + this.PaymntDebits;
+		return this;
+	};
+	StmtSmryObj.prototype.getEndingBalance = function(){  
+		return this.EndingBalance;
+	}
+	
+	StmtSmryObj.prototype.setUIValues = function(vals){
+	
+	
+		$("#beginningbalance").text(formatNumbersToCommas(this.getSumBeginningBalance().toFixed(2)));
+		$("#endingbalance").text(formatNumbersToCommas(this.setEndingBalance().getEndingBalance().toFixed(2)));			
+		$("#depositscredit").text(formatNumbersToCommas(this.getSumDepCredit().toFixed(2)));
+		$("#paymentsdebit").text(formatNumbersToCommas(this.getPaymntDebits().toFixed(2)));		
+	}
+	
+	return StmtSmryObj;
+})();
+
+
+var refreshBegBalance = function(){
+
+
+    MatchedReconciled=0;
+    var deferred = $.Deferred();
+		        Visualforce.remoting.Manager.invokeAction(
+		            '{!$RemoteAction.BankTransactionMatchExt.getWhereClause}',
+					$('#datepickerfrom').val(), 
+                    bankid,
+                    companyid,
+		            function(result, event){
+                        //console.log('getWhereClause : ');
+		               //console.log(result.records);
+                        if(result){
+                         	baseFilterMatchedFinalized =   result.records[0];
+                            chunkEntireDB(NameSpaceUU+'Bank_Transaction__c');
+                            deferred.resolve(result, event);
+                            }
+                            else{
+                            console.log("Error:");
+                            console.log(event);
+								//deferred.reject("Rejecting this promise");                         
+                            }
+                            
+                         
+		            },
+		            {escape: false}
+		        );
+	
+	return deferred.promise();
+
+};
+
+var stmtsumm = new StmtSmryObj();
+//End Object for StatementSummary
+   
+    var idurlparm= "{!$CurrentPage.parameters.Id}";
+    var baseQueryMatchedFinalized= "{!bankTranSummarySelectQry}"   +' ' ;
+    var baseFilterMatchedFinalized= "{!baseFilterReconciledTransactions}" + ' ' ;
+    var BankAcctOpeningBal ='{!Bank_Account__c.opening_balance__C}';
+    var BankAcctOpeningBalAdjustment ='{!Bank_Account__c.Balance_Offset__c}';
+    var MatchedReconciled=0; //Beginning Balance.
+    var MatchedReconciledData =[];
+    var SubTransactionTypesArr =[];//KNDY-16543
+    var  OnCompleteReconciledTrans = function(type){
+        		if( type==null){
+                     console.log('no transaction found');
+                     isComplete("no Transaction found for one of the objects");
+                     }else
+                switch (type) {
+                    case NameSpaceUU+'Bank_Transaction__c':
+                   		parallelStart_ReconciledTrans(baseQueryMatchedFinalized, chunkList[type], chunkCallbackReconciledTrans, completeCallbackReconciledTrans, checkErrors, updateStatus,baseFilterMatchedFinalized);
+                        break;
+                   
+                }
+        
+        };
+    var  chunkCallbackReconciledTrans= function(result, event) {
+            //console.log('ReconciledTrans');
+            //console.log(result);        	
+           // console.log('ReconciledTrans event');
+           // console.log(event);
+	        KenandyErp.CleanNamespace(result, NameSpaceUU);
+        
+        for (index = 0; index < result.length; ++index) {
+            MatchedReconciled =MatchedReconciled + result[index]['Amount__c'];
+        } // end of for loop
+        //TODO Set the beginning balance here
+		//console.log("MatchedReconciled = "+MatchedReconciled);
+		
+    };
+    var completeCallbackReconciledTrans = function(uniqueId) {
+        //console.log('all chunks completeCallbackReconciledTrans: ' + uniqueId);
+        //Increase counter
+        isComplete("reconTxn");
+        
+    };
+    var updateStatus = function (msgLocation, statusMsg) { 
+	if (msgLocation == 2) {
+		window.setTimeout(function(){
+			$("#status-message2").text(statusMsg);
+		});	
+	} else {
+		window.setTimeout(function(){
+			$("#status-message1").text(statusMsg);
+		});		
+	} 
+}; 
+    var checkErrors = function (event) { 
+	if (event.status) {            
+		} else if (event.type === 'exception') {
+			errors.push(event.message + ' : ' + event.type);
+		} else {
+			errors.push(event.message);
+		}
+		if (errors.length == 0) {
+		} else {
+			//console.log('***errors***');
+			//console.log(errors);
+     }
+};	
+
+  
+
+    $(document).on('KenandyErpReady', function(e) {
+        ReconcileUtils.RenderActionListDropdown();
+        if('{!loadScreen}' == 'false'){     
+            $(".Fcontainer").hide();
+            $("#toBeMatchedWindow").hide();
+        }      
+        	ReconcileUtils.GetLastReconciledDate(); //KNDY-15495
+        
+             bindGridExpandCollapseAll();
+        
+                 $(document).on('SummaryValuesReady', function(e) {
+	                //Initialize the values of deposits, credits, payments and credits 
+	                BTMatchingUtils.SetStatementSummaryFields();                 
+                 
+                 });
+    
+                 $(document).on('RefreshGridReady', function(e) {
+						var BTGridPromise = $('#{!bankTransactionGridConfig.uniqueId}').data('kendoGrid').dataSource.read();
+						BTGridPromise.done(function(result, event){
+			                 //refresh the search grid
+			                 BankTxnMatch.LoadGrid();  
+			                 //refresh the alreadymatched grid
+			                 BankTxnMatch.LoadAlreadyMatchedGrid();	
+			                //re-calculate the already matched and remaining		
+				            //Initialize the previously and currently matched values
+				            var tmplstMatchesSum = 0;
+				            var gridData = $('#{!bankTransactionGridConfig.uniqueId}').data('kendoGrid').dataSource.data();
+				            //Get the previously matched array.
+				            $.each(gridData, function(index, element){
+				            	if(banktxnObj && element.bankTransaction.Id === banktxnObj.Id){
+				            		//get the lstMatched for the row.
+									if(element.lstMatches){
+										for(var i = 0 ; i < element.lstMatches.length ; i++){
+											tmplstMatchesSum +=element.lstMatches[i].amountMatched;
+										}
+									}
+				            	}
+				            });
+				            //Calcuate the remaining
+                             var tmpRemaining;
+                            if(banktxnObj)
+				            tmpRemaining = Number(banktxnObj.Amount__c)-Number(tmplstMatchesSum);
+                            else tmpRemaining=0;
+                             
+				            //Set the UI values
+				            $("#prevmatched").text(formatNumbersToCommas(Number(tmplstMatchesSum).toFixed(2)));
+				            $("#amtremaining").text(formatNumbersToCommas(Number(tmpRemaining).toFixed(2)));   		
+                            
+                             statusCollapsed=true;
+                    		  expCol=  $('#bankTransactionGrid').find("th.k-hierarchy-cell.k-header"); 
+        					  expCol.html("<span><i class='k-icon k-plus ExpandCollapse'></i></span>");
+                            bindGridExpandCollapseAll();                            
+						});
+                 });                 
+    
+        //View the reconciliation summary on an iframe
+        $("#viewrs").click(function(){
+        	//KNDY-15576
+            //var datetimevar = $("#datepickerto").val();
+            //var dateFrom = $("#datepickerfrom").val(); 
+            var dateFrom = $('#datepickerfrom').data('kendoDatePicker').value() == null ? null : new Date($('#datepickerfrom').data('kendoDatePicker').value());//$("#datepickerfrom").val();
+			var datetimevar =   $('#datepickerto').data('kendoDatePicker').value() == null ? null : new Date($('#datepickerto').data('kendoDatePicker').value());//$("#datepickerto").val();
+
+            var res = BTMatchingUtils.isValidSearchDate(dateFrom, datetimevar);
+	           if(!res.status){
+	           //'Please enter the correct from and to dates before opening the reconcile view.'
+	           	KenandyErp.Message(res.message, KenandyErp.MessageType.Error);
+            	return;
+            }
+            	
+            //On closing the iframe, reset the page.
+            function onClose(){
+                ReconcileUtils.GetLastReconciledDate(); //KNDY-15495
+            //Initiate a dataread on the mastergrid.            	
+            	//location.reload();
+                BTMatchingUtils.Search();
+            }
+	        //Reset the counter FOR THE IFRAME.
+	      //  resetTheIFrameCounter();
+            var bankreconmodal = $("#dialog");
+            //Make sure that the transform is always 1.
+			$("#dialog").parent().css("transform", "matrix(1, 0, 0, 1, 0, 0)")            
+            
+            kwindow  = bankreconmodal.kendoWindow({
+                            content: "/apex/BankReconSummary?id="+idurlparm +'&endDate='+$("#datepickerto").val(),
+                            close: onClose,
+                   			iframe: true,
+                            modal: true
+                        }).data("kendoWindow").title("{!$Label.Bank_Rec_As_Of} "+ $("#datepickerto").val()).center().open(); //TODO change to custom label
+                              
+        });
+        
+        // KNDY-15576 Validate dates
+        	$('#datepickerfrom').kendoValidator({
+                rules: {
+                    correctDateFormat: function (e) {
+                        var dateVal = $('#datepickerfrom').data('kendoDatePicker').value();
+                        // either a valid date or fail 
+                        return dateVal == '' || KenandyErp.ParseSFDCDate(dateVal) || false;                        
+                    }
+                },
+                messages: {
+                    correctDateFormat: "Invalid date"
+                }
+            });
+            $('#datepickerto').kendoValidator({
+                rules: {
+                    correctDateFormat: function (e) {
+                        var dateVal = $('#datepickerto').data('kendoDatePicker').value();
+                        // either a valid date or fail 
+                        return dateVal == '' || KenandyErp.ParseSFDCDate(dateVal) || false;                        
+                    }
+                },
+                messages: {
+                    correctDateFormat: "Invalid date"
+                }
+            });
+            
+        //End of Munishs code
+        
+            //Initializing Events
+            //When the search button is clicked
+            $("#searchFilter").click(function(){
+                    BTMatchingUtils.Search();
+                });
+                       
+            //When the Reset button is pressed
+            $("#clearFilters").click(function(){
+                BTMatchingUtils.Reset();
+            });
+
+            //When the approve matches button is clicked
+            $("#approvematches").click(function(){
+	            BankTxnMatch.ApproveMatches();
+            });
+            $("#unmatchpotentialmatches").click(function(){
+	            BankTxnMatch.unmatchpotentialmatches();
+            });
+            $("#createJE").click(function(){
+	            BankTxnMatch.createJE();
+            });
+            $("#bankacc").click(function() {
+            	BankTxnMatch.GoBack();
+            });
+            $("#back").click(function() {
+            	BankTxnMatch.Back();
+            });
+            
+            //When the search button for 'find and match record' modal is clicked, initialize the grid
+            $("#searchMatched").click(function(){
+            	BankTxnMatch.LoadGrid();
+            });
+            //Reset button on 'Find and Match' modal
+            $("#clearMatched").click(function(){
+            //Reset values to original values.
+            BankTxnMatch.initializeFindMatchForm(banktxnObj, true);
+            });
+			
+			function chkDisableSearchBtn(ele){
+				//If the value of Date To is empty, disable the search button.
+				//console.log("Length = "+($(ele).val().length === 0));
+				if(($(ele).val().length === 0)){
+//					$("#searchFilter").attr('disabled','disabled');
+				}
+				else{
+//					$("#searchFilter").removeAttr('disabled');
+				}
+			}			
+
+            //Initialize the page - Dates, Statement Summary and Grid.
+            BankTxnMatch.Init();
+        });
+        //End of KenandyErpReady event
+    
+   bindGridExpandCollapseAll=function(){
+
+          $('#bankTransactionGrid').find("th.k-hierarchy-cell.k-header").on('click',function(){
+                    if(statusCollapsed){
+                    	KenandyErp.BlockUI();
+                        ExpandAllRows();
+                        statusCollapsed =false;
+                        /// $("#ExpandCollapse").value='Collapse All';
+                        expCol=  $('#bankTransactionGrid').find("th.k-hierarchy-cell.k-header"); 
+                        expCol.html("<span><i class='k-icon k-minus ExpandCollapse'></i></span>");
+                    	KenandyErp.UnBlockUI();
+                    }
+                    else{
+                    	KenandyErp.BlockUI();
+                        CollapseAllRows();   
+                        statusCollapsed =true;
+                        expCol=  $('#bankTransactionGrid').find("th.k-hierarchy-cell.k-header"); 
+                        expCol.html("<span><i class='k-icon k-plus ExpandCollapse'></i></span>");
+                    	KenandyErp.UnBlockUI();
+                    }
+                });
+       
+       }
+	//Functions for this page
+    var BankTxnMatch = function(){
+        return{
+        
+        	GoBack: function(e) {
+                var cnfrm = window.confirm('{!$Label.ConfirmGoBack} ');
+                if(cnfrm){
+                    KenandyErp.BlockUI();
+                    window.location.href = '{!returnUrl}';
+                }
+        	},
+        	
+        	Back: function(e) {
+                //KenandyErp.BlockUI();
+                window.location.href = '{!returnUrl}';
+        	},
+        	
+        	getDetailGrid: function(Id){},
+        	
+        	//initialize/re-initialize the alreadymatched grid.
+        	LoadAlreadyMatchedGrid: function(){
+        	
+				$('#alreadyMatched').width("100%");
+
+
+				var getMatchedArr = function(){
+				var tmp = [];
+				   $.each($('#{!bankTransactionGridConfig.uniqueId}').data('kendoGrid').dataSource.data(), function(index, element){
+						if((banktxnObj && element.bankTransaction.Id === banktxnObj.Id) && element.lstMatches){
+						tmp = element.lstMatches;
+						return false;
+						}
+					});
+					return tmp;
+				}
+				//Datasource
+				 var getMatchedDataSourcePromise = function(){
+		         var deferred = $.Deferred();
+		         deferred.resolve({records: getMatchedArr()}, {type: "none"});
+		         return deferred.promise();
+		         }; 
+				//Fieldlist	
+				var getMatchedTxnsFieldList = function(){
+					var tmparr = [];
+					$.each(BTMatchingUtils.GetFieldList('{!matchedRecordFieldList}'), function(index, element){
+					//change the format of the date.
+						//Show the date as date only
+						if(element.field === "transactionDate"){
+							element.fieldtype = 'date';
+						}	
+						if(element.field === "amountMatched"){
+							element.fieldtype = "double";
+						}		
+						if(element.field === "ruleRecordName"){
+                            element.hidden = true;
+                        } 			
+						tmparr.push(new FSObj(element));
+					});
+					return tmparr;
+				};
+				
+				
+        		if($('#alreadyMatched').data('kendoGridActionList')){
+	            var gridDataAfterUpdate = $("#alreadyMatched").data("kendoGridActionList");
+	            //add a description to the array before loading it into the grid.
+	            var tmpArr = $.map(getMatchedArr(), function(item, index){
+	            	item.description =item.description ? item.description : ""; 
+	            	item.referenceNumber =item.referenceNumber ? item.referenceNumber : ""; 
+	            	item.transactedWithName =item.transactedWithName ? item.transactedWithName : ""; 
+	            	return item;
+	            });
+					
+	         //var gridInfo = gridDataAfterUpdate.dataSource.data(tmpArr);
+	         gridDataAfterUpdate.dataSource.data([]);
+	         var gridInfo = gridDataAfterUpdate.dataSource.read(tmpArr);
+                
+				var dataItems= $('#alreadyMatched').data('kendoGridActionList').dataSource.view() ;
+                var columns =$('#alreadyMatched').data('kendoGridActionList').columns;
+               var  columnIndex=$('#alreadyMatched').data('kendoGridActionList').wrapper.find(".k-grid-header [data-field=" + "IsPotentialMatch" + "]").index();
+               
+                for (var j = 0; j < dataItems.length; j++) {
+                        var IsPotentialMatch = dataItems[j].get("IsPotentialMatch");
+                        var row = $('#alreadyMatched').data('kendoGridActionList').tbody.find("[data-uid='" + dataItems[j].uid + "']");
+                        if(IsPotentialMatch=="true") {
+                            $(row.children()).find('.grid-unmatch-custom-command')[0].innerHTML ='<span class="fa fa-circle-o fa-lg" title="Confirm"></span>';
+                            $(row.children()).find('.grid-unmatch-custom-command').addClass('grid-confirm-custom-command');
+                            $(row.children()).find('.grid-unmatch-custom-command')[0].innerHTML ='<span class="fa fa-circle-o fa-lg" title="Confirm"></span>';
+                            $(row.children()).find('.grid-unmatch-custom-command').removeClass('grid-unmatch-custom-command');
+                        }else{
+                            $(row.children()).find('.grid-confirm-custom-command')[0].innerHTML ='<span class="fa fa-dot-circle-o fa-lg" title="Unmatch this row"></span>';
+                            $(row.children()).find('.grid-confirm-custom-command').addClass('grid-unmatch-custom-command');
+                            $(row.children()).find('.grid-confirm-custom-command')[0].innerHTML ='<span class="fa fa-dot-circle-o fa-lg" title="Unmatch this row"></span>';
+                            $(row.children()).find('.grid-confirm-custom-command').removeClass('grid-confirm-custom-command');
+                        }
+                    }
+                $('#alreadyMatched').data('kendoGridActionList').wrapper.on("click", ".grid-confirm-custom-command", $.proxy(BankTxnMatch.ConfirmMatch , { grid: alreadyMGrid, selector: $('#alreadyMatched') }));
+                 $('#alreadyMatched').data('kendoGridActionList').wrapper.on("click", ".grid-unmatch-custom-command", $.proxy(BankTxnMatch.UnmatchTxn , { grid: alreadyMGrid, selector: $('#alreadyMatched') }));
+
+        	}
+        	else{
+           
+                
+                
+                
+                            //var DLIcon = same as colorCodeObj in GridHierarchicalA
+           			 //var ccshowIcon = new DLIcon(...);
+					var cmdtmp = new Object();
+					cmdtmp.name = "unmatch-custom-command";
+					cmdtmp.template = "<a class='grid-unmatch-custom-command grid-confirm-custom-command pointer' title='Unmatch this row'><span class='fa fa-chain-broken fa-lg'></span></a>";
+					cmdtmp.text = "";
+					
+					
+	               	//Make call to the RemoteAction getMatchingTransactions here.
+					var alreadyMGrid = $('#alreadyMatched').kendoGridActionList({
+		        	namespace: '', 
+                    config: new ConfigObj('alreadyMatched', '', '', '', '', true, false, true, [cmdtmp], 0),
+                        //config: getConfig(), 
+                    fieldList: getMatchedTxnsFieldList(),
+		            lookupSearchAction: [],
+		            getActionListFunction: getMatchedDataSourcePromise,
+		            toolbarButtons : []
+			        }).data('kendoGridActionList');  
+			        
+			        //Bind custom event for when the unmatch button is clicked for a match
+            		alreadyMGrid.wrapper.on("click", ".grid-unmatch-custom-command", $.proxy(BankTxnMatch.UnmatchTxn, { grid: alreadyMGrid, selector: $('#alreadyMatched') }));
+        			alreadyMGrid.wrapper.on("click", ".grid-confirm-custom-command", $.proxy(BankTxnMatch.ConfirmMatch , { grid: alreadyMGrid, selector: $('#alreadyMatched') }));
+        
+                
+                var dataItems= $('#alreadyMatched').data('kendoGridActionList').dataSource.view() ;
+                var columns =$('#alreadyMatched').data('kendoGridActionList').columns;
+               var  columnIndex=$('#alreadyMatched').data('kendoGridActionList').wrapper.find(".k-grid-header [data-field=" + "IsPotentialMatch" + "]").index();
+               
+                for (var j = 0; j < dataItems.length; j++) {
+                        var IsPotentialMatch = dataItems[j].get("IsPotentialMatch");
+                        var row = $('#alreadyMatched').data('kendoGridActionList').tbody.find("[data-uid='" + dataItems[j].uid + "']");
+                        if(IsPotentialMatch=="true") {
+                            $(row.children()).find('.grid-unmatch-custom-command')[0].innerHTML ='<span class="fa fa-circle-o fa-lg" title="Confirm"></span>';
+                            $(row.children()).find('.grid-unmatch-custom-command').addClass('grid-confirm-custom-command');
+                            $(row.children()).find('.grid-unmatch-custom-command')[0].innerHTML ='<span class="fa fa-circle-o fa-lg" title="Confirm"></span>';
+                            $(row.children()).find('.grid-unmatch-custom-command').removeClass('grid-unmatch-custom-command');
+                        }else{
+                            $(row.children()).find('.grid-confirm-custom-command')[0].innerHTML ='<span class="fa fa-dot-circle-o fa-lg" title="Unmatch this row"></span>';
+                            $(row.children()).find('.grid-confirm-custom-command').addClass('grid-unmatch-custom-command');
+                            $(row.children()).find('.grid-confirm-custom-command')[0].innerHTML ='<span class="fa fa-dot-circle-o fa-lg" title="Unmatch this row"></span>';
+                            $(row.children()).find('.grid-confirm-custom-command').removeClass('grid-confirm-custom-command');
+                        }
+                        
+                    }
+        	}				
+				
+				
+			},
+
+			ValidateSDSearchFilters: function(){
+				BankTxnMatch.ValidateSearchFilters($('#txnDateFrom'),$('#txnDateTo'),$('#amtFrom'),
+														$('#amtTo'),$('#refnumber'),$('#transactedWith'), $('#depositId'),
+														$('#searchMatched'));
+			},
+        	ValidateSearchFilters: function(txnDateFrom,txnDateTo,amtFrom,amtTo,
+     									refnumber,transactedWith,depositId, button){
+				var refnum = refnumber.val();
+				var toamt = amtTo.val();
+				var fromamt = amtFrom.val();
+				var transactedwith = transactedWith.val();
+				var depositId = depositId.val();
+				var kFromDate = txnDateFrom.data('kendoDatePicker').value();
+				var kToDate = txnDateTo.data('kendoDatePicker').value();
+				console.log(refnum+'&'+toamt+'&'+fromamt+'&'+transactedwith+'&'+kFromDate+'&'+kToDate+
+							'&'+txnDateFrom.val()+'&'+txnDateTo.val());
+				if((refnum == '' || refnum == null) && (transactedwith == '' || transactedwith == null) && (depositId == '' || depositId == null)
+				   && ((txnDateFrom.val() == '' || kFromDate == null || txnDateFrom.data('kendoDatePicker') == undefined)
+				   || (txnDateTo.val() == '' || kToDate == null || txnDateTo.data('kendoDatePicker') == undefined))
+				   && ((toamt == '' || toamt == null)
+				   || (fromamt == '' || fromamt == null))){
+					button.prop('disabled','disabled');
+					button.removeClass('btn');
+				}else{
+					button.removeAttr('disabled');
+					button.addClass('btn');
+				}
+			},
+			ValidateDateAndAmount: function(txnDateFrom,txnDateTo,amtFrom,amtTo){
+				if(txnDateFrom.data('kendoDatePicker') == undefined) return {status: false};
+				if(txnDateTo.data('kendoDatePicker') == undefined) return {status: false};
+				var fromdate = txnDateFrom.data('kendoDatePicker').value() == null ? null : new Date(txnDateFrom.data('kendoDatePicker').value());
+				var todate = txnDateTo.data('kendoDatePicker').value() == null ? null : new Date(txnDateTo.data('kendoDatePicker').value());
+				var toamt = amtTo.val();
+				var fromamt = amtFrom.val();
+				isDateUpdated = false;
+				if(todate != null && todate != undefined && todate.length!=0 && fromdate != null && fromdate != undefined && fromdate.length!=0){
+					isDateUpdated = true;
+				}
+				isAmtUpdated = false;
+				if(toamt != '' && toamt != null && toamt != undefined && fromamt != '' && fromamt != null && fromamt != undefined){
+					isAmtUpdated = true;
+				}
+				if(Number(fromamt) > Number(toamt)) return {status: false, msg: From_Amount_cant_be_greater_than_the_To_Amount};
+				console.log(fromdate+'***'+todate);
+
+				if(fromdate > todate) return {status: false, msg: From_date_cant_be_greater_than_the_To_date};
+				return true;
+			},
+        	//Called When the search button for 'find and match record' modal is clicked, initialize the grid
+            LoadGrid: function() {
+                statusCollapsed=true;
+                 bindGridExpandCollapseAll();
+        
+       
+                //search matching transaction
+	            function searchGetFieldList(){
+		           var cols = BTMatchingUtils.GetFieldList('{!searchResultRecordFieldList}');
+						$.each(cols, function(index, element){
+							//Show the date as date only
+							if(element.field == "transactionDate"){
+								element.fieldtype = 'date';
+							}	
+							if(element.field === "amountMatched"){
+								element.fieldtype = 'double';
+							}
+							element.width = element.width ? element.width : '100px'; //To add a scroll bar, set the width of each column in pixels - KNDY-10623							
+						});         
+		            return cols;
+	            }
+	            
+	            //If the form is valid
+	            
+    //Validate before sending
+    var isvalid = BankTxnMatch.ValidateDateAndAmount($('#txnDateFrom'),$('#txnDateTo'),$('#amtFrom'),$('#amtTo'));
+    var messageElement = document.getElementById("errMsgFindModal");
+    if(isvalid.status === false){
+        KenandyErp.Message(isvalid.msg === null ? "There was an error. Please contact support" : isvalid.msg, KenandyErp.MessageType.Error, messageElement);
+    }
+    else{
+    			KenandyErp.ClearMessage(messageElement);
+    
+            	var searchResultGrid = $('#{!searchedResultGridConfig.uniqueId}').data('kendoGridActionList');
+				$('#{!searchedResultGridConfig.uniqueId}').width("100%");
+
+            	
+                if (searchResultGrid) { //if it was rendered before destroy and recreate it. 
+                     //console.log("Initializing");     
+	                //empty the datasource
+                	searchResultGrid.dataSource.data([]);
+					searchResultGrid.dataSource.read();
+					//Update the amount checked.KNDY-15242
+        			$("#amtselected").text(Number(0).toFixed(2));
+                }
+                else { 
+		                var getConfig = function(){
+		                	var ret = JSON.parse('{!searchedResultGridConfigJson}');
+		                	ret.scrollable = true;
+		                	return JSON.stringify(ret);
+		                }
+                	//Make call to the RemoteAction getMatchingTransactions here.
+					var selectMGrid = $('#{!searchedResultGridConfig.uniqueId}').kendoGridActionList({
+		        	namespace: '{!NamespaceUU}', 
+			            config: getConfig(),
+		            fieldList: searchGetFieldList(),
+		            lookupSearchAction: [], 
+		            getActionListFunction: get2BMTRecordsData,
+		            toolbarButtons : [
+						{ name: "grid-match-custom-command", text:"", template: "<input type='button' value='Match' class='btn grid-match-custom-command' />" }		            
+					]
+		        }).data('kendoGridActionList');    
+		        //Add a custom event when the match button on the modal is clicked
+		        selectMGrid.wrapper.on("click", ".grid-match-custom-command", $.proxy(BankTxnMatch.SaveMatches, { grid: selectMGrid, selector:  $('#{!searchedResultGridConfig.uniqueId}') }));
+		     	//Attach an event to the checkbox.
+		   		selectMGrid.tbody.on("change", ".grid-select-one", $.proxy(BankTxnMatch.UpdateAmount, { grid: selectMGrid }));
+		   		selectMGrid.thead.on( "click", ".grid-select-all", $.proxy( BankTxnMatch.UpdateAmount, { grid: selectMGrid } ) );//KNDY-15242
+		   		//Update the amount checked.KNDY-15242
+        		$("#amtselected").text(Number(0).toFixed(2));
+		     	//end of else here
+		     	  }    
+
+    } 
+            },
+	            
+            getLatestReconciledDate: function() {
+            	 var deferred = $.Deferred();
+		        Visualforce.remoting.Manager.invokeAction(
+		            '{!$RemoteAction.BankTransactionMatchExt.getLatestReconciledDate}',
+					'{!Bank_Account__c}', 
+		            function(result, event){
+		            //console.log(result);
+		                deferred.resolve(result.records[0], event);
+		            },
+		            {escape: false}
+		        );
+		        return deferred.promise();
+            },      
+            //Called when the page loads to initialize it.
+            Init: function(){
+            
+            //Initialize the BankAccount
+            $("[id$='bankAccCoName']").text(BankAccName+" (Company: "+companyName+")");
+            
+             //Initialize the date-pickers KNDY-15576
+             //$.fn.KendoDatePicker($('#datepickerfrom'), {value: new Date(stdate) });
+             //$.fn.KendoDatePicker($('#datepickerto'), {value: new Date()});
+              var startDate = $('#datepickerfrom').data('kendoDatePicker');
+               if(startDate)
+               		startDate.destroy();
+                startDate = $('#datepickerfrom').kendoDatePicker({
+						    	culture: KenandyErp.Culture,
+						    	format: KenandyErp.DateFormat
+						    	}).data('kendoDatePicker');
+               //startDate.value(new Date(stdate) );//? BankTxnMatch.NormalizeDate(new Date(stdate)) : '');
+               startDate.value(KenandyErp.ParseSFDCDate(stdate));
+               var endDate = $('#datepickerto').data('kendoDatePicker');
+               if(endDate)
+               		endDate.destroy();
+                endDate = $('#datepickerto').kendoDatePicker({
+						    	culture: KenandyErp.Culture,
+						    	format: KenandyErp.DateFormat
+						    	}).data('kendoDatePicker');
+               endDate.value(KenandyErp.ParseSFDCDate(new Date().setHours(0,0,0,0)));// ? BankTxnMatch.NormalizeDate(new Date()) : '');
+               
+              
+              //Hide the page block
+              //$("[id$='bankTxnPageBlock']").hide();
+              $("#searchResultBlock").hide();
+			    
+			    crjespTypeField =  $("#crjespType");
+			    //Initialize the multi-select picklist
+			    crjespTypeField.kendoMultiSelect({
+			     placeholder: "Click to multi-select options",
+			      dataTextField: "text",
+			      dataValueField: "value",
+			      dataSource: [
+			        { text: "Receipts", value: "Receipts" },
+			        { text: "Journal Entry", value: "Journal_Entry_Line__c" },
+			        { text: "Payments", value: "Payments" },
+                   
+			      ]
+			    });
+
+                //Initialize the find and match modal pop-up
+				var window = $("#toBeMatchedWindow");
+                if (!window.data("kendoWindow")) {
+                            window.kendoWindow({
+                                height: "750px",
+                                width: "700px",
+                                title: "", 
+                                visible: false, //ENSURES POPUP DOESNT LOAD ON PAGELOAD
+                                modal: true,
+                                position: {
+                                    top: 100,
+                                    left: 100
+                                },
+                                actions: [
+                                    "Pin",
+                                    "Minimize",
+                                    "Maximize",
+                                    "Close"
+                                ]
+                    });
+                }
+                  // initialize Journal Etnry Popup 
+            var window2 = $("#createJEWindow");
+                if (!window2.data("kendoWindow")) {
+                            window2.kendoWindow({
+                                height: "250px",
+                                width: "800px",
+                                title: "", 
+                                visible: false, //ENSURES POPUP DOESNT LOAD ON PAGELOAD
+                                modal: true,
+                                position: {
+                                    top: 75,
+                                    left: 100
+                                },
+                                actions: [
+                                    "Pin",
+                                    "Minimize",
+                                    "Maximize",
+                                    "Close"
+                                ]
+                    });
+                }
+                
+                
+                 //Initialize the fetch transaction from yodlee window
+                var yodleeWindow = $("#yodleePopUp");
+                if(!yodleeWindow.data("kendoWindow")){
+                            yodleeWindow.kendoWindow({
+                                width: "750px",
+                                height: "300px",
+                                 title: "Refresh Transactions from Yodlee ",
+                                visible: false, //ENSURES POPUP DOESNT LOAD ON PAGELOAD
+                                modal: true,
+                                iframe: true,
+                                position: {
+                                    top: 100,
+                                    left: 100
+                                },
+                                actions: [
+                                    "Pin",
+                                    "Minimize",
+                                    "Maximize",
+                                    "Close"
+                                ]
+                    });                
+                }
+                
+                //Initialize the reconciliation summary modal pop-up
+                var rswindow = $("#dialog");
+                if(!rswindow.data("kendoWindow")){
+                            rswindow.kendoWindow({
+                            	width: "750px",
+                            	height: "600px",
+                                 title: "Bank Reconciliation Summary as of ",
+                                visible: false, //ENSURES POPUP DOESNT LOAD ON PAGELOAD
+                                modal: true,
+                                iframe: true,
+                                position: {
+                                    top: 100,
+                                    left: 100
+                                },
+                                actions: [
+                                    "Pin",
+                                    "Minimize",
+                                    "Maximize",
+                                    "Close"
+                                ]
+                    });                
+                }
+                
+              //Initialize the tabstrip of the find match page.
+			    matchTabstrip = $("#MatchTabstrip").kendoTabStrip({
+			        animation: {
+			            close: {
+			                duration: 200,
+			                effects: "fadeOut"
+			            }
+			        }
+			    });                
+                
+            },        
+        	//Called when a row needs to be unmatched.
+        	UnmatchTxn: function(e){
+                var self = this;
+                var grid = self.grid;
+                var selector = self.selector;
+                var row = $(e.target).closest("tr"); //get the row where the button was clicked
+                var dataItem = grid != undefined ?  grid.dataItem(row) : null; // get the row data          
+                //var mainGrid = $('#{!bankTransactionGridConfig.uniqueId}').data('kendoGrid');
+                //var mainMessageElement = mainGrid.element.closest("div.grid-container").find("div.grid-message:first");
+                var mainMessageElement = selector.closest("div.grid-container").find("div.grid-message:first");
+                //Going to get the parent row data
+                function getParentRow(){
+	                if(selector.selector === "#alreadyMatched"){
+	                	return {f: banktxnObj.Match_Approved__c, r: banktxnObj.Reconciled_As_Of_Date__c};
+	                }
+	                else{
+	                	var parentRow = selector.data('kendoGrid').dataItem(row.parent().parent().parent().parent().parent().parent().prev());
+	                	return {f: parentRow.bankTransaction.Match_Approved__c, r: parentRow.bankTransaction.Reconciled_As_Of_Date__c};
+	                }
+                }
+                
+                function getMessage(){
+                   var pr = getParentRow();
+                var message = '';
+	                if(pr.f === true){
+	                	if(pr.r !== null){
+                		message = '{!$Label.bank_transaction_has_been_reconciled}';
+                	}else{
+                		message = '{!$Label.approved_matches_will_be_deleted}';
+                	}
+                }                
+	                return message;
+                }
+                
+      
+	                           	message = '{!$Label.approved_matches_will_be_deleted}';
+	                           
+        		
+        		var cnfrm = window.confirm(getMessage() + " Are you sure you want to unmatch Record Name: "+dataItem.recordName+" ?");                
+				if(cnfrm){
+					KenandyErp.ClearMessage(mainMessageElement);
+	                //Make a remote action call to unMatchedBankTransaction aka unmatch 
+	                var tmpArr = [dataItem.bankTransactionMatchId];
+	                KenandyErp.BlockUI(selector);
+		            Visualforce.remoting.Manager.invokeAction(
+		                '{!$RemoteAction.BankTransactionMatchExt.unMatchedBankTransaction}',
+		                tmpArr,
+		                function (result, event) {
+		                    //KenandyErp.UnBlockUI(selector);
+		                    if(event.type === 'exception'){
+		                    	KenandyErp.UnBlockUI(selector);
+		                        KenandyErp.Message(event.message === null ? "There was an error. Please contact support." : event.message, KenandyErp.MessageType.Error);
+		                    }
+		                    else{
+		                    	KenandyErp.Messages(result.messages,mainMessageElement);
+		                    	if(selector.selector === "#alreadyMatched"){
+							        $(document).trigger("RefreshGridReady");	
+							    }
+							    else{
+									$('#{!bankTransactionGridConfig.uniqueId}').data('kendoGrid').dataSource.read();                        
+					            }
+				               KenandyErp.UnBlockUI(selector);
+		                    }
+		                },
+		                {escape: false}
+		            );
+
+				}
+				else{
+				//console.log("Not going to unmatch");
+				}
+        	},
+        	
+            ConfirmMatch: function(e){
+                var self = this;
+                var grid = self.grid;
+                var selector = self.selector;
+                var row = $(e.target).closest("tr"); //get the row where the button was clicked
+                var dataItem = grid.dataItem(row); // get the row data          
+                var mainMessageElement = selector.closest("div.grid-container").find("div.grid-message:first");
+                //Going to get the parent row data
+                function getParentRow(){
+	                if(selector.selector === "#alreadyMatched"){
+	                	return {f: banktxnObj.Match_Approved__c, r: banktxnObj.Reconciled_As_Of_Date__c};
+	                }
+	                else{
+	                	var parentRow = selector.data('kendoGrid').dataItem(row.parent().parent().parent().parent().parent().parent().prev());
+	                	return {f: parentRow.bankTransaction.Match_Approved__c, r: parentRow.bankTransaction.Reconciled_As_Of_Date__c};
+	                }
+                }
+                
+                function getMessage(){
+                   var pr = getParentRow();
+                var message = '';
+	                if(pr.f === true){
+	                	if(pr.r !== null){
+                		message = '{!$Label.bank_transaction_has_been_reconciled}';
+                	}else{
+                		message = '{!$Label.approved_matches_will_be_deleted}';
+                	}
+                }                
+	                return message;
+                }
+                
+      
+	                           
+        		
+        		var cnfrm = window.confirm(" Are you sure you want to confirm match and delete all other potential matches related to Record Name: "+dataItem.recordName+" ?");                
+				if(cnfrm){
+					KenandyErp.ClearMessage(mainMessageElement);
+	                //Make a remote action call to unMatchedBankTransaction aka unmatch 
+                    //var tmpArr = dataItem.bankTransactionMatchId;
+                    KenandyErp.BlockUI(selector);
+                    
+                     var p1 = new Promise(function(resolve, reject) { 
+                            AutoMatchUtil.confirmMatch(dataItem.bankTransactionMatchId,resolve);
+							});
+                        
+                       Promise.all([p1]).then(function(){
+                       	   var arrTemp = [];	
+                       	   arrTemp.push(dataItem.bankTransactionMatchId);
+                           var learnPromise = AutoMatchUtil.rememberAlias(arrTemp);
+                           learnPromise.done(function(){
+						   		KenandyErp.UnBlockUI(selector);
+				       			$(document).trigger("RefreshGridReady");
+                       			$('#{!bankTransactionGridConfig.uniqueId}').data('kendoGrid').dataSource.read();
+						   });  
+                  	  });
+                   
+				}
+				else{
+				//console.log("Not going to unmatch");
+				}
+        	},
+      
+        	//On clicking button 'Approve Matches'
+        	ApproveMatches: function(){
+        	//console.log("Going to approve matches");
+  			var messageElement = $('#{!bankTransactionGridConfig.uniqueId}').closest("div.grid-container").find("div.grid-message:first");        	
+	        //Get the mastergrid
+	        var mGrid = $('#{!bankTransactionGridConfig.uniqueId}').data('kendoGrid').dataSource.data();
+	        //Create an array of bank transaction ids in the master grid.
+	        var tmpArr = [];
+            var cannotApprove =false;
+            var counterSelected=0;
+	        tmpArr = $.map(mGrid, function(item, index){
+                if(item.IsSelected__custom === true){
+                    counterSelected++;
+	        	if(item.lstMatches ){
+                    if(item.MasterGridColor === MATCHED_COLOR_CODES.AllMatched){
+		        	return item.bankTransaction.Id;
+                    }else{
+                       cannotApprove=true; 
+                    }
+                 }
+                else{
+                    cannotApprove=true; 
+                    }
+                    
+	       } });
+        
+        	//Get the bankTransactionID of the master grid
+        	console.log("The following Bank TransactionIds need to be matched:");
+        	console.log(tmpArr);
+        	
+        	if(counterSelected==0){
+				var txt = "Please make a selection using the checkboxes";	
+ 				//var messageElement = document.getElementById("search-message");
+ 					        
+				KenandyErp.Message(txt, KenandyErp.MessageType.Error, messageElement);				        		
+        	}else if(cannotApprove && counterSelected>0){
+                var txt = "Not all bank transactions could be approved; please ensure they are fully matched (green icon).";	
+				KenandyErp.Message(txt, KenandyErp.MessageType.Error, messageElement);
+        	}else{
+				//Clear the message
+     			KenandyErp.ClearMessage(messageElement);         	
+        	//Block the UI     
+        	KenandyErp.BlockUI(); 
+        	//going to make a remote call to, approvedMatchedBankTransaction
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.BankTransactionMatchExt.approvedMatchedBankTransaction}',
+                tmpArr,
+                function (result, event) {
+                	//Unblock the UI
+                	KenandyErp.UnBlockUI();
+                	if(event.type === 'exception'){
+                		  KenandyErp.Message(event.message === null ? "There was an error. Please contact support." : event.message, KenandyErp.MessageType.Error);
+                	}
+                	else{
+					//console.log('approvedMatchedBankTransaction result is, ');
+                   // console.log(result);
+                    //Refresh the page grid.
+                    $('#{!bankTransactionGridConfig.uniqueId}').data('kendoGrid').dataSource.read();                 		
+                	}
+                },
+	                {escape: false});         	
+        	}
+        	
+
+        	
+        	},
+        	UpdateAmount: function(e){
+        	   var amt = 0;
+               var self = this;
+               var grid = self.grid;
+               var row = $(e.target).closest("tr");
+               var item = grid.dataItem(grid.tbody.find("tr[data-uid='" + row.attr('data-uid') + "']"));
+	        	//For each row,//KNDY-15242 - Fetch only on page data and not whole datasource
+	        	$.each(grid.dataSource.view(), function(index, element){
+	        	//If the row is checked
+	        		if(element.IsSelected__custom){
+						//Add up the sum
+						amt += Number(element.amountMatched);      	
+	        		}
+	        	});
+	        	//Update the amount checked.
+        		$("#amtselected").text(Number(amt).toFixed(2));
+        	},
+        
+        	//Make a call to save a select match
+	        SaveMatches: function(e){
+                var self = this;
+                var grid = self.grid;
+                var columns = grid.columns;
+	   			var selectedRows = [];
+	   			var gridDataSource = grid.dataSource;  
+	   			var dateFields = KenandyErp.KendoGridOptions.GetDateFields(BTMatchingUtils.GetFieldList('{!bankTransactionFieldList}')); // get the list of date fields for the master grid
+				var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+				var selector = self.selector;
+	   			//Get the rows that are selected
+				selectedRows = $.map(grid.dataSource.data(), function(item, index) {
+					if (item.IsSelected__custom) {
+						item = item.toJSON();
+						//convert the transactionDate to utc
+						item.transactionDate=new Date(moment.utc(item.transactionDate)).toUTCString(); //same value
+                         // Remove the extra attributes Kendo Grid creates for supporting wrapper classes
+                        ///   for (var i = 0; i < columns.length; i++) {
+                        for (var name in item) {
+   						if (item.hasOwnProperty(name)) {
+                            //var name = columns[i].field;
+                             if (name && name.indexOf('.') != -1) {
+                                 delete item[name];
+                             }
+                             //remove the IsSelected__custom field
+                             if(name && name.indexOf('IsSelected__custom') != -1){
+                             	delete item[name];
+                             }
+                         }
+                       }
+						return item;
+					}
+				});	
+            	
+            	//Serialize the Bank_Transaction__c 
+            	var bnkItemList = [];
+            	//Push the globalized variable banktxnObj into an array.
+            	bnkItemList.push(banktxnObj);
+            	var bnkItem = [];
+            	bnkItem = $.map(bnkItemList, function(item, index){
+                        return Serializer.ConvertToSFDCDate( item.toJSON(), { dateFields: dateFields });            		
+            	});
+            	bnkItem = (bnkItem.length>0) ? Serializer.ParameterMap(bnkItem) : console.log("bknItem is zero");
+            	//Get the messageElement for success or error
+            	var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+            	//Block the UI
+            	KenandyErp.BlockUI(selector);
+            	//Make the remote action call to make a Match.
+	            Visualforce.remoting.Manager.invokeAction(
+	                '{!$RemoteAction.BankTransactionMatchExt.save}',
+	                selectedRows,
+	                bnkItem[0],
+	                function (result, event) {
+	                //Unblock the UI
+	                KenandyErp.UnBlockUI(selector);
+	                if(event.type==='exception'){
+	                //Show the error message on the pop-up.
+	                KenandyErp.Message(event.message === null ? "There was an error. Please contact support." : event.message, KenandyErp.MessageType.Error, messageElement);
+	                }
+	                else{
+	                	if (result.success) {
+                             //KenandyErp.Messages(result.messages, messageElement);
+                              //$('#{!bankTransactionGridConfig.uniqueId}').data('kendoGrid').dataSource.read();
+	                        	//close the modal
+	           			 	// BTMatchingUtils.CloseMatchWindow();
+	           			 	var listbtmIDs = [];
+	           			 	$.each(result.records, function(index, element){
+		    					listbtmIDs.push(element.Id);
+		    				});
+		    				if(listbtmIDs.length >0){
+					               Visualforce.remoting.Manager.invokeAction(
+					                         '{!$RemoteAction.BankTransactionMatchExt.ConfirmMatchAndDeleteOthers}',
+					                listbtmIDs,
+					                function (result, event) {
+					                	if(event.type === 'exception'){
+					                		  KenandyErp.Message(event.message === null ? "There was an error. Please contact support." : event.message, KenandyErp.MessageType.Error);
+					                	}
+					                	else{
+					                         var learnPromise = AutoMatchUtil.rememberAlias(listbtmIDs);
+					                         learnPromise.done(function(){
+								    	   		KenandyErp.UnBlockUI(grid.element);
+									       		KenandyErp.Messages(result.messages, messageElement);
+											 }); 
+					                        
+					                    }
+					                });
+					          }
+                         }
+                         else {
+                              KenandyErp.UnBlockUI(grid.element);
+                             KenandyErp.Messages(result.messages, messageElement);
+                         }
+                         //Once a match is successful, refresh the grids.
+							$(document).trigger("RefreshGridReady");
+           			 
+         			 	
+	                }
+	                },
+	                {escape: false}
+	            );             	
+	        },
+        	//Open the 'Find Match' modal 
+        	FindMatches: function(e){
+        	
+        		//Validate the dates before opening the window.
+        		
+	           	//Validate date before sending a request
+	           	//KNDY-15576 -Converted date
+		   		//var fromDate = $("#datepickerfrom").val();
+				//var toDate =   $("#datepickerto").val();
+				var fromDate = $('#datepickerfrom').data('kendoDatePicker').value() == null ? null : new Date($('#datepickerfrom').data('kendoDatePicker').value());//$("#datepickerfrom").val();
+				var toDate =   $('#datepickerto').data('kendoDatePicker').value() == null ? null : new Date($('#datepickerto').data('kendoDatePicker').value());//$("#datepickerto").val();
+	            var res = BTMatchingUtils.isValidSearchDate(fromDate, toDate);
+	              var messageElement = document.getElementById("date-message");         
+	            
+	           if(res.status){
+		            //console.log("Going to search");
+		           	KenandyErp.ClearMessage(messageElement); 
+                var self = this;
+                var grid = self.grid;
+                var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                var row = $(e.target).closest("tr"); //get the row where the button was clicked
+                var dataItem = grid.dataItem(row).bankTransaction; // get the row data
+                //console.log("Opening window for");
+                //console.log(dataItem);
+                if(dataItem.Reconciled_As_Of_Date__c != null) {
+                		KenandyErp.Message("Existing matches have been approved and bank transaction is reconciled; to add a different match, you must first unmatch, which will also unreconcile this bank transaction.", KenandyErp.MessageType.Error, messageElement);
+                		return;
+                }else if(dataItem.Match_Approved__c) {
+                		KenandyErp.Message("Existing matches have been approved; to add a different match, you must first unmatch.", KenandyErp.MessageType.Error, messageElement);
+                		return;
+                }
+				BankTxnMatch.initializeFindMatchForm(dataItem);
+	            //Initialize the bank transaction values top row
+	            $("#btID").text(dataItem.Id);
+                $("#btAmount").text(Number(dataItem.Amount__c).toFixed(2));
+	            $("#fmAmt").text(formatNumbersToCommas(Number(dataItem.Amount__c).toFixed(2)));
+	            $("#fmDate").text(dataItem.Transaction_Date__c.toLocaleDateString("en-US"));
+	            $("#fmRefNum").text(dataItem.Reference_Number__c ? dataItem.Reference_Number__c : '');
+	            $("#fmTxnWith").text(dataItem.Transacted_With__c ? dataItem.Transacted_With__c : '');        		
+	            //Initialize the active tab.
+	            matchTabstrip.data("kendoTabStrip").activateTab($("#tab1"));
+        		
+	            
+	            //Initialize the previously and currently matched values
+	            var tmplstMatchesSum = 0;
+	            //Get the previously matched array.
+	            $.each(grid.dataSource.data(), function(index, element){
+	            	if(element.bankTransaction.Id === dataItem.Id){
+	            		//get the lstMatched for the row.
+						if(element.lstMatches){
+							for(var i = 0 ; i < element.lstMatches.length ; i++){
+								tmplstMatchesSum +=element.lstMatches[i].amountMatched;
+							}
+						}
+	            	}
+	            });
+	            //console.log("----");
+	            //console.log(tmplstMatchesSum);
+	            //console.log(dataItem.Amount__c);
+	            //Calcuate the remaining
+	            var tmpRemaining = Number(dataItem.Amount__c)-Number(tmplstMatchesSum);
+	            //Set the UI values
+	            $("#prevmatched").text(formatNumbersToCommas(Number(tmplstMatchesSum).toFixed(2)));
+	            $("#amtremaining").text(formatNumbersToCommas(Number(tmpRemaining).toFixed(2)));   
+	            
+	            
+	             		
+	            //Set the value of the bank transaction id as a hidden variable.
+	            banktxnObj = dataItem;	            
+	            //Initialize the alreadymatched grid
+	            BankTxnMatch.LoadAlreadyMatchedGrid();
+        		//Initialize the grid based on the values given
+        		BankTxnMatch.LoadGrid();
+                //Open the window with the transaction names
+                BTMatchingUtils.OpenMatchWindow("Find new match record for "+dataItem.Name);        		
+		        $('#searchMatched').removeAttr('disabled');
+ 				$('#searchMatched').addClass('btn');
+		           	
+		    }
+		    else{
+				KenandyErp.Message(res.message, KenandyErp.MessageType.Error, messageElement);
+			}
+        		
+        	
+      		
+        	},
+        	
+			initializeFindMatchForm: function(dataItem, reset){
+
+				//KNDY-15576 - instantiate datepicker with culture and format
+ 	   			 var txnDateFrom = $('#txnDateFrom').data('kendoDatePicker');
+				 var txnDateTo = $('#txnDateTo').data('kendoDatePicker');
+
+				 var amtFrom = $("#amtFrom").data('kendoNumericTextBox');
+				 var amtTo = $("#amtTo").data('kendoNumericTextBox');
+			if(reset){
+			    //Initialize the input elements of the modal pop-up
+			    //KNDY-15576 - instantiate datepicker with culture and format
+     			//$.fn.KendoDatePicker($('#txnDateFrom'), {value: ''}); //to date   
+				//$.fn.KendoDatePicker($('#txnDateTo'), {value: ''}); //to date  
+
+               txnDateFrom.value('');
+               txnDateTo.value('');
+				//To amount   
+                var amtTo = $("#amtTo").kendoNumericTextBox({
+                        value: null,
+
+                 		min: .01,
+                        decimals: 2,
+                        spin: function() {
+                            BankTxnMatch.ValidateSDSearchFilters();
+                        }
+                    }).data("kendoNumericTextBox");
+                    amtTo.value('');
+				//From amount                    
+                var amtFrom = $("#amtFrom").kendoNumericTextBox({
+                        value: null,
+                 		min: .01,
+                         decimals: 2,
+                         spin: function() {
+                         	BankTxnMatch.ValidateSDSearchFilters();
+                         }
+                    }).data("kendoNumericTextBox");
+                    amtFrom.value('');  
+                //Reference Number              
+            $("#refnumber").val("");
+            //Transacted With
+            $("#transactedWith").val("");
+            $("#depositId").val("");
+            //Set the multi-select
+        var tmp = crjespTypeField.data("kendoMultiSelect");
+        tmp.value([]);            
+        $('#searchMatched').prop('disabled','disabled');
+	    $('#searchMatched').removeClass('btn');
+      
+      }else{
+
+			    if(txnDateFrom == undefined){
+ 	            	txnDateFrom = $('#txnDateFrom').kendoDatePicker({
+						culture: KenandyErp.Culture,
+						format: KenandyErp.DateFormat,
+						change: function() {
+							BankTxnMatch.ValidateSDSearchFilters();
+						}
+					}).data('kendoDatePicker');
+					txnDateFrom.bind('keyup', function(e) {
+						BankTxnMatch.ValidateSDSearchFilters();
+					});
+ 			}
+
+ 			if(txnDateTo == undefined){
+ 	            txnDateTo = $('#txnDateTo').kendoDatePicker({
+ 	            	culture: KenandyErp.Culture,
+ 	                format: KenandyErp.DateFormat,
+ 	                change: function() {
+ 	                	BankTxnMatch.ValidateSDSearchFilters();
+ 	                }
+ 	            }).data('kendoDatePicker');
+ 	        	txnDateTo.bind('keyup', function(e) {
+ 					BankTxnMatch.ValidateSDSearchFilters();
+ 				});
+ 			}
+ 			txnDateFrom.value(KenandyErp.ParseSFDCDate($('#datepickerfrom').data('kendoDatePicker').value()));
+            txnDateTo.value(KenandyErp.ParseSFDCDate($('#datepickerto').data('kendoDatePicker').value()));
+            amtTo = $("#amtTo").kendoNumericTextBox({
+                value: null,
+                min: .01,
+                decimals: 2,
+			    spin: function() {
+				  BankTxnMatch.ValidateSDSearchFilters();
+			   }
+			}).data("kendoNumericTextBox");
+			amtTo.value(IfNegativeConvertToPostive(dataItem.Amount__c));
+			amtFrom = $("#amtFrom").kendoNumericTextBox({
+			   value: null,
+			   min: .01,
+			   decimals: 2,
+			   spin: function() {
+					BankTxnMatch.ValidateSDSearchFilters();
+			   }
+		    }).data("kendoNumericTextBox");
+		    amtFrom.value(IfNegativeConvertToPostive(0.01));
+
+			    //Reference Number
+        		$("#refnumber").val('');
+        		//Transacted With
+        		$("#transactedWith").val('');
+        		$("#depositId").val('');
+        		//Set the multi-select
+				var tmp = crjespTypeField.data("kendoMultiSelect");
+				tmp.dataSource.data([
+			        { text: "Receipts", value: "Receipts" },
+                    { text: "Payments", value: "Payments" },
+			        { text: "Journal Entry", value: "Journal_Entry_Line__c" }
+					]);
+				 tmp.value([]);
+
+			
+			}
+
+    		
+			},        	
+        	
+        	DetailInit: function(e){
+        	
+                var self = this;
+                var detailRow = e.detailRow;
+                var detailFieldList = self.detailFieldList;
+                var lookupSearchAction = self.lookupSearchAction;
+                var BankTxnUID = e.data.uid;
+                var detailReferenceFields = KenandyErp.KendoGridOptions.GetReferenceFields(detailFieldList); // get the list of reference fields for the detail grid
+                var detailButtonsOnRow = ['Unmatch'];
+                var dateFields = KenandyErp.KendoGridOptions.GetDateFields(detailFieldList); // get the list of date fields for the master grid
+                var selector = self.selector;
+                var namespace = e.namespace;
+                var matchedData = BTMatchingUtils.GetMatchedTxnsById(BankTxnUID);
+                var lookupSearchFilters = [];
+                
+                if(matchedData.length == 0 &&  (!_.contains(_.pluck(detailData, 'Id'), BankTxnUID))){
+                        if (e.data.get('lstMatches')) {
+                            matchedData = JSON.parse(JSON.stringify(e.data.get('lstMatches')));
+                        }                	
+                }
+                
+                var getDetailModel = function() {
+                    var fields = KenandyErp.KendoGridOptions.GetFields(detailFieldList); 
+					fields.amountMatched.type = "number";
+                    var model = kendo.data.Model.define({ id: "Id", fields: fields });
+                    return model;
+                };
+                
+                var getDetailColumns = function() {
+                    var mybool = false;
+                    var cols = KenandyErp.KendoGridOptions.GetColumns(detailFieldList, { lookupSearchAction: lookupSearchAction,  lookupSearchFilters: lookupSearchFilters });
+					var foundPOtentialColumn = false;
+					$.each(cols, function(index, element){
+						//Show the date as date only
+						if(element.field === "transactionDate"){
+							element.fieldtype = 'date';					
+						}	
+                        if(element.field === "IsPotentialMatch" && !foundPOtentialColumn){
+							element.template= "<a class='grid-Confirm-custom-command pointer' title='Confirm'><span #if(IsPotentialMatch=='true'){#class='fa fa-circle-o  fa-lg'#}#></span></a> <a class='grid-unmatch-custom-command pointer' title='Unmatch this row'><span #if(IsPotentialMatch=='false'){#class='fa fa-dot-circle-o fa-lg'#}#></span></a>";
+							element.title = "Action";
+                            element.width = 60;
+                            element.hidden=true;  
+                            element.text = "";
+                            var newObject = $.extend(true, {}, element);
+                            newObject.hidden =false;
+                            cols.unshift(newObject);
+                            foundPOtentialColumn = true;
+                            
+                        }
+						if(element.field === "amountMatched"){
+							element.format = "{0:n2}";
+		            		element.headerAttributes = { "class": "kndy-text-right" };
+		            		element.footerAttributes = { "class": "kndy-text-right" };
+		    				element.attributes = { "class": "kndy-text-right" };							
+						}
+						if(element.field === "ruleRecordName"){
+							element.template = "#if(ruleRecordName ) {# <a href='/#=ruleRecordId#' target='_blank'>#= ruleRecordName #</a> #}#"; 
+						}
+					});
+				
+					//Add the custom buttons column link here
+
+                    
+                    
+                    /*var cmdtmp = new Object();
+					cmdtmp.name = "unmatch-custom-command";
+                                        cmdtmp.template ="<a class='grid-unmatch-custom-command pointer' title='Unmatch this row'><span class='fa fa-chain-broken fa-lg'></span></a>";
+					cmdtmp.text = "";
+					var actionCol = new Object();
+					actionCol.title = "Action";
+					actionCol.width = 60;
+					actionCol.command = [cmdtmp];
+                    //var actionCol = new detailListObj(false, "IPM", "string", true, null, false, true, 0, null, false, 0, null, true, "Action", null, 80 );
+                    					cols.unshift(actionCol);*/
+                    
+					//End of the unmatch link
+                    return cols;
+                    
+                };      
+                
+                var getDetailDataSource = function() {
+	                    var dataSource = new kendo.data.DataSource({
+	                        data: matchedData, 
+	                        batch: true,
+		                    error: function(e) {console.log("Encountered an error trying to initialize the child grid.");
+		                                        console.log(e);},
+		                    pagesize: 10,
+		                    batch: true,
+		                    schema: {
+		                        model: getDetailModel(),
+		                        parse: function(response){
+		                            $.each(response, function (idx, item) {
+		                                item = Serializer.ConvertFromSFDCDate(item, { dateFields: dateFields });
+		                            });
+		                            return response;   
+		                        }   
+		                    }                       
+                    });
+        
+                    return dataSource;
+                };   
+                
+                var detailsGrid = detailRow.find('.grid-detail-container').kendoGrid({
+                                        dataSource: getDetailDataSource(), 
+                                        navigatable: true,
+                                        columns: getDetailColumns(),
+                                        sortable: false,
+                                        filterable: true,
+                                        resizable: true,
+                                        editable: false             	
+                }).data('kendoGrid');     
+                
+	                //Bind click events to the custom buttons.
+                    detailsGrid.dataSource.bind("change", BTMatchingUtils.refreshChildGrid);
+                    //Bind custom event for when the unmatch button is clicked for a match
+            		detailsGrid.wrapper.on("click", ".grid-unmatch-custom-command", $.proxy(BankTxnMatch.UnmatchTxn, { grid: detailsGrid, selector: selector }));
+        	        
+                    detailsGrid.wrapper.on("click", ".grid-Confirm-custom-command", $.proxy(BankTxnMatch.ConfirmMatch , { grid: detailsGrid, selector: selector }));
+                
+                
+                
+                
+            
+        	},
+	        ExpandCollapseRow: function(){
+		        //Get the grid
+		        var grid = $('#{!bankTransactionGridConfig.uniqueId}').data('kendoGrid');
+		        //Get the data
+		        var griddata = grid.dataSource.data();
+		        //for each data
+		        $.each(griddata, function(index, element){
+			        //if it contains expandedRows, expand the row.
+			        if(_.contains(expandedRows, element.uid)){
+			        	var row = grid.tbody.find("tr[data-uid='"+element.uid+"']" );
+			            grid.collapseRow(row);
+			        	grid.expandRow(row);
+                                }                           
+                            });                              
+                        },
+            
+            unmatchpotentialmatches: function(){
+                	var messageElement = $('#{!bankTransactionGridConfig.uniqueId}').closest("div.grid-container").find("div.grid-message:first");        	
+	        //Get the mastergrid
+	        var mGrid = $('#{!bankTransactionGridConfig.uniqueId}').data('kendoGrid').dataSource.data();
+	        //Create an array of bank transaction ids in the master grid.
+	        var tmpArr = [];
+           var  countSelected = 0;
+	       $.map(mGrid, function(item, index){
+	        	if( item.IsSelected__custom === true    ){
+                    countSelected++;
+                     if(item.get('lstMatches')){
+                       item.get('lstMatches').forEach( function(potentialbtm){
+                       	   tmpArr.push(potentialbtm.bankTransactionMatchId);
+                    });
+                        }
+                  }
+	        });
+        
+        	//Get the bankTransactionID of the master grid
+        	console.log("The following Bank TransactionIds need to be unmatched :::::::");
+        	console.log(tmpArr);
+                //The selected bank transaction(s) have no matches, so there is nothing to unmatch.
+               
+        	if(countSelected<=0){
+				var txt = '{!$Label.Please_select_the_records}';	
+                KenandyErp.Message(txt, KenandyErp.MessageType.Error, messageElement);				        		
+        	}else if(tmpArr.length==0){
+            	var txt = '{!$Label.Selected_bank_transaction_have_no_matches}';	
+                KenandyErp.Message(txt, KenandyErp.MessageType.Error, messageElement);	
+            }
+        	else{
+     			KenandyErp.ClearMessage(messageElement);         	
+        	    KenandyErp.BlockUI(); 
+                var cnfrm = true;
+                cnfrm=  window.confirm('{!$Label.Existing_matches_will_be_deleted1}');               
+                if(cnfrm){
+					KenandyErp.ClearMessage(messageElement);
+	                //Make a remote action call to unMatchedBankTransaction aka unmatch 
+                    // var tmpArr = [dataItem.bankTransactionMatchId];
+	                KenandyErp.BlockUI();
+		            Visualforce.remoting.Manager.invokeAction(
+		                '{!$RemoteAction.BankTransactionMatchExt.unMatchedBankTransaction}',
+		                tmpArr,
+		                function (result, event) {
+		                    KenandyErp.UnBlockUI();
+		                    if(event.type === 'exception'){
+		                    
+		                         KenandyErp.Message(event.message === null ? "There was an error. Please contact support." : event.message, KenandyErp.MessageType.Error);
+		                    }
+		                    else{
+		                    	KenandyErp.Messages(result.messages,messageElement);
+                                //KenandyErp.Message('Matches removed successfully.', KenandyErp.MessageType.Confirm);
+
+								$('#{!bankTransactionGridConfig.uniqueId}').data('kendoGrid').dataSource.read();                        
+		                    }
+		                },
+		                {escape: false}
+		            );
+
+				  }
+	              else{
+	                  KenandyErp.UnBlockUI();
+	              } 
+			  }
+          },
+           selectJEGrid  :null,
+           createJE: function(){
+               //BankTxnMatch.selectJEGrid =null;
+            $('#grid-createje-custom-command').show();
+               //BankTxnMatch.selectJEGrid.dataSource.data([]);
+               //BankTxnMatch.selectJEGrid.dataSource.read();
+            var messageElement = $('#{!bankTransactionGridConfig.uniqueId}').closest("div.grid-container").find("div.grid-message:first");        	
+	        //Get the mastergrid
+	        var mGrid = $('#{!bankTransactionGridConfig.uniqueId}').data('kendoGrid').dataSource.data();
+	        //Create an array of bank transaction ids in the master grid.
+	        var tmpArr = [];
+           var  countSelected = 0;
+           var allowCreate =true;
+               /// btIdRemainningAmountMap=null;
+           var maxDate;
+           btIdRemainningAmountMap= new Map();
+	       $.map(mGrid, function(item, index){
+               if( item.IsSelected__custom === true ){
+                    countSelected++;
+                   var totalRemainingAmount =item.bankTransaction.Amount__c;
+                   if(maxDate){
+                       if(item.bankTransaction.Transaction_Date__c>maxDate){
+                        maxDate =   item.bankTransaction.Transaction_Date__c;
+                        }
+                   }
+                   else{
+                        maxDate =   item.bankTransaction.Transaction_Date__c;
+                   }
+                   maxDate = (typeof maxDate == "object") ? maxDate.getTime() : maxDate;
+                   console.log('maxDate ::' + maxDate );
+                   if(item.get('lstMatches'))
+                  item.get('lstMatches').forEach( function(btm){
+                     if(typeof btm.IsPotentialMatch != 'undefined' && (btm.IsPotentialMatch == "true" || btm.IsPotentialMatch == true)){
+                         KenandyErp.Message('Please confirm/remove potential matches to proceed. ', KenandyErp.MessageType.Error, messageElement);	
+                         allowCreate =false;
+                         return;  
+                      }else{
+                         totalRemainingAmount =totalRemainingAmount-btm.amountMatched;
+                      }
+                     
+                   });
+                   if(totalRemainingAmount!=0){
+                       item['totalRemainingAmount'] = totalRemainingAmount;
+                       btIdRemainningAmountMap.put(item.bankTransaction.Id,item);
+                  }
+                  console.log('$$$ '+  item.bankTransaction.Id + ' -$$- ' +  item);
+
+                   if(!allowCreate){
+                   return; 
+                   }
+                }
+	        });
+        	console.log("The BTs need to be considered for JE creation");
+               //console.log(tmpArr);
+        	  if(allowCreate){
+                if(countSelected<=0){
+                    var txt = '{!$Label.Select_at_least_one_bank_transaction_to_create_a_journal_entry}';	//KNDY-15373
+                    KenandyErp.Message(txt, KenandyErp.MessageType.Error, messageElement);				        		
+                }
+                else if(btIdRemainningAmountMap.size>0){
+                    BTMatchingUtils.OpenCreateJEWindow('Journal Entry');
+                    var JournalEntryLineFieldList= '{!JournalEntryLineFieldList}';
+                    var JournalEntryLinesConfigJson = '{!JournalEntryLinesConfigJson}';
+                    //Clear the message
+                    KenandyErp.ClearMessage(messageElement); 
+                       
+                    // Create JEL records using selected amounts
+                    var jels =[];
+                   btIdRemainningAmountMap.each( (key) => {
+                       var value= btIdRemainningAmountMap.get(key);
+    					console.log(key, value);
+                          jeLine1  ={};
+                          jeLine1['Bank_Account__c'] = bankid;   
+                          jeLine1['Transaction_Date__c'] = maxDate;
+                          jeLine1['Amount'] = formatNumbersToCommas(Number(value['totalRemainingAmount']).toFixed(2));//KNDY-16112
+                          
+                        if(value['totalRemainingAmount']<0){
+                          jeLine1['Amount_CR__c'] = jeLine1['Amount'];
+                          jeLine1['Amount_DR__c'] = 0;
+                        }else{
+                          jeLine1['Amount_CR__c'] = 0;
+                          jeLine1['Amount_DR__c'] = jeLine1['Amount'];
+                        }
+                       jeLine1['Description__c']=value['bankTransaction.Name']+' '+ (value['bankTransaction.Payment_Method__c']  || "") + ' '+ ( value['bankTransaction.Reference_Number__c'] || "");
+                       jeLine1['Bank_Transaction__r'] ={Id: value['bankTransaction.Id']  ,Name: value['bankTransaction.Name']};
+                       jeLine1['Bank_Transaction__c'] = value['bankTransaction.Id'];
+                    if(value['bankTransaction.Category__c'] && value['bankTransaction.Category__c'].length>0  && categoryToStt[value['bankTransaction.Category__c']]){    
+                    jeLine1['SubTransaction_Type__c'] =    categoryToStt[value['bankTransaction.Category__c']]['{!NamespaceUU}'+'Sub_Transaction_Type__c']; 
+                    }else{
+                        if(categoryToStt['UnCategorized'])
+                        jeLine1['SubTransaction_Type__c'] = categoryToStt['UnCategorized']['{!NamespaceUU}'+'Sub_Transaction_Type__c']
+                    }
+                        jels.push(jeLine1);
+					});
+                         var getJELines = function(){
+                           var deferred = $.Deferred();  
+                            deferred.resolve({ records: jels , success: true, total: jels.length }, { statusCode: 200 });
+                            return deferred.promise();
+                         }
+                   if(BankTxnMatch.selectJEGrid) {
+                   BankTxnMatch.selectJEGrid.destroy();    
+                   }
+                    var parsedJELConfig = JSON.parse(JournalEntryLinesConfigJson);
+                    parsedJELConfig['renderCheckboxes'] = false;
+                    BankTxnMatch.selectJEGrid = $('#JELgrid').kendoGridActionList({
+			        	namespace: '{!NamespaceUU}', 
+				        config: parsedJELConfig,
+			            fieldList: JELinesUtils.GetFieldList(JournalEntryLineFieldList),
+			            lookupSearchAction: [], 
+	                    toolbarButtons: [ 
+	                    	{ name: "grid-createje-required-icon", text:"", template: "<img width='12' height='12' title='Required' src='/img/ple/required12.gif' class='Requiredtrue'></img>"},
+	                    	{ name: "grid-createje-transaction-date", text:"", template: "{!$Label.Transaction_Date} <input type='datetime' title='Transaction Date' id='transaction-date' data-role='datepicker'  class='kendoMassUpdateWidgetSelector' />"},
+	                        { name: "grid-createje-custom-command", text:"", template: "<input class='k-button' style='float: right;' type='button' title='Create Journal Entry' id='grid-createje-custom-command' value='Create Journal Entry'/>"},
+	                        
+	                    ],
+			            getActionListFunction: getJELines,   
+		        }).data('kendoGridActionList'); 
+		        //KNDY-16543
+		        BankTxnMatch.selectJEGrid.bind('edit', $.proxy(EditOverride, { grid: BankTxnMatch.selectJEGrid }));
+				//KNDY-15576
+		        	   //$.fn.KendoDatePicker($('#transaction-date'), {value: new Date($("#datepickerto").val())}); 
+		        	   var jeDate = $('#transaction-date').data('kendoDatePicker');
+		               if(jeDate)
+		               		jeDate.destroy();
+		                jeDate = $('#transaction-date').kendoDatePicker({
+								    	culture: KenandyErp.Culture,
+					    				format: KenandyErp.DateFormat,
+					    				//KNDY-16543
+					    				change: function(e){
+					    					console.log('onchange of date',$('#transaction-date').data('kendoDatePicker').value()); 										
+ 											FetchSubTransactionType(); 								
+					    				}
+								    	}).data('kendoDatePicker');		              
+		               jeDate.value(KenandyErp.ParseSFDCDate($('#datepickerto').data('kendoDatePicker').value()));
+		        	   $('.k-widget.k-datepicker.k-header.k-input').css('width','');    //correct the width of transaction date field 
+		        	   																	//which gets distorted whenever the popup is opened multiple time without refreshing page.
+                       $("#grid-createje-custom-command").unbind().click(function() {});
+	                BankTxnMatch.selectJEGrid.wrapper.on("click", "#grid-createje-custom-command", $.proxy(saveJEData, { grid: BankTxnMatch.selectJEGrid, options: { } }));
+                  
+            }else{
+                 KenandyErp.Message('Cannot Create Journal Entry , no eligible records found.', KenandyErp.MessageType.Error, messageElement);	   
+                 }
+                }
+            },
+        
+    
+            	};
+            	// KNDY-15576 Validate dates
+        	$('#transaction-date').kendoValidator({
+                rules: {
+                    correctDateFormat: function (e) {
+                        var dateVal = $('#transaction-date').data('kendoDatePicker').value();
+                        // either a valid date or fail 
+                        return dateVal == '' || KenandyErp.ParseSFDCDate(dateVal) || false;                        
+                    }
+                },
+                messages: {
+                    correctDateFormat: "Invalid date"
+                }
+            });
+			}();
+   JELinesUtils = function(){
+   		return {
+   			GetFieldList: function(JournalEntryLineFieldList) {
+   				var parsedJournalEntryLineFieldList = JSON.parse(JournalEntryLineFieldList);
+                    KenandyErp.CleanNamespace(parsedJournalEntryLineFieldList, NameSpaceUU);
+                    $.each(parsedJournalEntryLineFieldList, function(index, element){
+                         if(element.field == "Amount" || element.field == "Amount_DR__c" || element.field == "Amount_CR__c"){ //KNDY-16112
+                            element.fieldtype = "double"; 
+                            element.scale = 2;                             
+                        } 
+                        else if(element.field == "SubTransaction_Type__c") {
+                        	//KNDY-16543 - Fetch effective subtransaction type from accounting rule                           	
+                        	FetchSubTransactionType();       
+                        	//element.selectList = newdata;                        	          
+	   																		 
+                        }
+                    });
+                    
+                    return parsedJournalEntryLineFieldList;
+   			},
+	   	};
+   }();         
+    //KNDY-16543
+   var EditOverride= function(e) {                  
+	   	var ddSubtransaction = $('input[name="SubTransaction_Type__c"]').data('kendoDropDownList');
+	   	if (ddSubtransaction != undefined){
+	   		ddSubtransaction.bind('open', $.proxy(updateSubTransactionType, { ddlSubtransactionType: ddSubtransaction }));
+		   	
+         }
+    }
+    //KNDY-16543 - update datasourcce of subtransaction type
+    var updateSubTransactionType = function(e){
+    var dummydata = [
+	   		
+	   			{ text: "", value: "" }
+				
+			];
+    	//e.sender.dataSource.data([]);
+    	if(SubTransactionTypesArr.length == 0){
+    		SubTransactionTypesArr = dummydata;
+    	}
+		var ds1 = new kendo.data.DataSource({
+             data: SubTransactionTypesArr
+          });
+         e.sender.setDataSource(ds1);
+    }
+   //KNDY-16543 - Method to fetch effective subtransaction type from Accounting Rules
+   var FetchSubTransactionType = function(){
+   		var dateVal = $('#transaction-date').data('kendoDatePicker') != null ? new Date($('#transaction-date').data('kendoDatePicker').value()).toUTCString() : new Date($('#datepickerto').data('kendoDatePicker').value()).toUTCString();
+   		KenandyErp.BlockUI($('#createJEWindow'));  
+   		messageElementError =$('#jeerrormessage'); 		
+    	var grid = $('#JELgrid').data('kendoGridActionList');
+    	SubTransactionTypesArr = []; 
+   		Visualforce.remoting.Manager.invokeAction(
+	    	'{!$RemoteAction.BankTransactionMatchExt.fetchSubTransactionTypes}',
+             dateVal,
+             function (result, event) {
+	              
+	         	if(event.type==='exception'){
+	                //Show the error message on the pop-up.
+	                KenandyErp.Message(event.message === null ? "There was an error. Please contact support." : event.message, KenandyErp.MessageType.Error, messageElement);
+	                KenandyErp.UnBlockUI($('#createJEWindow'));
+           		 }
+	             else{
+	             	if (result.success) {
+                    	
+                    	
+                    	$.each(result.records, function(index, element){							
+    						SubTransactionTypesArr.push({value:element.value, text:element.text, selected: false})
+    					}); 
+    					
+       				}
+                    else {                           
+                    	console.log(result.messages[0].message);
+                      	KenandyErp.Messages(result.messages, messageElementError);
+            		}
+    					if (grid != undefined){
+    						var data = grid.dataSource.data();
+	    					$.each(data, function(index,element){	
+	    						if (element.SubTransaction_Type__c != undefined){    	
+	    							if(SubTransactionTypesArr.length == 0){	
+	    								element.set('SubTransaction_Type__c','');	
+	    							}else{
+			    						if (!search(element.SubTransaction_Type__c,SubTransactionTypesArr)){
+			    							element.set('SubTransaction_Type__c','');	
+			    						}
+		    						}
+	    						}
+	    					});
+                    	}
+            		KenandyErp.UnBlockUI($('#createJEWindow'));
+                        
+        		}
+        	},
+	        {escape: false}
+            );  
+            
+   } 
+   //KNDY-16543 - Search for key value from array
+   function search(nameKey, searchInArr){
+   		if (searchInArr.length == 0 ) return true;
+	    for (var i=0; i < searchInArr.length; i++) {
+	        if (searchInArr[i].text === nameKey) {
+	            return true;
+	        }
+	    }
+	}
+    
+   var statusCollapsed=true;   
+   var  ExpandAllRows= function(){
+                    //Get the grid
+                    var grid = $('#{!bankTransactionGridConfig.uniqueId}').data('kendoGrid');
+                    //Get the data
+                    var griddata = grid.dataSource.data();
+                    //for each data
+                    $.each(griddata, function(index, element){
+                            var row = grid.tbody.find("tr[data-uid='"+element.uid+"']" );
+                            grid.collapseRow(row);
+                            grid.expandRow(row);
+                                });                                
+                            } 
+   var  CollapseAllRows= function(){
+                    //Get the grid
+                    var grid = $('#{!bankTransactionGridConfig.uniqueId}').data('kendoGrid');
+                    //Get the data
+                    var griddata = grid.dataSource.data();
+                    //for each data
+                    $.each(griddata, function(index, element){
+                            var row = grid.tbody.find("tr[data-uid='"+element.uid+"']" );
+                            grid.collapseRow(row);
+                                });                                
+                            }                          
+    BTMatchingUtils = function(){
+        return{
+            listguid: [],
+			//Parse the JSON for the fieldlist          
+            GetFieldList: function(fieldList) {
+                return JSON.parse(fieldList);                  
+            },
+			//KNDY-15576 child grid row
+           	getbankTransactionDetailFieldList:  function(){
+				var tmparr = [];
+				$.each(BTMatchingUtils.GetFieldList('{!matchedRecordFieldList}'), function(index, element){
+				//change the format of the date.
+					//Show the date as date only
+					if(element.field == "transactionDate"){
+						element.fieldtype = 'date';
+					}
+					tmparr.push(element);
+				});
+				return tmparr;
+			},
+            //Initialize the hierarchical grid on the page
+            GridInit: function(){
+                var bankTransactionMasterGrid =$.fn.GridHierarchicalA($('#{!bankTransactionGridConfig.uniqueId}'), {
+                    namespace: '{!NamespaceUU}', 
+                    config: '{!bankTransactionGridConfigJson}', 
+                    masterFieldList: BTMatchingUtils.GetFieldList('{!bankTransactionFieldList}'), 
+                    detailFieldList: BTMatchingUtils.getbankTransactionDetailFieldList(), //KNDY-15579 BTMatchingUtils.GetFieldList('{!matchedRecordFieldList}'),
+                    // lookupSearchAction: 'RemoteAction.CustomerReceiptManageExt.lookupSearchFilter', 
+                    getCustomAction: getBTRecordsData, 
+                    lookupSearchFilters: [],
+                    columnButtons: 'Find',
+                    editable: false,
+                    messageElement: document.getElementById("date-message")
+                });
+                
+                //Change data before it is bound to the widget
+                bankTransactionMasterGrid.bind("dataBinding", function(e){
+                	//console.log("Called b4 binding");
+                	//for each row,
+                	$.each(this.dataSource.data(), function(index, element){
+                	//set the value for MasterGridColor(status) to the master row BankTransaction
+                	if(this.get('bankTransaction').get('Match_Approved__c') == true) {
+                			element.MasterGridColor = MATCHED_COLOR_CODES.Finalized;
+                	}
+                	else {
+	                    if (this.get('lstMatches') && this.get('lstMatches').length > 0) {
+	                    	//Calcuate total of lstMatches
+	                    	var total = 0;
+                            var allConfirmedMatches=true;
+	                    	$.each(this.get('lstMatches'), function(index, c){
+	                    		total +=c.amountMatched;
+                               if(typeof c.IsPotentialMatch != 'undefined' && (c.IsPotentialMatch == "true" || c.IsPotentialMatch == true)){
+                                    allConfirmedMatches=false;
+                                    }                           
+	                    	});
+	                    	//If the addition of all 'lstMatches' equals to amount green
+	                    	if(total.round(2) === element.bankTransaction.Amount__c && allConfirmedMatches){
+	                    		element.MasterGridColor = MATCHED_COLOR_CODES.AllMatched;
+	                    	}
+	                    	else{
+	                    		//Not equal to amount yellow or Is Potential Match
+	                    		element.MasterGridColor = MATCHED_COLOR_CODES.SomeMatched;
+	                    	}
+	                    }
+	                    else{
+	                    	element.MasterGridColor = MATCHED_COLOR_CODES.NoneMatched;
+	                    }                 		
+                	}
+                	//End of setting the value for MasterGridColor(status) to the master row BankTransaction
+                	});
+                });
+                 
+                //If matched rows are found, push it to the array and expand the child grid.
+	            bankTransactionMasterGrid.bind("dataBound", function(e) {
+					//Increase counter
+					isComplete("table");
+						            
+                $.each(this.dataSource.data(), function() {
+  							 var row = bankTransactionMasterGrid.tbody.find("tr[data-uid='"+this.uid+"']" );
+  							 				
+                    //if(this.get('MasterGridColor') !== MATCHED_COLOR_CODES.AllMatched){
+                    //	row.find('input.grid-select-one').hide();	
+                    //}
+                    //else{
+							row.find('input.grid-select-one').show(); 
+                    //}
+
+	                });
+                					
+						            
+              
+            });  
+                bankTransactionMasterGrid.wrapper.on("click", ".grid-find-custom-command", $.proxy(BankTxnMatch.FindMatches, { grid: bankTransactionMasterGrid }));
+            },
+            
+	        isValidSearchDate: function(fd, td){
+	        	if(fd === null || fd === undefined || fd.length===0)  return {status: false, message: "'From Date' cant be empty"};
+	        	if(td === null || td === undefined || td.length===0)  return {status: false, message: "'To Date' cant be empty"}; 
+	        	fd = new Date(fd);
+	        	td = new Date(td);
+	        	if(isNaN(fd.getMonth()) || isNaN(td.getMonth())) return {status: false, message: "Invalid Date format"};
+	        	if(fd > td) {
+	        		return ({status: false, message: "'From Date' can't be after 'To Date' "});
+	        	}
+	        	 return({status: true});
+	        },            
+	        isValidDate: function(td){ 
+	        if(td===null || td === undefined) return{status: false, message: "Please enter a date"};
+	        td.keyMsg = td.keyMsg ? td.keyMsg : 'Date';
+	        	if(td.date === null || td.date === undefined || td.date.length===0)  return {status: false, message: td.keyMsg+" cant be empty"}; 
+	        	td.date = new Date(td.date);
+	        	if(isNaN(td.date.getMonth())) return {status: false, message: td.keyMsg+ "has an invalid Date format (MM/DD/YYYY)"};
+	        	return({status: true});
+	        },	                
+
+            Search: function(){
+                KenandyErp.BlockUI();
+	           	//Validate date before sending a request
+		   		var fromDate =$('#datepickerfrom').data('kendoDatePicker').value() == null ? null : new Date($('#datepickerfrom').data('kendoDatePicker').value());//$("#datepickerfrom").val();
+				var toDate =   $('#datepickerto').data('kendoDatePicker').value() == null ? null : new Date($('#datepickerto').data('kendoDatePicker').value());//$("#datepickerto").val();
+	            var res = BTMatchingUtils.isValidSearchDate(fromDate, toDate);
+
+	            var messageElement = document.getElementById("date-message");
+	            
+	           if(res.status){
+		            //console.log("Going to search");
+		           	KenandyErp.ClearMessage(messageElement); 
+		            //Reset the counter
+		            isComplete("reseting the counter", 0);
+		            //Reinitialize the object to set the values	       
+					//stmtsumm = new StmtSmryObj();		            
+		            var isLoaded = $('#{!bankTransactionGridConfig.uniqueId}').data('kendoGrid');
+				    if(isLoaded){
+				        isLoaded.dataSource.read().then(
+		            	function(){console.log("Success");},
+		            	function(){console.log("Failure");}
+				        );
+
+				     }
+				     else{
+				        BTMatchingUtils.GridInit();			                            		
+				     }
+		       		//Call the function to calculate the beginning balance and subsequently the statement summary values
+		       		var res1 = BTMatchingUtils.isValidDate({date: toDate, keyMsg: 'To Date'});
+		       		 if(res1.status){
+						var refreshPromise = refreshBegBalance();
+						refreshPromise.done(function(result, event){
+							if(event.type === 'exception'){
+								console.log("There was an error on refreshing the balance");
+								console.log(event);
+							}
+						  $("#searchResultBlock").show();
+
+						});
+		       		 }
+		       		 else{
+
+		       		 	KenandyErp.Message(res1.message, KenandyErp.MessageType.Error, messageElement);	
+		       		 }
+				           
+	           }
+	           else{
+	           //console.log("Dates are not valid");
+					KenandyErp.UnBlockUI();
+					KenandyErp.Message(res.message, KenandyErp.MessageType.Error, messageElement);	               
+	           } 
+                expCol=  $('#bankTransactionGrid').find("th.k-hierarchy-cell.k-header"); 
+                expCol.html("<span><i class='k-icon k-plus'></i></span>");
+                 $('#bankTransactionGrid').find("th.k-hierarchy-cell.k-header").on('click',function(){
+                    if(statusCollapsed){
+                    	KenandyErp.BlockUI();
+                        ExpandAllRows();
+                        statusCollapsed =false;
+                        /// $("#ExpandCollapse").value='Collapse All';
+                        expCol=  $('#bankTransactionGrid').find("th.k-hierarchy-cell.k-header"); 
+                        expCol.html("<span><i class='k-icon k-minus ExpandCollapse'></i></span>");
+                        KenandyErp.UnBlockUI();
+                    }
+                    else{
+                    	KenandyErp.BlockUI();
+                        CollapseAllRows();   
+                        statusCollapsed =true;
+                        expCol=  $('#bankTransactionGrid').find("th.k-hierarchy-cell.k-header"); 
+                        expCol.html("<span><i class='k-icon k-plus ExpandCollapse'></i></span>");
+                        KenandyErp.UnBlockUI();
+                    }
+                });
+                
+            },
+            //Reset the date parameters on the page
+            Reset: function(){
+                $("#datepickerfrom").data("kendoDatePicker").value(new Date(new Date().setDate(new Date().getDate()-30)));
+                $("#datepickerto").data("kendoDatePicker").value(new Date());
+            },
+            
+            //Calculate and set value of statement summary on the UI.
+            SetStatementSummaryFields: function(){
+            //Reset the fields
+            stmtsumm.setSumDepCredit(0);
+            stmtsumm.setPaymntDebits(0);
+            
+	        //Get the mastergrid
+	        var mGrid = $('#{!bankTransactionGridConfig.uniqueId}').data('kendoGrid').dataSource.data();
+	        //Go through the array and add up the credits and debits
+	        $.each(mGrid, function(index, ele){
+	        if(ele.bankTransaction.Amount__c > 0){
+	        		//Add the credit
+	        		stmtsumm.setSumDepCredit(Number(stmtsumm.getSumDepCredit())+Number(ele.bankTransaction.Amount__c));
+	        }
+	        else if(ele.bankTransaction.Amount__c < 0){
+	        		//Add the debit
+	        		stmtsumm.setPaymntDebits(Number(stmtsumm.getPaymntDebits())+Number(ele.bankTransaction.Amount__c));
+	        }
+	        else{
+	        		console.log("Unrecongnized transaction type");	//Unrecongnised transaction type         
+	        	}		
+			});
+			//Set the beginning balance
+			stmtsumm.setSumBeginningBalance(MatchedReconciled , BankAcctOpeningBal,BankAcctOpeningBalAdjustment);
+			//Set values on the UI
+			stmtsumm.setUIValues();
+           },
+            OpenMatchWindow: function(atitle){
+
+            //Set the window 
+            	this.MatchWindow = $('#toBeMatchedWindow');
+                this.MatchWindow.kendoWindow({
+                    title: atitle,
+                    modal: true,
+                    height: "350px",
+                    width: "65%"
+                   
+                });
+                //Open the window
+                this.MatchWindow.data('kendoWindow').title(atitle).center().open();
+            },
+            OpenCreateJEWindow: function(atitle){
+
+            //Set the window 
+            	this.createJEWindow = $('#createJEWindow');
+                this.createJEWindow.kendoWindow({
+                    title: atitle,
+                    modal: true,
+                    height: "250px",
+                    width: "65%"
+                   
+                });
+                //Open the window
+                this.createJEWindow.data('kendoWindow').title(atitle).center().open();
+            },
+            CloseMatchWindow: function(){
+               var window = $("#toBeMatchedWindow").data("kendoWindow");
+               window.close();
+            },
+            refreshMasterGrid: function(e){
+            	//console.log("Called refreshMasterGrid");
+				if(e != undefined && e.items.length > 0){
+				}
+				else{
+					console.log("Unable to refresh the master grid");
+				}
+            },
+            refreshChildGrid: function(){
+            //console.log("Going to refresh the Child grid.");
+            },
+            
+            DetailExpand: function(e){
+           			//console.log("Called DetailExpand");
+                    var self = this;
+                    var grid = self.grid;
+                    var masterDataItem = grid.dataItem(e.masterRow);
+                    e.detailRow.find("#{!bankTransactionGridConfig.uniqueId}").show();
+                    // add row uid to the expandedRows list
+                    expandedRows.push(masterDataItem.uid);           	
+            },
+            
+            DetailCollapse: function(e){
+            		//console.log("Called DetailCollapse");
+                    var self = this;
+                    var grid = self.grid;
+                    var masterDataItem = grid.dataItem(e.masterRow);
+                    // remove row uid to the expandedRows list
+                    expandedRows.pop(masterDataItem.uid);            	
+            },
+            
+            GetMatchedTxnsById: function(id){
+                    var data = _.where(detailData, {Id: id});
+                    var matchedData = [];
+                    if (data.length > 0) {
+                    //TODO What should this be replaced with?
+                        matchedData = data[0].invoiceDeductions;
+                    }
+                    return matchedData;            
+            },
+            SetMatchedTxnsById: function(id, matchedData){
+                    var found = false;
+                    $.each(detailData, function() {
+                        if (this.Id == id) {
+                            this.matches = matchedData;
+                            found = true;
+                            return false;
+                        }
+                    });
+                    
+                    if (!found) {
+                        detailData.push({ Id: id, matches: matchedData });
+                        found = false; // Reset found for next round
+                    }				            
+            },
+              dateFieldsa : '{!bankTransactionFieldList}',
+            //KenandyErp.KendoGridOptions.GetDateFields(BTMatchingUtils.GetFieldList('{!bankTransactionFieldList}')), // get the list of date fields for the master grid
+		     dateFieldsSDa : '{!matchedRecordFieldList}',
+            //KenandyErp.KendoGridOptions.GetDateFields(BTMatchingUtils.GetFieldList('{!matchedRecordFieldList}')), 
+
+            saveAutoMatches: function(matchedSDs,bt){//BTMatchingUtils.saveAutoMatches
+              var dateFields = KenandyErp.KendoGridOptions.GetDateFields(BTMatchingUtils.GetFieldList('{!bankTransactionFieldList}')); // get the list of date fields for the master grid
+			  var dateFieldsSD = KenandyErp.KendoGridOptions.GetDateFields(BTMatchingUtils.GetFieldList('{!matchedRecordFieldList}')); 
+              var messageElement = $("#grid-message");
+
+                var bnkItemList = [];
+            	bnkItemList.push(bt);
+            	var bnkItem = [];
+            	bnkItem = $.map(bnkItemList, function(item, index){
+                        return Serializer.ConvertToSFDCDate( item, { dateFields: dateFields });    
+                    
+                     
+                    
+            	});
+             bnkItem = $.map(bnkItemList, function(item, index){
+           			  for (var name in item) {
+   						if (item.hasOwnProperty(name)) {
+                            //var name = columns[i].field;
+                             if (name && name.indexOf('.') != -1) {
+                                 delete item[name];
+                             }
+                             //remove the IsSelected__custom field
+                             if(name && name.indexOf('IsSelected__custom') != -1){
+                             	delete item[name];
+                             }
+                         }
+                       }
+      				return item ;
+                });
+                
+                /* matchedSDs =$.map(matchedSDs, function(item, index){
+                        return Serializer.ConvertToSFDCDate( item, { dateFields: dateFieldsSD });            		
+            	});*/
+                matchedSDs.forEach(function(entry){
+                    entry.transactionDate = new Date(entry.transactionDate).toUTCString();
+                    });
+                bnkItem = (bnkItem.length>0) ? Serializer.ParameterMap(bnkItem) : console.log("bknItem is zero");
+                Visualforce.remoting.Manager.invokeAction(
+	                '{!$RemoteAction.BankTransactionMatchExt.save}',
+	                matchedSDs,
+	                bnkItem[0].bankTransaction,
+	                function (result, event) {
+	                //Unblock the UI
+                        //KenandyErp.UnBlockUI(selector);
+	                if(event.type==='exception'){
+	                //Show the error message on the pop-up.
+	                KenandyErp.Message(event.message === null ? "There was an error. Please contact support." : event.message, KenandyErp.MessageType.Error, messageElement);
+            }
+	                else{
+	                	if (result.success) {
+                             KenandyErp.Messages(result.messages, messageElement);
+                              //$('#{!bankTransactionGridConfig.uniqueId}').data('kendoGrid').dataSource.read();
+	                        	//close the modal
+	           			 	// BTMatchingUtils.CloseMatchWindow();
+        }
+                         else {
+                             // KenandyErp.UnBlockUI(grid.element);
+                             console.log(result.messages[0].message);
+                             KenandyErp.Messages(result.messages, messageElement);
+            }
+                         //Once a match is successful, refresh the grids.
+                        //$(document).trigger("RefreshGridReady");
+           			 
+         			 	
+        }
+	                },
+	                {escape: false}
+	            );  
+                
+                
+                },
+        }
+        }();
+        
+        
+function IfNegativeConvertToPostive(x){
+	return x<0?Math.abs(Number(x)) : Number(x);
+}
+
+function formatNumbersToCommas(tmp){
+	if(tmp && !isNaN(tmp)){
+		tmp = tmp +"";
+		tmp = tmp.split(".");
+		tmp[0] = Number(tmp[0]).toLocaleString();
+		if(tmp[1] && tmp[1].length === 1) tmp[1] = tmp[1]+"0";
+		return tmp.length>1 ? tmp.join(".") : tmp[0] + ".00";
+	}
+	console.log("Encountered an error in addCommas: "+tmp);
+	return tmp;
+}
+
+   var saveJEData =function(e){
+   	   messageElementError =$('#jeerrormessage');
+   	   KenandyErp.ClearMessage(messageElementError);
+   	   if(!$("#transaction-date").val()){
+   	   		KenandyErp.Message('{!$Label.Please_populate_Transaction_Date}',KenandyErp.MessageType.Error,messageElementError);
+   	   		return false;	
+   	   }
+       $('#grid-createje-custom-command').hide();
+       var grid ;
+       var options={};
+       if(e.grid){
+       		var self = this;
+            grid = self.grid;
+            options = self.options;
+       }else{
+            grid=BankTxnMatch.selectJEGrid;
+       }                
+       var columns = grid.columns;
+       var messageElement = $("contmessage");
+       KenandyErp.ClearMessage(messageElement);
+       var allRows = grid.dataSource.data();
+       var updatedRows = [];
+       $.each(allRows, function(index, item) {
+       		item = item.toJSON();
+            if(!item['SubTransaction_Type__c']){
+            	KenandyErp.Message('{!$Label.Please_populate_SubTransaction_Type}',KenandyErp.MessageType.Error,messageElementError);
+                $('#grid-createje-custom-command').show();
+                updatedRows = [];
+                return false;
+            }else{
+	            // Remove the extra attributes Kendo Grid creates for supporting wrapper classes
+	            for (var i = 0; i < columns.length; i++) {
+	            	var name = columns[i].field;
+	                if (name && name.indexOf('.') != -1 || name == 'Amount') {//KNDY-16112
+	                	delete item[name];
+	                }
+	            }
+	            updatedRows.push(item);
+	         }
+        });
+        if (updatedRows.length > 0) {
+        	allRows = Serializer.ParameterMap(updatedRows);
+        }
+       if(updatedRows.length>0){
+	       var reciprocalJELines = $.extend(true, [], allRows);  //clone array   //jQuery.extend({}, allRows);   
+	       reciprocalJELines.forEach(function (RecijeLine){ //Swap RecijeLine.Amount_CR__c ,RecijeLine.Amount_DR__c
+	           tempX =RecijeLine.Amount_CR__c;
+	           RecijeLine.Amount_CR__c =RecijeLine.Amount_DR__c;
+	           RecijeLine.Amount_DR__c =   tempX;
+	           RecijeLine.Bank_Transaction__c ='';
+	           RecijeLine.Bank_Account__c='';
+	       });
+	       allRows =allRows.concat(reciprocalJELines);
+	       journalEtnry  = {};
+		   journalEtnry['Company__c'] = companyid;	
+		   journalEtnry['Type__c'] = 'Bank Transaction' ;   
+		   journalEtnry['Transaction_Type__c'] = 'Bank Transaction';
+		   journalEtnry['Currency__c'] = transactionCurrency;
+		   journalEtnry['Finalized__c'] = false;	
+		   journalEtnry['Transaction_Date__c'] =new Date(moment.utc($('#transaction-date').data('kendoDatePicker').value())).getTime(); //KNDY-15576//new Date(moment.utc($("#transaction-date").val())).getTime();
+	       messageElement =$('#contmessage');
+	       messageElementError =$('#jeerrormessage');
+	       console.log(journalEtnry);
+	       console.log(allRows);
+	       KenandyErp.BlockUI($('#createJEWindow'));
+	       Visualforce.remoting.Manager.invokeAction(
+	       	   '{!$RemoteAction.BankTransactionMatchExt.createJournalEntry}',
+	            journalEtnry,
+	            allRows,
+	            function (result, event) {
+	                KenandyErp.UnBlockUI($('#createJEWindow'));
+	                if(event.type === 'exception'){
+	                	KenandyErp.Message(event.message === null ? "There was an error. Please contact support." : event.message, KenandyErp.MessageType.Error);
+	                }
+	                else if(result.success){ 
+	                    //KenandyErp.Messages(  result.messages  , messageElement);
+	                    //KenandyErp.Message(result.message,KenandyErp.MessageType.Error,messageElement);
+	                    console.log(result.records);
+	                    windJE=$("#createJEWindow").data('kendoWindow');
+	                    if(windJE){windJE.close(); }     
+	                    $(document).trigger("RefreshGridReady");
+	                }else {
+	                    KenandyErp.Message(result.message,KenandyErp.MessageType.Error,messageElement);
+	                    KenandyErp.Messages(result.messages, messageElement);
+	                }
+	            })
+	        }
+       }
+
+
+    //Function to get to-be-confirmed matched records via the 'Find' button which opens a pop-up modal.
+    var get2BMTRecordsData = function(){
+ 		var types = $('#crjespType').data('kendoMultiSelect').value();
+        if(types == '') { //KNDY-10148
+		   $.each($('#crjespType').data('kendoMultiSelect').dataSource.data(), function(index, element){
+			 types.push(element.value);
+		   });
+		 }
+     	var fromDate = $('#txnDateFrom').data('kendoDatePicker').value() == null ?
+ 		    				new Date(moment(KenandyErp.ParseSFDCDate(new Date()))):
+ 		    				new Date(moment($('#txnDateFrom').data('kendoDatePicker').value()));
+ 		var toDate = $('#txnDateTo').data('kendoDatePicker').value() == null ?
+ 		    			  new Date(moment(KenandyErp.ParseSFDCDate(new Date()))):
+ 		    			  new Date(moment($('#txnDateTo').data('kendoDatePicker').value()));
+ 		fromDate = fromDate == null ? null : new Date(moment.utc(fromDate)).toUTCString();
+ 		toDate = toDate == null ? null : new Date(moment.utc(toDate)).toUTCString();
+
+
+        var deferred = $.Deferred();
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.BankTransactionMatchExt.getMatchingTransactions}',
+            fromDate,
+             toDate,
+       		'{!Bank_Account__c}',
+       		$("#refnumber").val(),
+      		IfNegativeConvertToPostive($("#amtFrom").val()),
+       		IfNegativeConvertToPostive($("#amtTo").val()),
+			$("#transactedWith").val(),
+			$("#depositId").val(),
+		   types,
+		   $("#btID").text(),
+		   false,
+		   isDateUpdated,
+		  isAmtUpdated,
+            function(result, event){
+            //console.log("Got matched records for the modal");
+            //console.log(result);            
+                deferred.resolve(result, event);
+            },
+            {escape: false}
+        );
+        return deferred.promise();    
+        
+    
+
+    };
+    var sourcedocs ;
+      /*  To be Removed
+    var PaymentsReceiptsList = function(){
+        var types = ['Receipts','Payments','Journal_Entry_Line__c'];
+ 		
+        var deferred = $.Deferred();
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.BankTransactionMatchExt.getMatchingTransactions}',
+			new Date(moment.utc($("#datepickerfrom").val())).toUTCString(),
+			new Date(moment.utc($("#datepickerto").val())).toUTCString(),
+			'{!Bank_Account__c}', 
+			' ', 
+			0,
+			99999999, 
+			' ',
+			types, 
+			'{!Bank_Account__c.GL_Account__c}', 
+			'',
+            function(result, event){
+            console.log("Got matched records for the modal");
+            console.log(result);
+                sourcedocs =result;
+                deferred.resolve(result, event);
+            },
+            {escape: false}
+        );
+        return deferred.promise();    
+    };
+    */
+//Get the Master-child grid on clicking the 'Search button'
+	var getBTRecordsData = function(){ 
+	var deferred = $.Deferred();
+	              var messageElement = document.getElementById("date-message");
+         //KNDY-15576
+         var fromDate = new Date(moment($('#datepickerfrom').data('kendoDatePicker').value()).tz(KenandyErp.TimeZone).utc().format('M/D/YYYY'));
+         fromDate = new Date(moment.utc(fromDate)).toUTCString();
+		var toDate =   new Date($('#datepickerto').data('kendoDatePicker').value());//$("#datepickerto").val();
+		var date = moment(toDate).tz(KenandyErp.TimeZone).utc().format('M/D/YYYY');
+		toDate = new Date(moment.utc(date)).toUTCString();
+		var res1 = BTMatchingUtils.isValidDate({date: fromDate, keyMsg: 'From Date'});
+		var res2 = BTMatchingUtils.isValidDate({date: toDate, keyMsg: 'To Date'});
+		       		
+		 if(res1.status && res2.status){
+	       //Make AJAX Call to get the Bank transaction records i.e. the parent grid
+	       Visualforce.remoting.Manager.invokeAction(
+	           '{!$RemoteAction.BankTransactionMatchExt.getBankTransactionAndMatches}',
+	           fromDate,
+	           toDate,
+	           '{!Bank_Account__c.ID}',
+	           function(result, event){           
+	              deferred.resolve(result, event);
+	              if (event.type == 'exception') {
+	                KenandyErp.ClearMessage();
+                  	KenandyErp.Message(event.message, KenandyErp.MessageType.Error);
+                  }else{
+                  		if (result.success) {
+                  			if(result.total == 0 || result.total == 10000){
+	                  			KenandyErp.ClearMessage();
+	                        	KenandyErp.Message(result.message,KenandyErp.MessageType.Info);
+	                        }else{
+	                        	KenandyErp.ClearMessage();
+	                        }
+                        }
+                        else {
+                        	KenandyErp.ClearMessage();
+                            KenandyErp.Message(result.message,KenandyErp.MessageType.Error);                                    
+                        }
+                  }
+	           	
+	           },
+	           {escape: false}     
+	       );  
+					       		       		 
+		       		 }
+		       		 else{
+		       		 	KenandyErp.Message(res1.message? res1.message : "" +" "+ res2.message? res2.message : "", KenandyErp.MessageType.Error, messageElement);
+		       		 	//deferred.reject();
+			            deferred.resolve(null, {type: "exception", message: res1.message? res1.message : "" +" "+ res2.message? res2.message : ""});    
+		       		 	
+		       		 }		
+		
+	       return deferred.promise();	   
+   };
+
+    var ReconcileUtils = function() {
+    	return {
+    		ReconcileInChunks: function(options) {
+    		
+    		//console.log("options.records");
+    		//console.log(options.records);
+    		//console.log("options.reconcileDate");
+    		//console.log(options.reconcileDate);
+    		//console.log('{!Bank_Account__c.Id}');
+    		
+    		
+    		//get the iframe element
+    		 var messageElement = document.getElementById("errMsgIFrame");
+    			KenandyErp.BlockUI();
+    			 var deferred = $.Deferred();
+    			Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.BankTransactionMatchExt.reconcileBankTransactions}',
+                        options.records,
+                         options.reconcileDate,
+                        '{!Bank_Account__c.Id}',
+                         function (result, event) {
+                          	KenandyErp.UnBlockUI();
+                            if (event.type == 'exception') {
+                            	KenandyErp.UnBlockUI();
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                            	if (result.success) {
+                            		if(options.isLastChunk) {
+                            			deferred.resolve(result, event);
+                            		}
+                                    KenandyErp.Messages(result.messages, messageElement);
+                                }
+                                else {
+                                    KenandyErp.UnBlockUI();
+                                    KenandyErp.Messages(result.messages, messageElement);
+                                }
+                            }
+                        },
+                        {escape: false}
+                    );
+                    return deferred.promise();
+    		},
+    		//KNDY-15787 - fetch rules before automatch starts
+             MatchingRules : function(){
+          		 var messageElement = document.getElementById("errMsgIFrame");
+    			KenandyErp.BlockUI();
+    			 var deferred = $.Deferred();
+    			Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.BankTransactionMatchExt.getMatchingRules}',
+                        '{!Bank_Account__c.Id}',
+                         companyid,
+                         function (result, event) {
+                          	KenandyErp.UnBlockUI();
+                            if (event.type == 'exception') {
+                            	KenandyErp.UnBlockUI();
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                            	if (result.success) {
+                                    rulesList = result.records;
+                                    deferred.resolve(result, event);
+                                    KenandyErp.Messages(result.messages, messageElement);
+                                }
+                                else {
+                                    KenandyErp.UnBlockUI();
+                                    KenandyErp.Messages(result.messages, messageElement);
+    		}
+    		}
+                        },
+                        {escape: false}
+                    );
+                    return deferred.promise();
+            },
+            
+            GetLastReconciledDate: function(){ //KNDY-15495 returns date only
+                KenandyErp.BlockUI();
+                Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.BankTransactionMatchExt.getLatestReconciledDate}',
+                        '{!Bank_Account__c.Id}',
+                         function (result, event) {
+                            KenandyErp.UnBlockUI();
+                                        
+                            if (event.type == 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error);
+                            } else {
+                                $("[id$='reconcileDate']").text("");
+                                if (result.success) {
+                                    if (result.records != null && result.records[0] != null){
+                                        var uidateTime = KenandyErp.ParseSFDCDateTime(result.records[0]);
+                                        //get date formatted in user`s locale
+                                        var uidate = moment(uidateTime).format(KenandyErp.DateFormat.toUpperCase());
+                                        $("[id$='reconcileDate']").text(uidate);
+                                    }
+                                }
+                            }
+                        },
+                        {escape: false}
+                );
+             },
+             
+             RenderActionListDropdown: function() {
+            	if('{!Bank_Account__c.Yodlee_Account_Number__c}' != ''){
+	              $('#actionButton').kendoDropDownButton({
+	                        items: [
+	                            {
+	                                text: "{!$Label.AutoMatch}", //TODO separate commit
+	                                click: function(e) {
+	                                    console.log('Auto Match');
+	                                    AutoMatchUtil.execute();
+	                                  } 
+	                            },
+	                            {
+	                                text: "Import using Date Range",                                
+	                                click: function(e) {
+	                                    console.log('Get Transactions');
+	                                    function onClose(){
+						
+							            //Initiate a dataread on the mastergrid.
+							             BTMatchingUtils.Search();
+							                //location.reload();
+							             }
+					
+							            var yodleeWin = $("#yodleePopUp");           
+							            isFetchAllTransactions = false;
+							            var ywindow  = yodleeWin.kendoWindow({
+							                            content: "/apex/BankTransactionSearchPage?id="+'{!Bank_Account__c.Id}',
+					                            		close: onClose,
+					                    				iframe: true,
+					                            		modal: true
+					                        }).data("kendoWindow").title(" ").center().open();
+					                   } 
+					               },
+					               {
+		                                text: "Import Latest",                                
+		                                click: function(e) {
+		                                    console.log('Get All Transactions');
+		                                    var datemessageElement = document.getElementById("date-message");
+						                    if(datemessageElement != undefined){
+						                        KenandyErp.ClearMessage(datemessageElement);    
+						                    }
+						                    var bankAccount = [];
+						                    bankAccount.push('{!Bank_Account__c.Yodlee_Account_Number__c}');
+						                    KenandyErp.BlockUI();
+						                    console.log('bankAccount'+bankAccount);
+						                    isFetchAllTransactions = true;
+											cobrandloginAndSearchForMultipleAccount(bankAccount,'',''); 
+						                } 
+					               },
+					             ]
+					     });
+				 	}else{
+				 		 $('#actionButton').kendoDropDownButton({
+	                        items: [
+	                            {
+	                                text: "{!$Label.AutoMatch}",
+	                                click: function(e) {
+	                                    console.log('Auto Match'); //TODO separate commit
+	                                    AutoMatchUtil.execute();
+	                                } 
+	                            },
+	                        ]
+	                     });
+				 	}
+           },
+    	};
+    }();
+    </script>
+    <script type="text/x-kendo-template" id="detailTemplate">
+		<h1>Matched Transactions</h1>
+		<div class="grid-container grid-detail-container"> </div>
+    </script>
+    
+    <c:QLPKChunk completeCallback="OnCompleteReconciledTrans"  chunkSize="4000"  />
+ 	<c:QueryChunk uniqueId="ReconciledTrans"/>
+
+</apex:page>

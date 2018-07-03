@@ -1,0 +1,195 @@
+<apex:page sidebar="false"   standardController="Company__c"   
+    extensions="CompanyService"    tabStyle="Getting_Around__tab"
+    >
+ <apex:sectionHeader title="Getting Around" help="{!URLFOR($Page.HelpWelcome)}" />
+<apex:stylesheet value="{!URLFOR($Resource.bootstrap_202, '/css/bootstrap-layout.css')}"  />
+
+<apex:form id="theForm" >
+<apex:pageBlock title="{!$Label.Company_Default}"  id="defaults" >
+<apex:pageMessages />
+    <apex:pageBlockButtons location="top" >
+        <apex:commandButton value="{!$Label.Change_Company}"  rerender="defaults"   action="{!editCompany}" rendered="{! !doedit}" /> 
+        <apex:commandButton value="{!$Label.Save}"   action="{!saveCompany}" rendered="{! doedit}" accessKey="s"/>
+        <apex:commandButton value="{!$Label.View}"  action="/{!URLFOR(Company.id)}" />
+        <apex:commandButton value="{!$Label.Company_List}"  action="/{!$ObjectType.Company__c}"  immediate="true"  />
+        <apex:commandButton value="{!$Label.Manage_Defaults}"  action="{!manageDefaults}"   /> 
+    </apex:pageBlockButtons> 
+    
+    <apex:pageBlockSection >
+        <apex:outputField value="{!Company.Name}"  rendered="{! !doedit}"/>
+        <apex:inputField required="true" value="{!defaults.preference.Default_Company__c}"   rendered="{!doedit}"  /> <br/>
+	</apex:pageBlockSection>
+ </apex:pageBlock>
+
+<div id="force"  class="container">
+<!--    <div style="float:left;" id="mb">   -->
+    <!--<apex:pageBlock title="Click on the icon to link to the function in Kenandy." />-->
+    <apex:pageBlock title="{!$Label.Procure_to_Pay_for} {!Company.Name} " id="pbt"  >
+     <div class="row" >     <!--6 tiles to a row, more wraps -->
+        <c:gridTile sobjecttype="Supplier__c" />
+        <c:gridTile sobjecttype="Purchase_Order__c" />
+        <c:gridTile sobjecttype="Receiving_Document__c" /> 
+        <c:gridTile sobjecttype="Supplier_Invoice__c" /> 
+        <c:gridTile sobjecttype="Supplier_Payment__c" />
+        <c:gridTile sobjecttype="Supplier_Invoice__c" title="{!$Label.Credit_Memos}"/>  
+       
+<!--        <c:gridTile sobjecttype="Account"  title="Addresses" /> -->
+    </div>
+<!--    <div class="row" >-->
+<!--        <c:gridTile sobjecttype="Product__c" /> -->
+<!--    </div>-->
+
+	<div class="row" >
+        <c:gridTile sobjecttype="Contract__c"   title="{!$ObjectType.Contract__c.LabelPlural}" />
+	</div>
+     </apex:pageBlock>
+
+    <apex:pageBlock title="{!$Label.Order_to_Cash_for} {!Company.Name} ">
+    <div class="row" >
+        <c:gridTile sobjecttype="Customer__c" /> 
+        <c:gridTile sobjecttype="Sales_Order__c" />  
+        <c:gridTile sobjecttype="Shipment__c" />
+        <c:gridTile sobjecttype="Customer_Invoice__c" />  
+        <c:gridTile sobjecttype="Customer_Invoice__c" title="{!$Label.Credit_Memos}"/>  
+<!--        <c:gridTile sobjecttype="Sales_Order_Line__c" />  -->
+        <c:gridTile sobjecttype="Customer_Receipt__c" />  
+<!--         -->
+
+    </div>
+<!--    <div class="row" >-->
+<!--        <c:gridTile sobjecttype="Supplier_Invoice_Line__c"  />-->
+<!--        <c:gridTile sobjecttype="Shipping_Method__c"  /> -->
+<!--    </div>-->
+    </apex:pageBlock>
+    
+    <apex:pageBlock title="{!$Label.Planning_and_Production_for} {!Company.Name} ">
+    <div class="row" >
+        <c:gridTile sobjecttype="Order_Forecast__c" />  
+        <c:gridTile sobjectType="Company__c" title="{!$Label.Generate_MRP}" />
+        <c:gridTile sobjecttype="Work_Order__c" />  
+        <c:gridTile sobjecttype="Item__c" />  
+         <c:gridTile sobjecttype="Item_Specification__c" />  
+       <c:gridTile sobjecttype="Item_Cost__c" />
+        
+    </div>
+    <div class="row" >
+    	<c:gridTile sobjecttype="Inventory_Change__c" />        	  
+      	<c:gridTile sobjecttype="Work_Center__c" />
+        <c:gridTile sobjecttype="Item_Specification__c"   title="{!$ObjectType.Routing__c.LabelPlural}" />
+        <c:gridTile sobjecttype="Item__c" url="InventoryMaster" title="{!$Label.Inventory_Master}" />
+        <c:gridTile sobjecttype="Item__c" url="InventoryTransactionsHistory" title="{!$Label.Inventory_Transactions_History}" />
+        <c:gridTile sobjecttype="Item_Specification__c"  title="{!$Label.Manage_ECOs}" />  
+	</div>
+	<div class="row" >
+         <c:gridTile sobjecttype="Class__c" />
+        
+<!--        <c:gridTile sobjecttype="Facility__c" />-->
+<!--        <c:gridTile sobjecttype="Work_Order__c"  title="Kit Work Order" />  -->
+<!--        <c:gridTile sobjecttype="Work_Order__c"  title="Complete To Inventory" />  -->
+<!--        <c:gridTile sobjecttype="Class__c" />-->
+    </div>
+<!--     <div class="row" > -->
+<!--         <c:gridTile sobjecttype="Class__c" /> -->
+<!--        <c:gridTile sobjecttype="Item_Cost__c" />-->
+<!--        <c:gridTile sobjecttype="Location__c" />  -->
+<!--        -->
+<!--     </div> -->
+     </apex:pageBlock>
+
+    <apex:pageBlock title="{!$Label.Global_Financials_for} {!Company.Name} "   >
+     <div class="row" >
+        <c:gridTile sobjecttype="Financial_Report__c"/>
+        <c:gridTile sobjecttype="Accounting_Entry__c" />
+        <c:gridTile sobjecttype="Journal_Entry__c" />
+        <c:gridTile sobjecttype="Company__c" />  
+        <c:gridTile sobjecttype="Period__c"/>
+        <c:gridTile sobjecttype="Exchange_Rate__c" />
+       
+        
+<!--        <c:gridTile sobjecttype="Customer_Invoice__c" />  -->
+<!--        <c:gridTile sobjecttype="Customer_Receipt__c" />  -->
+<!--        <c:gridTile sobjecttype="GL_Account__c" />-->
+<!--        <c:gridTile sobjecttype="Accounting_Rule__c" />         -->
+     </div>
+ <!--    <div class="row" >
+        <c:gridTile sobjecttype="Recurring_Accounting_Entry__c" />
+        <c:gridTile sobjecttype="Payment_Term__c" />  
+        <c:gridTile sobjecttype="Fixed_Asset__c" />  
+<!--        <c:gridTile sobjecttype="01Ii00000009fXS" />-->
+<!--        <c:gridTile sobjecttype="Balance__c" />-->
+<!--        
+     </div> -->
+     
+    </apex:pageBlock>
+   </div>
+
+
+ <style>
+#force h2 { font-size: 1.3em;   line-height: 1.4em; }
+#force .row a {  color: #4a4a56;  font-weight: bold; text-decoration: none;  } 
+#force .row a div { padding : 0px 0px 10px 0px;  width: 95px; } 
+#force [class*="span"] {margin-left: 0; } 
+#force.container { min-width: 846px; } 
+
+.row [class*="span"] img {  height: 48px; width: 48px;  background-size: 48px 48px; }
+/* 
+ .row [class*="span"] img { margin-left: 20px;  } 
+ */
+ <!-- Purchasing Section -->
+img.Purchase_Order__c {     background-image:       url( {!URLFOR($Resource.pmgwl, 'Create_Purchase_Orders.png') } ); }
+img.Receiving_Document__c { background-image:   url( {!URLFOR($Resource.pmgwl, 'Receiving_Document.png') } );}
+img.Supplier_Invoice__c {  background-image:            url( {!URLFOR($Resource.pmgwl, 'Supplier_Invoice.png' ) } ); } 
+img.Supplier_Payment__c {  background-image:        url( {!URLFOR($Resource.pmgwl, 'Supplier_Payment.png' ) } ); } 
+img.Supplier__c {  background-image:        url( {!URLFOR($Resource.pmgwl, 'Suppliers.png' ) } ); } 
+img.Account   {  background-image:      url( {!URLFOR($Resource.pmgwl, 'Location.png' ) } ); } 
+img.Product__c {  background-image:      url( {!URLFOR($Resource.pmgwl, 'Products.png' ) } ); } 
+
+<!--Order Management section-->
+img.Sales_Order__c  {  background-image:        url( {!URLFOR($Resource.pmgwl, 'Create_Sales_Orders.png' ) } ); } 
+img.Sales_Order_Line__c  {  background-image:       url( {!URLFOR($Resource.pmgwl, 'Create_Sales_Orders.png' ) } ); } 
+
+img.Customer_Invoice__c  {  background-image:       url( {!URLFOR($Resource.pmgwl, 'Customer_Invoices.png' ) } ); } 
+img.Customer_Receipt__c  {  background-image:       url( {!URLFOR($Resource.pmgwl, 'Customer_Receipts.png' ) } ); }
+
+img.Customer__c  {  background-image:       url( {!URLFOR($Resource.pmgwl, 'Customer.png' ) } ); } 
+img.Supplier_Invoice_Line__c  {  background-image:       url( {!URLFOR($Resource.pmgwl, 'Supplier_Invoice.png' ) } ); } 
+img.Shipment__c  {  background-image:       url( {!URLFOR($Resource.pmgwl, 'Fulfillment.png' ) } ); } 
+img.Shipping_Method__c  {  background-image:       url( {!URLFOR($Resource.pmgwl, 'Shipping_Methods.png' ) } ); } 
+
+<!--Manufacturing section-->
+img.Order_Forecast__c {  background-image:      url( {! URLFOR($Resource.pmgwl, 'Manage_Order_Forecast.png' ) } ); } 
+img.Work_Order__c  {  background-image:         url( {! URLFOR($Resource.pmgwl, 'Create_Work_Orders.png' ) } ); } 
+img.Item__c  {  background-image:       url( {! URLFOR($Resource.pmgwl, 'Manage_Items.png' ) } ); } 
+img.Item_Specification__c  {  background-image:         url( {! URLFOR($Resource.pmgwl, 'Item_Specifications.png' ) } ); } 
+img.Routing__c  {  background-image:        url( {! URLFOR($Resource.pmgwl, 'Routing.png' ) } ); } 
+
+img.Inventory_Change__c {  background-image:        url( {! URLFOR($Resource.pmgwl, 'Inventory_Change.png' ) } ); } 
+img.Cycle_Count__c {  background-image:         url( {! URLFOR($Resource.pmgwl, 'Cycle_Counts.png' ) } ); } 
+img.Item_Cost__c {  background-image:         url( {! URLFOR($Resource.pmgwl, 'Item_Costs.png' ) } ); } 
+img.Location__c {  background-image:         url( {! URLFOR($Resource.pmgwl, 'Location.png' ) } ); } 
+img.Work_Center__c {  background-image:         url( {! URLFOR($Resource.pmgwl, 'WC_Employee.png' ) } ); } 
+
+img.Company__c, 
+img.GL_Account__c {  background-image:      url( {! URLFOR($Resource.pmgwl, 'GL_Account.png' ) } ); } 
+img.Accounting_Default__c,
+img.Accounting_Entry__c {  background-image:        url( {! URLFOR($Resource.pmgwl, 'Accounting_Entries.png' ) } ); } 
+img.Journal_Entry__c {  background-image:        url( {! URLFOR($Resource.pmgwl, 'Journal_Entry.png' ) } ); } 
+img.Accounting_Rule__c, 
+img.Period__c {  background-image:      url( {! URLFOR($Resource.pmgwl, 'Periods.png' ) } ); } 
+img.Bank_Account__c { background-image:         url( {! URLFOR($Resource.pmgwl, 'Bank_Accounts.png' ) } ); } 
+
+img.Class__c  { background-image:       url( {! URLFOR($Resource.pmgwl, 'Class1.png' ) } ); } 
+img.Facility__c,
+img.Company__c  { background-image:         url( {! URLFOR($Resource.pmgwl, 'Company.png' ) } ); } 
+
+img.Payment_Term__c { background-image:         url( {! URLFOR($Resource.pmgwl, 'Terms.png' ) } ); } 
+
+img.Exchange_Rate__c  { background-image:         url( {! URLFOR($Resource.pmgwl, 'Exchange_Rates.png' ) } ); }
+img.Recurring_Accounting_Entry__c  { background-image:         url( {! URLFOR($Resource.pmgwl, 'Recurring_Accounting_Entry.png' ) } ); } 
+img.Financial_Statements,
+img.Financial_Report__c  { background-image:         url( {! URLFOR($Resource.pmgwl, 'Financial_Statements.png' ) } ); }
+img.Fixed_Asset__c  { background-image:         url( {! URLFOR($Resource.pmgwl, 'FixedAssets.png' ) } ); }  
+img.Contract__c  { background-image:         url( {! URLFOR($Resource.pmgwl, 'Purchase_Agreement.png' ) } ); }  
+</style>
+</apex:form>
+</apex:page>

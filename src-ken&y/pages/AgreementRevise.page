@@ -1,0 +1,118 @@
+<apex:page doctype="html-5.0" standardController="Agreement__c" extensions="AgreementReviseLinesCon" showHeader="false">
+	<style type="text/css">
+		.column-width {
+        	width: 25%;
+        }
+        .filterLabel {
+            font-weight: bold;
+            font-size: 93%;
+        }
+		.filterInput {
+        	width : 90%;
+        }
+	</style>
+	
+	
+    <c:KendoResources />
+    <script>
+    
+		
+			function checkAll(cb)
+			{
+				var inputElem = document.getElementsByTagName("input");
+				for(var i=0; i<inputElem.length; i++)
+				{
+					if(inputElem[i].id.indexOf("checkedone")!=-1)
+					inputElem[i].checked = cb.checked;
+				}
+			} 
+		var isSuccess = '{!isSuccess}';                                                   
+        var errorMsg = '{!errorMsg}';
+    	function closeModalWindow(result) {
+	        var win = window.parent.$("#reviseAgreementwindow").data("kendoWindow");
+	        if ( win) { 
+                window.parent.$("#pprod").data("kendoTreeList").dataSource.read();
+	        	win.close(); 
+	        }
+	    }
+			
+	    function onConfirmComplete() { debugger;
+	    	if (isSuccess == 'true') {
+                KenandyErp.Message(errorMsg, KenandyErp.MessageType.Success, window.parent.$('.page-message'));
+	        	closeModalWindow();
+	        }
+	    }	
+			
+		
+
+	</script>
+    <apex:sectionHeader title="{!Agreement__c.Name}" subtitle="Revise"/>
+    <apex:form id="form">
+    	<script>
+			isSuccess = '{!isSuccess}';                                                   
+		    errorMsg = '{!errorMsg}';
+		</script>
+        <apex:pageMessages escape="false"/>
+        <apex:pageBlock >
+         <div style="overflow-x: auto">	
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="Revise"  action="{!revise}" disabled="{!disableButton}" rendered="{!renderGrid}" rerender="form" oncomplete="onConfirmComplete();" />
+                <apex:commandButton value="Cancel" onclick="closeModalWindow()"/>
+                
+            </apex:pageBlockButtons>
+            <apex:pageBlockTable value="{!lws}" var="lw" rendered="{!renderGrid}">
+                <apex:column >
+                    <apex:facet name="header"> 
+								<apex:inputCheckbox id="checkAll">
+									<apex:actionSupport event="onclick" onsubmit="checkAll(this)" rerender=""/>
+								</apex:inputCheckbox>
+							</apex:facet>
+					<apex:inputCheckbox id="checkedone" value="{!lw.selected}"/>	
+                </apex:column>
+               <apex:column headerValue="Product">
+                    <apex:outputField value="{!lw.al.Product__c}"/>
+                </apex:column>
+               <apex:column headerValue="Quantity">
+                    <apex:outputField value="{!lw.al.Sales_Agreement_Quantity__c}"/>
+                </apex:column>
+                <apex:column headerValue="New Quantity">
+                    <apex:inputField value="{!lw.revAl.Sales_Agreement_Quantity__c}"/>
+                </apex:column>
+                <apex:column headerValue="Agreement Price">
+                    <apex:outputField value="{!lw.al.Agreement_Price__c}"/>
+                </apex:column>
+                 <apex:column headerValue="New Agreement Price">
+                    <apex:inputField value="{!lw.revAl.Agreement_Price__c}"/>
+                </apex:column>
+                <apex:column headerValue="Start Date">
+                    <apex:outputField value="{!lw.al.Start_Date__c}"/>
+                </apex:column>
+                 <apex:column headerValue="New Start Date">
+                    <apex:inputField value="{!lw.revAl.Start_Date__c}"/>
+                </apex:column>
+                <apex:column headerValue="End Date">
+                    <apex:outputField value="{!lw.al.End_Date__c}"/>
+                </apex:column>
+                 <apex:column headerValue="New End Date">
+                    <apex:inputField value="{!lw.revAl.End_Date__c}"/>
+                </apex:column>
+				
+                <apex:repeat value="{!$ObjectType.Agreement_Line__c.Fieldsets.ReviseRO}" var="f" >
+                   <apex:column headerValue="{!f.label}" >
+                       <apex:outputField value="{!lw.al[f]}"/>
+                   </apex:column>
+                </apex:repeat>
+                <apex:repeat value="{!$ObjectType.Agreement_Line__c.Fieldsets.Revise}" var="f" >
+                   <apex:column headerValue="{!f.label}" >
+                       <apex:inputField value="{!lw.al[f]}"/>
+                   </apex:column>
+                </apex:repeat>
+                
+            </apex:pageBlockTable>
+         </div>   
+        </apex:pageBlock>
+       
+      
+    </apex:form>
+    
+</apex:page>

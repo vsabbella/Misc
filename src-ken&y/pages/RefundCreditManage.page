@@ -1,0 +1,1471 @@
+<apex:page controller="RefundCreditManageExt" sidebar="false" title="{!IF(claimId == null,$Label.Refund_Credit,$Label.Settlement)}" tabStyle="Refund_Credits__tab">
+<style type="text/css">
+        .column-label {
+            vertical-align: middle !important;    
+            width: 10%;
+        }
+        .column-field {
+            vertical-align: middle !important;    
+            width: 40%;
+        }
+        .column-right {
+            text-align: right;
+            padding:6px;
+        }
+        .column-left {
+            text-align: left;
+        }
+        .filter-operator {
+        
+        }
+        .custom-filter-options {    
+            width: 10%;
+        }
+        .custom-filter-fields {
+            width: 85%;
+        }
+        .custom-refundcredit-button-opacity{
+            opacity: 0.4;
+            cursor: default;
+            pointer-events: none;
+        }
+        .kndy-detail-list th, td{
+            vertical-align: initial;
+        }
+        .button-text-bold {
+            font-weight: bold;
+        }
+    </style>
+    <c:KendoResources /> 
+    <script src="../../soap/ajax/38.0/connection.js" type="text/javascript"> </script>
+    <apex:includeScript value="{!$Resource.GridRelatedListJS}" />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />  
+    <apex:form id="refundCreditForm">
+       <div class="page-container">
+           <apex:sectionHeader subtitle="{!IF(claimId == null,$Label.Refund_Credit,$label.Settlement)}" help="{!URLFOR($Page.HelpCustomerRefunds)}"/>
+	       <div class="page-message"></div>
+	       <apex:pageMessages id="msgs"/> 
+	       <div>
+	           <apex:pageBlock >
+	             <apex:pageBlockButtons location="top">
+	                <apex:outputPanel layout="none">
+	                    <input name="searchFilter" id="searchFilter" type="button" value="{!$Label.Search}" onclick="RefundCreditActions.Search();" class="k-button kndy-btn button-text-bold" />
+	                </apex:outputPanel>
+	                <apex:outputPanel layout="none">
+	                    <input name="goBack" id="goBack" type="button" value="{!$Label.Go_Back}" class="k-button kndy-btn button-text-bold" />
+	                </apex:outputPanel>
+	              </apex:pageBlockButtons>
+	              <apex:panelGrid columns="6" width="100%" columnClasses="column-right,column-left">
+                        <apex:outputLabel value="{!$ObjectType.Customer__c.Label}" for="customerFilter" />  
+                        <div class="kndy-required-input">
+                            <div class="kndy-required-block"></div>
+                               <input id="customerFilter" class="kendoWidgetSelector" style="width:75%"/>
+                        </div>
+                        <apex:outputLabel value="{!$ObjectType.Company__c.Label}" for="companyFilter" />
+                        <div class="kndy-required-input">
+                            <div class="kndy-required-block"></div>
+                            <input id="companyFilter" class="kendoWidgetSelector" />  
+                        </div> 
+                        <apex:outputLabel value="{!$ObjectType.Currency__c.Label}" for="currencyFilter" />
+                        <div class="kndy-required-input">
+                            <div class="kndy-required-block"></div>   
+                            <input id="currencyFilter" class="kendoWidgetSelector" />
+                        </div>  
+                    </apex:panelGrid> 
+	           </apex:pageBlock>
+	      </div>
+          <div>
+            <apex:pageBlock title="Claim Reference" rendered="{!claimId != null}">
+               <apex:panelGrid columns="6" width="100%" columnClasses="column-right,column-left">
+                  <apex:outputLabel value="Claim"/>
+                  <apex:outputText id='claimLink' value=""/>
+                  <apex:outputLabel value="{!$ObjectType.Claim__c.fields.Claim_Balance__c.Label}"/>
+                  <apex:outputText id="claimBalance" value=""/>
+                  <div id="claimBalanceAvailableToRefundDiv" align="right" style = "padding-right: 4cm;" >
+                      <span>{!$Label.Balance_Available_to_Settle}</span>
+                      <span id="claimBalanceAvailableToRefundSpan" ></span>
+                  </div>
+               </apex:panelGrid>
+             </apex:pageBlock>
+          </div>                       
+	      <div id="tabstrip">
+	           <ul id="tabListId">
+	               <li id="invoiceCredits">{!$Label.Invoice_Credits}</li>  
+	               <li id="paymentGatewayCredits">{!$Label.Payment_Gateway_Credits}</li>
+	           </ul>
+	                <div>
+	                    <apex:pageBlock id="cibeforeupdate">     
+	                        <div class="grid-container"> 
+	                            <div class="grid-message"></div>
+	                            <div id="RollupRefundAmount" align="right" style = "padding-right: 4cm;" >
+                             <span>{!IF(claimId == null, $Label.Total_Refund_Amount, $Label.Total_Settlement_Amount)}</span> 
+	                              <span id="runningRefundAmount" ></span>
+	                            </div>
+	                            <div id="{!InvoiceCreditsConfig.uniqueId}" ></div>
+	                        </div>
+	                    </apex:pageBlock>
+	                </div>
+	                <div>
+	                     <apex:pageBlock id="pgcbeforeupdate">    
+	                        <div class="grid-container">
+	                            <div class="grid-message"></div>
+                           <div id="{!PaymentCreditsConfig.uniqueId}"></div>
+	                         </div>
+	                    </apex:pageBlock>
+	                </div>
+	       </div> 
+	     </div>
+    </apex:form>
+    <!-- Create a separate div and apex: form for the pop up. This will store the Detail List which allows you to create a Refund Method.  -->
+    <div id="popUp">
+        <apex:form id="popUpForm">
+            <apex:pageBlock id="popupBlock" >
+                <apex:pageBlockSection columns="1">
+                    <div class="grid-container"  >
+                        <div class="grid-message"></div> 
+                        <div id="{!RefundMethodConfig.uniqueId}"></div>
+                        <div id="popUpRollupRefundAmount" align="right" style = "padding-right: 5cm;" >
+                            <span style ="font-weight:bold;font-size:11px;padding-right: .53cm;">{!IF(claimId == null, $Label.Refund_Amount, $Label.Payment_Amount)}</span>
+                            <span id="popUpRunningRefundAmount" style ="padding-right: .20cm;"></span>
+                        </div>
+                        <input type="button" id="confirmButton" class="btn" value="{!$Label.Confirm}" onclick="RefundMethodUtils.CreateReceipt();" style="margin-left: 40%;align:bottom"/>
+                      </div>    
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+        </apex:form>
+    </div>
+    <script type="text/javascript">
+       Visualforce.remoting.timeout = 120000;  // Set timeout at page level      
+       var customerFilterValue; 
+       var companyFilterValue;
+       var currencyFilterValue; 
+       var customerInvoiceId = '{!customerInvoiceId}';
+       console.log('customerInvoiceId-->'+customerInvoiceId)
+       var customerId = '{!customerId}';
+       console.log('customerId-->'+customerId);
+       var claimId = '{!JSENCODE($CurrentPage.parameters.claimId)}';
+       console.log('claimId-->'+claimId);
+       var claim = '';
+       // Search clears messages before querying customer invoices
+       // After claim is settled, do not clear the CR created message
+       var clearMessagesBeforeSearch = true;
+       var searchFlagInvCredits = false;
+       var searchFlagPayCredits = false;
+       var tabHandler = '{!JSENCODE($CurrentPage.parameters.launchTab)}'; // differentiating string to launch on PaymentGateWayCredits
+       var tabHandlerFlag = false; 
+       var noRecordsMsgFlag = false; //flag to handle the message - We could not find any search results on Invoice Credits
+       var noRecordsMsgOnPGCFlag = false; //flag to handle the message - We could not find any search results on Payment GateWay Credits
+       var multipleSearchFlag = false;
+       var multipleSearchFlag_PGC = false;
+       
+       var getInvoiceCreditsData = function(e) {
+       var deferred = $.Deferred();
+       var grid = $('#{!InvoiceCreditsConfig.uniqueId}').data('kendoGridActionList');
+       
+           customerFilterValue = $('#customerFilter').val();
+           companyFilterValue = $('#companyFilter').val();
+           currencyFilterValue = $('#currencyFilter').val();
+	           var creditsType = 'Invoice';
+	           customerInvoiceId = customerInvoiceId ? '{!customerInvoiceId}' : null;
+	           
+           var filterCriteria = RefundCreditsUtils.GetFilterCriteria();
+           Visualforce.remoting.Manager.invokeAction(
+               '{!$RemoteAction.RefundCreditManageExt.getInvoiceCredits}',
+               filterCriteria,
+	               creditsType,
+	               customerInvoiceId,
+	               searchFlagInvCredits,
+               function (result, event) {
+                  if(event.type == 'exception'){
+                       var records = [];
+                       var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                       KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                       deferred.resolve({ records: records, success: true, total: records.total }, { statusCode: 200 });
+                   }else{
+                    deferred.resolve(result, event);
+                    refundAmount = 0.00;
+                    $('#RollupRefundAmount #runningRefundAmount').text(formatNumbersToCommas(refundAmount));
+                    if(result != null && result.records.length == 0){
+                          
+                           if((noRecordsMsgFlag || multipleSearchFlag) && clearMessagesBeforeSearch){
+                             var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                             KenandyErp.Message('{!$Label.Refund_Credit_No_Results_Found}', KenandyErp.MessageType.Info, messageElement); 
+	                             $('#InvoiceCreditsGrid #createRefundButtonId').val('{!IF(claimID == null, $Label.Create_Refund, $Label.Settle_Claim)}');
+                             return;
+                           }  
+                    }else{
+                       if(customerInvoiceId){
+	                           RefundCreditsUtils.SortedInvoiceCredits(grid);   
+	                           if(!tabHandlerFlag && !searchFlagPayCredits){    
+                                       console.log('first tab activate - 1');
+                                       var tabToActivate = $("#invoiceCredits");
+                                       $("#tabstrip").kendoTabStrip().data("kendoTabStrip").activateTab(tabToActivate); //activates the Invoice Credits tab and eliminates the class way of activating the tab
+                                }
+                    }
+                    }
+                   } 
+               },
+               {escape: false}
+           );
+         return deferred.promise();
+        };
+        
+        var getPaymentCreditsData = function(e) {
+            var deferred = $.Deferred();
+            var grid = $('#{!PaymentCreditsConfig.uniqueId}').data('kendoGridActionList');
+               
+               customerFilterValue = $('#customerFilter').val();
+               companyFilterValue = $('#companyFilter').val();
+               currencyFilterValue = $('#currencyFilter').val();
+               var creditsType = 'PaymentGateway';
+               customerInvoiceId = customerInvoiceId ? '{!customerInvoiceId}' : null;
+           
+               KenandyErp.BlockUI();
+               var filterCriteria = RefundCreditsUtils.GetFilterCriteria();  
+               Visualforce.remoting.Manager.invokeAction(
+                   '{!$RemoteAction.RefundCreditManageExt.getInvoiceCredits}',
+                   filterCriteria,
+                   creditsType,
+                   customerInvoiceId,
+                   searchFlagPayCredits,
+                   function (result, event) {
+	                    if(event.type == 'exception'){
+	                       var records = [];
+                           var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                           KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement); 
+                           deferred.resolve({ records: records, success: true, total: records.total }, { statusCode: 200 });
+	                    }else{
+	                        if(result != null && result.records.length == 0){
+	                             deferred.resolve(result, event);
+                                 if(noRecordsMsgOnPGCFlag || multipleSearchFlag_PGC){
+                                 var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                                 KenandyErp.Message('{!$Label.Refund_Credit_No_Results_Found}', KenandyErp.MessageType.Info, messageElement); 
+                                 //KenandyErp.UnBlockUI();   
+                                 $('#InvoiceCreditsGrid #createRefundButtonId').val('{!IF(claimID == null, $Label.Create_Refund, $Label.Settle_Claim)}');
+                                 return;
+                                     }
+	                        }else{
+	                           if(result != null && result.records.length > 0){
+	                               Visualforce.remoting.Manager.invokeAction(
+					                   '{!$RemoteAction.RefundCreditManageExt.getValidInvoicePaymentCredits}', 
+					                    Serializer.ParameterMap(result.records),
+					                     customerInvoiceId,
+					                     searchFlagPayCredits,
+					                   function (result, event) {
+					                      deferred.resolve(result, event);
+					                      if(result != null && result.records.length > 0){
+                                                 PaymentCreditsUtils.SortedPaymentCredits(grid);   
+                                                 if(!(customerInvoiceId === null) && !searchFlagPayCredits){
+						                            var tabToActivate = $("#paymentGatewayCredits");
+						                                console.log('second tab activate - 1');
+                                                        $("#tabstrip").kendoTabStrip().data("kendoTabStrip").activateTab(tabToActivate); //activates the PGC tab, when launched form the valid PGC CI
+                                                        tabHandlerFlag = true;
+                                                  } 
+					                        }else{
+                                              if(noRecordsMsgOnPGCFlag){ 
+					                            var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                                                KenandyErp.Message('{!$Label.Refund_Credit_No_Results_Found}', KenandyErp.MessageType.Info, messageElement); 
+					                          }
+                                            }
+					                        KenandyErp.UnBlockUI();
+                                            $('#InvoiceCreditsGrid #createRefundButtonId').val('{!IF(claimID == null, $Label.Create_Refund, $Label.Settle_Claim)}');
+					                   },
+					                  {escape: false}
+					                );  
+	                           }
+	                        }
+	                      }  
+                       },
+                   {escape: false}
+               );
+            return deferred.promise();
+        };
+        
+        var getClaim = function(e) {
+            if(claimId){
+                 Visualforce.remoting.Manager.invokeAction(
+                     '{!$RemoteAction.RefundCreditManageExt.getClaimDetails}', 
+                      claimId,    
+                      function (result, event) {
+                         KenandyErp.CleanNamespace(result, '{!NamespaceUU}');
+                         claim = result;
+                         RefundCreditsUtils.RefreshClaimRelatedWidgets();
+                      },
+                 {escape:false});
+             };
+         };
+        
+    	$(document).ready(function() {  
+
+                var tabStrip;
+              
+                    tabStrip = $("#tabstrip").kendoTabStrip({
+                    animation: false,
+                    contentUrls: [ , , , , , , ]}).data("kendoTabStrip"); //select(0) -  removed the forced defaulting to the first tab of tabstrip.
+                                  
+                // Initialize Customer Lookup filter
+                var customerDropdown = $.fn.KendoComboBox($('#customerFilter'), { lookupSearchAction: '{!$RemoteAction.RefundCreditManageExt.lookupSearchFilter}', referenceTo: 'Customer__c', filterCriteria: "RecordType.DeveloperName  in ( \'Bill_To\' , \'Corporate_Parent\' )", title: 'Customer', value:'{!defaultCustomer}'});
+            
+                // Initialize Company Lookup filter
+                var companyDropdown = $.fn.KendoComboBox($('#companyFilter'), { lookupSearchAction: '{!$RemoteAction.RefundCreditManageExt.lookupSearchFilter}', referenceTo: 'Company__c', title: 'Company', value: '{!defaultCompany}' });
+
+                // Initialize Currency filter
+                var currencyDropdown = $.fn.KendoComboBox($('#currencyFilter'), { lookupSearchAction: '{!$RemoteAction.RefundCreditManageExt.lookupSearchFilter}', referenceTo: 'Currency__c', title: 'Currency', value: '{!defaultCurrency}' });
+                
+                // Go back to Customer Invoice Detail Page
+                $('#goBack').on("click", $.proxy(RefundCreditActions.GoBack));
+                
+                
+                if(customerInvoiceId != "" || customerId != ""){
+                    RefundCreditActions.Search();
+                     
+                     } 
+                    
+                
+                if('{!defaultCustomer}' == "" || '{!defaultCompany}' == "" || '{!defaultCurrency}' == ""){
+                   $('[id$=tabstrip]').hide();  
+                }
+                
+                if(customerInvoiceId == "" && customerId == "" && claimId == ""){
+                   $('[id$=goBack]').hide();     
+                }  
+ 
+                if(claimId != ""){ //KNDY-15030
+                   $('[id$=searchFilter]').hide();
+                   $('[id$=paymentGatewayCredits]').hide();
+                   $("#currencyFilter").kendoComboBox({ enable: false});
+                   $("#customerFilter").kendoComboBox({ enable: false});
+                   $("#companyFilter").kendoComboBox({ enable: false});
+                   // Search will be called after customer dropdown is populated with claim`s bill to customer
+                   claim = getClaim();
+                } 
+                 
+                //KENDO WINDOW
+		        var window = $("#popUp");
+		        if(!window.data("kendoWindow")) {
+		            window.kendoWindow({
+                        height: "28%",
+		                width: "800px",
+                        title: "{!IF(claimId == null, $Label.Refund_Method, $ObjectType.Payment_Method__c.Label)}",
+		                visible: false, //ENSURES POPUP DOESNT LOAD ON PAGELOAD
+		                modal: true,
+		                position: {
+		                    top: 100,
+		                    left: 100
+		                },
+		                actions: [
+		                    "Pin",
+		                    "Minimize",
+		                    "Maximize",
+		                    "Close"  
+		                ]
+		            });
+		        }
+       });
+     
+       var refundAmountOnPopUp;
+       var bankAccountLookup= null;                       
+       var RefundMethodUtils = function(){   
+           return {
+           
+                 refundMethodGrid: null,
+                 LaunchRefundMethod: function(grid) {
+                    console.log(removeCommasToNumber($('#RollupRefundAmount #runningRefundAmount')[0].innerText));
+                    refundAmountOnPopUp = parseFloat(removeCommasToNumber($('#RollupRefundAmount #runningRefundAmount')[0].innerText));  
+                    var modelIdField = grid.dataSource.options.schema.model.idField;
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first"); 
+                    RefundMethodUtils.RefundMethodDetailView($('#currencyFilter').val(),$('#companyFilter').val());  
+                    var window = $("#popUp").data("kendoWindow");
+                    window.title('{!IF(claimId == null, $Label.Refund_Method, $ObjectType.Payment_Method__c.Label)}');
+                    window.center();
+                    window.open();		
+                },
+                SettleClaims: function(grid){
+                    KenandyErp.ClearMessage();
+                    var selectedRows = [];
+                    var invoicesGrid = $('#{!InvoiceCreditsConfig.uniqueId}').data('kendoGridActionList');
+                    var messageElementOnInvGrid = invoicesGrid.element.closest("div.grid-container").find("div.grid-message:first");
+                    var invgridData = invoicesGrid.dataSource.data();
+                        for(var i = 0; i < invgridData.length; i++){
+                          if(invgridData[i].get("IsSelected__custom") == true)
+                             selectedRows.push(invgridData[i]);
+                        }
+                        var columns = invoicesGrid.columns;
+                        var updatedRows = [];
+		                $.each(selectedRows, function(index, item) {
+
+		                    item = item.toJSON();
+		                    // Remove the extra attributes Kendo Grid creates for supporting wrapper classes
+		                    for (var i = 0; i < columns.length; i++) {
+		                        var name = columns[i].field;
+		                        if (name && name.indexOf('.') != -1) {
+		                            delete item[name];
+		                        }
+		                    }
+		                    updatedRows.push(item);
+		                });
+		                if (updatedRows.length > 0) {
+		                    selectedRows = Serializer.ParameterMap(updatedRows);
+		                }
+		                //settleClaim(Id claimId, List<RefundCreditService.InvoiceCreditsWrapper> custInvoices)
+		                KenandyErp.BlockUI();
+		                 Visualforce.remoting.Manager.invokeAction(
+                                    '{!$RemoteAction.RefundCreditManageExt.settleClaim}',
+                                    claimId,
+                                    selectedRows,
+                                    function (result, event) {
+                                      var window = $("#popUp").data("kendoWindow");
+                                      if (event.type == 'exception' ) {
+                                            KenandyErp.UnBlockUI();
+                                            window.close();
+                                            KenandyErp.Messages(result.messages, messageElementOnInvGrid);
+                                       } else {
+                                            if (result.success ) {
+                                               KenandyErp.ClearMessage();
+                                               KenandyErp.UnBlockUI();
+                                               noRecordsMsgFlag = false;
+                                               multipleSearchFlag = false;
+                                               invoicesGrid.dataSource.read();
+                                               if(claimId){
+                                                   clearMessagesBeforeSearch = false;
+                                                   getClaim();
+                                               }
+                                               KenandyErp.Messages(result.messages, messageElementOnInvGrid);
+                                            }
+                                            else {
+                                                KenandyErp.UnBlockUI();
+                                                window.close();
+                                                KenandyErp.Messages(result.messages, messageElementOnInvGrid);
+                                            }
+                                        }
+                                    },
+                                    {escape: false}
+                        );
+
+
+
+                },
+                OnRefundMethodLoadSuccess:  function(){  
+                      $('select[name="Payment_Method_G__c"]').bind('change',RefundMethodUtils.OnPaymentMethodChange );
+                      //KNDY-18029 on change of bank account fetch default disbursement payment method                       
+                      $('input[name="Bank_Account_2__c"]').off().on('change', 
+	                        RefundMethodUtils.OnBankAccountChange
+	                     );
+	                  $('#popUpRollupRefundAmount #popUpRunningRefundAmount').text(formatNumbersToCommas(refundAmountOnPopUp));
+	                  
+	                  //KNDY-18030 Bind Type change event
+		                $.each($(".k-autocomplete input"), function(){
+		                        $(this).data("kendoLookup").options.minLength = 1;
+		                            if(this.id=='Bank_Account_2__r.Name'){
+                            		   //KNDY-18030
+		                               bankAccountLookup=this;
+		                            }
+		                });
+		                
+		               var paymentDetailList = $('#{!RefundMethodConfig.uniqueId}').data('kendoDetailList');   
+                       var deferred = $.Deferred();
+                       KenandyErp.BlockUI();
+                       //KNDY-18030 calling to get bank account details from company if set in disbursement bank account
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.RefundCreditManageExt.getRefundBankAccountMethod}',  
+                            $('#companyFilter').val(),
+                            function (result, event) {
+                            if (result.success ) {
+                                  if(result != null && result.records.length > 0){//
+                                		KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+                                    	var defaultBank = result.records[0];
+										$(bankAccountLookup).data('kendoLookup').value (  '' );
+                                    	paymentDetailList.data.set('Bank_Account_2__c', '') ;
+                                    	paymentDetailList.data.set('Bank_Account_2__r', {Id: '', Name: '' });
+                                    	if (defaultBank.Disbursement_Bank_Account__c != undefined){
+	                                      	$(bankAccountLookup).data('kendoLookup').value ( defaultBank.Disbursement_Bank_Account__r.Name );
+	                                      	paymentDetailList.data.set('Bank_Account_2__c', defaultBank.Disbursement_Bank_Account__c) ;
+	                                      	paymentDetailList.data.set('Bank_Account_2__r', {Id: defaultBank.Disbursement_Bank_Account__c, Name: defaultBank.Disbursement_Bank_Account__r.Name });
+	                                      	//KNDY-18029 - set default payment method for disbursement bank account
+	                                      	var paymentMethod = defaultBank.Disbursement_Bank_Account__r.Primary_Disbursement_Payment_Method__c ? defaultBank.Disbursement_Bank_Account__r.Primary_Disbursement_Payment_Method__c : '';
+	                                      	paymentDetailList.data.set('Payment_Method_G__c', paymentMethod) ;
+	                                      	$('select[name="Payment_Method_G__c"]').val(paymentMethod);
+	                                      	RefundMethodUtils.OnPaymentMethodChange();   
+                                    	}                                      
+									}
+                              }else {//
+                              KenandyErp.Messages(result.messages);
+                         	 }
+                         	KenandyErp.UnBlockUI();
+                             deferred.resolve(result, event);
+                            },
+                            {escape: false}
+                        );
+                            
+	                  
+                },
+                //KNDY-18029 on change of bank account fetch default disbursement payment method 
+                OnBankAccountChange:function(){
+                	KenandyErp.BlockUI($('#{!RefundMethodConfig.uniqueId}'));
+                	console.log('onBankAccountChange');
+                	var paymentDetailList = $('#{!RefundMethodConfig.uniqueId}').data('kendoDetailList');   
+		            var bankAccountId = $('input[name="Bank_Account_2__r.Id"]').val();
+		            Visualforce.remoting.Manager.invokeAction(
+		               '{!$RemoteAction.RefundCreditManageExt.getBankAccountDetails}',
+		               bankAccountId,
+		               function (result, event) {
+		                   if(result != null && result.records.length > 0){
+		                       KenandyErp.CleanNamespace(result.records, '{!NamespaceUU}');
+		                       console.log('result  :' + result);
+		                       var bankAccount = result.records[0];
+		                       var paymentMethod = bankAccount.Primary_Disbursement_Payment_Method__c ? bankAccount.Primary_Disbursement_Payment_Method__c : '';
+		                       paymentDetailList.data.set('Payment_Method_G__c', paymentMethod) ;
+		                       paymentDetailList.data.set('Bank_Account_2__c', bankAccount.Id) ;
+                               $('select[name="Payment_Method_G__c"]').val( paymentMethod);
+                               RefundMethodUtils.OnPaymentMethodChange();   
+		                   }else {
+		                     if(result != null) {
+		                          KenandyErp.Messages(result.messages);
+                             }
+
+                        	}
+                        	KenandyErp.UnBlockUI($('#{!RefundMethodConfig.uniqueId}'));
+		               },
+		               {escape: false}
+		            );
+                },
+                
+                
+                OnPaymentMethodChange: function(){
+                	//KNDY-17919 - deprecate ACH/Wire numbers from bank. so allowing user to enter reference number
+                    if($('select[name="Payment_Method_G__c"]').val() === 'Check' ){ //|| $('select[name="Payment_Method_2__c"]').val() === 'Wire' 
+                       $('input[name="Reference_Number__c"]')[0].value = '{!$Label.Number_Provided}';
+                       $('input[name="Reference_Number__c"]').prop('disabled',true);  
+                    }else{
+                       $('input[name="Reference_Number__c"]')[0].value = '';
+                       $('input[name="Reference_Number__c"]').prop('disabled',false);   
+                    }
+                     
+                },
+                
+                CreateReceipt: function(){
+                   
+                  KenandyErp.ClearMessage();
+                  var selectedRows = []; 
+                  
+                  var invoicesGrid = $('#{!InvoiceCreditsConfig.uniqueId}').data('kendoGridActionList');
+                  var paymentDetailList = $('#{!RefundMethodConfig.uniqueId}').data('kendoDetailList');  
+                  var messageElement = paymentDetailList.element.closest("div.grid-container").find("div.grid-message:first");
+                  var messageElementOnInvGrid = invoicesGrid.element.closest("div.grid-container").find("div.grid-message:first");
+                  
+                  var bankAccount = $('input[name="Bank_Account_2__r.Name"]').val();
+                  var refundDate = $('input[name="Date_Received__c"]').val();
+                  var paymentMethod = $('select[name="Payment_Method_G__c"]').val();
+                  var referenceNumber = $('input[name="Reference_Number__c"]').val();  
+                  
+                  if(paymentDetailList && invoicesGrid){
+                  
+	                    if(paymentMethod == null || paymentMethod == '' || bankAccount == '' || refundDate == '' ){
+	                          KenandyErp.Message('{!$Label.Refund_Method_Fields_Required}', KenandyErp.MessageType.Error, messageElement);
+                              return false;
+                        }
+	                    
+
+	                    // Processing the Refund Method Grid
+	                    var headerDateFields = paymentDetailList.getDateFields();
+                        var headerRowsList = [];
+                        var headerRows = [];
+                        if (!paymentDetailList.validate()) {
+                                //e.preventDefault();
+                                return false;
+                        }
+                        headerRowsList.push(paymentDetailList.data);
+                        for(var i = 0; i < headerRowsList.length; i++){
+                            headerRowsList[i].set('Customer__c',customerFilterValue);
+                            headerRowsList[i].set('Company__c',companyFilterValue);
+                            headerRowsList[i].set('Currency__c',currencyFilterValue);
+                            if (claimId){
+                                headerRowsList[i].set('Claim__c',claimId); //KNDY-15033
+                            }  
+                              
+                        }
+		                //need to convert the date time issues in kendo
+		                headerRows = $.map(headerRowsList, function(item, index) {
+		                    item = item.toJSON();
+		                    item = Serializer.ConvertToSFDCDate(item, { dateFields: headerDateFields });
+		                    
+		                    return item;
+		                });
+		                
+		                if (headerRows.length > 0) {
+		                   headerRows = Serializer.ParameterMap(headerRows);
+		                }
+		                
+		                headerDateFields = headerDateFields ? _.pluck(headerDateFields, KenandyErp.KendoGridOptions.FieldInfo.Field) : null;
+                        
+                        //processing the invoices grid
+                        
+                        var invgridData = invoicesGrid.dataSource.data();
+                        for(var i = 0; i < invgridData.length; i++){
+                          if(invgridData[i].get("IsSelected__custom") == true)
+                             selectedRows.push(invgridData[i]);     
+                        }
+                        var columns = invoicesGrid.columns;
+                        var updatedRows = [];
+		                $.each(selectedRows, function(index, item) {
+		                    
+		                    item = item.toJSON();
+		                    // Remove the extra attributes Kendo Grid creates for supporting wrapper classes
+		                    for (var i = 0; i < columns.length; i++) {
+		                        var name = columns[i].field;
+		                        if (name && name.indexOf('.') != -1) {
+		                            delete item[name];
+		                        }
+		                    }
+		                    updatedRows.push(item);
+		                });
+		                if (updatedRows.length > 0) {
+		                    selectedRows = Serializer.ParameterMap(updatedRows);
+		                }
+		                 KenandyErp.BlockUI();
+		                Visualforce.remoting.Manager.invokeAction(
+                                    '{!$RemoteAction.RefundCreditManageExt.createRefundReceipt}', 
+                                    headerRows,
+                                    headerDateFields,
+                                    selectedRows,
+                                    refundAmountOnPopUp,     
+                                    function (result, event) {
+                                      var window = $("#popUp").data("kendoWindow"); 
+                                      if (event.type == 'exception' ) {
+                                            KenandyErp.UnBlockUI();
+                                            window.close(); 
+                                            KenandyErp.Messages(result.messages, messageElementOnInvGrid);
+                                       } else {
+                                            if (result.success ) {
+                                               KenandyErp.ClearMessage();
+                                               KenandyErp.UnBlockUI();
+                                               window.close(); 
+                                               noRecordsMsgFlag = false;
+                                               multipleSearchFlag = false;
+                                               invoicesGrid.dataSource.read();
+                                               if(claimId){
+                                                   clearMessagesBeforeSearch = false;
+                                                   getClaim();
+                                               }
+                                               KenandyErp.Messages(result.messages, messageElementOnInvGrid);
+                                            }
+                                            else {
+                                                KenandyErp.UnBlockUI();
+                                                window.close(); 
+                                                KenandyErp.Messages(result.messages, messageElementOnInvGrid);
+                                            }
+                                        }
+                                    },
+                                    {escape: false}
+                          );
+                          
+                  } 
+                  return true;
+               
+                },
+                    
+                             
+                RefundMethodDetailView: function(currencyId,companyId) {  
+                
+	                var lookupSearchFilters = [];
+                    var rmDetailView = $('#RefundMethodGrid').data('kendoDetailList');
+	                var messageElement = $('.detailList').find('.grid-message .message'); 
+	                
+	                if(messageElement){
+	                   //removes the alert/error div
+	                   messageElement.remove();
+	                }  
+	                
+	                if(rmDetailView) { //if it was rendered before destroy and recreate it. 
+	                    rmDetailView.destroy();
+                        $('#RefundMethodGrid').off();
+                        $('#RefundMethodGrid').empty();
+                     } 
+                     
+                     //KNDY-18879 - remove restriction of currency filter for bank
+                     lookupSearchFilters.push({ field: "Bank_Account_2__c", filter: "Company__c = '" + companyId + "' " });  
+                     var refundMethodGrid = $('#RefundMethodGrid').kendoDetailList({
+	                    namespace: '{!NamespaceUU}',  
+	                    sections: [
+	                        {
+	                             name: 'refundMethod-info', 
+	                             fields: JSON.parse('{!RefundMethodFieldList}') //the main section 
+	                        }
+	                    ],  
+	                    lookupSearchAction: '{!$RemoteAction.RefundCreditManageExt.lookupSearchFilter}', 
+	                    lookupSearchFilters: lookupSearchFilters,
+	                    highlightFirst: true,
+	                    getDetailListFunction: function() {  
+	                       var deferred = $.Deferred();
+                           //calling dummy method to load the popup
+                            Visualforce.remoting.Manager.invokeAction(
+                                '{!$RemoteAction.RefundCreditManageExt.getRefundMethod}',  
+                                function (result, event) {
+                                    deferred.resolve(result, event);
+                                },
+                                {escape: false}
+                            );
+                          return deferred.promise();
+	                    } 
+	                 }).data('kendoDetailList');
+	                 
+                    refundMethodGrid.element.bind('OnReadSuccess', RefundMethodUtils.OnRefundMethodLoadSuccess);
+               }
+           };
+       }();
+    
+       var refundAmount = 0.00; 
+       
+       var RefundCreditsUtils = function() {
+            return {
+                
+               invoiceCreditsGrid: null,
+               GetFieldList: function(fieldList) {
+                   
+                    fieldList = JSON.parse(fieldList);
+                    $.each(fieldList, function() {
+                       if (this.field == 'cusInv.Balance__c') { 
+                            this.min = 0;
+                            this.template = '#= RefundCreditsUtils.SetBalanceAmount(data) #';
+                            this.sortable = {
+                                compare: function(a, b) { 
+                                    var aBalanceAmount = parseFloat($('#' + a.uid + 'BalanceAmount').text());
+                                    var bBalanceAmount = parseFloat($('#' + b.uid + 'BalanceAmount').text());
+                                    
+                                    return aBalanceAmount - bBalanceAmount;
+                        }
+                            };
+                        }
+                    });
+                    return JSON.stringify(fieldList);
+                },
+                
+                SetBalanceAmount: function(data) {
+                    var rowUid = '';
+                    var balanceAmount = 0;
+                    if (data && data.get('cusInv')) {
+                        rowUid = data.uid;
+                        
+                        var ciBalance = (data.get('cusInv.Balance__c')) ? data.get('cusInv.Balance__c') : 0;  
+                        var ciRefAmount = (data.get('refundAmount')) ? data.get('refundAmount') : 0;
+                          
+                        balanceAmount =  (ciBalance + ciRefAmount).round(2); 
+                    }
+                    
+                    return '<span id="' + rowUid + 'BalanceAmount">' + formatNumbersToCommas(balanceAmount.round(2)) + '</span>';
+                },
+                
+                CalculateRefundAmount: function(e) {
+                   
+                     var refundAmount = 0.00;
+                     var grid = $('#{!InvoiceCreditsConfig.uniqueId}').data('kendoGridActionList');
+            
+		             if (grid) {
+		                var gridData = grid.dataSource.data();
+		                RefundCreditsUtils.CreateRefundButtonToggle();
+		                $.each( gridData, function(indx,valu) { 
+                            var rowUid =  valu.uid ;
+                            balanceAmount = (valu.cusInv.Balance__c + valu.refundAmount).round(2);
+                            if(rowUid){
+                               $('#' + rowUid + 'BalanceAmount').text(formatNumbersToCommas(balanceAmount.round(2)));
+                            }
+                        });
+		                for(var i = 0; i < gridData.length; i++){
+		                    var refAmount = parseFloat(gridData[i].refundAmount);
+		                    if(gridData[i].IsSelected__custom){
+			                      refundAmount += refAmount; 
+			                }      
+		                }
+		             } 
+		             refundAmount = parseFloat(refundAmount).toFixed(2);
+                    $('#RollupRefundAmount #runningRefundAmount').text(formatNumbersToCommas(refundAmount));      
+                    return true;
+                },
+                
+                RefreshClaimRelatedWidgets: function(e){ //KNDY-15030
+                    if (claimId == "" ) return;
+                    if (!claim) return;
+                    var company = claim.Company__r;
+                    $("#currencyFilter").kendoComboBox({text: claim.Currency__r.Name, value: claim.Currency__c});
+                    var parentCustomerId = claim.Parent_Customer__c;
+                    var billToCustomerId = claim.Bill_to_Customer__c;
+                    if (billToCustomerId){
+                        $("#customerFilter").kendoComboBox({text: claim.Bill_to_Customer__r.Name, value: claim.Bill_to_Customer__c});
+                    }
+                    else if (parentCustomerId){
+                        $("#customerFilter").kendoComboBox({text: claim.Parent_Customer__r.Name, value: claim.Parent_Customer__c});
+                    }
+                    
+                    $("#companyFilter").kendoComboBox({text: claim.Company__r.Name,value: claim.Company__c});
+                    var claimLink =  '<a href="{!claimUrl}">' + claim.Name + '</a>';
+                    $('span[id$="claimLink"]').html(claimLink);
+                    RefundCreditActions.Search();
+                    RefundCreditsUtils.CalculateClaimBalanceAvailableForRefund();
+                },
+                
+                
+                CalculateClaimBalanceAvailableForRefund: function(e) { //KNDY-15030
+                    if (claimId == "" ) return;
+                    if (!claim) return;
+                    $('span[id$="claimBalance"]').html(parseFloat(claim.Claim_Balance__c).toFixed(2));
+                    var claimBalanceAvailableToRefund =  parseFloat(claim.Claim_Balance__c);
+                    var grid = $('#{!InvoiceCreditsConfig.uniqueId}').data('kendoGridActionList');
+                    if (grid) {
+                       var gridData = grid.dataSource.data();
+                       for(var i = 0; i < gridData.length; i++){
+                           var refAmount = parseFloat(gridData[i].refundAmount);
+                           if(gridData[i].IsSelected__custom){
+                               claimBalanceAvailableToRefund -= refAmount; 
+                           }      
+                       }
+                    }
+                    claimBalanceAvailableToRefund = parseFloat(claimBalanceAvailableToRefund).toFixed(2);
+                    $('#claimBalanceAvailableToRefundDiv #claimBalanceAvailableToRefundSpan').text(formatNumbersToCommas(claimBalanceAvailableToRefund));
+                    if (claimBalanceAvailableToRefund < 0){
+                         $('#claimBalanceAvailableToRefundDiv #claimBalanceAvailableToRefundSpan').css("color", "red");
+                    }
+                    else if (claimBalanceAvailableToRefund == 0){
+                         $('#claimBalanceAvailableToRefundDiv #claimBalanceAvailableToRefundSpan').css("color", "black");
+                    }
+                    else{
+                         $('#claimBalanceAvailableToRefundDiv #claimBalanceAvailableToRefundSpan').css("color", "green");
+                    }
+                    RefundCreditsUtils.CreateRefundButtonToggle();
+                },
+                
+                GetFilterCriteria: function(){
+
+                    var filterCriteria = [];
+                    var customerFilter = $('#customerFilter').val();
+                    var companyFilter = $('#companyFilter').val();
+                    var currencyFilter = $('#currencyFilter').val();
+                    
+					filterCriteria.push({ field: 'Customer__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: customerFilter, operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+                    filterCriteria.push({ field: 'Company__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: companyFilter, operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+                    filterCriteria.push({ field: 'Currency__c', fieldType: KenandyErp.KendoGridOptions.ColumnType.String, value: currencyFilter, operator: KenandyErp.KendoGridOptions.FilterOperatorType.Equals });
+             	    
+             	    return filterCriteria;
+                },
+                
+                ValidateFilterSelections: function(){
+                  var successfulValidation = false;
+                  var filterCriteriaSelected = RefundCreditsUtils.GetFilterCriteria();
+		          var customerPassed = false;
+		          var companyPassed = false;
+		          var currencyPassed = false;
+		          for(var count = 0; count < filterCriteriaSelected.length; count++){
+		               if(filterCriteriaSelected[count].field == 'Customer__c' && filterCriteriaSelected[count].value == customerFilterValue){ 
+		                  customerPassed = true;
+		                  continue;
+		               }  
+		               if(filterCriteriaSelected[count].field == 'Company__c' && filterCriteriaSelected[count].value == companyFilterValue){
+		                  companyPassed = true;
+		                  continue;
+		               }
+		               if(filterCriteriaSelected[count].field == 'Currency__c' && filterCriteriaSelected[count].value == currencyFilterValue){
+		                  currencyPassed = true;
+		                  continue;
+		               }    
+		          }
+		          if(customerPassed && companyPassed && currencyPassed){
+                      successfulValidation = true;
+                  }
+		          
+                  return successfulValidation;
+                },
+                calledForFirstTime: true,
+                SetFilterOnInvoiceType: function(e) {
+                    var grid = $('#{!InvoiceCreditsConfig.uniqueId}').data('kendoGridActionList');
+                    var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                    if(typeof claim != 'undefined' && typeof claim.Type__c != 'undefined' && claim.Type__c == '{!$Label.Allowance_Accrual}' && RefundCreditsUtils.calledForFirstTime) {
+                        grid.dataSource.filter({"field" : "cusInv.Invoice_Type__c", "operator" : "eq", "value" : "{!$Label.Allowance_Accrual}"})
+                        KenandyErp.Message('{!$Label.Refund_Credit_Filter_On_Invoice_Type}', KenandyErp.MessageType.Info, messageElement);
+                        RefundCreditsUtils.HideMessage($(messageElement).find('span.k-icon.k-i-close'));
+                        RefundCreditsUtils.calledForFirstTime = false;
+
+                    }
+
+                },
+                HideMessage: function(selector) {
+                    window.setTimeout(
+                        function() {
+
+                            var text = $(selector).closest('td').prev().find('div').text();
+                            if(typeof text != 'undefined' && text == '{!$Label.Refund_Credit_Filter_On_Invoice_Type}') {
+                                KenandyErp.HideMessage(selector);
+                            }
+                        },
+                        5000
+                    );
+                },
+
+                CreateRefundButtonToggle: function(e){
+                  
+                     var grid = $('#{!InvoiceCreditsConfig.uniqueId}').data('kendoGridActionList');
+                     if (grid) {
+                        KenandyErp.ClearMessage();
+                        var gridData = grid.dataSource.data();
+                        var counter = 0;
+                        for(var i = 0; i < gridData.length; i++){
+                           if(!gridData[i].IsSelected__custom){  
+                            counter++;
+                           }    
+                        }
+                        //KenandyErp.UnBlockUI();
+                        if(counter == gridData.length){
+                          $('#createRefundButtonId').prop('disabled',true);
+                        } 
+                        else{
+                          $('#createRefundButtonId').prop('disabled',false); 
+                          if (claimId){
+                              var claimBalanceAvailableToRefund = parseFloat(removeCommasToNumber($('#claimBalanceAvailableToRefundDiv #claimBalanceAvailableToRefundSpan')[0].innerText));  
+                              if (claimBalanceAvailableToRefund < 0){
+                                 $('#createRefundButtonId').prop('disabled',true);
+                              }
+                          }
+                       }
+                     }
+                     return true; 
+                },
+                
+                SortedInvoiceCredits: function(grid){
+                
+                    var grid = [];
+                    grid = $('#{!InvoiceCreditsConfig.uniqueId}').data('kendoGridActionList'); 
+                    var gridData = grid.dataSource.data();
+                    if (grid) {
+                          refundAmount = 0.00;
+                          var uidValue;
+                          for(var i = 0; i < gridData.length; i++){
+                              if(gridData[i].cusInv.Id == customerInvoiceId && !searchFlagInvCredits){
+                                gridData[i].IsSelected__custom = true;
+                                gridData[i].set("IsSelected__custom", true);
+                                if(gridData[i].get("IsSelected__custom") == true &&  (gridData[i].get('refundAmount') == 0 || gridData[i].get('refundAmount') == '')){
+                                   gridData[i].set("refundAmount", -1 * gridData[i].get('cusInv.Balance__c'));
+                                }
+                                uidValue = gridData[i].uid;
+                              }
+                          }
+                          
+                           if(uidValue){
+                          $('#InvoiceCreditsGrid table:eq(1) tr[data-uid='+uidValue+']').find('input[type="checkbox"]').prop('checked','true'); 
+                          //grid.dataSource.sort({ field: "IsSelected__custom", dir: "desc" }); 
+                          RefundCreditsUtils.CalculateRefundAmount();
+                          var dataItem = grid.dataSource.getByUid(uidValue);
+                          grid.dataSource.remove(dataItem);
+                          grid.dataSource.insert(0, dataItem);
+                         }  
+                    }
+                    return true;
+                },
+                
+                InvoiceCreditsGridInit: function(){
+
+                    var invoiceCreditsGrid = $('#{!invoiceCreditsConfig.uniqueId}').kendoGridActionList({
+                        namespace: '{!NamespaceUU}', 
+                        config: '{!InvoiceCreditsConfigJson}',
+                        showIconButtons: true,
+                        fieldList: RefundCreditsUtils.GetFieldList('{!InvoiceCreditsFieldList}'), 
+                        lookupSearchAction: '{!$RemoteAction.RefundCreditManageExt.lookupSearch}', 
+                        toolbarButtons: [{ name: "grid-release-custom-command", text:"Create Refund", template: "<input type='button' id='createRefundButtonId'  value='{!IF(claimID == null, $Label.Create_Refund, $Label.Settle_Claim)}' class='k-button kndy-btn grid-release-custom-command'/>"}],
+                        getActionListFunction: getInvoiceCreditsData,
+                        beforeEdit: function(e) {
+                            RefundCreditsUtils.InvoiceGridBeforeEdit.call(this, e);
+                        },
+                    }).data('kendoGridActionList');
+                    
+                    // remove the select all option from grid
+                    $('.grid-select-all').hide();
+		       
+                    invoiceCreditsGrid.element.bind('OnReadSuccess', this.CreateRefundButtonToggle);
+                    invoiceCreditsGrid.element.bind('OnReadSuccess', this.SetFilterOnInvoiceType);
+
+                    invoiceCreditsGrid.tbody.on("change", "tr", $.proxy(RefundCreditActions.SetRefundAmount, { grid: this.invoiceCreditsGrid })); 
+                    invoiceCreditsGrid.tbody.on("change", "tr", $.proxy(RefundCreditActions.SetWarningMessage, { grid: this.invoiceCreditsGrid }));
+
+		            invoiceCreditsGrid.bind('edit', $.proxy(RefundCreditsUtils.BindEvents, { grid: this.invoiceCreditsGrid }));
+		           
+		           invoiceCreditsGrid.wrapper.on("click", ".grid-release-custom-command", $.proxy(RefundCreditActions.CreateRefund, { grid: this.invoiceCreditsGrid}));
+		          },
+                
+                BindEvents: function(e) {
+                       $(e.container).find('input[name="refundAmount"]').bind('blur',$.proxy(RefundCreditsUtils.CalculateRefundAmount, { e: e}));  
+                       $(e.container).find('input[name="refundAmount"]').bind('blur',$.proxy(RefundCreditsUtils.CalculateClaimBalanceAvailableForRefund, { e: e}));
+                  },
+               InvoiceGridBeforeEdit: function(e) {
+                    var grid = this;
+                    var columnIndex = grid.cellIndex(e.container);
+                    var fieldName = grid.thead.find("th").eq(columnIndex).data("field");
+                    var isDefaultPrevented = false;
+                    if(fieldName == 'cusInv.Memo__c' || fieldName == 'refundAmount') {
+                        if(!e.model.get('IsSelected__custom')) {
+                            isDefaultPrevented = true;
+                        }
+
+                    }
+                    if (isDefaultPrevented) {
+                        e.preventDefault();
+                    }
+               }
+             };
+        }(); 
+        
+        var PaymentCreditsUtils = function() {
+              return {
+              
+              
+                    GetPayCreditsFieldList: function(fieldList) {
+	                    fieldList = JSON.parse(fieldList);
+	                    $.each(fieldList, function() {
+	                       if (this.field == 'cusInv.Balance__c') {   
+	                            this.min = 0;
+	                            this.template = '#= PaymentCreditsUtils.SetBalanceAmount(data) #';
+	                            this.sortable = {
+	                                compare: function(a, b) { 
+	                                    var aBalanceAmount = parseFloat($('#' + a.uid + 'BalanceAmount').text());
+	                                    var bBalanceAmount = parseFloat($('#' + b.uid + 'BalanceAmount').text());
+	                                    return aBalanceAmount - bBalanceAmount;
+	                                }
+	                            };
+	                        }
+	                    });
+	                    return JSON.stringify(fieldList); 
+                    },
+                    
+                  SetPaymentRefundAmount: function(e) {
+                      var grid = $('#{!PaymentCreditsConfig.uniqueId}').data('kendoGridActionList');
+                      if (grid) {
+	                        var gridData = grid.dataSource.data();
+	                        $.each( gridData, function(indx,valu) { 
+	                            var rowUid =  valu.uid ;
+	                            balanceAmount = (valu.cusInv.Balance__c + valu.refundAmount).round(2);
+	                            if(rowUid){
+	                                $('#' + rowUid + 'BalanceAmount').text(formatNumbersToCommas(balanceAmount.round(2)));  
+	                                if(valu.refundAmount != 0 || valu.refundAmount != ''){
+	                                   $('tr[data-uid='+ rowUid +']').find('td input[id="refundCreditButtonId"]').removeClass('custom-refundcredit-button-opacity');    
+	                                }else{
+	                                   $('tr[data-uid='+ rowUid +']').find('td input[id="refundCreditButtonId"]').addClass('custom-refundcredit-button-opacity'); 
+	                                }
+	                            }
+	                        });
+	                  }   
+                     return true;
+                  },
+                  
+                  RefundCreditButtonInactiveOnLoad: function(e){
+                     var self = this;
+                     var grid = self.grid;
+                         if (grid) {
+                            KenandyErp.ClearMessage();
+	                        var gridData = grid.dataSource.data();
+	                        for(var i = 0; i < gridData.length; i++){
+	                            var rowUid = gridData[i].uid;  
+                                var currenRow = grid.table.find("tr[data-uid='" + rowUid + "']");
+                                $(currenRow).find(".btn.grid-custom-apply-command").addClass('custom-refundcredit-button-opacity');
+	                        }
+	                     }
+                      $('#InvoiceCreditsGrid #createRefundButtonId').val('{!IF(claimID == null, $Label.Create_Refund, $Label.Settle_Claim)}');
+                     return true;
+                  },
+                  
+                 SortedPaymentCredits: function(grid){
+                 
+                     var grid = [];
+                     grid = $('#{!PaymentCreditsConfig.uniqueId}').data('kendoGridActionList');   
+                  
+                     var gridData = grid.dataSource.data();
+                     if (grid) {
+                          refundAmount = 0.00;
+                          var uidValue;
+                          for(var i = 0; i < gridData.length; i++){
+                              if(gridData[i].cusInv.Id == customerInvoiceId && !searchFlagPayCredits){
+                                if((gridData[i].get('refundAmount') == 0 || gridData[i].get('refundAmount') == '')){
+                                   gridData[i].set("refundAmount", -1 * gridData[i].get('cusInv.Balance__c'));
+                                }
+                                uidValue = gridData[i].uid;
+                              }
+                          }
+                          
+                         if(uidValue){
+                               var dataItem = grid.dataSource.getByUid(uidValue);    
+                               grid.dataSource.remove(dataItem);
+                               grid.dataSource.insert(0, dataItem);  
+                         }  
+                    }
+                     return true;
+                  },
+                    
+                 SetBalanceAmount: function(data) {
+	                    var rowUid = '';
+	                    var balanceAmount = 0;
+	                    if (data && data.get('cusInv')) {
+	                        rowUid = data.uid;
+	                        var ciBalance = (data.get('cusInv.Balance__c')) ? data.get('cusInv.Balance__c') : 0;  
+	                        var ciRefAmount = (data.get('refundAmount')) ? data.get('refundAmount') : 0;
+	                        balanceAmount =  (ciBalance + ciRefAmount).round(2); 
+	                    }
+	                    return '<span id="' + rowUid + 'BalanceAmount">' + formatNumbersToCommas(balanceAmount.round(2)) + '</span>';
+                    },
+                    
+                  CreatePaymentRefund: function(e){
+                        
+                        KenandyErp.ClearMessage();
+                        KenandyErp.BlockUI();
+                        var grid = $('#{!PaymentCreditsConfig.uniqueId}').data('kendoGridActionList');
+                        var row = $(e.target).closest("tr");
+                        var selectedRow = grid.dataItem(grid.tbody.find("tr[data-uid='" + row.attr('data-uid') + "']"));    
+                        var selectedRowUID =  row.attr('data-uid');
+                        
+                        var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                        var messageElementOnInvGrid = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                   
+                        if (grid) {
+                            var recordLevelFailures = false;
+                            var gridData = grid.dataSource.data();
+                                for(var i = 0; i < gridData.length; i++){
+                                    var rowUid = gridData[i].uid;  
+                                    if( rowUid == selectedRowUID ){
+                                        if(parseFloat(gridData[i].refundAmount) < 0){
+                                            recordLevelFailures = true;
+                                            KenandyErp.Message('{!$Label.Refund_Amount_cannot_be_negative}', KenandyErp.MessageType.Error, messageElement);
+                                            KenandyErp.UnBlockUI();
+                                            e.preventDefault();
+                                            return false;
+                                        }else if(parseFloat(gridData[i].refundAmount) == 0){
+                                            recordLevelFailures = true;
+                                            KenandyErp.Message('{!$Label.Refund_amount_is_required}', KenandyErp.MessageType.Error, messageElement);
+                                            KenandyErp.UnBlockUI();
+                                            e.preventDefault();
+                                            return false;
+                                        }else if(parseFloat(gridData[i].refundAmount) > (-1 * parseFloat(gridData[i].cusInv.Balance__c))){
+                                             recordLevelFailures = true;
+                                             KenandyErp.Message('{!$Label.You_cannot_refund_more_than_an_invoice_credit_balance}', KenandyErp.MessageType.Error, messageElement);
+                                             KenandyErp.UnBlockUI();
+                                             e.preventDefault();
+                                             return false;
+                                        }
+                                        break;
+                                   }     
+                                    
+                                 }
+                                 if(gridData != null && gridData.length > 0){
+                                     var validateSuccess = RefundCreditsUtils.ValidateFilterSelections();     
+                                     if(!recordLevelFailures){
+                                         if(validateSuccess){
+                                            // call the remote action to create payment refund. 
+                                            if(selectedRowUID && selectedRow)
+                                            {
+				                                 var transactionId = selectedRow.cusInv.Customer_Receipt__r.Transaction_ID__c;
+				                                 var paymentMethod = selectedRow.cusInv.Customer_Receipt__r.Payment_Method_3__c;
+				                                 
+				                                 var columns = grid.columns;
+						                         var processedRow = [];
+						                             selectedRow = selectedRow.toJSON();
+						                            // Remove the extra attributes Kendo Grid creates for supporting wrapper classes
+						                            for (var i = 0; i < columns.length; i++) {
+						                                var name = columns[i].field;
+						                                if (name && name.indexOf('.') != -1) {
+						                                    delete selectedRow[name];
+						                                }
+						                            }
+						                           processedRow.push(selectedRow);
+						                         
+						                         if (processedRow.length > 0) {
+                                                    processedRow = Serializer.ParameterMap(processedRow);
+                                                  }
+				                                 
+				                                  Visualforce.remoting.Manager.invokeAction(           
+				                                    '{!$RemoteAction.RefundCreditManageExt.createPaymentGatewayRefundReceipt}', 
+				                                    processedRow,
+				                                    paymentMethod,    
+				                                    transactionId,
+				                                    function (result, event) {
+				                                     console.log(result);
+				                                      if (event.type == 'exception' ) {
+				                                            KenandyErp.Message(event.result.message, KenandyErp.MessageType.Error, messageElement);
+				                                            KenandyErp.UnBlockUI();
+				                                       } else {
+				                                            if (result.success ) {
+				                                               KenandyErp.ClearMessage();
+				                                               KenandyErp.UnBlockUI();
+                                                               noRecordsMsgOnPGCFlag = false;
+                                                               multipleSearchFlag_PGC = false;
+				                                               grid.dataSource.read();
+				                                               console.log(event.result.message);  
+				                                               console.log(event.result.messages);  
+				                                               //KenandyErp.Message(event.result.message, KenandyErp.MessageType.CONFIRM, messageElement);
+				                                               KenandyErp.Messages(event.result.messages, messageElementOnInvGrid);
+				                                               
+				                                            }else {
+				                                                console.log(event.result.message);  
+				                                                KenandyErp.Message(event.result.message, KenandyErp.MessageType.Error, messageElement);
+				                                                KenandyErp.UnBlockUI();
+				                                            }
+				                                        }
+				                                    },
+				                                    {escape: false}  
+				                               );
+				                         }
+				                         }else{
+                                           KenandyErp.Message('{!$Label.The_search_criteria_has_been_updated}', KenandyErp.MessageType.Error, messageElement);
+                                          KenandyErp.UnBlockUI();
+                                           e.preventDefault();
+                                           return false;
+                                         }
+                                     }  
+                                }
+                            }
+                      return true;
+                   },
+                    
+	              PaymentCreditsGridInit: function(){ 
+	                    
+	                    var paymentCreditsGrid = $('#{!PaymentCreditsConfig.uniqueId}').kendoGridActionList({   
+	                        namespace: '{!NamespaceUU}', 
+	                        config: '{!PaymentCreditsConfigJson}', 
+	                        fieldList: PaymentCreditsUtils.GetPayCreditsFieldList('{!PaymentCreditsFieldList}'), 
+	                        lookupSearchAction: '{!$RemoteAction.RefundCreditManageExt.lookupSearch}', 
+	                        actionColumnButtons: [{ name: "custom-update-command", text:"", template: "<input type='button' id='refundCreditButtonId'  value='Refund Credit' class='btn grid-custom-apply-command' style='align:center' />" }],
+	                        getActionListFunction: getPaymentCreditsData
+	                    }).data('kendoGridActionList');
+	                    
+	                    // remove the select option from grid
+	                    paymentCreditsGrid.hideColumn(0);
+	                     
+	                    paymentCreditsGrid.element.bind('OnReadSuccess', $.proxy(PaymentCreditsUtils.RefundCreditButtonInactiveOnLoad,{ grid: paymentCreditsGrid }));  
+	                     
+	                    paymentCreditsGrid.bind('edit', $.proxy(PaymentCreditsUtils.BindEvents, { grid: this.paymentCreditsGrid }));
+                   
+	                    paymentCreditsGrid.table.on("click", ".btn.grid-custom-apply-command", $.proxy(PaymentCreditsUtils.CreatePaymentRefund, { grid: this.paymentCreditsGrid}));    
+                   
+                   },
+                
+                   BindEvents: function(e) {  
+                       $(e.container).find('input[name="refundAmount"]').bind('blur',$.proxy(PaymentCreditsUtils.SetPaymentRefundAmount, { e: e}));
+   				  }
+             };
+        }();                   
+       
+        
+        var formatNumbersToCommas = function(tmp){
+            if(tmp && !isNaN(tmp)){
+                var ret = tmp;
+                ret = ret +"";
+                ret = ret.split(".");
+                //If ret[0] is -0, -ve sign will be lost while typecasting into Number
+                ret[0] = Number(ret[0]).toLocaleString();
+                if(ret[1] && ret[1].length === 1) ret[1] = ret[1]+"0";
+                ret = ret.length>1 ? ret.join(".") : ret[0] + ".00";
+                //add the -ve sign back if tmp was negative 0
+                tmp = tmp + "";
+                tmp = tmp.split(".");
+                if (tmp[0] == "-0"){ret = "-"+ret;}
+                return ret;
+            }
+            console.log("Encountered an error in addCommas: "+tmp);
+            return "0.00";
+        }                  
+       
+        var removeCommasToNumber =  function parseFloatIgnoreCommas(number) {
+                var numberNoCommas = number.replace(/,/g, '');
+             return parseFloat(numberNoCommas);
+        }                
+       
+        var RefundCreditActions = function() {
+              return {
+                    
+                    Search: function() {
+                        
+                        if (this.Validate()) {
+                              
+                              $('[id$=tabstrip]').show();
+	                          var invoiceGrid = $('#InvoiceCreditsGrid').data('kendoGridActionList');
+                              var paymentsGrid = $('#PaymentCreditsGrid').data('kendoGridActionList');
+                              var validateInvsFlag = RefundCreditsUtils.ValidateFilterSelections();
+                              
+                              if(invoiceGrid) {
+                                  var messageElement = invoiceGrid.element.closest("div.grid-container").find("div.grid-message:first");
+                                  if (clearMessagesBeforeSearch){
+                                      KenandyErp.ClearMessage(messageElement);
+                                  }
+                                  searchFlagInvCredits = true;
+				                  if(!validateInvsFlag){
+				                      noRecordsMsgFlag = true;
+				                  }else{
+				                      noRecordsMsgFlag = false;   
+				                  }  
+				                  
+				                  if(validateInvsFlag && searchFlagInvCredits){
+				                     multipleSearchFlag = true;
+				                  }
+                                  $('#InvoiceCreditsGrid').data('kendoGridActionList').dataSource.read();
+                              }else {
+                                   noRecordsMsgFlag = true;
+                                   RefundCreditsUtils.InvoiceCreditsGridInit();
+                                   if(customerInvoiceId != null && !searchFlagInvCredits && (tabHandler == 'tab2')){
+                                     tabHandlerFlag = false;   // flag to identify the first time launch and land on PGC tab. 
+                                   }else{
+                                     tabHandlerFlag = true;    // flag to land on the Invoice Credits(IC) tab, any time. 
+                                   }
+                          	  }
+                          	  console.log('tabHandlerFlag-->'+tabHandlerFlag);
+                              if(tabHandler == "" && tabHandlerFlag && !searchFlagInvCredits){    
+                          	       console.log('first tab activate');
+                          	       var tabToActivate = $("#invoiceCredits");
+                                   $("#tabstrip").kendoTabStrip().data("kendoTabStrip").activateTab(tabToActivate); // activates the IC tab, and should be executed once per load.
+                                   tabHandlerFlag = true; 
+                          	  } 
+                          	
+                              if(paymentsGrid) {
+                                  var messageElement = paymentsGrid.element.closest("div.grid-container").find("div.grid-message:first");
+                                  KenandyErp.ClearMessage(messageElement);
+                                  searchFlagPayCredits = true;
+                                  if(!validateInvsFlag){
+                                      noRecordsMsgOnPGCFlag = true;
+                                  }else{
+                                      noRecordsMsgOnPGCFlag = false;   
+                                  }
+                                  if(validateInvsFlag && searchFlagPayCredits){
+                                     multipleSearchFlag_PGC = true;
+                                  }
+                                  $('#PaymentCreditsGrid').data('kendoGridActionList').dataSource.read();
+                              }else {
+                                  noRecordsMsgOnPGCFlag = true;
+                                  if (!claimId){ //KNDY-15030 saves queries as Payment Gateway Credit should be invisible for Claim refund credit
+                                      PaymentCreditsUtils.PaymentCreditsGridInit();
+                                  }
+                              }
+                          }
+                        
+                        return true;
+               	    },
+               	     
+               	    GoBack: function(e){
+                            e.stopPropagation();
+                            console.log('customerId--->'+customerId);
+                            console.log('customerInvoiceId--->'+customerInvoiceId); 
+                            console.log('claimId--->'+claimId);   
+                            //var cnfrm = window.confirm('{!$Label.ConfirmGoBack} '); 
+                            var retunUrl;
+                            if(claimId){
+                                retunUrl =  '/'+claimId;
+                            }else if(!(customerInvoiceId === null)){
+                                retunUrl =  '/'+customerInvoiceId;  
+                            }else if(!(customerId === null)){
+                                retunUrl =  '/'+customerId;
+                            }     
+                                KenandyErp.BlockUI();
+                                KenandyErp.back(true, retunUrl);
+                    },
+                   
+                    SetRefundAmount: function(e){
+                       var grid = $('#{!InvoiceCreditsConfig.uniqueId}').data('kendoGridActionList');
+	                   var row = $(e.target).closest("tr");
+	                   var item = grid.dataItem(grid.tbody.find("tr[data-uid='" + row.attr('data-uid') + "']"));  
+	                   var isSelected = $(row).find('input[type="checkbox"]').prop('checked'); //$(e.target).is(":checked");
+	                   console.log('isSelected-1->'+isSelected);
+                         if (grid) {
+                                refundAmount = 0;
+                                  if (isSelected && (item.get('refundAmount') == 0 || item.get('refundAmount') == '')) {
+                                         item.set("refundAmount",-1 * item.get('cusInv.Balance__c'));  
+                                  }else if(!isSelected){
+                                         item.set("refundAmount",0.00);
+                                }
+                                RefundCreditsUtils.CalculateClaimBalanceAvailableForRefund();
+                                RefundCreditsUtils.CalculateRefundAmount();
+                        }
+                       return true;
+                    },
+                    displayedWarningMessage: false,
+                    SetWarningMessage: function(e) {
+
+                       var grid = $('#{!InvoiceCreditsConfig.uniqueId}').data('kendoGridActionList');
+                       var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+	                   var row = $(e.target).closest("tr");
+	                   var item = grid.dataItem(grid.tbody.find("tr[data-uid='" + row.attr('data-uid') + "']"));
+	                   var isSelected = $(row).find('input[type="checkbox"]').prop('checked'); //$(e.target).is(":checked");
+	                   console.log('isSelected-1->'+isSelected);
+                         if (grid && isSelected && !RefundCreditActions.displayedWarningMessage){
+
+                             if(claim.Type__c == '{!$Label.Allowance_Accrual}' && claim.Type__c != item.cusInv.Invoice_Type__c) {
+                                 KenandyErp.Message('{!$Label.You_selected_credit_invoices_different_types_allowance_accrual_claim}', KenandyErp.MessageType.Warning, messageElement);
+                                 RefundCreditActions.displayedWarningMessage = true;
+                             }
+                         }
+                       return true;
+                    },
+                    
+                    CreateRefund: function(e){
+                         
+                        var selectedRows = []; 
+                        var grid = $('#{!InvoiceCreditsConfig.uniqueId}').data('kendoGridActionList');
+                        var messageElement = grid.element.closest("div.grid-container").find("div.grid-message:first");
+                        
+                        if (grid) {
+                            var recordLevelFailures = false;
+                            var gridData = grid.dataSource.data();
+		                        for(var i = 0; i < gridData.length; i++){
+		                            if(gridData[i].IsSelected__custom){
+		                                if(parseFloat(gridData[i].refundAmount) < 0){
+		                                    recordLevelFailures = true;
+		                                    KenandyErp.Message('{!$Label.Refund_Amount_cannot_be_negative}', KenandyErp.MessageType.Error, messageElement);
+		                                    e.preventDefault();
+		                                    return false;
+		                                }else if(parseFloat(gridData[i].refundAmount) == 0){
+		                                    recordLevelFailures = true;
+		                                    KenandyErp.Message('{!$Label.Refund_amount_is_required}', KenandyErp.MessageType.Error, messageElement);
+		                                    e.preventDefault();
+		                                    return false;
+		                                }else if(parseFloat(gridData[i].refundAmount) > (-1 * parseFloat(gridData[i].cusInv.Balance__c))){
+		                                     recordLevelFailures = true;
+		                                     KenandyErp.Message('{!$Label.You_cannot_refund_more_than_an_invoice_credit_balance}', KenandyErp.MessageType.Error, messageElement);
+		                                     e.preventDefault();
+		                                     return false;
+		                                }
+		                            }
+		                         }
+		                         if(gridData != null && gridData.length > 0){
+			                         var validateSuccess = RefundCreditsUtils.ValidateFilterSelections();
+	                                 if(!recordLevelFailures){
+		                                 if(validateSuccess){
+
+		                                     if(claimId != '' && typeof claim != 'undefined' && claim.Source__c != 'Manual') {
+		                                        RefundMethodUtils.SettleClaims(grid);
+                                             }else {
+                                                 // call the remote action to create refund.
+                                                RefundMethodUtils.LaunchRefundMethod(grid);
+                                             }
+		                                 }else{
+		                                   KenandyErp.Message('{!$Label.The_search_criteria_has_been_updated}', KenandyErp.MessageType.Error, messageElement);
+		                                   e.preventDefault();
+		                                   return false;
+		                                }
+		                             }  
+                                }
+		                 }        
+                       return true;
+                    },
+                    
+                    Validate: function() {
+                    
+	                    KenandyErp.ClearMessage();
+	                    var errorMessages = [];
+	                    var customer = $("#customerFilter").val() != null ? $("#customerFilter").val().trim() : ''; 
+	                    var company = $("#companyFilter").val() != null ? $("#companyFilter").val().trim() : ''; 
+	                    var currency = $("#currencyFilter").val() != null ? $("#currencyFilter").val().trim() : ''; 
+	                        
+	                    if (!customer || !company || !currency) {
+	                        errorMessages.push({ message: '{!$Label.Customer_Company_and_Currency_Required}', severity: KenandyErp.MessageType.Error });
+	                    }
+	                    
+	                    if (errorMessages.length > 0) {
+	                        KenandyErp.Messages(errorMessages);
+	                        return false
+	                    }
+	                    return true;
+                   }    
+                    
+               };
+        }();
+  </script>
+</apex:page>

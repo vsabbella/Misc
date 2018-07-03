@@ -1,0 +1,118 @@
+<apex:page standardcontroller="Fixed_Asset__c" extensions="FixedAssetNewExt" sidebar="false">
+	
+    <apex:form id="theForm">
+
+        <apex:sectionHeader title="{!$Label.Fixed_Asset_Edit}"
+            subtitle="{!$Label.New_Fixed_Asset}" />
+        <apex:pageMessages escape="false" />
+        <c:busyWait />
+        <apex:pageBlock title="{!$Label.Fixed_Asset_Edit}">
+
+            <apex:pageBlockSection >
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$Label.Select_New_FixedAsset_Type}" />
+                    <apex:selectList value="{!selectedEntryType}" size="1">
+                        <apex:selectOptions value="{!fixedAssetOptions}" />
+                        <apex:actionSupport event="onchange" action="{!checkRenderPanels}"
+                            rerender="theForm" status="actionStatus" />
+                    </apex:selectList>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection rendered="{!!renderRLPanel}">
+                <apex:inputField value="{!Fixed_Asset__c.Asset_Tag_Number__c}"
+                    required="false" />
+                <apex:inputField value="{!Fixed_Asset__c.Asset_Class__c}"
+                    rendered="{!renderNewTaxBook}" />
+                    <apex:inputField value="{!Fixed_Asset__c.Fixed_Asset__c}"
+                    rendered="{!renderNewTaxBook}" />
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection collapsible="false"
+                title="{!$Label.Supplier_Invoice_Details}" id="pbsRLDetails"
+                rendered="{!renderRLPanel}" columns="1">
+                <apex:inputField value="{!Fixed_Asset__c.Supplier_Invoice__c}">
+                    <apex:actionSupport event="onchange" action="{!updateRILines}"
+                        rerender="pbsRLDetails,popupPanel" status="actionStatus" />
+                </apex:inputField>
+                <apex:pageBlockTable value="{!rilWrappers}" var="rw"
+                    rendered="{!rilWrappers.size > 0}">
+                    <apex:column headervalue="{!$Label.Actions}">
+                    
+	    				<c:multiSelectButton uniqueId="{!rw.ril.Id}" buttonText="Actions">	
+				            <apex:commandLink value="{!$Label.Add_Single}" action="{!openSingleAssetPopUp}" status="actionStatus" rerender="theForm">
+								<apex:param name="selectedRILID" value="{!rw.ril.Id}" assignTo="{!selectedRILID}" />
+							</apex:commandLink>
+							<apex:commandLink value="{!$Label.Add_Multiple}" action="{!openMultipleAssetPopUp}" status="actionStatus" rerender="theForm">
+								<apex:param name="selectedRILID" value="{!rw.ril.Id}" assignTo="{!selectedRILID}" />
+							</apex:commandLink>
+							<apex:commandLink value="{!$Label.Add_Custom}" action="{!openCustomAssetPopUp}" status="actionStatus" rerender="theForm">
+								<apex:param name="selectedRILID" value="{!rw.ril.Id}" assignTo="{!selectedRILID}" />
+							</apex:commandLink>
+			           </c:multiSelectButton>
+						
+                    </apex:column>
+                    
+                    
+                    <apex:column value="{!rw.ril.Supplier_Invoice__c}" />
+                    <apex:column value="{!rw.ril.name}" />
+                    <apex:column value="{!rw.ril.Item__c}"/>
+                    <!--  <apex:column value="{!rw.ril.Status__c}" />-->
+                    <apex:column value="{!rw.ril.Unit_Price__c}" />
+                    <apex:column value="{!rw.ril.Quantity_Received__c}" />
+                     
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+            
+            <apex:outputPanel id="popupPanel">
+
+                <apex:outputPanel layout="block"
+                    rendered="{!displayPopUp}" />
+    
+    
+                <apex:outputPanel id="popInnerAddressPanel" layout="block" rendered="{!displayPopUp}">
+                    <apex:pageBlockSection title="{!$Label.New_Fixed_Asset_Details_for} {!selectedRILName}" columns="1" collapsible=" false">
+    
+                        <apex:pageBlockTable value="{!addFixedAssets}" var="fa">
+                        
+                        	<apex:repeat value="{!$Objecttype.Fixed_Asset__c.Fieldsets.Fixed_Asset_New}" var="f">
+                        		<apex:column headerValue="{!f.label}">
+                       				<apex:inputField value="{!fa[f]}"/>
+                        		</apex:column>
+                        	</apex:repeat>
+                       
+                        </apex:pageBlockTable>
+                    </apex:pageBlockSection>
+                    <apex:outputPanel id="buttonPanel">
+    
+                        <apex:commandButton value="{!$Label.Add}" action="{!saveFixedAssets}" rerender="theForm" status="actionStatus" />
+                        <apex:commandButton value="{!$Label.Add_Additional}" action="{!addAdditionalAsset}" status="actionStatus" rerender="theForm"  rendered="{!isCustom}"/>
+                        <apex:commandButton value="{!$Label.Cancel}" action="{!closePopup}" rerender="theForm" status="actionStatus"/>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+            </apex:outputPanel>
+
+
+            <apex:pageBlockButtons >
+                <apex:commandButton value="{!$Label.Check_asset_tag_number}"
+                    action="{!checkExistingAssets}" rendered="{!!renderRLPanel}"
+                    status="actionStatus" rerender="theForm" />
+                <apex:commandButton value="{!$Label.New_Fixed_Asset}"
+                    rendered="{!renderNewAsset}" action="{!createNewFixedAsset}" status="actionStatus" rerender="theForm" />
+                <apex:commandButton value="{!$Label.New_Fixed_Asset}"
+                    rendered="{!!renderRLPanel}" action="{!createNewFixedAsset}" status="actionStatus" rerender="theForm" />
+                <apex:commandButton value="{!$Label.New_Tax_Book}"
+                    rendered="{!renderNewTaxBook}" action="{!createNewTaxBook}" status="actionStatus" rerender="theForm" />
+                <apex:commandButton value="{!$Label.Generate_Fixed_Assets}" action="{!generateRLFixedAssets}" rendered="{!renderRLPanel}" status="actionStatus" rerender="theForm" />
+                <apex:commandButton value="{!$Label.Cancel}" action="{!cancel}" status="actionStatus" rerender="theForm" />
+            </apex:pageBlockButtons>
+        </apex:pageBlock>    
+
+        
+    </apex:form>
+    
+    <apex:outputPanel rendered="false">
+        <apex:outputField value="{!Fixed_Asset__c.Fixed_Asset__c}"/>
+    </apex:outputPanel>
+
+</apex:page>

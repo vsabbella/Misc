@@ -1,0 +1,1240 @@
+<apex:page docType="html-5.0" showHeader="true" title="Shipment Workbench" sidebar="true" controller="ShipmentWorkbenchExt">
+    <c:KendoResources />
+    <apex:includeScript value="{!$Resource.GridActionListJS}" />
+    <apex:includeScript value="{!$Resource.JSBatch}" />
+    <c:busyWait includeScripts="false" />
+    <script src="../../soap/ajax/38.0/connection.js" type="text/javascript" />
+
+    <apex:form><div class="page-container">
+        <apex:sectionHeader title="Shipment Workbench" help="{!helpURL}" />
+
+        <apex:pageMessages />
+        <div id="page-message" />
+
+        <apex:pageBlock>
+            <div id="filters"></div>
+            <div id="pageParams"></div>
+
+            <apex:pageBlockButtons location="top">
+                <apex:outputPanel layout="none">
+                    <input type="button" id="search-button" value="Search" class="btn" />
+                    <input type="button" id="pick-assign-button" value="Assign Picker" class="btn" />
+                    <apex:commandButton value="{!$Label.Cancel}" action="{!cancel}" />
+                </apex:outputPanel>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+
+        <apex:pageBlock title="Shipment Lines">
+            <div class="grid-container">
+                <div class="grid-message" />
+                <div id="shl-grid" />
+            </div>
+                
+            <div id="serial-window">
+                <div class="grid-container k-block k-info-colored">
+                    <div id="serial-grid" style="width: {!gridSize}px" />
+                </div>
+            </div>
+
+            <apex:pageBlockButtons location="top">
+                <apex:outputPanel layout="none">
+                    <input type="button" id="save-button" value="Save" class="btn" style="display: none;" accesskey="s"/>
+                    <input type="button" id="undo-button" value="Undo" class="btn" style="display: none;" />
+                </apex:outputPanel>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </div></apex:form>
+
+    <script type="text/x-kendo-template" id="detailTemplate">
+        <div class="grid-container">
+            <div class="grid-label"><span style="font-weight: bold;"></span></div>
+            <div class="skid-grid" style="margin-bottom: 10px;"></div>
+        </div>
+    </script>
+
+    <script>
+        Visualforce.remoting.timeout = 120000;
+
+        var shipment    = '{!JSENCODE(shipmentJson)}',
+            defaultMode = '{!mode}',
+            facility    = '{!JSENCODE(defaultFacility)}',
+            defaultGridPageSize = '{!JSENCODE(defaultGridPageSize)}';
+        var namespace        = '{!namespace}',
+            atReceipt        = '{!atReceipt}',
+            showSerialTopbar = {!serialShowTopBar},
+            filterFields     = JSON.parse('{!JSENCODE(filterFieldsJson)}'),
+            pageParamFields  = JSON.parse("{!JSENCODE(pageParamFieldsJson)}"),
+            actionField      = JSON.parse(JSON.stringify(filterFields[0])),
+            shlFields,
+            serialFields     = JSON.parse('{!JSENCODE(serialFieldsJson)}'),
+            serialAttributes = JSON.parse('{!JSENCODE(serialAttributesJson)}');
+
+        var filterDateFields = KenandyErp.KendoGridOptions.GetDateFields(filterFields),
+            shlDateFields,
+            serialDateFields = KenandyErp.KendoGridOptions.GetDateFields(serialFields);
+
+        var mode,
+            swbfilters,
+            pageParams,
+            shippingBin,
+            shlData,
+            shlGrid,
+            skidData,
+            serialData,
+            serialWindow,
+            serialGrid,
+            record = 0,
+            clearMsg = true,
+            expandAll = false,
+            expanded = [],
+            numberOfRetries = 20;
+
+        var warningMessages = {
+            allocate: 'Quantity to allocate does not match quantity available for allocation',
+            planpick: 'Quantity to plan pick does not match quantity available for plan picking',
+            pick: 'Quantity to pick does not match quantity available for picking'
+        };
+
+
+        var renderRecordNumber = function() {
+            return ++record;
+        };
+
+        function clearSHLGrid() {
+            if (shlGrid) {
+                $('#shl-grid').off();
+                shlGrid.destroy();
+                $('#shl-grid').empty();
+                shlGrid = undefined;
+            }
+        }
+
+        function resetState() {
+            $('#save-button').hide();
+            $('#undo-button').hide();
+
+            clearSHLGrid();
+
+            shlData = {};
+            skidData = {};
+            serialData = {};
+
+            if (clearMsg) KenandyErp.ClearMessage($('#shl-grid').closest('div.grid-container').find('div.grid-message'));
+            clearMsg = true;
+        }
+
+        $(document).on('KenandyErpReady', function() {
+            KenandyErp.KendoGridOptions.DefaultPageSize = KenandyErp.KendoGridOptions.PageSizes[0];
+
+            serialWindow = $('#serial-window').kendoWindow({
+                modal: true,
+                title: '{!$Label.Serials}',
+                resizable: false,
+                visible: false
+            }).data('kendoWindow');
+
+            if (shipment) {
+                shipment = JSON.parse(shipment);
+                KenandyErp.CleanObject(shipment, namespace, true);
+            }
+            if (facility) {
+                facility = JSON.parse(facility);
+                KenandyErp.CleanObject(facility, namespace, true);
+                ShipmentWorkbenchUtil.GetActionList(facility.Id);
+            }
+
+            ShipmentWorkbenchUtil.RenderWidgets();
+        });
+
+        var ShipmentWorkbenchUtil = function() {
+            return {
+                RenderWidgets: function() {
+                    var searchFilters = [
+                        { field:'Sales_Order__r.Customer__c', filter: 'RecordType.DeveloperName = \'Sold_To\'' },
+                        { field: 'Shipment__r.Customer__c', filter: 'RecordType.DeveloperName = \'Ship_To\'' }
+                    ];
+
+                    swbfilters = $('#filters').kendoDetailList({
+                        namespace: namespace,
+                        sections: [{
+                            fields: filterFields,
+                            name: 'Filters',
+                            title: 'Filters'
+                        }],
+                        columns: 3,
+                        lookupSearchAction: '{!$RemoteAction.ShipmentWorkbenchExt.lookupSearchFilter}',
+                        lookupSearchFilters: searchFilters,
+                        getDetailListFunction: function() {
+                            var deferred = $.Deferred();
+                            setTimeout(function() {
+                                deferred.resolve({ records: shipment && defaultMode ? [{ Shipment__c: shipment.Id, Shipment__r: shipment, Facility__c: facility.Id, Facility__r: facility, action: defaultMode }] : (facility ? [{ Facility__c: facility.Id, Facility__r: facility }] : []), success: true }, { statusCode: 200 });
+                            }, 100);
+                            return deferred.promise();
+                        }
+                    }).data('kendoDetailList');
+
+                    swbfilters.element.bind('OnReadSuccess', function() {
+                        $('#filters').find('#action, #Shipment__c').bind('change', ShipmentWorkbenchUtil.RenderPageParams);
+                        $('#filters #Facility__c').bind('change',  ShipmentWorkbenchUtil.GetActionList);
+
+                        $('#filters #Shipment__r\\.Customer__r\\.Name').bind('change',function(e){
+
+                            //display an error message if shipto parent does not match the sold to
+                            KenandyErp.ClearMessage($('#page-message'));
+                            if(!swbfilters.data.Sales_Order__r.Customer__c || !e.target.value){
+                                return;
+                            }
+                            Visualforce.remoting.Manager.invokeAction(
+                                    '{!$RemoteAction.ShipmentWorkbenchExt.getShipToCustomerInfo}',
+                                    swbfilters.data.Shipment__r.Customer__c,
+                                    function(result, event) {
+                                        console.log(result);
+                                        if(result.success) {
+
+                                            if (result.records[0][namespace.concat('Parent_Customer__c')].indexOf(swbfilters.data.Sales_Order__r.Customer__c)<0) {
+                                                KenandyErp.Message('Ship to customer does not belong to sold to customer.', KenandyErp.MessageType.Error, $('#page-message'));
+                                            }
+                                        }
+                                        else
+                                           KenandyErp.Message('Error validating ship to customer .', KenandyErp.MessageType.Error, $('#page-message'));
+                                    })
+                        });
+
+                        $('#search-button').on('click', ShipmentWorkbenchUtil.GetShipmentLines);
+                        $('#save-button').on('click', ShipmentWorkbenchUtil.Save);
+                        $('#undo-button').on('click', ShipmentWorkbenchUtil.Undo);
+                        $('#pick-assign-button').on('click', function() { window.open('{!URLFOR($Page.PickAssignment, null,null)}', '_blank'); });
+
+                        ShipmentWorkbenchUtil.RenderPageParams();
+                        pageParams.element.bind('OnReadSuccess', function() {
+                            if (shipment && defaultMode) $('#search-button').trigger('click');
+                        });
+                    });
+                },
+
+                RenderPageParams: function() {
+                    if (pageParams) {
+                        $('#pageParams').off();
+                        pageParams.destroy();
+                        $('#pageParams').empty();
+                        pageParams = null;
+                    }
+
+                    var action = $('#filters #action').val();
+                    var shipmentVal = $('#filters #Shipment__c').val();
+                    var paramFields = JSON.parse(JSON.stringify(pageParamFields));
+                    for (var i = 0; i < paramFields.length; i++) {
+                        var paramField = paramFields[i];
+                        if (paramField.field === 'includeUndo') {
+                            paramField.title = action === 'allocate' ? 'Include Allocated Lines' : (action === 'planpick' ? 'Include Planned Picked Lines' : (action === 'pick' ? 'Include Picked Lines' : 'Include Lines to Undo'));
+                        } else if ((paramField.field === 'includeBuildToOrder' && action !== 'allocate') ||
+                        (paramField.field === 'Bin__c' && action !== 'pick') ||
+                        (paramField.field === 'LPN__c' && (action !== 'pick' || !shipmentVal))) {
+                            paramFields.splice(i--, 1);
+                        }
+                    }
+
+                    pageParams = $('#pageParams').kendoDetailList({
+                        namespace: namespace,
+                        sections: [{
+                            fields: paramFields,
+                            name: 'Additional Options',
+                            title: 'Additional Options'
+                        }],
+                        columns: 3,
+                        lookupSearchAction: '{!$RemoteAction.ShipmentWorkbenchExt.lookupSearchFilter}',
+                        getDetailListFunction: function() {
+                            var deferred = $.Deferred();
+                            setTimeout(function() {
+                                deferred.resolve({ records: [], success: true }, { statusCode: 200 });
+                            }, 100);
+                            return deferred.promise();
+                        }
+                    }).data('kendoDetailList');
+
+                    pageParams.element.bind('OnReadSuccess', function() {
+                        pageParams.element.find('input[name="Bin__c"]').bind('change', function() {
+                            if (!pageParams.data.Bin__c) {
+                                shippingBin = null;
+                            } else {
+                                ShipmentWorkbenchUtil.GetBinRecord(pageParams.data.Bin__c, function(err, bin) {
+                                    if (err) return;
+                                    shippingBin = bin;
+                                });
+                            }
+                        });
+                    });
+                },
+
+                GetActionList: function(facilityId) {
+                    facilityId = typeof facilityId === 'string' ? facilityId : swbfilters.data.Facility__c;
+                    filterFields[0] = JSON.parse(JSON.stringify(actionField));
+
+                    if (!facilityId || (facility && facilityId === facility.Id)) {
+                        return setActionList(facilityId != null && facilityId != '' && facility.Company__r.Auto_Plan_Pick__c === true);
+                    } else {
+                        KenandyErp.BlockUI();
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.ShipmentWorkbenchExt.hasAutoPlanPick}',
+                            facilityId,
+                            function(hasAutoPlanPick, event) {
+                                KenandyErp.UnBlockUI();
+                                if (event.type === 'exception') KenandyErp.Message(event.message, KenandyErp.MessageType.Error, $('#page-message'));
+                                else return setActionList(hasAutoPlanPick);
+                            },
+                            { escape: false }
+                        );
+                    }
+
+                    function setActionList(autoPlanPick) {
+                        if (autoPlanPick === true) filterFields[0].selectList.splice(1, 1);
+
+                        if (swbfilters) {
+                            var actionDropDown = $('#filters #action').data('kendoDropDownList');
+                            var actionOptions = actionDropDown.dataSource;
+                            var action = swbfilters.data.action;
+
+                            while (1) {
+                                var actionOption = actionOptions.at(0);
+                                if (actionOption) actionOptions.remove(actionOption);
+                                else break;
+                            }
+
+                            var actionIndex;
+                            for (var i = 0; i < filterFields[0].selectList.length; i++) {
+                                var actionOption = filterFields[0].selectList[i];
+                                if (actionOption.value === action) actionIndex = i;
+                                actionOptions.add(actionOption);
+                            }
+                            if (actionIndex != null) actionDropDown.select(actionIndex);
+                            else swbfilters.data.action = null;
+                        }
+                    }
+                },
+
+                GetShipmentLines: function() {
+                    var messageElement = $('#shl-grid').closest('div.grid-container').find('div.grid-message');
+
+                    resetState();
+
+                    //Validate filter inputs
+                    if (!swbfilters.validate()) return;
+
+                    //Generate filter data to pass back
+                    var filterData = {};
+                    for (var i = 1; i < filterFields.length; i++) {   //Skip action field
+                        var fieldName = filterFields[i].field;
+                        var fieldParts = fieldName.split('.');
+
+                        var curObj = swbfilters.data;
+                        for (var j = 0; j < fieldParts.length; j++) {
+                            curObj = curObj[fieldParts[j]];
+                        }
+                        if (curObj) filterData[fieldName] = curObj;
+                    }
+
+                    filterData = Serializer.ConvertFromDate2(filterData, filterDateFields);
+
+                    //Cache mode
+                    mode = swbfilters.data.action;
+                    
+                    KenandyErp.BlockUI();
+
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.ShipmentWorkbenchExt.getShipmentLinesAndFields}',
+                        filterData,
+                        mode,
+                        pageParams.data.includeUndo || false,
+                        pageParams.data.includeBuildToOrder || false,
+                        function(result, event) {
+                            if (event.type === 'exception') {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                                KenandyErp.UnBlockUI();
+                            } else if (result.success === false) {
+                                KenandyErp.Messages(result.messages, messageElement);
+                                KenandyErp.UnBlockUI();
+                            } else {
+                            	KenandyErp.CleanObject(result.records, namespace, true);
+
+                                var shlMap = {};
+                                for (var i = 0; i < result.records.length; i++) {
+                                    var shl = result.records[i];
+                                    shl.IsSelected__custom = true;
+
+                                    shlData[shl.Id] = shl;
+
+                                    if (shlMap.hasOwnProperty(shl.Item__c)) shlMap[shl.Item__c].push(shl);
+                                    else shlMap[shl.Item__c] = [shl];
+                                }
+
+                                shlFields = JSON.parse(result.additionalInfo);
+                                shlFields[0].headerTemplate = '';
+                                shlFields[0].template = '#= ShipmentWorkbenchUtil.RenderWarnings(data)#';
+                                shlFields[0].width = '35px';
+
+                                shlDateFields = KenandyErp.KendoGridOptions.GetDateFields(shlFields);
+
+                                var itemIds = Object.keys(shlMap);
+                                if (itemIds.length > 0) {
+                                    var shlList = [];
+                                    for (var i = 0; i < itemIds.length; i++) shlList.push(shlMap[itemIds[i]]);
+
+                                    var messages = [];
+                                    var batch = new JSBatch({
+                                        records: shlList,
+                                        executeAction: ShipmentWorkbenchUtil.GetSkids,
+                                        errorCallback: errorCb,
+                                        doneCallback: successCb
+                                    });
+
+                                    batch.run();
+
+                                    function errorCb(err) {
+                                        if (err.constructor === Array) messages = messages.concat(err);
+                                        else messages.push(err);
+                                        KenandyErp.Messages(messages, messageElement);
+                                    }
+
+                                    function successCb() {
+                                        if (messages.length === 0) ShipmentWorkbenchUtil.RenderSHLGrid();
+                                        else KenandyErp.UnBlockUI();
+                                    }
+                                } else {
+                                    ShipmentWorkbenchUtil.RenderSHLGrid();
+                                }
+                             }
+                        },
+                        { escape: false, buffer: false }
+                    );
+                },
+
+                GetSkids: function(shipmentLines, callback) {
+                    var shls = [];
+                    var shlIds = [];
+                    for (var i = 0; i < shipmentLines.length; i++) {
+                        var shl = JSON.parse(JSON.stringify(shipmentLines[i]));
+                        shl = Serializer.ConvertFromDate(shl, shlDateFields);
+                        delete shl.IsSelected__custom;
+                        shls.push(shl);
+                        shlIds.push(shl.Id);
+                    }
+                    
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.ShipmentWorkbenchExt.getInventoryAndFields}',
+                        shls,
+                        mode,
+                        function(result, event) {
+                            if (event.type === 'exception') {
+                                return callback({ message: event.message, severity: KenandyErp.MessageType.Error });
+                            } else if (result.success === false) {
+                                return callback(result.messages);
+                            } else {
+                            	KenandyErp.CleanObject(result.records, namespace, true);
+
+                                for (var i = 0; i < result.records.length; i++) {
+                                    var shlWrappers = result.records[i];
+                                    var shlId = shlWrappers[0].line.Id;
+                                    var shl = shlData[shlId];
+                                    skidData[shlId] = {};
+                                    shlIds.splice(shlIds.indexOf(shlId), 1);
+                                    for (var j = 0; j < shlWrappers.length; j++) {
+                                        var shlWrapper = shlWrappers[j];
+                                        var hasToLPN = false;
+                                        if (pageParams.data.LPN__c || (pageParams.data.LPN__r && pageParams.data.LPN__r.Name)) {
+                                            for (var k = 0; k < shlWrapper.skidFields.length; k++) {
+                                                if (shlWrapper.skidFields[k].field === 'skid.To_LPN__c') {
+                                                    hasToLPN = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        
+                                        var serialWrappers = shlWrapper.serialWrappers;
+                                        for (var k = 0; k < serialWrappers.length; k++) {
+                                            var sw = serialWrappers[k];
+                                            
+                                            if (mode === "pick") {
+                                            	sw.originalLoc = sw.skid.Location__c;
+                                            	sw.originalBin = sw.skid.Bin__c;
+                                            	
+                                            	if (sw.skid.Temporary_Value_Holder1__c || sw.temporaryValueHolder) {
+                                                	sw.skid.To_Bin__r = JSON.parse(sw.skid.Temporary_Value_Holder1__c ? sw.skid.Temporary_Value_Holder1__c : sw.temporaryValueHolder);
+                                                	sw.skid.To_Bin__c = sw.skid.To_Bin__r.Id;
+                                                	KenandyErp.CleanObject(sw.skid.To_Bin__r, namespace, true);
+                                                
+                                                	if (sw.skid.Temporary_Value_Holder1__c) sw.originalToBin = sw.skid.To_Bin__c;
+                                                
+                                                	delete sw.skid.Temporary_Value_Holder1__c;
+                                                	delete sw.temporaryValueHolder;
+                                            	} else if (shippingBin != null && shippingBin.Location__c === shl.Location__c) {
+                                            		sw.skid.To_Bin__r = JSON.parse(JSON.stringify(shippingBin));
+                                                	sw.skid.To_Bin__c = sw.skid.To_Bin__r.Id;
+                                            	}
+
+                                                if (hasToLPN) {
+                                                    if (pageParams.data.LPN__c) sw.skid.To_LPN__c = pageParams.data.LPN__c;
+                                                    sw.skid.To_LPN__r = JSON.parse(JSON.stringify(pageParams.data.LPN__r));
+                                                }
+                                                else{
+                                                    var LPNRef = { Id: null, Name: null };
+                                                    sw.skid.To_LPN__c = null;
+                                                    sw.skid.To_LPN__r = LPNRef;
+                                                }
+                                            }
+                                        }
+                                        
+                                        skidData[shlId][shlWrapper.uom] = shlWrapper;
+                                    }
+                                }
+
+                                for (var i = 0; i < shlIds.length; i++) skidData[shlIds[i]] = {};
+
+                                return callback();
+                            }
+                        },
+                        { escape: false, buffer: false }
+                    );
+                },
+
+                RenderSHLGrid: function() {
+                    clearSHLGrid();
+
+                    //var shlList = Object.values(shlData);
+                    var shlList= Object.keys(shlData).map(function(key){
+                        return shlData[key];
+
+                    });
+                    for (var i = 0; i < shlList.length; i++) ShipmentWorkbenchUtil.GetWarnings(shlList[i], false);
+                    
+                    var buttons = "Expand All, Collapse All, Select All, Unselect All";
+
+                    shlGrid = $('#shl-grid').kendoGridActionList({
+                        namespace: namespace,
+                        config: { buttons: buttons,
+                                  pageSize: (defaultGridPageSize)? parseInt(defaultGridPageSize) :null},
+                        fieldList: shlFields,
+                        filterable: false,
+                        detailTemplate: kendo.template($('#detailTemplate').html()),
+                        getActionListFunction: function() {
+                            var deferred = $.Deferred();
+                            setTimeout(function() {
+                                deferred.resolve({ records: shlList, success: true }, { statusCode: 200 });
+                            }, 100);
+                            return deferred.promise();
+                        }
+                    }).data('kendoGridActionList');
+                    
+                    shlGrid.table.kendoTooltip({
+                        filter: '.warning-icon',
+                        position: 'right',
+                        content: function(e) { return e.target.find('.warnings').html(); }
+                    });
+
+                    shlGrid.wrapper.on('click', '.grid-expand-all-custom-command', ShipmentWorkbenchUtil.ExpandAll);
+                    shlGrid.wrapper.on('click', '.grid-collapse-all-custom-command', ShipmentWorkbenchUtil.CollapseAll);
+
+                    shlGrid.bind('detailExpand', ShipmentWorkbenchUtil.DetailExpand);
+                    shlGrid.bind('detailCollapse', ShipmentWorkbenchUtil.DetailCollapse);
+
+                    shlGrid.bind('detailInit', ShipmentWorkbenchUtil.RenderSkidGrids);
+                    
+                    shlGrid.wrapper.on("click", ".grid-select-all-custom-command", $.proxy(ShipmentWorkbenchUtil.SelectAll, { grid: this.shlGrid, options: { chkFlag: true } }));
+        			shlGrid.wrapper.on("click", ".grid-unselect-all-custom-command", $.proxy(ShipmentWorkbenchUtil.SelectAll, { grid: this.shlGrid, options: { chkFlag: false } }));
+                    
+                    $('#save-button').show();
+
+                    $('#undo-button').prop('default_value', mode === 'allocate' ? 'Unallocate' : (mode === 'planpick' ? 'Unplan' : 'Unpick'));
+                    $('#undo-button').show();
+
+                    KenandyErp.UnBlockUI();
+                },
+
+                RenderSkidGrids: function(e) {
+                    var shl = e.data;
+                    var shlWrappers = skidData[shl.Id];
+
+                    e.detailRow.css('background-color', '#ccc');
+
+                    var curContainer = e.detailCell.find('.grid-container');
+                    var uoms = Object.keys(shlWrappers);
+                    for (var i = 0; i < uoms.length; i++) {
+                        var uom = uoms[i];
+                        var shlWrapper = shlWrappers[uom];
+                        var containerClone = curContainer.clone();
+
+                        //Set grid label
+                        curContainer.find('.grid-label').find('span').append(shlWrapper.uom);
+
+                        var skFields = shlWrapper.skidFields;
+                        
+                        var searchFilters = [
+                            { field: "skid.Location__c", filter: "Facility__c = \'" + shl.Facility__c + "\'" },
+                            { field: "skid.Bin__c", filter: "Location__c = \'#=skid.Location__c#\'" },
+                            { field: "skid.To_Bin__c", filter: "Location__c = \'" + shl.Location__c + "\'" }
+                        ];
+
+                        var skidColumns = KenandyErp.KendoGridOptions.GetColumns(skFields, { lookupSearchAction: '{!$RemoteAction.ShipmentWorkbenchExt.lookupSearchFilter}', lookupSearchFilters: searchFilters , validateLookupOnBlur: true});
+                        var serialTracked = shl.Company__r.Serial_Control__c === atReceipt && shl.Item__r.Item_Attribute__c && shl.Item__r.Item_Attribute__r.Serial_Number__c === true;
+                        if (serialTracked) skidColumns.push({ command: [{ name: 'serial-button', text: '', template: '<input type="button" value="Serials" class="btn serial-button" />' }], title: 'Action', width: 60 });
+
+                        var getSkidDataSource = function(uofm) {
+                            return new kendo.data.DataSource({
+                                data: shlWrapper.serialWrappers,
+                                pageSize: 10,
+                                batch: true,
+                                serverPaging: false,
+                                schema: {
+                                    model: kendo.data.Model.define({ id: "Id", fields: KenandyErp.KendoGridOptions.GetFields(skFields) }),
+                                    parse: function(response) {
+                                        $.each(response, function(i, item) {
+                                            item = Serializer.ConvertToDate(item, KenandyErp.KendoGridOptions.GetDateFields(skFields));
+                                        });
+                                        return response;
+                                    }
+                                },
+                                change: function() { skidData[shl.Id][uofm].serialWrappers = this.data(); }
+                            });
+                        };
+
+                        var skidGrid = curContainer.find('.skid-grid').kendoGrid({
+                            columns: skidColumns,
+                            dataSource: getSkidDataSource(uom),
+                            editable: true,
+                            navigatable: true,
+                            pageable: { 
+                                input: true,
+                                numeric: false,
+                                pageSizes: KenandyErp.KendoGridOptions.PageSizes,
+                            },
+                            resizable: true,
+                            edit: function(e) {
+                                if (e.container.find('.k-numerictextbox').length > 0) {
+                                    var input = e.container.find('.k-input');
+                                    input.addClass('kndy-text-right');
+                                    input.on('focus', function() {
+                                        var that = $(this);
+                                        setTimeout(function() { if (!kendo.support.browser.safari) that.select(); });
+                                    });
+                                    input.focus();
+                                }
+                                $.proxy(KenandyErp.KendoGridActions.Edit, { referenceFields: KenandyErp.KendoGridOptions.GetReferenceFields(skFields) });
+                            }
+                        }).data('kendoGrid');
+
+                        skidGrid.bind('edit', $.proxy(ShipmentWorkbenchUtil.OnSkidEdit, { grid: skidGrid, shl: shl }));
+                        if (serialTracked) skidGrid.wrapper.on('click', '.serial-button', $.proxy(ShipmentWorkbenchUtil.ManageSerials, { grid: skidGrid, shl: shl, convFactor: shlWrapper.convFactor }));
+
+                        //Add new grid if additional UOM
+                        if ((i + 1) < uoms.length) {
+                            curContainer.after(containerClone);
+                            curContainer = containerClone;
+                        }
+                    }
+                },
+
+                RenderWarnings: function(shl) {
+                    if (shl.warnings == null || shl.warnings.length === 0) return '';
+                    if (typeof shl.warnings == 'string') shl.warnings = shl.warnings.split(',');
+
+                    var template = '<i class="fa fa-exclamation-triangle fa-lg warning-icon kndy-orange"><div class="warnings k-hidden"><table cellspacing="3"><tr><td class="kndy-white kndy-text-left"><h3>Warnings</h3></td></tr><tr><td><ul class="warning-messages">';
+                    for (var i = 0; i < shl.warnings.length; i++) template += '<li>' + shl.warnings[i] + '</li>';
+                    template += '</ul></td></tr></table></div></i>';
+                    return template;
+                },
+
+                OnSkidEdit: function(e) {
+                    var grid = this.grid;
+                    var shl = this.shl;
+                    var sw = grid.dataItem(e.container.closest('tr'));
+
+                    if ($(e.container).find("input[data-role=numerictextbox]").length > 0) {
+                        $(e.container).find("input[data-role=numerictextbox]").bind("blur", function() {
+                            if (mode !== "allocate") {
+                                var qty1 = sw.skid.Quantity_to_Issue__c != null ? sw.skid.Quantity_to_Issue__c * sw.skid.Quantity_Issued__c : 0;
+                                var qty2 = sw.skid.Quantity_To_Return__c != null ? sw.skid.Quantity_To_Return__c * sw.skid.Quantity_Required__c : 0;
+                                var qty3 = sw.skid.Quantity_to_Scrap__c != null ? sw.skid.Quantity_to_Scrap__c * sw.skid.Quantity_Scrapped__c : 0;
+
+                                sw.skid.Input_Quantity__c = qty1 + qty2 + qty3;
+                                grid.refresh();
+                            }
+
+                            ShipmentWorkbenchUtil.GetWarnings(shl);
+                            ShipmentWorkbenchUtil.reDrawWarningCell(shlGrid,shl.uid);
+                        });
+                    } else if (mode === "pick") {
+                        var fieldName = e.container.find("input").length > 0 && e.container.find("input").attr("name") ? e.container.find("input").attr("name") : "";
+
+                        if (fieldName == "skid.Location__c") {
+                            $(e.container).find('input[name="skid.Location__c"]').bind("blur", $.proxy(ShipmentWorkbenchUtil.GetLocation, { grid: this.grid }));
+                        } else if (fieldName === "skid.Bin__c" || fieldName === "skid.To_Bin__c") {
+                            $(e.container).find('input[name="' + fieldName + '"]').bind("blur", $.proxy(ShipmentWorkbenchUtil.GetBin, { grid: grid, field: fieldName.replace("skid.", "") }));
+                            if (fieldName === "skid.Bin__c" && (!sw.skid.Location__c || sw.skid.Location__r.Bin_Tracked__c !== true)) e.sender.closeCell();
+                        }
+                    }
+                },
+
+                reDrawWarningCell : function (grid, rowuid) {
+                    var dataItem = grid.dataSource.getByUid(rowuid);
+                    var warningCellIndex = grid.wrapper.find('.k-grid-header [data-field=warnings]').index();
+                    var gridwarningCell = grid.element.find("tr[data-uid="+rowuid+"] td:eq("+warningCellIndex+")");
+                    var editedRowTemplate = grid.rowTemplate(dataItem);
+                    var warningTempHtml = $(editedRowTemplate).find('td').find('i');
+                    gridwarningCell.html(warningTempHtml);
+                },
+
+                GetLocation: function(e) {
+                    var grid = this.grid;
+                    var sw = grid.dataItem($(e.target).closest("tr"));
+
+                    if (!sw.skid.Location__c) {
+                        delete sw.skid.Bin__c;
+                        delete sw.skid.Bin__r;
+                        grid.refresh();
+                        return;
+                    }
+
+                    KenandyErp.BlockUI();
+
+                    Visualforce.remoting.Manager.invokeAction(
+                        "{!$RemoteAction.ShipmentWorkbenchExt.getLocation}",
+                        sw.skid.Location__c,
+                        function(location, event) {
+                            if (event.type == "exception") {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error, messageElement);
+                            } else {
+                            	KenandyErp.CleanObject(location, namespace, true);
+
+                                sw.skid.Location__r = location;
+
+                                if (sw.skid.Bin__c && sw.skid.Bin__r.Location__c != location.Id) {
+                                    delete sw.skid.Bin__c;
+                                    delete sw.skid.Bin__r;
+                                    grid.refresh();
+                                }
+                            }
+
+                            KenandyErp.UnBlockUI();
+                        },
+                        { escape: false }
+                    );
+                },
+
+                GetBin: function(e) {
+                    var grid = this.grid;
+                    var field = this.field;
+                    var sw = grid.dataItem($(e.target).closest("tr"));
+
+                    if (!sw.skid[field]) return;
+                    
+                    ShipmentWorkbenchUtil.GetBinRecord(sw.skid[field], function(err, bin) {
+                        if (err) return;
+                        
+                        sw.skid[field.replace("__c", "__r")] = bin;
+                    });
+                },
+                
+                GetBinRecord: function(binId, callback) {
+                    KenandyErp.BlockUI();
+                    
+                    Visualforce.remoting.Manager.invokeAction(
+                        "{!$RemoteAction.ShipmentWorkbenchExt.getBin}",
+                        binId,
+                        function(bin, event) {
+                            KenandyErp.UnBlockUI();
+                            
+                            if (event.type == "exception") {
+                                KenandyErp.Message(event.message, KenandyErp.MessageType.Error);
+                                return callback(true);
+                            }
+                            
+                            KenandyErp.CleanObject(bin, namespace, true);
+                            return callback(false, bin);
+                        },
+                        { escape: false }
+                    );
+                },
+
+                GetWarnings: function(shl, refresh) {
+                    var shlQty;
+                    if (mode === 'allocate') {
+                        shlQty = shl.Quantity_Planned__c - shl.Quantity_Allocated__c - shl.Quantity_To_Pick__c - shl.Quantity_Picked__c - shl.Quantity_Shipped__c;
+                    } else if (mode === 'planpick') {
+                        shlQty = shl.Quantity_Allocated__c;
+                    } else if (mode === 'pick') {
+                        shlQty = shl.Quantity_To_Pick__c;
+                    }
+                    
+                    var uoms = Object.keys(skidData[shl.Id]);
+                    var qty = 0;
+                    var blockedBins = [];
+                    for (var i = 0; i < uoms.length; i++) {
+                        var shlWrapper = skidData[shl.Id][uoms[i]];
+                        for (var j = 0; j < shlWrapper.serialWrappers.length; j++) {
+                            var sw = shlWrapper.serialWrappers[j];
+                            if (sw.skid.Input_Quantity__c > 0) {
+                                qty += sw.skid.Input_Quantity__c;
+                                if (sw.skid.Bin__c && sw.skid.Bin__r.Blocked__c === true) blockedBins.push(sw.skid.Bin__r.Name);
+                            }
+                        }
+                    }
+
+                    var warnings = [];
+                    if (shlQty !== qty) warnings.push(warningMessages[mode]);
+                    if (blockedBins.length > 0) warnings.push("The following bins are blocked: " + blockedBins.join(", "));
+
+                    if(mode === 'allocate'){
+                        if((shl.Sales_Order_Line__r && shl.Sales_Order_Line__r.Fulfillment_Source__c =='Build To Order')
+                            || shl.Item__r.Source__c =='Build To Order')
+                               warnings.push('You don\'t need to allocate this line. Kenandy auto-allocates build to order lines when you complete the associated work order.');
+                    }
+
+                    shl.warnings = warnings;
+                },
+
+                ManageSerials: function(e) {
+                    var grid = this.grid;
+                    var shl = this.shl;
+                    var convFactor = this.convFactor;
+                    var sw = grid.dataItem($(e.target).closest('tr'));
+                
+                    if (serialGrid) {
+                        $('#serial-grid').off();
+                        serialGrid.destroy();
+                        $('#serial-grid').empty();
+                    }
+
+                    var serFields = JSON.parse(JSON.stringify(serialFields));
+                    var i = serFields.length;
+                    while (i--) {
+                        var serialField = serFields[i].field;
+                        if (_.contains(serialAttributes, serialField.toLowerCase()) && (!shl.Item__r.Item_Attribute__c || shl.Item__r.Item_Attribute__r[serialField] === false)) serFields.splice(i, 1);
+                    }
+
+                    var serialColumns = KenandyErp.KendoGridOptions.GetColumns(serFields);
+                    serialColumns[0].template = '#= renderRecordNumber() #';
+                    serialColumns.unshift({ field: 'IsSelected__custom', filterable: false, sortable: false, template: '<input type="checkbox" data-bind="IsSelected__custom" #= IsSelected__custom ? checked="checked" : "" # class="grid-select-one" />', headerTemplate: '<input type="checkbox" class="grid-select-all" />', width: 30, attributes: { class: 'kndy-text-left' }, headerAttributes: { class: 'kndy-text-left' }});
+
+                    var serialModel = KenandyErp.KendoGridOptions.GetFields(serFields);
+                    serialModel.IsSelected__custom = { type: 'boolean' };
+                    serialModel = kendo.data.Model.define({ id: "Id", fields: serialModel });
+
+                    var serials = ShipmentWorkbenchUtil.GetSerials(sw, convFactor);
+
+                    var serialDataSource = new kendo.data.DataSource({
+                        data: serials,
+                        batch: true,
+                        pageSize: 10,
+                        serverPaging: false,
+                        schema: {
+                            model: serialModel,
+                            total: function() { return serials.length; },
+                            parse: function(response) {
+                                $.each(response, function(i, item) {
+                                    item = Serializer.ConvertToDate(item, serialDateFields);
+                                });
+                                return response;
+                            }
+                        },
+                        change: function() { serialData[sw.uid] = this.data(); }
+                    });
+
+                    var buttons = [KenandyErp.KendoGridOptions.CommandType.Search];
+
+                    serialGrid = $('#serial-grid').kendoGrid({
+                        columns: serialColumns,
+                        dataSource: serialDataSource,
+                        editable: true,
+                        filterable: true,
+                        navigatable: true,
+                        pageable: {
+                            input: true,
+                            numeric: false,
+                            pageSizes: KenandyErp.KendoGridOptions.PageSizes
+                        },
+                        resizeable: true,
+                        sortable: true,
+                        toolbar: KenandyErp.KendoGridOptions.GetToolbarButtons(buttons),
+                        dataBinding: function() { record = (this.dataSource.page() - 1) * this.dataSource.pageSize(); },
+                        dataBound: function() { record = 0; }
+                    }).data('kendoGrid');
+                    
+                    if (showSerialTopbar) {
+                        $('#serial-grid').prepend('<div id="serial-grid-pager" />');
+                        $('#serial-grid-pager').kendoPager({
+                            dataSource: serialGrid.dataSource,
+                            pageSizes: [10, 25, 50, 100, 200],
+                            input: true,
+                            numeric: false
+                        });
+                    }
+
+                    KenandyErp.KendoGridOptions.BindEvents(serialGrid, buttons, { referenceFields: KenandyErp.KendoGridOptions.GetReferenceFields(serFields) });
+
+                    serialGrid.thead.on('change', '.grid-select-all', $.proxy(KenandyErp.KendoGridActions.SelectAll, { grid: serialGrid }));
+                    serialGrid.tbody.on('change', '.grid-select-one', $.proxy(KenandyErp.KendoGridActions.Select, { grid: serialGrid }));
+
+                    serialGrid.thead.find('.grid-select-all').prop('checked', serialGrid.tbody.find('.grid-select-one').length > 0 && !serialGrid.tbody.find('.grid-select-one').is(':not(:checked)'));
+                    
+                    serialWindow.open().center();
+                },
+
+                Save: function() {
+                    var messageElement = $('#shl-grid').closest('div.grid-container').find('div.grid-message');
+                    KenandyErp.ClearMessage(messageElement);
+
+                    var shipmentLineData = shlGrid.dataSource.data();
+
+                    var shlWrapperMap = {};
+                    var warnings = [];
+                    for (var i = 0; i < shipmentLineData.length; i++) {
+                        var shl = shipmentLineData[i];
+                        if (!shl.IsSelected__custom) continue;
+                        if (shl.warnings) {
+                            if (typeof shl.warnings === 'string') shl.warnings = shl.warnings.split(',');
+                            for (var i2 = 0; i2 < shl.warnings.length; i2++) {
+                                var warning = shl.warnings[i2];
+                                if (warnings.indexOf(warning) === -1) warnings.push(warning);
+                            }
+                        }
+
+                        var uoms = Object.keys(skidData[shl.Id]);
+                        var swMap = {};
+                        for (var j = 0; j < uoms.length; j++) {
+                            var shlWrapper = skidData[shl.Id][uoms[j]];
+                            for (var k = 0; k < shlWrapper.serialWrappers.length; k++) {
+                                var sw = shlWrapper.serialWrappers[k];
+
+                                var serialList = ShipmentWorkbenchUtil.GetSerials(sw, shlWrapper.convFactor);
+                                var serials = [];
+                                for (var l = 0; l < serialList.length; l++) {
+                                    var serial = JSON.parse(JSON.stringify(serialList[l]));
+
+                                    if (mode === 'allocate') {
+                                        if (serial.IsSelected__custom === true) {
+                                            if (serial.Allocated_SKID__c) serial.Temporary_Value_Holder__c = 'Allocated';
+                                            else serial.Temporary_Value_Holder__c = 'Allocate';
+                                        } else if (serial.Allocated_SKID__c) {
+                                            serial.Temporary_Value_Holder__c = 'Unallocate';
+                                        }
+                                    } else {
+                                        var statusVal = mode === 'planpick' ? 'Planned' : 'Picked';
+                                        var forwardAction = mode === 'planpick' ? 'Plan' : 'Pick';
+                                        var backAction = mode === 'planpick' ? 'Unplan' : 'Unpick';
+                                        var prevOp = mode === 'planpick' ? 'Allocated' : 'Planned';
+
+                                        if (serial.IsSelected__custom === true) {
+                                            if (serial.Temporary_Value_Holder__c !== statusVal) serial.Temporary_Value_Holder__c = forwardAction;
+                                        } else if (serial.Temporary_Value_Holder__c === statusVal) {
+                                            serial.Temporary_Value_Holder__c = backAction;
+                                        } else if (serial.Allocated_SKID__c != null) {
+                                            serial.Temporary_Value_Holder__c = prevOp;
+                                        }
+                                    }
+
+                                    if (serial.Temporary_Value_Holder__c != null) {
+                                        delete serial[''];
+                                        delete serial.IsSelected__custom;
+                                        delete serial.Status__c;
+                                        if (serialDateFields.length > 0) serial = Serializer.ConvertFromDate(serial, serialDateFields);
+                                        serials.push(serial);
+                                    }
+                                }
+
+                                sw = JSON.parse(JSON.stringify(sw));
+
+                                if (mode === 'pick') sw.temporaryValueHolder = sw.originalLoc + "|" + (sw.originalBin || 'null') + "|" + (sw.originalToBin || 'null');
+                                if (sw.skid.To_Bin__c || sw.skid.To_LPN__c || (sw.skid.To_LPN__r && sw.skid.To_LPN__r.Name)) {
+                                    sw.toskid = {};
+                                    if (sw.skid.To_Bin__c) {
+                                        sw.toskid.Bin__c = sw.skid.To_Bin__c;
+                                        sw.toskid.Bin__r = sw.skid.To_Bin__r;
+                                    }
+                                    if (sw.skid.To_LPN__c || (sw.skid.To_LPN__r && sw.skid.To_LPN__r.Name)) {
+                                        if (sw.skid.To_LPN__c) {
+                                            sw.toskid.License_Plate_Number__c = sw.skid.To_LPN__c;
+                                            sw.toskid.License_Plate_Number__r = sw.skid.To_LPN__r;
+                                        } else {
+                                            sw.toskid.Temporary_LPN_Holder__c = sw.skid.To_LPN__r.Name;
+                                        }
+                                    }
+                                }
+                                
+                                for (var l = 0; l < shlWrapper.skidFields.length; l++) delete sw[shlWrapper.skidFields[l].field];
+                                delete sw.skid.To_Bin__c;
+                                delete sw.skid.To_Bin__r;
+                                delete sw.skid.To_LPN__c;
+                                delete sw.skid.To_LPN__r;
+                                delete sw.originalLoc;
+                                delete sw.originalBin;
+                                delete sw.originalToBin;
+                                
+                                sw = Serializer.ConvertFromDate(sw, KenandyErp.KendoGridOptions.GetDateFields(shlWrapper.skidFields));
+                                sw.serialList = serials;
+
+                                var level = sw.skid.Packaging_UOM__r.Package_Class__c != null ? String(sw.skid.Packaging_UOM__r.Package_Class__r.Level__c) : 'null';
+                                if (swMap[level] == null) swMap[level] = [sw];
+                                else swMap[level].push(sw);
+                            }
+                        }
+
+                        var swList = [];
+                        var levels = Object.keys(swMap).sort(); //sort UOMs ASC
+                        for (var i2 = 0; i2 < levels.length; i2++) swList = swList.concat(swMap[levels[i2]]);
+
+                        if (swList.length > 0) {
+                            shlWrapper = JSON.parse(JSON.stringify(shlWrapper));
+                            shlWrapper.line = {
+                                Id: shl.Id,
+                                Name: shl.Name,
+                                Company__c: shl.Company__c,
+                                Item__c: shl.Item__c,
+                                Item__r: JSON.parse(JSON.stringify(shl.Item__r))
+                            }
+                            delete shlWrapper.skidFields;
+                            shlWrapper.serialWrappers = swList;
+
+                            if (shlWrapperMap.hasOwnProperty(shl.Item__c)) shlWrapperMap[shl.Item__c].push(shlWrapper);
+                            else shlWrapperMap[shl.Item__c] = [shlWrapper];
+                        }
+                    }
+
+                    var itemIds = Object.keys(shlWrapperMap);
+                    if (itemIds.length === 0) {
+                        KenandyErp.Message('No changes detected', KenandyErp.MessageType.Info, messageElement);
+                        return;
+                    }
+
+                    if (warnings.length > 0) {
+                        KenandyErp.Confirmation(warnings.join('\n') + '\n\nDo you wish to continue?', executeSave);
+                        $('.kendo-confirmation').parent().css('height', 'auto');
+                        $('.kendo-confirmation').parents('.k-window').css('width', 'auto');
+                        $('.kendo-confirmation').parent().css('white-space', 'pre');
+                    } else {
+                        executeSave();
+                    }
+                    
+                    function executeSave() {
+                        KenandyErp.BlockUI();
+
+                        var shlList = [];
+                        for (var i = 0; i < itemIds.length; i++) shlList.push(Serializer.ParameterMap(shlWrapperMap[itemIds[i]], { isDml: false }));
+
+                        var messages = [];
+                        var batch = new JSBatch({
+                            records: shlList,
+                            retry: 20,
+                            retryLogic: doRetry,
+                            executeAction: save,
+                            errorCallback: errorCb,
+                            doneCallback: successCb
+                        });
+
+                        batch.run();
+
+                        function doRetry(err) {
+                            var errMsgs = err.constructor === Array ? err : [err];
+                            for (var i = 0; i < errMsgs.length; i++) {
+                                var msg = errMsgs[i].message;
+                                if (msg.indexOf("timeout") > -1 || msg.indexOf("UNABLE_TO_LOCK_ROW") > -1 || msg.indexOf("ConcurrentPerOrgApex") > -1 || msg.indexOf("Remoting request invalid for your session") > -1 || msg.indexOf("Logged in") > -1) {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        }
+
+                        function save(shlWrappers, callback) {
+                            Visualforce.remoting.Manager.invokeAction(
+                                "{!$RemoteAction.ShipmentWorkbenchExt.save}",
+                                shlWrappers,
+                                mode,
+                                function(result, event) {
+                                    if (event.type === "exception") {
+                                        return callback({ message: event.message, severity: KenandyErp.MessageType.Error });
+                                    } else if (result.success === false) {
+                                        return callback(result.messages);
+                                    } else {
+                                        autoPick(shlWrappers, callback);
+                                    }
+                                },
+                                { escape: false, buffer: false }
+                            );
+                        }
+
+                        function autoPick(shlWrappers, callback) {
+                            var shlIds = [];
+                            
+                            for (var i = 0; i < shlWrappers.length; i++) {
+                                var shl = shlData[shlWrappers[i].line.Id];
+                                if (shl.Facility__r.Auto_Confirm_Pick_On_Allocation__c === true && shl.Location__r.Bin_Tracked__c !== true && ((mode === 'allocate' && shl.Company__r.Auto_Plan_Pick__c === true) || mode === 'planpick')) shlIds.push(shl.Id);
+								var shlId = shlWrappers[i].line.Id;
+                                delete shlData[shlId];
+                                delete skidData[shlId];
+                            }
+
+                            if (shlIds.length > 0) {
+                                Visualforce.remoting.Manager.invokeAction(
+                                    "{!$RemoteAction.ShipmentWorkbenchExt.autoPick}",
+                                    shlIds,
+                                    function(result, event) {
+                                        if (event.type === "exception") {
+                                            return callback({ message: event.message, severity: KenandyErp.MessageType.Error });
+                                        } else if (result.success === false) {
+                                            return callback(result.messages);
+                                        } else {
+                                            return callback();
+                                        }
+                                    },
+                                    { escape: false, buffer: false }
+                                );
+                            } else {
+                                return callback();
+                            }
+                        }
+
+                        function errorCb(err) {
+                            if (err.constructor === Array) messages = messages.concat(err);
+                            else messages.push(err);
+                            KenandyErp.Messages(messages, messageElement);
+                        }
+
+                        function successCb() {
+                            if (messages.length > 0) {
+                                ShipmentWorkbenchUtil.RenderSHLGrid();
+                            } else {
+                                KenandyErp.Message("Shipment lines have been processed successfully", KenandyErp.MessageType.Success, messageElement);
+                                clearMsg = false;
+                                resetState();
+                                KenandyErp.UnBlockUI();
+                            }
+                        }
+                    }
+                },
+
+                Undo: function() {
+                    var shlData = shlGrid.dataSource.data();
+                    for (var i = 0; i < shlData.length; i++) {
+                        var shl = shlData[i];
+                        if (shl.IsSelected__custom !== true) continue;
+
+                        var uoms = Object.keys(skidData[shl.Id]);
+                        for (var j = 0; j < uoms.length; j++) {
+                            var shlWrapper = skidData[shl.Id][uoms[j]];
+
+                            for (var k = 0; k < shlWrapper.serialWrappers.length; k++) {
+                                var sw = shlWrapper.serialWrappers[k];
+                                sw.skid.Input_Quantity__c = -(mode === 'allocate' ? sw.skid.Quantity_Allocated__c : (sw.skid.Quantity_Used__c * sw.skid.Quantity_Issued__c));
+                                if (mode !== 'allocate') {
+                                    sw.skid.Quantity_to_Issue__c = sw.skid.Input_Quantity__c / sw.skid.Quantity_Issued__c;
+                                    sw.skid.Quantity_To_Return__c = 0;
+                                    sw.skid.Quantity_to_Scrap__c = 0;
+                                }
+
+                                var serialList = ShipmentWorkbenchUtil.GetSerials(sw, shlWrapper.convFactor);
+                                for (var l = 0; l < serialList.length; l++) {
+                                    var serial = serialList[l];
+                                    serial.IsSelected__custom = false;
+                                }
+                            }
+                        }
+                    }
+
+                    $('#save-button').trigger('click');
+                },
+
+                GetSerials: function(sw, convFactor) {
+                    var serials = [];
+                    if (serialData.hasOwnProperty(sw.uid)) {
+                        serials = serialData[sw.uid];
+                    } else {
+                        serials = JSON.parse(JSON.stringify(sw.serialList));
+                        for (var i = 0; i < serials.length; i++) {
+                            var serial = serials[i];
+                            if (mode === 'allocate') {
+                                if (serial.Allocated_SKID__c) serial.Status__c = 'Allocated';
+
+                                if (sw.skid.Input_Quantity__c < 0 && sw.skid.Input_Quantity__c <= -sw.skid.Quantity_Allocated__c) {
+                                    serial.IsSelected__custom = false;
+                                } else if (serial.Allocated_SKID__c || (sw.skid.Input_Quantity__c > 0 && serials.length <= (sw.skid.Input_Quantity__c + sw.skid.Quantity_Allocated__c) * convFactor)) {
+                                    serial.IsSelected__custom = true;
+                                }
+                            } else {
+                                var statusVal = mode === 'planpick' ? 'Planned' : 'Picked';
+                                var prevStatus = mode === 'planpick' ? 'Allocated' : 'Plan Picked';
+
+                                if (serial.Temporary_Value_Holder__c === statusVal) serial.Status__c = mode === 'planpick' ? 'Plan Picked' : 'Picked';
+                                else if (serial.Allocated_SKID__c) serial.Status__c = prevStatus;
+
+                                if (sw.skid.Input_Quantity__c < 0 && sw.skid.Input_Quantity__c <= -(sw.skid.Quantity_Used__c * sw.conversionFactor)) {
+                                    serial.IsSelected__custom = false;
+                                } else if ((sw.skid.Quantity_Used__c == 0 && serial.Allocated_SKID__c) || serial.Temporary_Value_Holder__c === statusVal || (sw.skid.Input_Quantity__c > 0 && serials.length <= sw.skid.Input_Quantity__c + (sw.skid.Quantity_Used__c * sw.conversionFactor))) {
+                                    serial.IsSelected__custom = true;
+                                }
+                            }
+                        }
+                    }
+                    return serials;
+                },
+
+                ExpandAll: function() {
+                    expanded = [];
+                    expandAll = true;
+                    shlGrid.expandRow(shlGrid.tbody.find('tr.k-master-row')); 
+                    expandAll = false;
+                },
+
+                DetailExpand: function(e) {
+                    if (expandAll !== true) ShipmentWorkbenchUtil.CollapseAll();
+                    shlGrid.unbind('detailExpand', ShipmentWorkbenchUtil.DetailExpand);
+                    shlGrid.expandRow(e.masterRow);
+                    var shlItemUid=shlGrid.dataItem(e.masterRow).uid;
+
+                    if(expanded.indexOf(shlItemUid)<0)
+                       expanded.push(shlItemUid);
+                    shlGrid.bind('detailExpand', ShipmentWorkbenchUtil.DetailExpand);
+                },
+
+                CollapseAll: function() {
+                    expanded = [];
+                    shlGrid.collapseRow(shlGrid.tbody.find('tr.k-master-row'));
+                },
+                
+                SelectAll: function(e,checkedflag) {
+                	var self = this;
+                    var options = self.options;
+                    var checkedflag = options.chkFlag;
+                    var grid = $('#shl-grid').data('kendoGridActionList');
+                    
+                    $.each(grid.dataSource.data(), function() {
+                        var isDirty = this['dirty'];
+        
+                        this['IsSelected__custom'] = checkedflag;
+        
+                        if (!isDirty) {
+                            this['dirty'] = isDirty;
+                        }
+                    });
+        
+                    grid.refresh();
+                },
+
+                DetailCollapse: function(e) {
+                    expanded.pop(shlGrid.dataItem(e.masterRow).uid);
+                },
+                
+                RestoreExpanded: function() {
+                    expandAll = true;
+                    for (var i = 0; i < expanded.length; i++) shlGrid.expandRow('tr[data-uid="' + expanded[i] + '"]');
+                    expandAll = false;
+                }
+            };
+        }();
+    </script>
+
+    <style>
+        ul.warning-messages {
+            color: #fff;
+            padding-left: 20px;
+            text-align: left;
+        }
+    </style>
+</apex:page>
